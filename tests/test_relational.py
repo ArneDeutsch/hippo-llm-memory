@@ -32,4 +32,3 @@ def test_kg_subgraph_retrieval() -> None:
     assert "Alice" in sub.nodes
     # The relation node should also be present via the edge from Alice.
     assert ("Alice", "met Bob") in sub.edges
-

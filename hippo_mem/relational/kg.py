@@ -48,9 +48,7 @@ class KnowledgeGraph:
 
     # ------------------------------------------------------------------
     # Retrieval
-    def subgraph(
-        self, query: Iterable[float], k: int = 1, radius: int = 1
-    ) -> nx.DiGraph:
+    def subgraph(self, query: Iterable[float], k: int = 1, radius: int = 1) -> nx.DiGraph:
         """Retrieve an induced subgraph around the top ``k`` nodes.
 
         Similarity is measured by the dot product between the query vector and
@@ -74,4 +72,3 @@ class KnowledgeGraph:
 
 
 __all__ = ["KnowledgeGraph"]
-

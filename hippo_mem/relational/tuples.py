@@ -18,7 +18,6 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Tuple
 
-
 TupleType = Tuple[str, str, str, Optional[str]]
 
 
@@ -71,4 +70,3 @@ def extract_tuples(text: str) -> List[TupleType]:
 
 
 __all__ = ["extract_tuples", "TupleType"]
-
