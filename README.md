@@ -20,10 +20,10 @@ hippo-llm-memory/
 ├─ DESIGN.md                         # high-level design links/notes
 ├─ LICENSE
 ├─ codex-env/
-│  ├─ requirements.txt               # deps Codex installs in its container
-│  └─ setup.sh                       # paste into Codex → Environment → Setup script
-├─ pyproject.toml                    # black/ruff/pytest settings
-├─ Makefile                          # lint/test shortcuts for Codex and CI
+│  ├─ requirements.txt
+│  └─ setup.sh
+├─ pyproject.toml
+├─ Makefile
 ├─ scripts/
 │  ├─ train_lora.py                  # TRL + PEFT LoRA/QLoRA trainer (single GPU)
 │  ├─ eval_bench.py                  # episodic/semantic/spatial evaluation
@@ -50,6 +50,11 @@ hippo-llm-memory/
 │  ├─ test_relational.py
 │  ├─ test_spatial.py
 │  └─ test_training.py
+├─ research/                         # Reseach results this experiments are based on
+│  ├─ experiment-synthesis.md
+│  ├─ hippocampal-memory-storage.md
+│  ├─ large-language-models.md
+│  └─ validation.md
 └─ .github/
    ├─ workflows/ci.yml
    ├─ PULL_REQUEST_TEMPLATE.md
