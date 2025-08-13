@@ -17,7 +17,8 @@ hippo-llm-memory/
 ├─ README.md
 ├─ CONTRIBUTING.md
 ├─ CODING_STANDARDS.md
-├─ DESIGN.md                         # (optional) high-level design links/notes
+├─ DESIGN.md                         # high-level design links/notes
+├─ LICENSE
 ├─ codex-env/
 │  ├─ requirements.txt               # deps Codex installs in its container
 │  └─ setup.sh                       # paste into Codex → Environment → Setup script
