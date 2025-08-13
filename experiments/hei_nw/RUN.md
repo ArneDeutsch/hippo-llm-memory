@@ -23,3 +23,8 @@
 ## Local training
 
 - After merging PRs, run LoRA training with `scripts/train_lora.py` and enable the **EpisodicAdapter** via config.
+
+## Notes
+
+- Initial FAISS-backed store and surprise/novelty gating implemented.
+- Run `pytest tests/test_episodic.py` to exercise write/recall behaviour.
