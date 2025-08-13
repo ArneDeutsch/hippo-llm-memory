@@ -18,6 +18,7 @@ hippo-llm-memory/
 ├─ CONTRIBUTING.md
 ├─ CODING_STANDARDS.md
 ├─ DESIGN.md                         # high-level design links/notes
+├─ EVAL_PLAN.md                      # plan to evaluate our results
 ├─ LICENSE
 ├─ codex-env/
 │  ├─ requirements.txt
