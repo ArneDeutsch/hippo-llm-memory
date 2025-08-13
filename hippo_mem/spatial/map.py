@@ -8,9 +8,9 @@ stub for more sophisticated spatial memory systems.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import heapq
 import math
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
 
@@ -64,9 +64,7 @@ class SpatialMap:
         self.graph.setdefault(place.name, {})
         return place
 
-    def connect(
-        self, a_context: str, b_context: str, weight: Optional[float] = None
-    ) -> None:
+    def connect(self, a_context: str, b_context: str, weight: Optional[float] = None) -> None:
         """Create an undirected edge between two contexts.
 
         Args:
@@ -153,4 +151,3 @@ class SpatialMap:
                     came_from[neighbor] = node
                     heapq.heappush(queue, (new_cost, neighbor))
         return []
-

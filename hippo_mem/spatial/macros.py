@@ -53,4 +53,3 @@ class MacroLibrary:
         macro = Macro(name, trajectory)
         self.add(macro)
         return macro
-

@@ -4,8 +4,8 @@ These tests exercise the context→place encoder stub, the topological
 graph with A*/Dijkstra path finding, and the minimal macro library.
 """
 
-from hippo_mem.spatial.map import SpatialMap
 from hippo_mem.spatial.macros import MacroLibrary, plan_route
+from hippo_mem.spatial.map import SpatialMap
 
 
 def test_context_encoder_is_deterministic() -> None:
@@ -45,4 +45,3 @@ def test_behavior_cloning_macro_library() -> None:
     macro = library.behavior_clone("go", demos)
     assert macro.trajectory == ["A", "C"]
     assert library.get("go").trajectory == ["A", "C"]
-
