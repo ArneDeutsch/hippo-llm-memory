@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=67", "wheel>=0.41"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hippo-llm-memory"
+version = "0.0.1"
+description = "Hippocampus-inspired memory modules for small LLMs with LoRA/QLoRA"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+# Runtime deps are managed in codex-env/requirements.txt for Codex/CI; keep this minimal.
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+# Target Python 3.10 syntax
+target-version = "py310"
+# Enable import sorting and common lint rules
+extend-select = ["I"]
+# Keep config simple; Black handles formatting
+fix = true
+exclude = ["tests/data", "runs"]
+
+[tool.pytest.ini_options]
+addopts = "-q -ra --color=yes"
+testpaths = [
+  "tests"
+]
+python_files = ["test_*.py"]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = ["hippo_mem"]
