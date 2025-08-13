@@ -1,0 +1,3 @@
+# Semantic/relational memory preset using SGC-RSS store.
+model: mock
+memory: sgc_rss

@@ -1,0 +1,3 @@
+# Episodic memory preset using HEI-NW store.
+model: mock
+memory: hei_nw

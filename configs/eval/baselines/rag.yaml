@@ -1,0 +1,3 @@
+# Retrieval-augmented baseline preset.
+model: mock
+retrieval: true
