@@ -1,0 +1,3 @@
+# Spatial/procedural memory preset using SMPD store.
+model: mock
+memory: smpd

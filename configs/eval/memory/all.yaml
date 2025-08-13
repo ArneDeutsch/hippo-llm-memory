@@ -1,0 +1,6 @@
+# Combined memory preset using all stores.
+model: mock
+memory:
+  - hei_nw
+  - sgc_rss
+  - smpd
