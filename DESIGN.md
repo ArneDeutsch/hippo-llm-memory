@@ -1,113 +1,118 @@
 # 1) Purpose & scope
 
-This document specifies the end‑to‑end design for hippocampus‑inspired memory extensions for small open LLMs trained/adapted with LoRA/QLoRA on a single 12 GB GPU. It translates the research workflow (Pass 1–4) into concrete software modules, data schemas, training/eval procedures, and Codex tasking.
+This document specifies a production-ready design for hippocampus-inspired memory extensions to small open LLMs (single 12 GB GPU). It consolidates the research outcome (Pass 1–4) into software modules, data schemas, training/eval protocols, and CI-friendly tasks. It implements **three experiments**:
 
-**Experiments:**
+* **HEI-NW** — Episodic index with **k-WTA sparse keys**, **modern-Hopfield completion**, **neuromodulated one-shot writes**, **CA2-like prioritized replay**.
+* **SGC-RSS** — Schema-guided consolidation with a **relational semantic store** and **schema fast-track** routing.
+* **SMPD** — Spatial map with **place-like codes**, optional **path-integration**, and **replay-to-policy** macro distillation.
 
-- **HEI‑NW** — Episodic index + neuromodulated writes + prioritized replay.
-- **SGC‑RSS** — Schema‑guided consolidation + relational/graph semantic store.
-- **SMPD** — Spatial map + replay‑to‑policy macro distillation.
+# 2) Assumptions & constraints
 
-# 2) System assumptions & constraints
+* **Hardware:** 1× NVIDIA GPU (12 GB), Ubuntu Linux.
+* **Base models:** small causal LMs (e.g., Llama-3.2-3B / Phi-3-Mini / Qwen2-1.5B).
+* **Efficiency:** **QLoRA (NF4)** + gradient checkpointing; **FlashAttention** kernels when supported; **MQA/GQA** for KV memory reduction in both core and adapters; context length ≤1024 by default.
+* **Frameworks:** PyTorch, HF Transformers, TRL, PEFT, bitsandbytes, FAISS-CPU (+PQ), Hydra, NetworkX (or DGL), pytest.
+* **Non-goals:** Full pretraining; multi-GPU; online RL.
 
-- **Hardware:** 1× NVIDIA GPU (12 GB), Ubuntu Linux.
-- **Models:** small, open‑weights causal LMs (e.g., Llama‑3.2‑3B, Phi‑3‑Mini, Qwen2‑1.5B) with **QLoRA (4‑bit NF4)**, gradient checkpointing, seq‑len ≤1024.
-- **Frameworks:** PyTorch, Hugging Face Transformers, TRL, PEFT, bitsandbytes, FAISS‑CPU, Hydra, NetworkX, pytest.
-- **Codex (web):** runs in an ephemeral CPU container, installs `codex-env/requirements.txt`, runs `make lint`/`make test`, opens PRs.
-- **Non‑goals:** Full pretraining; multi‑GPU distributed training; online reinforcement learning.
-
-# 3) High‑level architecture
+# 3) High-level architecture
 
 ```
-                  ┌──────────────────────────────────────────────────────┐
-                  │                      LLM core                        │
-                  │  (HF Transformers; LoRA/QLoRA adapters inserted)    │
-                  └───────────┬───────────────────────────────┬──────────┘
-                              │                               │
-                         [Episodic Adapter]              [Relational Adapter]
-                              │                               │
-             ┌────────────────┴──────────────┐        ┌───────┴────────────────┐
-             │   HEI‑NW Episodic Store      │        │   SGC‑RSS Semantic KG  │
-             │  (FAISS + SQLite + Replay)   │        │  (NetworkX + Embeds)   │
-             └────────────────┬──────────────┘        └───────────┬────────────┘
-                              │                                   │
-                         [Spatial Adapter / Tool]                 │
-                              │                                   │
-                         SMPD Map + Macros  <──────────────────────┘
+                    ┌───────────── LLM core (HF, FlashAttn, MQA/GQA) ─────────────┐
+                    │                   LoRA/QLoRA adapters                        │
+                    └───────────────┬───────────────────────┬──────────────────────┘
+                                    │                       │
+                           [Episodic Adapter]        [Relational Adapter]
+                                    │                       │
+         ┌──────────────────────────┴────────────┐    ┌─────┴───────────────┐
+         │ HEI-NW Episodic Store (FAISS+PQ,     │    │ SGC-RSS Semantic KG │
+         │ SQLite, modern-Hopfield, ReplayQ)    │    │ (graph + GNN enc.)  │
+         └───────────────────┬───────────────────┘    └─────────┬───────────┘
+                             │                                  │
+                        [Spatial Adapter / Tool API]            │
+                             │                                  │
+                     SMPD Map (PlaceGraph, path-int)  <─────────┘
+                             + MacroLib
 ```
 
-Shared library `hippo_mem/` provides retrieval, adapters, and utils. Each experiment adds its own configs and eval tasks.
+**Retrieval fabric:** one embedding/ANN layer shared across stores; store-type tags; latency SLAs and budgets.
 
 # 4) Data structures
 
-## 4.1 Episodic (HEI‑NW)
+## 4.1 Episodic (HEI-NW)
 
-- `DGKey`: sparse key (indices + values; CSR‑like), `dim=d_k`.
-- `TraceValue`: `{tokens_span_ref, entity_slots(who,what,where,when), state_sketch, salience_tags}`.
-- `AssocStore`: FAISS index (IP/cosine), optional small MLP for completion.
-- `ReplayQueue` item: `{key_id, S (salience), recency, diversity_sig, timestamp}`.
+* `DGKey`: **sparse k-WTA** key (indices+values, CSR-like), dim `d_k`.
+* `TraceValue`: `{tokens_span_ref, entity_slots(who,what,where,when), state_sketch, salience_tags, provenance}`.
+* `AssocStore`: FAISS index with **product quantization (PQ)** for RAM efficiency; a **modern-Hopfield** readout layer for CA3-style completion.
+* `ReplayQueue` item: `{key_id, S (salience), recency, diversity_sig, grad_overlap_proxy, timestamp}`.
 
-## 4.2 Relational (SGC‑RSS)
+## 4.2 Relational (SGC-RSS)
 
-- Tuple: `(head, relation, tail, context, time, conf, provenance)`.
-- KG: `NetworkX` multigraph with node/edge embeddings; SQLite for persistence.
-- `SchemaIndex`: prototypes/frames with slot types; similarity scores for schema‑fit routing.
+* Tuple: `(head, relation, tail, context, time, conf, provenance)`.
+* `SemanticGraph`: multigraph with **GNN-maintained node/edge embeddings**; persisted in SQLite/Parquet.
+* `SchemaIndex`: prototypes/frames (slot types, constraints) with similarity metrics.
 
 ## 4.3 Spatial (SMPD)
 
-- `PlaceGraph`: nodes = place/context embeddings; edges = transitions with weights `{cost, success_prob}`.
-- `MacroLib`: list of `{signature, steps, success_stats}`; small scoring head during inference.
+* `PlaceGraph`: nodes = **place-like codes** for contexts; edges carry `{cost, success_prob, last_seen}`; optional **path-integration accumulator** for sequential contexts.
+* `MacroLib`: `{signature, steps (tool calls), success_stats, last_update}`; small scoring head for suggestion ranking.
 
-# 5) Core algorithms
+# 5) Algorithms
 
-## 5.1 Write‑gate (neuromodulatory analog)
+## 5.1 Write-gate (neuromodulatory analog)
 
-`S = α · surprise + β · novelty + γ · reward + δ · pin`.
+`S = α·surprise + β·novelty + γ·reward + δ·pin`.
 
-- **surprise:** `−log p(next_token)` or local entropy from LM logits.
-- **novelty:** `1 − max cos(query, catalog_keys)`.
-- **reward/pin:** explicit task flags. Write iff `S > τ`.
+* `surprise`: `−log p(next_token)` or local entropy from logits.
+* `novelty`: `1 − max cos(query, catalog_keys)` (pre-retrieval).
+* `reward/pin`: flags from environment/user.
+* **Write iff `S > τ`**, attach provenance.
 
-## 5.2 Recall (content‑addressable)
+## 5.2 Recall (content-addressable, CA3 completion)
 
-1. Build query from current hidden/residual state.
-2. Obtain sparse key via k‑WTA projection (or plain dense embedding v0).
-3. FAISS KNN → top‑k traces; optional MLP completion → memory tokens.
-4. Cross‑attend via **EpisodicAdapter**.
+1. Query from current residual stream.
+2. Sparse key via **k-WTA projection**.
+3. FAISS-PQ KNN → candidate traces.
+4. **Modern-Hopfield** completion to densify/“fill in” the episodic pattern.
+5. Pack to “memory tokens”; **EpisodicAdapter** cross-attends (MQA/GQA to cap KV).
 
-## 5.3 Prioritized replay (CA2‑like)
+## 5.3 CA2-like prioritized replay (interference-aware)
 
-- Priority = mixture of `S`, recency, and diversity (reduce gradient overlap).
-- Offline worker yields interleaved batches to the trainer for consolidation.
+* Priority mix: `λ1·S + λ2·recency + λ3·diversity` with **successive-batch gradient-overlap minimization** (proxy via representation cosine).
+* **Consolidation mix:** default **50% episodic**, **30% semantic graph**, **20% fresh tasks** per batch window.
+* Interleave hard negatives to stabilize adapters before any weight-unfreezing.
 
 ## 5.4 Relational retrieval & schema routing
 
-- Tuple extractor → KG insert with provenance.
-- Schema score determines **fast‑track** consolidation vs. extended replay.
-- Dual‑path inference: top‑k subgraphs ⊕ top‑k episodes → fused cross‑attention.
+* Tuple extractor → KG upsert (with confidence & provenance).
+* **Schema score** gates: high → **fast-track** to KG + light replay; low → remain episodic + heavy replay before generalization.
+* Dual-path inference: top-k subgraphs ⊕ top-k episodes; **gating head** merges adapter outputs.
 
 ## 5.5 Spatial planning & macro distillation
 
-- Place encoder groups contexts; planner = A\*/Dijkstra on `PlaceGraph`.
-- Successful trajectories → behavior cloning into `MacroLib`.
+* Place encoder builds/merges nodes; optional **path-integration** over recent segments.
+* Planner: A\*/Dijkstra (text worlds) or learned planner (ablation).
+* Successful trajectories → **behavior cloning** into `MacroLib`; suggest at inference (top-k).
 
-# 6) Adapter design (LoRA/QLoRA)
+# 6) Adapters (LoRA/QLoRA)
 
-- **Targets:** `q_proj`, `k_proj`, `v_proj`, `o_proj`, and optionally FFN `{up,down}` in adapter blocks only.
-- **Defaults:** r=16, α=32, dropout=0.05; load base in 4‑bit NF4; gradient checkpointing on.
-- **Placement:**
-  - **EpisodicAdapter:** after transformer block N (configurable), adds a cross‑attn over retrieved traces.
-  - **RelationalAdapter:** parallel cross‑attn over KG subgraph encodings; gating head merges outputs.
-  - **Spatial:** either a lightweight cross‑attn to plan/macro embeddings or tool‑call interface producing structured hints.
+* **Targets:** `q_proj`, `k_proj`, `v_proj`, `o_proj`, optionally FFN `{up, down}` in adapter blocks only.
+* **Defaults:** r=16, α=32, dropout=0.05, NF4 4-bit, grad checkpointing.
+* **Placement:**
+
+  * **EpisodicAdapter**: after block `N` (configurable).
+  * **RelationalAdapter**: parallel cross-attention over KG encodings; gated merge.
+  * **SpatialAdapter**: lightweight cross-attention to plan/macro embeddings or via tool-API.
+* **Efficiency:** enable **FlashAttention** kernels and **MQA/GQA** in adapter attention.
 
 # 7) Configuration (Hydra)
-
-Example keys:
 
 ```yaml
 model:
   name: llama32-3b
   dtype: bfloat16
+efficiency:
+  flash_attention: true
+  mqa_gqa: "gqa"
 train:
   load_in_4bit: true
   gradient_checkpointing: true
@@ -119,12 +124,15 @@ lora:
   alpha: 32
   dropout: 0.05
 memory:
-  episodic: {k: 8, metric: cosine, write_threshold: 0.7}
-  relational: {topk_subgraphs: 4, tuple_conf_min: 0.8}
-  spatial: {planner: astar, heuristic: manhattan}
+  episodic: {k: 8, metric: cosine, write_threshold: 0.7, hopfield: true, pq: true}
+  relational: {topk_subgraphs: 4, tuple_conf_min: 0.8, schema_fasttrack: true}
+  spatial: {planner: astar, path_integration: true}
+consolidation:
+  batch_mix: {episodic: 0.5, semantic: 0.3, fresh: 0.2}
+  schedule: {minimize_grad_overlap: true}
 ```
 
-# 8) Module APIs (summary)
+# 8) Public APIs
 
 ## 8.1 Episodic
 
@@ -133,6 +141,7 @@ class EpisodicStore:
     def write(self, key: np.ndarray, value: dict) -> int: ...
     def recall(self, query: np.ndarray, k: int) -> list[dict]: ...
     def delete(self, key_id: int) -> None: ...
+    def decay(self, now: float) -> None: ...
 
 class WriteGate:
     def score(self, surprise: float, novelty: float, reward: bool, pin: bool) -> float: ...
@@ -141,12 +150,11 @@ class WriteGate:
 ## 8.2 Relational
 
 ```python
-class TupleExtractor:
-    def extract(self, text: str) -> list[Tuple]: ...
-
+class TupleExtractor: ...
 class KG:
     def upsert(self, tuples: list[Tuple]) -> None: ...
-    def retrieve(self, query: str, k: int) -> Subgraph: ...
+    def retrieve(self, query: str, k: int) -> "Subgraph": ...
+    def prune(self, ttl_days: int) -> None: ...
 ```
 
 ## 8.3 Spatial
@@ -155,6 +163,7 @@ class KG:
 class PlaceGraph:
     def observe(self, context: dict) -> int: ...
     def plan(self, start: int, goal: int) -> list[int]: ...
+    def merge_similar(self, thr: float) -> None: ...
 
 class MacroLib:
     def add(self, trajectory: list[dict]) -> str: ...
@@ -163,76 +172,81 @@ class MacroLib:
 
 # 9) Training & consolidation
 
-- **Phase A (adapters only):** freeze base LM; train Episodic/Relational adapters with synthetic tasks (Pass‑4) and small curated corpora.
-- **Phase B (replay distillation):** run prioritized replay → interleaved batches; optionally allow low‑LR updates to select base layers.
-- **Checkpoints:** save LoRA weights per adapter; `export_adapter.py` can merge/unmerge.
+* **Phase A (adapters only):** freeze base; train Episodic/Relational/Spatial adapters on synthetic tasks + small curated corpora.
+* **Phase B (replay distillation):** enable **CA2-like scheduler** with the 50/30/20 mix; optionally unfreeze a small subset of base layers at low LR.
+* **KV-cache interplay:** prefer **retrieval + adapters** over brute long contexts; cap adapter tokens via learned budgeters; rely on **GQA** to bound KV.
+* **Checkpointing:** save per-adapter LoRA weights; export/merge tools provided.
 
-# 10) Evaluation (harness)
+# 10) Evaluation & ablations
 
-- **Episodic:** EM/F1 from partial cues; robustness vs. distractors; latency.
-- **Semantic:** multi‑hop QA against KG; contradiction rate; schema‑fit acceleration.
-- **Spatial:** path success, suboptimality, steps.
-- **Procedural:** macro reuse rate; steps‑to‑solve; tool‑call latency.
-- **Ablations:** remove sparsity, completion, gate, replay scheduler, schema routing, or macros.
-- **Compute:** FLOPs saved vs. long‑context; KV‑cache memory vs. baseline.
+* **Episodic:** partial-cue EM/F1; robustness vs. distractors; latency.
+* **Semantic:** multi-hop QA vs. KG; contradiction rate; **schema acceleration** delta.
+* **Spatial:** path success, suboptimality, plan length.
+* **Procedural:** macro reuse, steps-to-solve, tool-latency.
+* **Stress tests:** rapid novel-episode bursts; schema-flip events; large-map growth.
+* **User-like setting:** interactive sessions with explicit **pin** signals to validate gating.
+* **Baselines:** core LM (FlashAttn), +RAG, +long-context (ALiBi/RoPE), +Compressive/Longformer variants.
+* **Ablations:** −DG sparsity, −Hopfield, −gate, −replay scheduler, −schema fast-track, −path-integration, −macros.
+* **Compute:** FLOPs saved vs. long-context; KV memory with/without MQA/GQA.
 
-# 11) Logging, provenance, and rollback
+# 11) Ops: logging, provenance, rollback, and maintenance
 
-- Every write stores `{text_span, doc_id, time, conf, source}`.
-- Provide `delete_by_provenance()` and snapshot/restore of stores.
-- Structured logs: JSON lines in `runs/<date>/<exp>/events.jsonl`.
+* Every write records `{text_span, doc_id, time, conf, source}`; **delete\_by\_provenance()** and snapshot/restore for all stores.
+* **Nightly jobs:**
+
+  * Episodic decay of low-S traces; dedupe near-duplicates.
+  * KG pruning of stale/low-confidence edges.
+  * PlaceGraph node merging and TTL on unused nodes; MacroLib success aging.
+* Structured logs as JSONL under `runs/<date>/<exp>/events.jsonl`.
 
 # 12) Risks & mitigations
 
-- **Noisy writes (low precision gating):** raise τ, add user “pin”, post‑hoc pruning.
-- **Interference during replay:** diversity‑aware scheduler; cap batch similarity.
-- **Extractor drift (KG):** confidence thresholds, rollback, tests with golden tuples.
-- **Map explosion:** node merging by similarity; TTL for stale places.
+* **Noisy writes:** raise τ; allow user **pin**; post-hoc pruning.
+* **Replay interference:** enforce diversity and **grad-overlap minimization**; cap similarity per batch.
+* **Extractor drift (KG):** confidence thresholds, provenance rollback, golden tests.
+* **Map explosion:** similarity-based node merge; TTLs; cap degree.
+* **Latency spikes:** ANN budgets per store; adapter token budgets; FlashAttention and GQA.
 
-# 13) Milestones & PRs (Codex‑friendly)
+# 13) Milestones & CI-friendly tasks
 
-1. **Scaffold & CI** (PR‑1): repo tree, lint/test green.
-2. **Episodic v0** (PR‑2): store + gating + tests.
-3. **Relational v0** (PR‑3): tuples + KG + tests.
-4. **Spatial v0** (PR‑4): map + planner + tests.
-5. **Training script** (PR‑5): QLoRA trainer + dry‑run test.
-6. **Eval harness** (PR‑6): metrics & fixtures; ablation toggles.
-7. **Adapters wired** (PR‑7..9): Episodic/Relational/Spatial adapters + configs.
+1. **Scaffold/CI**: repo tree, lint/test green.
+2. **Episodic v0**: store + gating + FAISS-PQ; tests.
+3. **Hopfield completion**: CA3 readout; ablations.
+4. **Relational v0**: tuple extractor + KG + GNN enc.; tests.
+5. **Spatial v0**: PlaceGraph + A\* + optional path-integration; tests.
+6. **Adapters wired**: Episodic/Relational/Spatial with GQA & FlashAttn.
+7. **Trainer**: QLoRA trainer + consolidation mix + scheduler.
+8. **Eval harness**: metrics, baselines, stress tests, user-pin flows.
 
-# 14) Example Codex task snippets
+# 14) Reproducibility
 
-- *“Implement EpisodicStore with FAISS‑CPU, add tests, ensure make lint/test pass, open PR ‘feat(episodic): v0 store+gating’.”*
-- *“Create KG with NetworkX & embeddings; retrieval API; tests for simple multi‑hop; PR ‘feat(relational): kg v0’.”*
-- *“Add A* planner to PlaceGraph; tests on toy grid; PR ‘feat(spatial): planner v0’.”\*
+* Fixed seeds; deterministic dataloaders where feasible; snapshot FAISS/KG/PlaceGraph for CI.
+* Record model IDs and config hashes in run metadata.
 
-# 15) Reproducibility
+# 15) ASCII appendix
 
-- Fix random seeds in tests; persist FAISS/SQLite snapshots under `tests/data/tmp` during CI.
-- Record exact model IDs and config hashes in run metadata.
-
-# 16) ASCII appendix
-
-## 16.1 HEI‑NW dataflow
+## 15.1 HEI-NW
 
 ```
 Tokens → LLM → Query
               │
-      k‑WTA/Embed → EpisodicStore.recall → Traces → EpisodicAdapter → LLM
+      k-WTA → FAISS-PQ KNN → Hopfield completion → Traces → EpisodicAdapter (GQA)
               │
-      WriteGate(S) → [write] → ReplayQueue → (offline) trainer
+      WriteGate(S) → [write] → ReplayQueue → (CA2 scheduler) → Trainer (50/30/20)
 ```
 
-## 16.2 SGC‑RSS dataflow
+## 15.2 SGC-RSS
 
 ```
-Text → TupleExtractor → KG.upsert;
-Query → KG.retrieve + EpisodicStore.recall → RelationalAdapter/EpisodicAdapter → LLM
+Text → TupleExtractor → KG.upsert (GNN embeds, provenance)
+Query → {KG.subgraphs ⊕ Episodic traces} → Relational/Episodic Adapters → LLM
+Schema score ↑ → fast-track vs. heavy replay
 ```
 
-## 16.3 SMPD dataflow
+## 15.3 SMPD
 
 ```
-Context → PlaceGraph.observe → plan(goal) → route scaffold
-Successful trajectories → MacroLib.add → suggest() → LLM hints
+Context → Place encoder (+path-integration) → PlaceGraph
+Goal → plan() → route scaffold → SpatialAdapter/tool hints → LLM
+Trajectories → MacroLib (behavior cloning) → suggest()
 ```
-
