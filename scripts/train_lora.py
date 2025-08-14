@@ -15,10 +15,12 @@ loop does not run on CI.
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 import hydra
+import numpy as np
 import torch
 from datasets import load_dataset
 from hydra.core.config_store import ConfigStore
@@ -28,6 +30,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
+from hippo_mem.relational.adapter import RelationalAdapter
+from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
+from hippo_mem.spatial.adapter import SpatialAdapter
 
 
 @dataclass
@@ -57,6 +62,21 @@ class TrainConfig:
     episodic: AdapterConfig = field(
         default_factory=lambda: AdapterConfig(hidden_size=16, num_heads=1)
     )
+
+    # Relational and spatial memory knobs
+    relational: bool = False
+    spatial: SpatialAdapterConfig = field(
+        default_factory=lambda: SpatialAdapterConfig(hidden_size=16, num_heads=1)
+    )
+
+    # Batch mix for replay scheduling
+    @dataclass
+    class BatchMix:
+        episodic: float = 0.5
+        semantic: float = 0.3
+        fresh: float = 0.2
+
+    batch_mix: BatchMix = field(default_factory=BatchMix)
 
 
 # Register the config with Hydra so that `@hydra.main` can locate it.
@@ -95,8 +115,10 @@ def train(cfg: TrainConfig) -> None:
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
 
+    hidden = getattr(model.config, "hidden_size", cfg.episodic.hidden_size)
+
+    epi_adapter: EpisodicAdapter | None = None
     if cfg.episodic.enabled:
-        hidden = getattr(model.config, "hidden_size", cfg.episodic.hidden_size)
         epi_cfg = AdapterConfig(
             hidden_size=hidden,
             num_heads=cfg.episodic.num_heads,
@@ -106,12 +128,45 @@ def train(cfg: TrainConfig) -> None:
             lora_dropout=cfg.episodic.lora_dropout,
             enabled=True,
         )
-        adapter = EpisodicAdapter(epi_cfg)
-        # Pass a tiny dummy batch through the adapter so that the code path is
-        # exercised during tests.  This has no effect on the model.
-        dummy_h = torch.zeros(1, 1, hidden)
-        dummy_m = torch.zeros(1, 1, hidden)
-        adapter(dummy_h, dummy_m)
+        epi_adapter = EpisodicAdapter(epi_cfg)
+
+    rel_adapter: RelationalAdapter | None = None
+    if cfg.relational:
+        rel_adapter = RelationalAdapter()
+
+    spat_adapter: SpatialAdapter | None = None
+    if cfg.spatial.enabled:
+        spat_cfg = SpatialAdapterConfig(
+            hidden_size=hidden,
+            num_heads=cfg.spatial.num_heads,
+            lora_r=cfg.spatial.lora_r,
+            lora_alpha=cfg.spatial.lora_alpha,
+            lora_dropout=cfg.spatial.lora_dropout,
+            enabled=True,
+        )
+        spat_adapter = SpatialAdapter(spat_cfg)
+
+    # Simulate interleaved replay batches (50/30/20 default mix)
+    schedule = []
+    total = 10
+    schedule.extend(["episodic"] * int(cfg.batch_mix.episodic * total))
+    schedule.extend(["semantic"] * int(cfg.batch_mix.semantic * total))
+    remaining = total - len(schedule)
+    schedule.extend(["fresh"] * remaining)
+    random.shuffle(schedule)
+    for kind in schedule:
+        if kind == "episodic" and epi_adapter is not None:
+            h = torch.zeros(1, 1, hidden)
+            m = torch.zeros(1, 1, hidden)
+            epi_adapter(h, m)
+        elif kind == "semantic" and rel_adapter is not None:
+            q = np.zeros(hidden, dtype=np.float32)
+            k = np.zeros((1, hidden), dtype=np.float32)
+            rel_adapter(q, k)
+        elif kind == "fresh" and spat_adapter is not None:
+            h = torch.zeros(1, 1, hidden)
+            p = torch.zeros(1, 1, hidden)
+            spat_adapter(h, p)
 
     # Short circuit for the unit tests / smoke runs
     if cfg.dry_run:
