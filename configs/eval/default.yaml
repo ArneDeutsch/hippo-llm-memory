@@ -1,2 +1,19 @@
 # Default evaluation configuration.
 tasks: []
+
+# Basic run parameters with reasonable defaults.
+suite: null
+preset: baselines/core
+n: 5
+seed: 0
+outdir: null
+dry_run: false
+
+# Hydra stays in-place so our manual ``outdir`` handling works.
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+# Placeholder for ablation flags exposed via ``+ablate=...`` on the CLI.
+ablate: {}

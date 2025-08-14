@@ -184,7 +184,7 @@ python scripts/eval_bench.py suite=episodic preset=memory/hei_nw eval.post_repla
 
 # 12) CI & Codex scope
 
-- CI runs `make lint` and a **dry‑run** of the harness on 5 tasks per suite (ensures plumbing only).
+- CI runs `make lint` and a **dry_run** of the harness on 5 tasks per suite across all presets (ensures plumbing only).
 - Codex PRs should include updated fixtures/tests and leave heavy training/eval to local GPU runs.
 
 # 13) Reproducibility

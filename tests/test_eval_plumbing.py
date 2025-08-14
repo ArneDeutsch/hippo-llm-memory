@@ -18,16 +18,11 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_bench.py",
-        "--suite",
-        suite,
-        "--n",
-        "3",
-        "--seed",
-        "0",
-        "--preset",
-        "baselines/core",
-        "--outdir",
-        str(outdir),
+        f"suite={suite}",
+        "preset=baselines/core",
+        "n=3",
+        "seed=0",
+        f"outdir={outdir}",
     ]
     subprocess.run(cmd, check=True)
 
