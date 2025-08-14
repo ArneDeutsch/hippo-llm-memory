@@ -18,11 +18,11 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Tuple
 
-TupleType = Tuple[str, str, str, Optional[str]]
+TupleType = Tuple[str, str, str, Optional[str], float]
 
 
-def extract_tuples(text: str) -> List[TupleType]:
-    """Extract ``(entity, relation, context, time)`` tuples from ``text``.
+def extract_tuples(text: str, threshold: float = 0.0) -> List[TupleType]:
+    """Extract ``(entity, relation, context, time, conf)`` tuples from ``text``.
 
     The extractor is intentionally lightweight.  It splits the text into
     sentences using common punctuation, assumes the first whitespace separated
@@ -32,10 +32,11 @@ def extract_tuples(text: str) -> List[TupleType]:
 
     Args:
         text: Free form text potentially containing several sentences.
+        threshold: Minimum confidence required for returned tuples.
 
     Returns:
-        A list of 4-tuples ``(entity, relation, context, time)``.  ``time`` will
-        be ``None`` if no temporal expression was detected.
+        A list of 5-tuples ``(entity, relation, context, time, conf)``.  ``time``
+        will be ``None`` if no temporal expression was detected.
     """
 
     tuples: List[TupleType] = []
@@ -64,7 +65,18 @@ def extract_tuples(text: str) -> List[TupleType]:
             # Not enough information for a relation.
             continue
         entity, relation = parts[0].strip(), parts[1].strip()
-        tuples.append((entity, relation, sent.strip(), time))
+
+        # Heuristic confidence: longer relations and the presence of a timestamp
+        # increase the score.  Values are clipped to ``[0, 1]``.
+        rel_len = len(relation.split())
+        conf = min(1.0, rel_len / 3.0)
+        if time is not None:
+            conf = min(1.0, conf + 0.1)
+
+        if conf < threshold:
+            continue
+
+        tuples.append((entity, relation, sent.strip(), time, conf))
 
     return tuples
 
