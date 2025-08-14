@@ -1,57 +1,55 @@
-"""Tests for the spatial map and macro library."""
-
 from hippo_mem.spatial.macros import MacroLib
 from hippo_mem.spatial.map import PlaceGraph
 
 
-def _run_observations(seq: list[str]) -> tuple[list[int], PlaceGraph]:
-    graph = PlaceGraph()
-    ids = [graph.observe(ctx) for ctx in seq]
-    return ids, graph
+def test_graph_growth_deterministic() -> None:
+    seq = ["a", "b", "c", "a"]
+    g1 = PlaceGraph()
+    for s in seq:
+        g1.observe(s)
+    g2 = PlaceGraph()
+    for s in seq:
+        g2.observe(s)
 
-
-def test_observations_are_deterministic() -> None:
-    """Sequences of observations should grow the same graph."""
-
-    seq = ["A", "B", "C", "A", "C", "B"]
-    ids1, g1 = _run_observations(seq)
-    ids2, g2 = _run_observations(seq)
-    assert ids1 == ids2
     assert g1.graph == g2.graph
+    assert g1._context_to_id == g2._context_to_id
+    enc = g1.encoder
+    assert enc.encode("a").last_seen == 4
+    assert enc.encode("b").last_seen == 2
+    a = g1._context_to_id["a"]
+    b = g1._context_to_id["b"]
+    assert g1.graph[a][b].last_seen == 2
 
 
-def test_planner_finds_shortest_path_on_grid() -> None:
-    """A small 2×2 grid has two equivalent shortest routes."""
+def test_path_integration_planning() -> None:
+    seq = ["start", "mid", "goal"]
+    g_no = PlaceGraph(path_integration=False)
+    for s in seq:
+        g_no.observe(s)
+    g_pi = PlaceGraph(path_integration=True)
+    for s in seq:
+        g_pi.observe(s)
 
-    g = PlaceGraph()
-    g.connect("0,0", "1,0")
-    g.connect("0,0", "0,1")
-    g.connect("1,0", "1,1")
-    g.connect("0,1", "1,1")
-    path = g.plan("0,0", "1,1")
-    assert path in (["0,0", "1,0", "1,1"], ["0,0", "0,1", "1,1"])
-
-
-def test_planner_shortest_path_with_custom_weights() -> None:
-    """A* and Dijkstra agree on a simple weighted triangle."""
-
-    g = PlaceGraph()
-    g.connect("A", "B", cost=1)
-    g.connect("B", "C", cost=1)
-    g.connect("A", "C", cost=5)
-    assert g.plan("A", "C", method="dijkstra") == ["A", "B", "C"]
+    path_a = g_pi.plan("start", "goal", method="astar")
+    path_d = g_pi.plan("start", "goal", method="dijkstra")
+    assert path_a == path_d == seq
+    assert g_pi.encoder.encode("start").coord == (0.0, 0.0)
+    assert g_pi.encoder.encode("mid").coord != g_no.encoder.encode("mid").coord
 
 
-def test_macro_replay_reduces_steps() -> None:
-    """Macros should be shorter than a baseline planned route."""
-
-    g = PlaceGraph()
-    g.connect("start", "a")
-    g.connect("a", "b")
-    g.connect("b", "goal")
-    baseline = g.plan("start", "goal")
-
+def test_macro_replay_improves_success() -> None:
     lib = MacroLib()
-    lib.store("shortcut", ["start", "goal"])
-    macro = lib.suggest("start", "goal", k=1)[0]
-    assert len(macro.trajectory) < len(baseline)
+    lib.store("bad", ["s", "g"])
+    lib.store("good", ["s", "g"])
+
+    baseline = lib.suggest("s", "g", k=1)[0].name
+    assert baseline == "bad"
+
+    lib.update_stats("good", True)
+    lib.update_stats("good", True)
+    lib.update_stats("bad", False)
+    lib.update_stats("bad", False)
+
+    improved = lib.suggest("s", "g", k=1)[0].name
+    assert improved == "good"
+
