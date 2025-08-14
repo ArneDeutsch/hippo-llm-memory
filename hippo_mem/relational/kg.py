@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, Sequence
 
 import networkx as nx
 import numpy as np
@@ -14,7 +14,7 @@ class KnowledgeGraph:
     """Knowledge graph backed by NetworkX and SQLite."""
 
     def __init__(self, db_path: str = ":memory:") -> None:
-        self.graph = nx.DiGraph()
+        self.graph = nx.MultiDiGraph()
         self.node_embeddings: Dict[str, np.ndarray] = {}
         self.conn = sqlite3.connect(db_path)
         self._init_db()
@@ -28,12 +28,15 @@ class KnowledgeGraph:
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS edges (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 src TEXT,
+                relation TEXT,
                 dst TEXT,
                 context TEXT,
                 time TEXT,
-                embedding TEXT,
-                PRIMARY KEY(src, dst)
+                conf REAL,
+                provenance INTEGER,
+                embedding TEXT
             )
             """
         )
@@ -45,69 +48,126 @@ class KnowledgeGraph:
             self.graph.add_node(name)
             if emb is not None:
                 self.node_embeddings[name] = np.asarray(json.loads(emb), dtype=float)
-        for src, dst, ctx, time, emb in cur.execute(
-            "SELECT src, dst, context, time, embedding FROM edges"
+        for edge_id, src, rel, dst, ctx, time, conf, prov, emb in cur.execute(
+            "SELECT id, src, relation, dst, context, time, conf, provenance, embedding FROM edges"
         ):
-            self.graph.add_edge(src, dst, context=ctx, time=time)
+            self.graph.add_edge(
+                src,
+                dst,
+                key=edge_id,
+                relation=rel,
+                context=ctx,
+                time=time,
+                conf=conf,
+                provenance=prov,
+            )
             if emb is not None:
-                self.graph[src][dst]["embedding"] = np.asarray(json.loads(emb), dtype=float)
+                self.graph[src][dst][edge_id]["embedding"] = np.asarray(
+                    json.loads(emb), dtype=float
+                )
 
     # ------------------------------------------------------------------
     # Graph manipulation
     def upsert(
         self,
-        entity: str,
+        head: str,
         relation: str,
+        tail: str,
         context: str,
         time: Optional[str] = None,
+        conf: float = 1.0,
+        provenance: Optional[int] = None,
         *,
-        entity_embedding: Optional[Iterable[float]] = None,
-        relation_embedding: Optional[Iterable[float]] = None,
+        head_embedding: Optional[Iterable[float]] = None,
+        tail_embedding: Optional[Iterable[float]] = None,
         edge_embedding: Optional[Iterable[float]] = None,
     ) -> None:
         """Add or update a tuple in the graph and SQLite store."""
 
-        rel_node = relation
-        self.graph.add_node(entity)
-        self.graph.add_node(rel_node)
-        self.graph.add_edge(entity, rel_node, context=context, time=time)
-        if edge_embedding is not None:
-            self.graph[entity][rel_node]["embedding"] = np.asarray(
-                list(edge_embedding), dtype=float
-            )
+        self.graph.add_node(head)
+        self.graph.add_node(tail)
 
         cur = self.conn.cursor()
         cur.execute(
             "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
-            (entity, self._to_json(entity_embedding)),
+            (head, self._to_json(head_embedding)),
         )
         cur.execute(
             "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
-            (rel_node, self._to_json(relation_embedding)),
+            (tail, self._to_json(tail_embedding)),
         )
         cur.execute(
-            "INSERT OR REPLACE INTO edges(src, dst, context, time, embedding) VALUES (?,?,?,?,?)",
-            (entity, rel_node, context, time, self._to_json(edge_embedding)),
+            "INSERT INTO edges(src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?)",
+            (
+                head,
+                relation,
+                tail,
+                context,
+                time,
+                conf,
+                provenance,
+                self._to_json(edge_embedding),
+            ),
         )
+        edge_id = cur.lastrowid
         self.conn.commit()
 
-        if entity_embedding is not None:
-            self.node_embeddings[entity] = np.asarray(list(entity_embedding), dtype=float)
-        if relation_embedding is not None:
-            self.node_embeddings[rel_node] = np.asarray(list(relation_embedding), dtype=float)
+        self.graph.add_edge(
+            head,
+            tail,
+            key=edge_id,
+            relation=relation,
+            context=context,
+            time=time,
+            conf=conf,
+            provenance=provenance,
+        )
+        if edge_embedding is not None:
+            self.graph[head][tail][edge_id]["embedding"] = np.asarray(
+                list(edge_embedding), dtype=float
+            )
+
+        if head_embedding is not None:
+            self.node_embeddings[head] = np.asarray(list(head_embedding), dtype=float)
+        if tail_embedding is not None:
+            self.node_embeddings[tail] = np.asarray(list(tail_embedding), dtype=float)
+
+        self._gnn_update([head, tail])
 
     def _to_json(self, emb: Optional[Iterable[float]]) -> Optional[str]:
         if emb is None:
             return None
         return json.dumps(list(map(float, emb)))
 
+    def _gnn_update(self, nodes: Sequence[str]) -> None:
+        """Very small message-passing stub updating node embeddings."""
+
+        for n in nodes:
+            edges = [
+                d.get("embedding")
+                for _, _, d in self.graph.edges(n, data=True)
+                if d.get("embedding") is not None
+            ]
+            if not edges:
+                continue
+            mean = np.mean(np.asarray(edges), axis=0)
+            if n in self.node_embeddings:
+                if self.node_embeddings[n].shape == mean.shape:
+                    self.node_embeddings[n] = (self.node_embeddings[n] + mean) / 2.0
+                else:
+                    self.node_embeddings[n] = mean
+            else:
+                self.node_embeddings[n] = mean
+
     # ------------------------------------------------------------------
     # Retrieval
-    def retrieve(self, query_embedding: Iterable[float], k: int = 1, radius: int = 1) -> nx.DiGraph:
+    def retrieve(
+        self, query_embedding: Iterable[float], k: int = 1, radius: int = 1
+    ) -> nx.MultiDiGraph:
         """Return a radius-``r`` subgraph around the top-``k`` nodes."""
 
         if not self.node_embeddings:
-            return nx.DiGraph()
+            return nx.MultiDiGraph()
 
         q = np.asarray(list(query_embedding), dtype=float)
         scores = {n: float(np.dot(vec, q)) for n, vec in self.node_embeddings.items()}
