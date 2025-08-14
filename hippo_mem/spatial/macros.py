@@ -1,55 +1,57 @@
-"""Macro planning utilities for spatial memory.
+"""Tiny macro library for spatial trajectories.
 
-The real project would learn reusable action sequences ("macros") from
-demonstrations.  Here we implement only the minimum scaffolding needed
-for testing: a tiny in-memory library and a behaviour-cloning stub that
-stores the shortest demonstration trajectory.
+`MacroLib` stores successful trajectories and can suggest the top *k*
+macros for a desired start and goal.  The scoring mechanism is merely a
+stub that favours shorter macros, leaving room for more sophisticated
+learned heuristics in future work.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Sequence
-
-from .map import SpatialMap
-
-
-def plan_route(world: SpatialMap, start: str, end: str) -> List[str]:
-    """Plan a route between two contexts using Dijkstra's algorithm."""
-
-    return world.dijkstra(start, end)
+from typing import Dict, Iterable, List, Sequence
 
 
 @dataclass
 class Macro:
-    """Representation of a macro behaviour."""
+    """A reusable action sequence."""
 
     name: str
     trajectory: List[str]
 
 
-class MacroLibrary:
-    """Collection of macros with a behaviour cloning placeholder."""
+class MacroLib:
+    """In‑memory store for macros."""
 
     def __init__(self) -> None:
         self._macros: Dict[str, Macro] = {}
 
-    def add(self, macro: Macro) -> None:
-        self._macros[macro.name] = macro
+    # ------------------------------------------------------------------
+    def store(self, name: str, trajectory: Sequence[str]) -> None:
+        """Record a new macro by name."""
 
-    def get(self, name: str) -> Macro:
-        return self._macros[name]
+        self._macros[name] = Macro(name, list(trajectory))
 
-    def behavior_clone(self, name: str, demos: Sequence[List[str]]) -> Macro:
-        """Return a macro cloned from demonstration trajectories.
+    def suggest(self, start: str, goal: str, k: int = 1) -> List[Macro]:
+        """Return the top *k* macros from *start* to *goal*."""
 
-        The simplest possible approach is used here: the shortest
-        demonstration is taken as-is and stored as a macro.
+        candidates: Iterable[Macro] = (
+            m
+            for m in self._macros.values()
+            if m.trajectory and m.trajectory[0] == start and m.trajectory[-1] == goal
+        )
+        ranked = sorted(candidates, key=self.score, reverse=True)
+        return list(ranked[:k])
+
+    # ------------------------------------------------------------------
+    def score(self, macro: Macro) -> float:
+        """Quality score for a macro (stub).
+
+        The current implementation simply prefers shorter macros by
+        returning ``1 / len(trajectory)``.  Real systems could plug in a
+        learned value function or success statistics.
         """
 
-        if not demos:
-            raise ValueError("No demonstrations provided")
-        trajectory = list(min(demos, key=len))
-        macro = Macro(name, trajectory)
-        self.add(macro)
-        return macro
+        if not macro.trajectory:
+            return 0.0
+        return 1.0 / len(macro.trajectory)
