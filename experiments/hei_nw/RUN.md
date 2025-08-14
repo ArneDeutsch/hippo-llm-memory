@@ -29,5 +29,5 @@
 
 - Store now supports update/delete, exposes keys for recall and includes a tiny MLP completion stub.
 - WriteGate combines surprise, novelty, reward and a pin flag with thresholding.
-- PrioritizedReplay orders events by gating score, recency and diversity.
+- ReplayQueue orders events by gating score, recency and diversity.
 - Run `pytest tests/test_episodic.py` to exercise gating and deletion behaviour.
