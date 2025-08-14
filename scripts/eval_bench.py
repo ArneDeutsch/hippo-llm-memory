@@ -67,7 +67,7 @@ def _init_modules(memory: Optional[List[str]]) -> Dict[str, object]:
             modules["hei_nw"] = store
         elif name == "sgc_rss":
             kg = KnowledgeGraph()
-            kg.upsert("a", "b", "c")
+            kg.upsert("a", "rel", "b", "a rel b")
             modules["sgc_rss"] = kg
         elif name == "smpd":
             g = PlaceGraph()
