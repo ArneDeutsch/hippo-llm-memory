@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import heapq
 import math
+import threading
+import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -57,7 +59,7 @@ class ContextEncoder:
 class PlaceGraph:
     """Graph of observed places with light‑weight planning."""
 
-    def __init__(self, path_integration: bool = False) -> None:
+    def __init__(self, path_integration: bool = False, *, config: Optional[dict] = None) -> None:
         self.encoder = ContextEncoder()
         self._context_to_id: Dict[str, int] = {}
         self._id_to_context: Dict[int, str] = {}
@@ -69,6 +71,9 @@ class PlaceGraph:
         self._path_integration = path_integration
         self._position = (0.0, 0.0)
         self._last_coord: Optional[Tuple[float, float]] = None
+        self.config = config or {}
+        self._log = {"writes": 0, "recalls": 0, "hits": 0}
+        self._bg_thread: Optional[threading.Thread] = None
 
     # ------------------------------------------------------------------
     # Observation and graph construction
@@ -113,6 +118,7 @@ class PlaceGraph:
             self._add_edge(self._last_obs, node, step=self._step)
             self._add_edge(node, self._last_obs, step=self._step)
         self._last_obs = node
+        self._log["writes"] += 1
         return node
 
     def connect(
@@ -128,6 +134,7 @@ class PlaceGraph:
         b = self._ensure_node(b_context)
         self._add_edge(a, b, cost, success)
         self._add_edge(b, a, cost, success)
+        self._log["writes"] += 1
 
     def _add_edge(
         self,
@@ -159,6 +166,9 @@ class PlaceGraph:
             path_ids = self._dijkstra(s, g)
         else:
             raise ValueError(f"Unknown planning method: {method}")
+        self._log["recalls"] += 1
+        if path_ids:
+            self._log["hits"] += 1
         return [self._id_to_context[i] for i in path_ids]
 
     # -- heuristics -----------------------------------------------------
@@ -211,3 +221,46 @@ class PlaceGraph:
                     came_from[neighbor] = node
                     heapq.heappush(queue, (new_cost, neighbor))
         return []
+
+    # ------------------------------------------------------------------
+    # Maintenance and logging
+    def prune(self, max_age: int) -> None:
+        """Drop edges and places not observed within ``max_age`` steps."""
+
+        threshold = self._step - max_age
+        for context, place in list(self.encoder._cache.items()):
+            if place.last_seen < threshold:
+                node = self._context_to_id.pop(context, None)
+                if node is not None:
+                    self._id_to_context.pop(node, None)
+                    self.graph.pop(node, None)
+                del self.encoder._cache[context]
+
+        for a in list(self.graph.keys()):
+            for b in list(self.graph[a].keys()):
+                if self.graph[a][b].last_seen < threshold:
+                    del self.graph[a][b]
+            if not self.graph[a]:
+                context = self._id_to_context.pop(a, None)
+                if context is not None:
+                    self._context_to_id.pop(context, None)
+                del self.graph[a]
+
+    def log_status(self) -> dict:
+        return dict(self._log)
+
+    def start_background_tasks(self, interval: float = 100.0) -> None:
+        if self._bg_thread is not None:
+            return
+
+        def loop() -> None:
+            while True:
+                time.sleep(interval)
+                cfg = self.config.get("prune", {})
+                age = cfg.get("max_age")
+                if age is not None:
+                    self.prune(int(age))
+
+        t = threading.Thread(target=loop, daemon=True)
+        t.start()
+        self._bg_thread = t

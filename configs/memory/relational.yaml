@@ -1,2 +1,10 @@
 # Relational memory configuration.
-size: 0
+
+# Threshold on schema confidence before an edge is accepted.
+schema_threshold: 0.7
+
+# Pruning parameters for low-confidence or old tuples.
+prune:
+  min_conf: 0.2
+  max_age: 86400
+

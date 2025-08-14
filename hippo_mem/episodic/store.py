@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 import time
 from dataclasses import asdict, dataclass
 from typing import List, Optional
@@ -53,6 +54,8 @@ class EpisodicStore:
         db_path: str = ":memory:",
         index_str: str = "Flat",
         train_threshold: int = 100,
+        *,
+        config: Optional[dict] = None,
     ) -> None:
         """Create a store with given key dimensionality.
 
@@ -77,6 +80,11 @@ class EpisodicStore:
 
         # Hopfield parameter (inverse temperature)
         self.beta = 1.0
+
+        # Configuration and logging
+        self.config = config or {}
+        self._log = {"writes": 0, "recalls": 0, "hits": 0}
+        self._bg_thread: Optional[threading.Thread] = None
 
     # ------------------------------------------------------------------
     # SQLite helpers
@@ -159,6 +167,7 @@ class EpisodicStore:
                 self.index.add_with_ids(train_mat, ids)
                 self._pending_keys.clear()
                 self._pending_ids.clear()
+        self._log["writes"] += 1
         return idx
 
     def recall(self, query: np.ndarray, k: int) -> List[Trace]:
@@ -190,6 +199,8 @@ class EpisodicStore:
                     salience=salience,
                 )
             )
+        self._log["recalls"] += 1
+        self._log["hits"] += len(traces)
         return traces
 
     def delete(self, idx: int) -> None:
@@ -274,3 +285,32 @@ class EpisodicStore:
         ids = [r[0] for r in cur.fetchall()]
         for idx in ids:
             self.delete(int(idx))
+
+    # ------------------------------------------------------------------
+    # Logging and maintenance
+    def log_status(self) -> dict:
+        """Return a snapshot of usage counters."""
+
+        return dict(self._log)
+
+    def start_background_tasks(self, interval: float = 60.0) -> None:
+        """Start a thread that periodically decays and prunes memories."""
+
+        if self._bg_thread is not None:
+            return
+
+        def loop() -> None:
+            while True:
+                time.sleep(interval)
+                rate = float(self.config.get("decay_rate", 0.0))
+                if rate > 0:
+                    self.decay(rate)
+                prune_cfg = self.config.get("prune", {})
+                self.prune(
+                    float(prune_cfg.get("min_salience", 0.1)),
+                    prune_cfg.get("max_age"),
+                )
+
+        t = threading.Thread(target=loop, daemon=True)
+        t.start()
+        self._bg_thread = t

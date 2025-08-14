@@ -1,2 +1,10 @@
 # Spatial memory configuration.
-size: 0
+
+# Gating weight controlling transition updates.
+gating_weights:
+  transition: 1.0
+
+# Remove places and edges that haven't been observed for a number of steps.
+prune:
+  max_age: 1000
+
