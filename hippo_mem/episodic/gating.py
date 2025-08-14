@@ -35,3 +35,34 @@ def novelty(query: np.ndarray, keys: np.ndarray) -> float:
     faiss.normalize_L2(k)
     sims = k @ q[0]
     return 1.0 - float(np.max(sims))
+
+
+class WriteGate:
+    """Combine surprise, novelty and reward/pin signals into a write decision."""
+
+    def __init__(self, tau: float = 0.5) -> None:
+        self.tau = tau
+
+    def score(
+        self,
+        prob: float,
+        query: np.ndarray,
+        keys: np.ndarray,
+        reward: float = 0.0,
+    ) -> float:
+        s = surprise(prob)
+        n = novelty(query, keys)
+        return 0.5 * (s + n) + reward
+
+    def __call__(
+        self,
+        prob: float,
+        query: np.ndarray,
+        keys: np.ndarray,
+        reward: float = 0.0,
+        pin: bool = False,
+    ) -> tuple[bool, float]:
+        if pin:
+            return True, float("inf")
+        sc = self.score(prob, query, keys, reward)
+        return sc > self.tau, sc
