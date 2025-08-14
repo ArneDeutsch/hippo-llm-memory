@@ -47,13 +47,13 @@ def test_gating_threshold_and_pin() -> None:
 
     prob = 1.0  # no surprise
     query = key
-    allow, _ = gate(prob, query, store.keys())
-    if allow:
+    decision = gate(prob, query, store.keys())
+    if decision.allow:
         store.write(query, TraceValue(provenance="b"))
     assert store.index.ntotal == 1
 
-    allow, _ = gate(prob, query, store.keys(), pin=True)
-    if allow:
+    decision = gate(prob, query, store.keys(), pin=True)
+    if decision.allow:
         store.write(query, TraceValue(provenance="b"))
     assert store.index.ntotal == 2
 

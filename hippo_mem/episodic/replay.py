@@ -1,63 +1,116 @@
-"""Prioritized replay utilities for episodic memory."""
+"""Replay queue utilities for episodic memory."""
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import numpy as np
-
-from .gating import novelty
 
 
 @dataclass
 class ReplayItem:
-    """Item stored for replay."""
+    """Metadata stored for replay scheduling."""
 
-    event: str
+    trace_id: str
     key: np.ndarray
     score: float
     step: int
+    diversity_sig: float
+    grad_overlap_proxy: Optional[float]
+    timestamp: float
 
 
-class PrioritizedReplay:
-    """Replay queue mixing gating score, recency and diversity."""
+class ReplayQueue:
+    """Replay queue mixing gating score, recency and diversity.
 
-    def __init__(self, maxlen: int = 1024) -> None:
+    Items are ordered by a weighted combination of gating score ``S``, recency
+    and a diversity signature augmented by an optional gradient-overlap proxy.
+    ``lambda1``, ``lambda2`` and ``lambda3`` control the relative weighting of
+    these signals.
+    """
+
+    def __init__(
+        self,
+        maxlen: int = 1024,
+        *,
+        lambda1: float = 0.5,
+        lambda2: float = 0.3,
+        lambda3: float = 0.2,
+    ) -> None:
         self.maxlen = maxlen
         self.items: List[ReplayItem] = []
         self.step = 0
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
+        self.lambda3 = lambda3
 
-    def add(self, event: str, key: np.ndarray, score: float) -> None:
-        """Add an event with associated key and gating score."""
+    def _diversity(self, key: np.ndarray, keys: np.ndarray) -> float:
+        """Average cosine dissimilarity between ``key`` and ``keys``."""
+
+        if keys.size == 0:
+            return 1.0
+        q = np.asarray(key, dtype="float32").reshape(1, -1)
+        k = np.asarray(keys, dtype="float32")
+        import faiss  # type: ignore
+
+        faiss.normalize_L2(q)
+        faiss.normalize_L2(k)
+        sims = k @ q[0]
+        return float(1.0 - np.mean(sims))
+
+    def add(
+        self,
+        trace_id: str,
+        key: np.ndarray,
+        score: float,
+        *,
+        grad_overlap_proxy: Optional[float] = None,
+        timestamp: float | None = None,
+    ) -> None:
+        """Add a trace with associated key and gating score ``S``."""
 
         self.step += 1
+        if timestamp is None:
+            timestamp = time.time()
+        k = np.asarray(key, dtype="float32")
+        keys = (
+            np.stack([it.key for it in self.items])
+            if self.items
+            else np.empty((0, k.size), dtype="float32")
+        )
+        diversity = self._diversity(k, keys)
         item = ReplayItem(
-            event=event,
-            key=np.asarray(key, dtype="float32"),
+            trace_id=trace_id,
+            key=k,
             score=float(score),
             step=self.step,
+            diversity_sig=diversity,
+            grad_overlap_proxy=grad_overlap_proxy,
+            timestamp=timestamp,
         )
         self.items.append(item)
         if len(self.items) > self.maxlen:
             self.items.pop(0)
 
     def sample(self, k: int) -> List[str]:
-        """Return ``k`` events in priority order."""
+        """Return ``k`` trace identifiers in priority order."""
 
         if not self.items:
             return []
         now = self.step
-        keys = np.stack([it.key for it in self.items])
         priorities = []
-        for i, it in enumerate(self.items):
+        for it in self.items:
             recency = 1.0 / (now - it.step + 1)
-            if len(self.items) > 1:
-                others = np.delete(keys, i, axis=0)
-                divers = novelty(it.key, others)
-            else:
-                divers = 1.0
-            p = 0.5 * it.score + 0.3 * recency + 0.2 * divers
+            diversity_component = it.diversity_sig
+            if it.grad_overlap_proxy is not None:
+                diversity_component += it.grad_overlap_proxy
+            p = (
+                self.lambda1 * it.score
+                + self.lambda2 * recency
+                + self.lambda3 * diversity_component
+            )
             priorities.append(p)
         order = np.argsort(priorities)[::-1]
-        return [self.items[i].event for i in order[:k]]
+        return [self.items[i].trace_id for i in order[:k]]
