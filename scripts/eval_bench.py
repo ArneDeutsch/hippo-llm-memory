@@ -39,7 +39,10 @@ import torch
 
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.store import EpisodicStore
+from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
+from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
+from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.map import PlaceGraph
 
 
@@ -53,28 +56,61 @@ def _git_sha() -> str:
         return "unknown"
 
 
-def _init_modules(memory: Optional[List[str]]) -> Dict[str, object]:
-    """Initialise memory modules based on ``memory`` names."""
+def _init_modules(
+    memory: Optional[object], ablate: Dict[str, object]
+) -> Dict[str, Dict[str, object]]:
+    """Initialise memory modules based on ``memory`` config.
 
-    modules: Dict[str, object] = {}
+    ``memory`` may be a single name, list of names or a dict with keys
+    ``episodic``, ``relational`` and ``spatial``.  ``ablate`` contains flattened
+    ablation flags which can disable optional components such as Hopfield or
+    product quantisation.
+    """
+
+    modules: Dict[str, Dict[str, object]] = {}
     if not memory:
         return modules
-    for name in memory:
-        if name == "hei_nw":
-            store = EpisodicStore(dim=8)
-            # seed with a dummy entry
-            store.write(np.ones(8, dtype="float32"), "dummy")
-            modules["hei_nw"] = store
-        elif name == "sgc_rss":
-            kg = KnowledgeGraph()
-            kg.upsert("a", "rel", "b", "a rel b")
-            modules["sgc_rss"] = kg
-        elif name == "smpd":
-            g = PlaceGraph()
-            g.observe("a")
-            g.observe("b")
-            g.connect("a", "b")
-            modules["smpd"] = g
+
+    def _add_episodic() -> None:
+        hopfield = bool(ablate.get("memory.episodic.hopfield", True))
+        pq = bool(ablate.get("memory.episodic.pq", True))
+        store = EpisodicStore(dim=8, config={"hopfield": hopfield, "pq": pq})
+        store.write(np.ones(8, dtype="float32"), "dummy")
+        adapter_cfg = AdapterConfig(hidden_size=8, num_heads=1, enabled=True)
+        modules["episodic"] = {"store": store, "adapter": EpisodicAdapter(adapter_cfg)}
+
+    def _add_relational() -> None:
+        kg = KnowledgeGraph()
+        kg.upsert("a", "rel", "b", "a rel b")
+        modules["relational"] = {"kg": kg, "adapter": RelationalAdapter()}
+
+    def _add_spatial() -> None:
+        g = PlaceGraph()
+        g.observe("a")
+        g.observe("b")
+        g.connect("a", "b")
+        spat_cfg = SpatialAdapterConfig(hidden_size=8, num_heads=1, enabled=True)
+        modules["spatial"] = {"map": g, "adapter": SpatialAdapter(spat_cfg)}
+
+    if isinstance(memory, str):
+        memory = [memory]
+
+    if isinstance(memory, list):
+        if "hei_nw" in memory:
+            _add_episodic()
+        if "sgc_rss" in memory:
+            _add_relational()
+        if "smpd" in memory:
+            _add_spatial()
+        return modules
+
+    mem_dict = OmegaConf.to_container(memory, resolve=True)
+    if mem_dict.get("episodic") is not None:
+        _add_episodic()
+    if mem_dict.get("relational") is not None:
+        _add_relational()
+    if mem_dict.get("spatial") is not None:
+        _add_spatial()
     return modules
 
 
@@ -116,29 +152,35 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     generator = SUITE_TO_GENERATOR[suite]
     tasks = generator(n, seed)
 
-    modules = _init_modules(cfg.get("memory"))
-
-    adapter: EpisodicAdapter | None = None
-    if "hei_nw" in modules:
-        adapter_cfg = AdapterConfig(hidden_size=8, num_heads=1, enabled=True)
-        adapter = EpisodicAdapter(adapter_cfg)
+    flat_ablate = _flatten_ablate(cfg.get("ablate"))
+    modules = _init_modules(cfg.get("memory"), flat_ablate)
 
     rows: List[Dict[str, object]] = []
     correct = 0
     total_tokens = 0
     for idx, item in enumerate(tasks):
         # Exercise retrieval APIs for smoke coverage only.
-        if "hei_nw" in modules:
-            store = modules["hei_nw"]
+        epi_feats = None
+        if "episodic" in modules:
+            store = modules["episodic"]["store"]
             traces = store.recall(np.zeros(8, dtype="float32"), 1)
-            if adapter is not None:
+            if traces:
                 mem = torch.tensor([t.key for t in traces], dtype=torch.float32).unsqueeze(0)
-                hidden = torch.zeros(1, 1, 8)
-                adapter(hidden, mem)
-        if "sgc_rss" in modules:
-            modules["sgc_rss"].retrieve(np.zeros(8, dtype="float32"))
-        if "smpd" in modules:
-            modules["smpd"].plan("a", "b")
+            else:
+                mem = torch.zeros(1, 1, 8)
+            hidden_t = torch.zeros(1, 1, 8)
+            epi_feats = modules["episodic"]["adapter"](hidden_t, mem).detach().numpy()[0]
+        if "relational" in modules:
+            modules["relational"]["kg"].retrieve(np.zeros(8, dtype="float32"))
+            modules["relational"]["adapter"](
+                np.zeros(8, dtype="float32"),
+                np.zeros((1, 8), dtype="float32"),
+                epi_feats,
+            )
+        if "spatial" in modules:
+            modules["spatial"]["map"].plan("a", "b")
+            plans = torch.zeros(1, 1, 8)
+            modules["spatial"]["adapter"](torch.zeros(1, 1, 8), plans)
 
         prompt = str(item["prompt"])
         answer = str(item["answer"])
@@ -160,12 +202,21 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         )
 
     em = correct / n if n else 0.0
+    mem_usage: Dict[str, object] = {}
+    if "episodic" in modules:
+        mem_usage["episodic"] = modules["episodic"]["store"]._log
+    if "relational" in modules:
+        mem_usage["relational"] = modules["relational"]["kg"]._log
+    if "spatial" in modules:
+        mem_usage["spatial"] = modules["spatial"]["map"]._log
+
     metrics = {
         "suite": suite,
         "n": n,
         "seed": seed,
         "preset": preset,
         "metrics": {suite: {"em": em}, "compute": {"tokens": total_tokens}},
+        "memory": mem_usage,
     }
 
     outdir.mkdir(parents=True, exist_ok=True)
@@ -194,7 +245,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         "git_sha": _git_sha(),
         "model": cfg.get("model", "mock"),
         "config_hash": cfg_hash,
-        "ablate": _flatten_ablate(cfg.get("ablate")),
+        "ablate": flat_ablate,
     }
     with (outdir / "meta.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f)
