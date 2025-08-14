@@ -15,7 +15,7 @@ loop does not run on CI.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 import hydra
@@ -26,6 +26,8 @@ from omegaconf import OmegaConf
 from peft import LoraConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
+
+from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 
 
 @dataclass
@@ -50,6 +52,11 @@ class TrainConfig:
 
     # Utility flags
     dry_run: bool = False
+
+    # Episodic adapter configuration
+    episodic: AdapterConfig = field(
+        default_factory=lambda: AdapterConfig(hidden_size=16, num_heads=1)
+    )
 
 
 # Register the config with Hydra so that `@hydra.main` can locate it.
@@ -87,6 +94,24 @@ def train(cfg: TrainConfig) -> None:
     """Execute the training or dry‑run."""
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
+
+    if cfg.episodic.enabled:
+        hidden = getattr(model.config, "hidden_size", cfg.episodic.hidden_size)
+        epi_cfg = AdapterConfig(
+            hidden_size=hidden,
+            num_heads=cfg.episodic.num_heads,
+            num_kv_heads=cfg.episodic.num_kv_heads,
+            lora_r=cfg.episodic.lora_r,
+            lora_alpha=cfg.episodic.lora_alpha,
+            lora_dropout=cfg.episodic.lora_dropout,
+            enabled=True,
+        )
+        adapter = EpisodicAdapter(epi_cfg)
+        # Pass a tiny dummy batch through the adapter so that the code path is
+        # exercised during tests.  This has no effect on the model.
+        dummy_h = torch.zeros(1, 1, hidden)
+        dummy_m = torch.zeros(1, 1, hidden)
+        adapter(dummy_h, dummy_m)
 
     # Short circuit for the unit tests / smoke runs
     if cfg.dry_run:

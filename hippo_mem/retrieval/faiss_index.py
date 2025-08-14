@@ -18,22 +18,51 @@ except Exception:  # pragma: no cover - fallback path
 
 
 class FaissIndex:
-    """Very small wrapper around :mod:`faiss` or a Python fallback."""
+    """Very small wrapper around :mod:`faiss` or a Python fallback.
 
-    def __init__(self, dim: int) -> None:
-        """Create an empty L2 index of dimension ``dim``.
+    Only the bits of the API that are exercised in the unit tests are
+    implemented.  When :mod:`faiss` is not available the class falls back to a
+    tiny ``numpy`` based index so that tests can run without native
+    dependencies.
+    """
+
+    def __init__(self, dim: int, *, use_pq: bool = False, m: int = 8) -> None:
+        """Create an empty index of dimension ``dim``.
 
         Parameters
         ----------
         dim:
             Dimensionality of the vectors that will be stored in the index.
+        use_pq:
+            If ``True`` and FAISS is available an ``IndexPQ`` will be used which
+            requires an explicit training step.
+        m:
+            Number of sub-quantizers for product quantisation when ``use_pq`` is
+            enabled.  The default keeps things small for tests.
         """
 
         self.dim = dim
+        self.use_pq = use_pq and faiss is not None
         if faiss is not None:
-            self.index = faiss.IndexFlatL2(dim)
+            if self.use_pq:
+                self.index = faiss.IndexPQ(dim, m, 8)
+            else:
+                self.index = faiss.IndexFlatL2(dim)
         else:  # fallback to a very small numpy based index
             self._vectors: List[np.ndarray] = []
+
+    # ------------------------------------------------------------------
+    def train(self, data: Sequence[Sequence[float]]) -> None:
+        """Train the underlying index on ``data`` if required."""
+
+        if not self.use_pq or faiss is None:
+            return  # nothing to do
+        if self.index.is_trained:
+            return
+        mat = np.asarray(list(data), dtype="float32")
+        if len(mat) == 0:
+            return
+        self.index.train(mat)
 
     def add(self, vector: Sequence[float]) -> None:
         """Add a single vector to the index."""
