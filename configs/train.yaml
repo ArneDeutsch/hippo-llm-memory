@@ -1,0 +1,10 @@
+# Training configuration.
+
+# Relative weighting for episodic replay during training.
+replay_weight: 0.5
+
+# Global gating weights.
+gating_weights:
+  write: 1.0
+  recall: 0.5
+

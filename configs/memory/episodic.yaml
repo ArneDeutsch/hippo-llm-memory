@@ -1,2 +1,22 @@
 # Episodic memory configuration.
-size: 0
+
+# FAISS index parameters for product quantization.
+index_str: "IVF10,PQ4"
+
+# Number of active units in k-Winner-Take-All encoding.
+k_wta: 8
+
+# Simple gating weights controlling write/recall balance.
+gating_weights:
+  write: 1.0
+  recall: 0.5
+
+# Relative weighting for replay sampling.
+replay_weight: 0.8
+
+# Maintenance settings.
+decay_rate: 0.01
+prune:
+  min_salience: 0.1
+  max_age: 3600
+

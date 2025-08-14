@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
+import time
 from typing import Dict, Iterable, Optional, Sequence
 
 import networkx as nx
@@ -13,12 +15,15 @@ import numpy as np
 class KnowledgeGraph:
     """Knowledge graph backed by NetworkX and SQLite."""
 
-    def __init__(self, db_path: str = ":memory:") -> None:
+    def __init__(self, db_path: str = ":memory:", *, config: Optional[dict] = None) -> None:
         self.graph = nx.MultiDiGraph()
         self.node_embeddings: Dict[str, np.ndarray] = {}
         self.conn = sqlite3.connect(db_path)
         self._init_db()
         self._load()
+        self.config = config or {}
+        self._log = {"writes": 0, "recalls": 0, "hits": 0}
+        self._bg_thread: Optional[threading.Thread] = None
 
     # ------------------------------------------------------------------
     # Database utilities
@@ -48,7 +53,7 @@ class KnowledgeGraph:
             self.graph.add_node(name)
             if emb is not None:
                 self.node_embeddings[name] = np.asarray(json.loads(emb), dtype=float)
-        for edge_id, src, rel, dst, ctx, time, conf, prov, emb in cur.execute(
+        for edge_id, src, rel, dst, ctx, t, conf, prov, emb in cur.execute(
             "SELECT id, src, relation, dst, context, time, conf, provenance, embedding FROM edges"
         ):
             self.graph.add_edge(
@@ -57,7 +62,7 @@ class KnowledgeGraph:
                 key=edge_id,
                 relation=rel,
                 context=ctx,
-                time=time,
+                time=t,
                 conf=conf,
                 provenance=prov,
             )
@@ -133,6 +138,7 @@ class KnowledgeGraph:
             self.node_embeddings[tail] = np.asarray(list(tail_embedding), dtype=float)
 
         self._gnn_update([head, tail])
+        self._log["writes"] += 1
 
     def _to_json(self, emb: Optional[Iterable[float]]) -> Optional[str]:
         if emb is None:
@@ -178,7 +184,61 @@ class KnowledgeGraph:
             if n in self.graph:
                 nodes.update(nx.ego_graph(self.graph, n, radius).nodes())
 
-        return self.graph.subgraph(nodes).copy()
+        sub = self.graph.subgraph(nodes).copy()
+        self._log["recalls"] += 1
+        self._log["hits"] += sub.number_of_nodes()
+        return sub
+
+    # ------------------------------------------------------------------
+    # Maintenance and logging
+    def prune(self, min_conf: float = 0.0, max_age: Optional[float] = None) -> None:
+        """Remove edges below confidence or older than ``max_age`` seconds."""
+
+        cur = self.conn.cursor()
+        conditions: list[str] = []
+        params: list[float] = []
+        if min_conf is not None:
+            conditions.append("conf < ?")
+            params.append(min_conf)
+        if max_age is not None:
+            cutoff = time.time() - max_age
+            conditions.append("(time IS NOT NULL AND CAST(time AS REAL) < ?)")
+            params.append(cutoff)
+        if conditions:
+            where = " OR ".join(conditions)
+            cur.execute(f"SELECT id, src, dst FROM edges WHERE {where}", params)
+            rows = cur.fetchall()
+            for edge_id, src, dst in rows:
+                if self.graph.has_edge(src, dst, key=edge_id):
+                    self.graph.remove_edge(src, dst, key=edge_id)
+                cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
+            self.conn.commit()
+
+        isolated = [n for n in list(self.graph.nodes()) if self.graph.degree(n) == 0]
+        for n in isolated:
+            self.graph.remove_node(n)
+            cur.execute("DELETE FROM nodes WHERE name=?", (n,))
+        self.conn.commit()
+
+    def log_status(self) -> dict:
+        return dict(self._log)
+
+    def start_background_tasks(self, interval: float = 300.0) -> None:
+        if self._bg_thread is not None:
+            return
+
+        def loop() -> None:
+            while True:
+                time.sleep(interval)
+                cfg = self.config.get("prune", {})
+                self.prune(
+                    float(cfg.get("min_conf", 0.0)),
+                    cfg.get("max_age"),
+                )
+
+        t = threading.Thread(target=loop, daemon=True)
+        t.start()
+        self._bg_thread = t
 
 
 __all__ = ["KnowledgeGraph"]

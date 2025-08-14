@@ -9,6 +9,9 @@ seed: 0
 outdir: null
 dry_run: false
 
+# Report macro averaged scores in addition to micro scores.
+macro_scoring: true
+
 # Hydra stays in-place so our manual ``outdir`` handling works.
 hydra:
   run:

@@ -1,0 +1,10 @@
+# Model configuration.
+
+# Product quantization parameters for vector stores.
+pq:
+  m: 8
+  nbits: 8
+
+# Threshold for k-Winner-Take-All encoding.
+k_wta: 8
+
