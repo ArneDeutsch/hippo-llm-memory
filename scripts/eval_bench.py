@@ -35,6 +35,9 @@ from omegaconf import DictConfig, OmegaConf
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+import torch
+
+from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
@@ -115,13 +118,23 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
 
     modules = _init_modules(cfg.get("memory"))
 
+    adapter: EpisodicAdapter | None = None
+    if "hei_nw" in modules:
+        adapter_cfg = AdapterConfig(hidden_size=8, num_heads=1, enabled=True)
+        adapter = EpisodicAdapter(adapter_cfg)
+
     rows: List[Dict[str, object]] = []
     correct = 0
     total_tokens = 0
     for idx, item in enumerate(tasks):
         # Exercise retrieval APIs for smoke coverage only.
         if "hei_nw" in modules:
-            modules["hei_nw"].recall(np.zeros(8, dtype="float32"), 1)
+            store = modules["hei_nw"]
+            traces = store.recall(np.zeros(8, dtype="float32"), 1)
+            if adapter is not None:
+                mem = torch.tensor([t.key for t in traces], dtype=torch.float32).unsqueeze(0)
+                hidden = torch.zeros(1, 1, 8)
+                adapter(hidden, mem)
         if "sgc_rss" in modules:
             modules["sgc_rss"].retrieve(np.zeros(8, dtype="float32"))
         if "smpd" in modules:
