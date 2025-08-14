@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import List, Optional
 
 import faiss  # type: ignore
@@ -123,7 +123,9 @@ class EpisodicStore:
 
         q = np.asarray(query, dtype="float32").reshape(-1)
         if k <= 0:
-            return DGKey(indices=np.empty(0, dtype=np.int64), values=np.empty(0, dtype="float32"), dim=q.size)
+            return DGKey(
+                indices=np.empty(0, dtype=np.int64), values=np.empty(0, dtype="float32"), dim=q.size
+            )
         k = min(k, q.size)
         idx = np.argpartition(-np.abs(q), k - 1)[:k]
         vals = q[idx]
@@ -179,7 +181,14 @@ class EpisodicStore:
             value_dict = json.loads(value_json)
             value = TraceValue(**value_dict)
             traces.append(
-                Trace(id=int(idx), value=value, key=key_vec, score=float(score), ts=ts, salience=salience)
+                Trace(
+                    id=int(idx),
+                    value=value,
+                    key=key_vec,
+                    score=float(score),
+                    ts=ts,
+                    salience=salience,
+                )
             )
         return traces
 
@@ -195,7 +204,9 @@ class EpisodicStore:
         cur.execute("DELETE FROM traces WHERE id=?", (idx,))
         self.conn.commit()
 
-    def update(self, idx: int, key: Optional[np.ndarray] = None, value: Optional[TraceValue] = None) -> None:
+    def update(
+        self, idx: int, key: Optional[np.ndarray] = None, value: Optional[TraceValue] = None
+    ) -> None:
         """Update the key and/or value for an existing trace."""
 
         cur = self.conn.cursor()
@@ -263,4 +274,3 @@ class EpisodicStore:
         ids = [r[0] for r in cur.fetchall()]
         for idx in ids:
             self.delete(int(idx))
-
