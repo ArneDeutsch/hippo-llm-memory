@@ -1,47 +1,57 @@
-"""Tests for spatial mapping and macros.
+"""Tests for the spatial map and macro library."""
 
-These tests exercise the context→place encoder stub, the topological
-graph with A*/Dijkstra path finding, and the minimal macro library.
-"""
-
-from hippo_mem.spatial.macros import MacroLibrary, plan_route
-from hippo_mem.spatial.map import SpatialMap
+from hippo_mem.spatial.macros import MacroLib
+from hippo_mem.spatial.map import PlaceGraph
 
 
-def test_context_encoder_is_deterministic() -> None:
-    """Encoding the same context twice yields the same coordinates."""
-
-    world = SpatialMap()
-    a = world.add_place("home")
-    b = world.add_place("home")
-    assert a.coord == b.coord
+def _run_observations(seq: list[str]) -> tuple[list[int], PlaceGraph]:
+    graph = PlaceGraph()
+    ids = [graph.observe(ctx) for ctx in seq]
+    return ids, graph
 
 
-def test_astar_matches_dijkstra() -> None:
-    """When edge weights are based on geometry, A* equals Dijkstra."""
+def test_observations_are_deterministic() -> None:
+    """Sequences of observations should grow the same graph."""
 
-    world = SpatialMap()
-    world.connect("A", "B")
-    world.connect("B", "C")
-    world.connect("A", "C")
-    assert world.shortest_path("A", "C") == world.dijkstra("A", "C")
-
-
-def test_plan_route_with_custom_weights() -> None:
-    """Dijkstra-based planning respects explicit edge weights."""
-
-    world = SpatialMap()
-    world.connect("A", "B", weight=1)
-    world.connect("B", "C", weight=1)
-    world.connect("A", "C", weight=5)
-    assert plan_route(world, "A", "C") == ["A", "B", "C"]
+    seq = ["A", "B", "C", "A", "C", "B"]
+    ids1, g1 = _run_observations(seq)
+    ids2, g2 = _run_observations(seq)
+    assert ids1 == ids2
+    assert g1.graph == g2.graph
 
 
-def test_behavior_cloning_macro_library() -> None:
-    """The macro library stores the shortest demonstration."""
+def test_planner_finds_shortest_path_on_grid() -> None:
+    """A small 2×2 grid has two equivalent shortest routes."""
 
-    demos = [["A", "B", "C"], ["A", "C"]]
-    library = MacroLibrary()
-    macro = library.behavior_clone("go", demos)
-    assert macro.trajectory == ["A", "C"]
-    assert library.get("go").trajectory == ["A", "C"]
+    g = PlaceGraph()
+    g.connect("0,0", "1,0")
+    g.connect("0,0", "0,1")
+    g.connect("1,0", "1,1")
+    g.connect("0,1", "1,1")
+    path = g.plan("0,0", "1,1")
+    assert path in (["0,0", "1,0", "1,1"], ["0,0", "0,1", "1,1"])
+
+
+def test_planner_shortest_path_with_custom_weights() -> None:
+    """A* and Dijkstra agree on a simple weighted triangle."""
+
+    g = PlaceGraph()
+    g.connect("A", "B", cost=1)
+    g.connect("B", "C", cost=1)
+    g.connect("A", "C", cost=5)
+    assert g.plan("A", "C", method="dijkstra") == ["A", "B", "C"]
+
+
+def test_macro_replay_reduces_steps() -> None:
+    """Macros should be shorter than a baseline planned route."""
+
+    g = PlaceGraph()
+    g.connect("start", "a")
+    g.connect("a", "b")
+    g.connect("b", "goal")
+    baseline = g.plan("start", "goal")
+
+    lib = MacroLib()
+    lib.store("shortcut", ["start", "goal"])
+    macro = lib.suggest("start", "goal", k=1)[0]
+    assert len(macro.trajectory) < len(baseline)

@@ -4,8 +4,10 @@
 
 ## Components to implement
 
-- `hippo_mem/spatial/map.py` — place encoder stub, graph updates, A\*/Dijkstra planner.
-- `hippo_mem/spatial/macros.py` — macro library from successful trajectories; scoring head stub.
+- `hippo_mem/spatial/map.py` — `PlaceGraph.observe()` inserts places and
+  `plan()` computes paths via A*/Dijkstra.
+- `hippo_mem/spatial/macros.py` — `MacroLib.store()` records trajectories
+  and `suggest()` returns top‑k macros (shortest first).
 - Integration glue: expose planning/macro hints to the LLM as structured inputs.
 
 ## Acceptance tests (pytest)
@@ -18,6 +20,14 @@
 ## Sample Codex task prompt
 
 > Implement spatial map and macro library. Create `hippo_mem/spatial/{map.py,macros.py}` and tests in `tests/test_spatial.py`. Provide A\* planner and a small macro replay interface. Ensure `make lint` and `make test` pass. Update RUN.md.
+
+## CLI notes
+
+- Build a graph by sequentially calling `PlaceGraph.observe(context)` or
+  explicitly `connect(a, b, cost)`.
+- Plan routes with `PlaceGraph.plan(start, goal, method="astar"|"dijkstra")`.
+- Record successful trajectories via `MacroLib.store(name, traj)` and
+  retrieve suggestions with `MacroLib.suggest(start, goal, k)`.
 
 ## Local training
 
