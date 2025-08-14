@@ -24,6 +24,7 @@ class AdapterConfig:
     lora_dropout: float = 0.0
     enabled: bool = False
 
+
 class SpatialAdapter(nn.Module):
     """Cross-attention between LLM states and plan/macro embeddings."""
 
@@ -97,5 +98,6 @@ class SpatialAdapter(nn.Module):
         context = context.transpose(1, 2).contiguous().view(bsz, q_len, self.hidden_size)
         out = self.o_proj(context)
         return hidden_states + out
+
 
 __all__ = ["SpatialAdapter", "AdapterConfig"]

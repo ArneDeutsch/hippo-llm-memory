@@ -52,4 +52,3 @@ def test_macro_replay_improves_success() -> None:
 
     improved = lib.suggest("s", "g", k=1)[0].name
     assert improved == "good"
-
