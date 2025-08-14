@@ -22,6 +22,7 @@ class Edge:
 
     cost: float = 1.0
     success: float = 1.0
+    last_seen: int = 0
 
 
 @dataclass
@@ -30,6 +31,7 @@ class Place:
 
     name: str
     coord: Tuple[float, float]
+    last_seen: int = 0
 
 
 class ContextEncoder:
@@ -55,7 +57,7 @@ class ContextEncoder:
 class PlaceGraph:
     """Graph of observed places with light‑weight planning."""
 
-    def __init__(self) -> None:
+    def __init__(self, path_integration: bool = False) -> None:
         self.encoder = ContextEncoder()
         self._context_to_id: Dict[str, int] = {}
         self._id_to_context: Dict[int, str] = {}
@@ -63,6 +65,10 @@ class PlaceGraph:
         self.graph: Dict[int, Dict[int, Edge]] = {}
         self._next_id = 0
         self._last_obs: Optional[int] = None
+        self._step = 0
+        self._path_integration = path_integration
+        self._position = (0.0, 0.0)
+        self._last_coord: Optional[Tuple[float, float]] = None
 
     # ------------------------------------------------------------------
     # Observation and graph construction
@@ -86,10 +92,26 @@ class PlaceGraph:
         unit cost and success probability of one.
         """
 
+        self._step += 1
         node = self._ensure_node(context)
+
+        place = self.encoder.encode(context)
+        if self._path_integration:
+            coord = place.coord
+            if self._last_coord is None:
+                self._position = (0.0, 0.0)
+                self._last_coord = coord
+            else:
+                dx = coord[0] - self._last_coord[0]
+                dy = coord[1] - self._last_coord[1]
+                self._position = (self._position[0] + dx, self._position[1] + dy)
+                self._last_coord = coord
+            place.coord = self._position
+        place.last_seen = self._step
+
         if self._last_obs is not None and self._last_obs != node:
-            self._add_edge(self._last_obs, node)
-            self._add_edge(node, self._last_obs)
+            self._add_edge(self._last_obs, node, step=self._step)
+            self._add_edge(node, self._last_obs, step=self._step)
         self._last_obs = node
         return node
 
@@ -107,13 +129,22 @@ class PlaceGraph:
         self._add_edge(a, b, cost, success)
         self._add_edge(b, a, cost, success)
 
-    def _add_edge(self, a: int, b: int, cost: float = 1.0, success: float = 1.0) -> None:
+    def _add_edge(
+        self,
+        a: int,
+        b: int,
+        cost: float = 1.0,
+        success: float = 1.0,
+        *,
+        step: Optional[int] = None,
+    ) -> None:
         edge = self.graph[a].get(b)
         if edge is None:
-            self.graph[a][b] = Edge(cost, success)
+            self.graph[a][b] = Edge(cost, success, last_seen=step or self._step)
         else:
             edge.cost = cost
             edge.success = success
+            edge.last_seen = step or self._step
 
     # ------------------------------------------------------------------
     # Planning utilities
