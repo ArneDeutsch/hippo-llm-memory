@@ -84,7 +84,7 @@
 
 1. [ ] **Adapter hookup**: modify scripts/train_lora.py to load memory modules (episodic, relational, spatial) based on configuration; ensure cross-attention adapters can be enabled individually or jointly.
 2. [ ] **Replay scheduling integration**: incorporate the replay scheduler and consolidation worker into the training loop; schedule interleaved batches of episodic, semantic and fresh data; implement dataloaders for synthetic datasets.
-3. **Hydra configuration & ablations**: provide YAML configs for base model, memory modules and ablation toggles (e.g., disable Hopfield completion, gating, schema routing, macros) according to EVAL_PLAN.md.
+3. [ ] **Hydra configuration & ablations**: provide YAML configs for base model, memory modules and ablation toggles (e.g., disable Hopfield completion, gating, schema routing, macros) according to EVAL_PLAN.md.
 4. [ ] **Dry-run training**: run a small fine-tuning session (few steps) to verify that the model parameters update, adapters receive gradients, replay batches are interleaved and ablation flags take effect.
 
 - [ ] **Gate**: scripts/train_lora.py executes end-to-end with memory modules and ablations; logs show replay scheduling; CI tests confirm ablation toggles are respected.
