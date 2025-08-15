@@ -29,6 +29,7 @@ from peft import LoraConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
+from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
@@ -36,7 +37,7 @@ from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
-from hippo_mem.consolidation.worker import ConsolidationWorker
+from hippo_mem.spatial.map import PlaceGraph
 
 
 @dataclass
@@ -83,6 +84,31 @@ class TrainConfig:
         fresh: float = 0.2
 
     batch_mix: BatchMix = field(default_factory=BatchMix)
+
+    @dataclass
+    class Maintenance:
+        maintenance_interval: float = 60.0
+        decay_rate: float = 0.0
+        prune_min_salience: float = 0.0
+        prune_max_age: Optional[float] = None
+
+    episodic_mem: Maintenance = field(default_factory=Maintenance)
+
+    @dataclass
+    class RelationalMaintenance:
+        maintenance_interval: float = 300.0
+        prune_min_conf: float = 0.0
+        prune_max_age: Optional[float] = None
+
+    relational_mem: RelationalMaintenance = field(default_factory=RelationalMaintenance)
+
+    @dataclass
+    class SpatialMaintenance:
+        maintenance_interval: float = 100.0
+        decay_rate: float = 0.0
+        prune_max_age: Optional[int] = None
+
+    spatial_mem: SpatialMaintenance = field(default_factory=SpatialMaintenance)
 
 
 # Register the config with Hydra so that `@hydra.main` can locate it.
@@ -154,8 +180,32 @@ def train(cfg: TrainConfig) -> None:
         spat_adapter = SpatialAdapter(spat_cfg)
 
     # Simulate interleaved replay batches using a scheduler
-    store = EpisodicStore(hidden)
-    kg = KnowledgeGraph()
+    store_cfg = {
+        "decay_rate": cfg.episodic_mem.decay_rate,
+        "prune": {
+            "min_salience": cfg.episodic_mem.prune_min_salience,
+            "max_age": cfg.episodic_mem.prune_max_age,
+        },
+    }
+    store = EpisodicStore(hidden, config=store_cfg)
+    store.start_background_tasks(cfg.episodic_mem.maintenance_interval)
+
+    kg_cfg = {
+        "prune": {
+            "min_conf": cfg.relational_mem.prune_min_conf,
+            "max_age": cfg.relational_mem.prune_max_age,
+        }
+    }
+    kg = KnowledgeGraph(config=kg_cfg)
+    kg.start_background_tasks(cfg.relational_mem.maintenance_interval)
+
+    spat_map_cfg = {
+        "decay_rate": cfg.spatial_mem.decay_rate,
+        "prune": {"max_age": cfg.spatial_mem.prune_max_age},
+    }
+    spatial_map = PlaceGraph(path_integration=cfg.spatial.enabled, config=spat_map_cfg)
+    spatial_map.start_background_tasks(cfg.spatial_mem.maintenance_interval)
+
     scheduler = ReplayScheduler(store, kg, batch_mix=cfg.batch_mix)
 
     total = 10
