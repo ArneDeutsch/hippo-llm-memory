@@ -15,7 +15,9 @@ loop does not run on CI.
 
 from __future__ import annotations
 
+import logging
 import os
+import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -38,6 +40,9 @@ from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.map import PlaceGraph
+from scripts.utils import log_memory_status
+
+logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
@@ -188,7 +193,8 @@ def train(cfg: TrainConfig) -> None:
         },
     }
     store = EpisodicStore(hidden, config=store_cfg)
-    store.start_background_tasks(cfg.episodic_mem.maintenance_interval)
+    epi_interval = 0.1 if cfg.dry_run else cfg.episodic_mem.maintenance_interval
+    store.start_background_tasks(epi_interval)
 
     kg_cfg = {
         "prune": {
@@ -197,14 +203,16 @@ def train(cfg: TrainConfig) -> None:
         }
     }
     kg = KnowledgeGraph(config=kg_cfg)
-    kg.start_background_tasks(cfg.relational_mem.maintenance_interval)
+    kg_interval = 0.1 if cfg.dry_run else cfg.relational_mem.maintenance_interval
+    kg.start_background_tasks(kg_interval)
 
     spat_map_cfg = {
         "decay_rate": cfg.spatial_mem.decay_rate,
         "prune": {"max_age": cfg.spatial_mem.prune_max_age},
     }
     spatial_map = PlaceGraph(path_integration=cfg.spatial.enabled, config=spat_map_cfg)
-    spatial_map.start_background_tasks(cfg.spatial_mem.maintenance_interval)
+    spat_interval = 0.1 if cfg.dry_run else cfg.spatial_mem.maintenance_interval
+    spatial_map.start_background_tasks(spat_interval)
 
     scheduler = ReplayScheduler(store, kg, batch_mix=cfg.batch_mix)
 
@@ -226,6 +234,9 @@ def train(cfg: TrainConfig) -> None:
     try:
         # Short circuit for the unit tests / smoke runs
         if cfg.dry_run:
+            for _ in range(3):
+                log_memory_status(store, kg, spatial_map, scheduler, worker)
+                time.sleep(0.1)
             return
 
         dataset = load_dataset(cfg.dataset_name, split="train")

@@ -72,7 +72,7 @@ class PlaceGraph:
         self._position = (0.0, 0.0)
         self._last_coord: Optional[Tuple[float, float]] = None
         self.config = config or {}
-        self._log = {"writes": 0, "recalls": 0, "hits": 0}
+        self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
 
     # ------------------------------------------------------------------
@@ -276,6 +276,7 @@ class PlaceGraph:
                 age = cfg.get("max_age")
                 if age is not None:
                     self.prune(int(age))
+                self._log["maintenance"] += 1
 
         t = threading.Thread(target=loop, daemon=True)
         t.start()
