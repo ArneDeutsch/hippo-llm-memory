@@ -18,7 +18,7 @@
 
 1. [x] **Repository & CI setup**: finalise directory structure, coding standards, Makefile and GitHub Actions; ensure flake8 / black and pytest run on each commit.
 2. [x] **Dataset generator**: implement deterministic synthetic generators for episodic, semantic and spatial suites (W4 stories, schema-fit/mismatch facts, grid worlds) as described in the evaluation plan. The existing scripts/build_datasets.py already provides this functionality.
-3. [ ] **Evaluation harness**: build a lightweight evaluation script ( scripts/eval_bench.py ) capable of reading datasets, instantiating memory modules, computing metrics and writing metrics.json/csv and meta.json. Ensure ablation flags from EVAL_PLAN.md are supported.
+3. [x] **Evaluation harness**: build a lightweight evaluation script ( scripts/eval_bench.py ) capable of reading datasets, instantiating memory modules, computing metrics and writing metrics.json/csv and meta.json. Ensure ablation flags from EVAL_PLAN.md are supported.
 4. [ ] **Baseline training wrapper**: implement a small LoRA/QLoRA training script ( scripts/train_lora.py ) for dry-run smoke tests; integrate HuggingFace models and LoRA adapters with minimal memory modules.
 
 - [ ] **Gate**: repository builds and tests pass; scripts/build_datasets.py generates JSONL files; scripts/eval_bench.py runs in dry-run mode and produces metrics files; CI shows a green status.
@@ -29,13 +29,13 @@
 
 **Work packages**
 
-1. [ ] **Write gate**: implement the neuromodulated write gate combining surprise, novelty and reward signals (threshold τ) as described in the design . Provide a simple API to compute scores and decide on writes.
-2. [ ] **Episodic store**: implement a FAISS + SQLite store with k‑WTA sparse keys, product quantization and Hopfield‑style completion; support write, recall, delete, decay and prune operations.
-3. [ ] **Replay queue and scheduler**: implement a prioritized replay queue mixing salience, recency and diversity ; provide sampling functions for consolidation.
-4. [ ] **Episodic adapter**: implement a cross-attention adapter that attends over recalled traces and outputs fused embeddings; ensure compatibility with LoRA/QLoRA.
-5. [ ] **Tests**: write unit tests to verify one-shot recall, partial‑cue retrieval amid distractors and gating behaviour (similar to tests/test_episodic.py).
+1. [x] **Write gate**: implement the neuromodulated write gate combining surprise, novelty and reward signals (threshold τ) as described in the design . Provide a simple API to compute scores and decide on writes.
+2. [x] **Episodic store**: implement a FAISS + SQLite store with k‑WTA sparse keys, product quantization and Hopfield‑style completion; support write, recall, delete, decay and prune operations.
+3. [x] **Replay queue and scheduler**: implement a prioritized replay queue mixing salience, recency and diversity ; provide sampling functions for consolidation.
+4. [x] **Episodic adapter**: implement a cross-attention adapter that attends over recalled traces and outputs fused embeddings; ensure compatibility with LoRA/QLoRA.
+5. [x] **Tests**: write unit tests to verify one-shot recall, partial‑cue retrieval amid distractors and gating behaviour (similar to tests/test_episodic.py).
 
-- [ ] **Gate**: hippo_mem/episodic/ contains gating.py , store.py , replay.py and adapter.py ; tests pass; scripts/eval_bench.py can instantiate and query the episodic module.
+- [x] **Gate**: hippo_mem/episodic/ contains gating.py , store.py , replay.py and adapter.py ; tests pass; scripts/eval_bench.py can instantiate and query the episodic module.
 
 # Milestone 4 – Relational semantic memory (SGC‑RSS) prototype
 
@@ -43,12 +43,12 @@
 
 **Work packages**
 
-1. [ ] **Tuple extractor & schema index**: implement a heuristic extractor to identify (head, relation, tail, context) tuples from text and a schema index for routing; ensure extraction precision ≥0.9 as per tests.
-2. [ ] **Knowledge graph store**: implement a NetworkX + SQLite knowledge graph with node/edge embeddings and radius‑based retrieval. Include message‑passing updates and persistence.
-3. [ ] **Relational adapter**: implement a dual-path cross‑attention adapter merging subgraph embeddings with episodic traces; gating head merges outputs. Write tests to verify deterministic fusion.
-4. [ ] **Schema routing tests**: test multi-hop retrieval and schema-fit vs mismatch routing using simple examples (similar to tests/test_relational.py).
+1. [x] **Tuple extractor & schema index**: implement a heuristic extractor to identify (head, relation, tail, context) tuples from text and a schema index for routing; ensure extraction precision ≥0.9 as per tests.
+2. [x] **Knowledge graph store**: implement a NetworkX + SQLite knowledge graph with node/edge embeddings and radius‑based retrieval. Include message‑passing updates and persistence.
+3. [x] **Relational adapter**: implement a dual-path cross‑attention adapter merging subgraph embeddings with episodic traces; gating head merges outputs. Write tests to verify deterministic fusion.
+4. [x] **Schema routing tests**: test multi-hop retrieval and schema-fit vs mismatch routing using simple examples (similar to tests/test_relational.py).
 
-- [ ] **Gate**: hippo_mem/relational/ modules and tests are complete; tuple extraction achieves ≥90 % precision; multi-hop retrieval returns correct subgraphs; adapter fusion is deterministic.
+- [x] **Gate**: hippo_mem/relational/ modules and tests are complete; tuple extraction achieves ≥90 % precision; multi-hop retrieval returns correct subgraphs; adapter fusion is deterministic.
 
 # Milestone 5 – Spatial and procedural memory (SMPD) prototype
 
@@ -56,12 +56,12 @@
 
 **Work packages**
 
-1. [ ] **PlaceGraph & planner**: implement a deterministic graph structure that observes sequences of contexts, builds nodes with optional path integration and supports A/Dijkstra planning.
-2. [ ] **Macro library**: implement MacroLib to store, update and suggest macros with success‑weighted ranking.
-3. [ ] **Spatial adapter**: implement a light cross‑attention adapter that interfaces with the PlaceGraph and MacroLib; ensure compatibility with LoRA/QLoRA.
-4. [ ] **Tests**: verify deterministic graph growth, path planning equivalence between A and Dijkstra, and that macro updates improve suggestion ranking .
+1. [x] **PlaceGraph & planner**: implement a deterministic graph structure that observes sequences of contexts, builds nodes with optional path integration and supports A/Dijkstra planning.
+2. [x] **Macro library**: implement MacroLib to store, update and suggest macros with success‑weighted ranking.
+3. [x] **Spatial adapter**: implement a light cross‑attention adapter that interfaces with the PlaceGraph and MacroLib; ensure compatibility with LoRA/QLoRA.
+4. [x] **Tests**: verify deterministic graph growth, path planning equivalence between A and Dijkstra, and that macro updates improve suggestion ranking .
 
-- [ ] **Gate**: hippo_mem/spatial/ modules exist; tests for deterministic map growth, path planning and macro suggestion pass; scripts/eval_bench.py can instantiate the spatial module.
+- [x] **Gate**: hippo_mem/spatial/ modules exist; tests for deterministic map growth, path planning and macro suggestion pass; scripts/eval_bench.py can instantiate the spatial module.
 
 # Milestone 6 – Consolidation & replay framework
 
