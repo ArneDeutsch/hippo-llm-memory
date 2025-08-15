@@ -81,6 +81,13 @@ class TrainConfig:
         default_factory=lambda: SpatialAdapterConfig(hidden_size=16, num_heads=1)
     )
 
+    # Replay toggle
+    @dataclass
+    class Replay:
+        enabled: bool = True
+
+    replay: Replay = field(default_factory=Replay)
+
     # Batch mix for replay scheduling
     @dataclass
     class BatchMix:
@@ -214,22 +221,25 @@ def train(cfg: TrainConfig) -> None:
     spat_interval = 0.1 if cfg.dry_run else cfg.spatial_mem.maintenance_interval
     spatial_map.start_background_tasks(spat_interval)
 
-    scheduler = ReplayScheduler(store, kg, batch_mix=cfg.batch_mix)
+    scheduler = None
+    worker = None
+    if cfg.replay.enabled:
+        scheduler = ReplayScheduler(store, kg, batch_mix=cfg.batch_mix)
 
-    total = 10
-    for i in range(total):
-        # Add some dummy traces to the scheduler so episodic items can be sampled
-        scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
+        total = 10
+        for i in range(total):
+            # Add some dummy traces to the scheduler so episodic items can be sampled
+            scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
 
-    # Launch background consolidation worker
-    worker = ConsolidationWorker(
-        scheduler,
-        model,
-        episodic_adapter=epi_adapter,
-        relational_adapter=rel_adapter,
-        spatial_adapter=spat_adapter,
-    )
-    worker.start()
+        # Launch background consolidation worker
+        worker = ConsolidationWorker(
+            scheduler,
+            model,
+            episodic_adapter=epi_adapter,
+            relational_adapter=rel_adapter,
+            spatial_adapter=spat_adapter,
+        )
+        worker.start()
 
     try:
         # Short circuit for the unit tests / smoke runs
@@ -270,8 +280,9 @@ def train(cfg: TrainConfig) -> None:
 
         trainer.train()
     finally:
-        worker.stop()
-        worker.join(timeout=1)
+        if worker is not None:
+            worker.stop()
+            worker.join(timeout=1)
 
 
 @hydra.main(config_name="train_lora_config", version_base=None)

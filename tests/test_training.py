@@ -50,3 +50,170 @@ def test_loads_real_model_offline(monkeypatch) -> None:
 
     assert model is not None
     assert tokenizer is not None
+
+
+def test_adapter_ablation_flags(monkeypatch) -> None:
+    """Hydra flags toggle adapters independently."""
+
+    created: list[str] = []
+
+    def fake_loader(_cfg: TrainConfig):
+        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
+        model.gradient_checkpointing_enable = lambda: None
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return model, tokenizer
+
+    class DummyStore:
+        def __init__(self, _hidden, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:  # pragma: no cover - trivial
+            return "store"
+
+    class DummyKG:
+        def __init__(self, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:  # pragma: no cover - trivial
+            return "kg"
+
+    class DummyMap:
+        def __init__(self, path_integration=False, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:  # pragma: no cover - trivial
+            return "map"
+
+    def fake_epi(cfg):
+        created.append("episodic")
+        return SimpleNamespace()
+
+    def fake_rel():
+        created.append("relational")
+        return SimpleNamespace()
+
+    def fake_spat(cfg):
+        created.append("spatial")
+        return SimpleNamespace()
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", fake_epi)
+    monkeypatch.setattr("scripts.train_lora.RelationalAdapter", fake_rel)
+    monkeypatch.setattr("scripts.train_lora.SpatialAdapter", fake_spat)
+
+    cfg = parse_args(
+        [
+            "dry_run=true",
+            "episodic.enabled=false",
+            "relational=true",
+            "spatial.enabled=false",
+            "replay.enabled=false",
+        ]
+    )
+    train(cfg)
+    assert created == ["relational"]
+
+
+def test_replay_flag_controls_scheduler(monkeypatch) -> None:
+    """Replay toggle skips scheduler and worker when disabled."""
+
+    calls: list[str] = []
+
+    def fake_loader(_cfg: TrainConfig):
+        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
+        model.gradient_checkpointing_enable = lambda: None
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return model, tokenizer
+
+    class DummyStore:
+        def __init__(self, _hidden, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:  # pragma: no cover - trivial
+            return "store"
+
+    class DummyKG:
+        def __init__(self, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:  # pragma: no cover - trivial
+            return "kg"
+
+    class DummyMap:
+        def __init__(self, path_integration=False, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:  # pragma: no cover - trivial
+            return "map"
+
+    def fake_scheduler(*_a, **_k):
+        calls.append("scheduler")
+
+        class Dummy:
+            def add_trace(self, *a, **k):
+                pass
+
+            def log_status(self) -> str:  # pragma: no cover - trivial
+                return "sched"
+
+        return Dummy()
+
+    def fake_worker(*_a, **_k):
+        calls.append("worker")
+
+        class Dummy:
+            def start(self):
+                pass
+
+            def stop(self):
+                pass
+
+            def join(self, timeout=None):  # pragma: no cover - trivial
+                pass
+
+            def log_status(self) -> str:  # pragma: no cover - trivial
+                return "worker"
+
+        return Dummy()
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", lambda cfg: SimpleNamespace())
+    monkeypatch.setattr("scripts.train_lora.RelationalAdapter", lambda: SimpleNamespace())
+    monkeypatch.setattr("scripts.train_lora.SpatialAdapter", lambda cfg: SimpleNamespace())
+    monkeypatch.setattr("scripts.train_lora.ReplayScheduler", fake_scheduler)
+    monkeypatch.setattr("scripts.train_lora.ConsolidationWorker", fake_worker)
+
+    cfg = parse_args(["dry_run=true", "episodic.enabled=true", "replay.enabled=false"])
+    train(cfg)
+    assert calls == []
+
+    calls.clear()
+    cfg = parse_args(["dry_run=true", "episodic.enabled=true", "replay.enabled=true"])
+    train(cfg)
+    assert calls == ["scheduler", "worker"]
