@@ -36,6 +36,7 @@ from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
+from hippo_mem.consolidation.worker import ConsolidationWorker
 
 
 @dataclass
@@ -162,54 +163,54 @@ def train(cfg: TrainConfig) -> None:
         # Add some dummy traces to the scheduler so episodic items can be sampled
         scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
 
-    for kind, _ in scheduler.next_batch(total):
-        if kind == "episodic" and epi_adapter is not None:
-            h = torch.zeros(1, 1, hidden)
-            m = torch.zeros(1, 1, hidden)
-            epi_adapter(h, m)
-        elif kind == "semantic" and rel_adapter is not None:
-            q = np.zeros(hidden, dtype=np.float32)
-            k = np.zeros((1, hidden), dtype=np.float32)
-            rel_adapter(q, k)
-        elif kind == "fresh" and spat_adapter is not None:
-            h = torch.zeros(1, 1, hidden)
-            p = torch.zeros(1, 1, hidden)
-            spat_adapter(h, p)
-
-    # Short circuit for the unit tests / smoke runs
-    if cfg.dry_run:
-        return
-
-    dataset = load_dataset(cfg.dataset_name, split="train")
-
-    peft_config = LoraConfig(
-        r=cfg.lora_r,
-        lora_alpha=cfg.lora_alpha,
-        lora_dropout=cfg.lora_dropout,
-        bias="none",
-        task_type="CAUSAL_LM",
+    # Launch background consolidation worker
+    worker = ConsolidationWorker(
+        scheduler,
+        model,
+        episodic_adapter=epi_adapter,
+        relational_adapter=rel_adapter,
+        spatial_adapter=spat_adapter,
     )
+    worker.start()
 
-    training_args = SFTConfig(
-        output_dir=cfg.output_dir,
-        per_device_train_batch_size=cfg.per_device_train_batch_size,
-        gradient_accumulation_steps=cfg.gradient_accumulation_steps,
-        max_steps=cfg.max_steps,
-        learning_rate=cfg.learning_rate,
-        logging_steps=1,
-        bf16=True,
-        gradient_checkpointing=True,
-    )
+    try:
+        # Short circuit for the unit tests / smoke runs
+        if cfg.dry_run:
+            return
 
-    trainer = SFTTrainer(
-        model=model,
-        train_dataset=dataset,
-        args=training_args,
-        tokenizer=tokenizer,
-        peft_config=peft_config,
-    )
+        dataset = load_dataset(cfg.dataset_name, split="train")
 
-    trainer.train()
+        peft_config = LoraConfig(
+            r=cfg.lora_r,
+            lora_alpha=cfg.lora_alpha,
+            lora_dropout=cfg.lora_dropout,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+
+        training_args = SFTConfig(
+            output_dir=cfg.output_dir,
+            per_device_train_batch_size=cfg.per_device_train_batch_size,
+            gradient_accumulation_steps=cfg.gradient_accumulation_steps,
+            max_steps=cfg.max_steps,
+            learning_rate=cfg.learning_rate,
+            logging_steps=1,
+            bf16=True,
+            gradient_checkpointing=True,
+        )
+
+        trainer = SFTTrainer(
+            model=model,
+            train_dataset=dataset,
+            args=training_args,
+            tokenizer=tokenizer,
+            peft_config=peft_config,
+        )
+
+        trainer.train()
+    finally:
+        worker.stop()
+        worker.join(timeout=1)
 
 
 @hydra.main(config_name="train_lora_config", version_base=None)
