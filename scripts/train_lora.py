@@ -16,7 +16,6 @@ loop does not run on CI.
 from __future__ import annotations
 
 import os
-import random
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -31,7 +30,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
+from hippo_mem.episodic.replay import ReplayScheduler
+from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.adapter import RelationalAdapter
+from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
 
@@ -150,15 +152,17 @@ def train(cfg: TrainConfig) -> None:
         )
         spat_adapter = SpatialAdapter(spat_cfg)
 
-    # Simulate interleaved replay batches (50/30/20 default mix)
-    schedule = []
+    # Simulate interleaved replay batches using a scheduler
+    store = EpisodicStore(hidden)
+    kg = KnowledgeGraph()
+    scheduler = ReplayScheduler(store, kg, batch_mix=cfg.batch_mix)
+
     total = 10
-    schedule.extend(["episodic"] * int(cfg.batch_mix.episodic * total))
-    schedule.extend(["semantic"] * int(cfg.batch_mix.semantic * total))
-    remaining = total - len(schedule)
-    schedule.extend(["fresh"] * remaining)
-    random.shuffle(schedule)
-    for kind in schedule:
+    for i in range(total):
+        # Add some dummy traces to the scheduler so episodic items can be sampled
+        scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
+
+    for kind, _ in scheduler.next_batch(total):
         if kind == "episodic" and epi_adapter is not None:
             h = torch.zeros(1, 1, hidden)
             m = torch.zeros(1, 1, hidden)
