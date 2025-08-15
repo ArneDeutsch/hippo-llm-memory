@@ -6,9 +6,9 @@
 
 1. [x] **Literature synthesis & novelty check**: review research/hippocampal-memorystorage.md, large-language-models.md and synthesise the neuro-LLM mapping in experiment-synthesis.md to ensure a clear understanding of HEI‑NW, SGC‑RSS and SMPD hypotheses. Produce a short summary in research/summary.md and confirm originality in research/validation.md.
 2. [x] **Design specification**: define the system architecture, data structures and algorithms for the episodic, relational and spatial modules, drawing from DESIGN.md (LLM core with episodic, relational and spatial adapters linked to FAISS/SQLite stores, knowledge graph and place graph). Update or finalise DESIGN.md as needed.
-3. [ ] **Evaluation plan**: outline datasets, baselines, run matrix, metrics and ablation toggles in EVAL_PLAN.md following the existing plan. Include success criteria (e.g., EM, F1, multi-hop accuracy, path success) and define baseline presets and memory variants.
+3. [x] **Evaluation plan**: outline datasets, baselines, run matrix, metrics and ablation toggles in EVAL_PLAN.md following the existing plan. Include success criteria (e.g., EM, F1, multi-hop accuracy, path success) and define baseline presets and memory variants.
 
-- [ ] **Gate**: DESIGN.md and EVAL_PLAN.md approved; research/summary.md and validation.md updated; CI passes linting and tests for documentation generation.
+- [x] **Gate**: DESIGN.md and EVAL_PLAN.md approved; research/summary.md and validation.md updated; CI passes linting and tests for documentation generation.
 
 # Milestone 2 – Baseline infrastructure & smoke tests
 
@@ -16,8 +16,8 @@
 
 **Work packages**
 
-1. [ ] **Repository & CI setup**: finalise directory structure, coding standards, Makefile and GitHub Actions; ensure flake8 / black and pytest run on each commit.
-2. [ ] **Dataset generator**: implement deterministic synthetic generators for episodic, semantic and spatial suites (W4 stories, schema-fit/mismatch facts, grid worlds) as described in the evaluation plan . The existing scripts/build_datasets.py already provides this functionality.
+1. [x] **Repository & CI setup**: finalise directory structure, coding standards, Makefile and GitHub Actions; ensure flake8 / black and pytest run on each commit.
+2. [x] **Dataset generator**: implement deterministic synthetic generators for episodic, semantic and spatial suites (W4 stories, schema-fit/mismatch facts, grid worlds) as described in the evaluation plan. The existing scripts/build_datasets.py already provides this functionality.
 3. [ ] **Evaluation harness**: build a lightweight evaluation script ( scripts/eval_bench.py ) capable of reading datasets, instantiating memory modules, computing metrics and writing metrics.json/csv and meta.json. Ensure ablation flags from EVAL_PLAN.md are supported.
 4. [ ] **Baseline training wrapper**: implement a small LoRA/QLoRA training script ( scripts/train_lora.py ) for dry-run smoke tests; integrate HuggingFace models and LoRA adapters with minimal memory modules.
 
