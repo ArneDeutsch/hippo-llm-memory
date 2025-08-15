@@ -4,8 +4,8 @@
 
 **Work packages**
 
-1. [ ] **Literature synthesis & novelty check**: review research/hippocampal-memorystorage.md, large-language-models.md and synthesise the neuro-LLM mapping in experiment-synthesis.md to ensure a clear understanding of HEI‑NW, SGC‑RSS and SMPD hypotheses. Produce a short summary in research/summary.md and confirm originality in research/validation.md.
-2. [ ] **Design specification**: define the system architecture, data structures and algorithms for the episodic, relational and spatial modules, drawing from DESIGN.md (LLM core with episodic, relational and spatial adapters linked to FAISS/SQLite stores, knowledge graph and place graph). Update or finalise DESIGN.md as needed.
+1. [x] **Literature synthesis & novelty check**: review research/hippocampal-memorystorage.md, large-language-models.md and synthesise the neuro-LLM mapping in experiment-synthesis.md to ensure a clear understanding of HEI‑NW, SGC‑RSS and SMPD hypotheses. Produce a short summary in research/summary.md and confirm originality in research/validation.md.
+2. [x] **Design specification**: define the system architecture, data structures and algorithms for the episodic, relational and spatial modules, drawing from DESIGN.md (LLM core with episodic, relational and spatial adapters linked to FAISS/SQLite stores, knowledge graph and place graph). Update or finalise DESIGN.md as needed.
 3. [ ] **Evaluation plan**: outline datasets, baselines, run matrix, metrics and ablation toggles in EVAL_PLAN.md following the existing plan. Include success criteria (e.g., EM, F1, multi-hop accuracy, path success) and define baseline presets and memory variants.
 
 - [ ] **Gate**: DESIGN.md and EVAL_PLAN.md approved; research/summary.md and validation.md updated; CI passes linting and tests for documentation generation.
