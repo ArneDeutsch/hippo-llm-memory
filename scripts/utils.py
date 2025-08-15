@@ -1,11 +1,13 @@
 import logging
+
+from hippo_mem.consolidation.worker import ConsolidationWorker
+from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
-from hippo_mem.episodic.replay import ReplayScheduler
-from hippo_mem.consolidation.worker import ConsolidationWorker
 
 log = logging.getLogger(__name__)
+
 
 def log_memory_status(
     store: EpisodicStore,
@@ -24,4 +26,3 @@ def log_memory_status(
         scheduler.log_status(),
         worker.log_status(),
     )
-

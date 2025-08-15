@@ -15,15 +15,15 @@ loop does not run on CI.
 
 from __future__ import annotations
 
+import logging
 import os
+import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 import hydra
 import numpy as np
 import torch
-import logging
-import time
 from datasets import load_dataset
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
