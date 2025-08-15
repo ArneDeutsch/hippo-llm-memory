@@ -73,9 +73,7 @@ class ConsolidationWorker(threading.Thread):
         if spatial_adapter is not None:
             params.extend(spatial_adapter.parameters())
         # ``RelationalAdapter`` is stateless in this toy setup.
-        self.optimizer = (
-            torch.optim.Adam(params, lr=lr) if params else None
-        )
+        self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
 
     # ------------------------------------------------------------------
     def run(self) -> None:  # pragma: no cover - exercised via thread
