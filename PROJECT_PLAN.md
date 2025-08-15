@@ -69,12 +69,12 @@
 
 **Work packages**
 
-1. [ ] **Priority replay scheduler**: implement a scheduler that samples traces from the episodic store for consolidation based on salience, recency and diversity ; support configurable mixing ratios (e.g., 50% episodic, 30% semantic, 20% fresh tasks).
-2. [ ] **Consolidation worker**: implement a background process that fetches replay batches, fine‑tunes adapters (keeping the base model frozen), and interleaves hard negatives; integrate this into the training script.
-3. [ ] **Maintenance jobs**: implement periodic decay and pruning for the episodic store and knowledge graph and path-integration decay for the spatial map (the underlying stores already provide decay/prune methods; they need to be scheduled and logged).
-4. [ ] **Logging & monitoring**: collect statistics on writes, recalls and hits for each module and record replay cycles and consolidation progress.
+1. [x] **Priority replay scheduler**: implement a scheduler that samples traces from the episodic store for consolidation based on salience, recency and diversity ; support configurable mixing ratios (e.g., 50% episodic, 30% semantic, 20% fresh tasks).
+2. [x] **Consolidation worker**: implement a background process that fetches replay batches, fine‑tunes adapters (keeping the base model frozen), and interleaves hard negatives; integrate this into the training script.
+3. [x] **Maintenance jobs**: implement periodic decay and pruning for the episodic store and knowledge graph and path-integration decay for the spatial map (the underlying stores already provide decay/prune methods; they need to be scheduled and logged).
+4. [x] **Logging & monitoring**: collect statistics on writes, recalls and hits for each module and record replay cycles and consolidation progress.
 
-- [ ] **Gate**: scheduler, consolidation worker and maintenance jobs run during a dry-run training session; logs show replay batches sampled and stores decayed/pruned; integration tests verify no crashes.
+- [x] **Gate**: scheduler, consolidation worker and maintenance jobs run during a dry-run training session; logs show replay batches sampled and stores decayed/pruned; integration tests verify no crashes.
 
 # Milestone 7 – Integration with LLM & ablation-ready training
 
@@ -82,10 +82,10 @@
 
 **Work packages**
 
-1. [ ] **Adapter hookup**: modify scripts/train_lora.py to load memory modules (episodic, relational, spatial) based on configuration; ensure cross-attention adapters can be enabled individually or jointly.
-2. [ ] **Replay scheduling integration**: incorporate the replay scheduler and consolidation worker into the training loop; schedule interleaved batches of episodic, semantic and fresh data; implement dataloaders for synthetic datasets.
+1. [x] **Adapter hookup**: modify scripts/train_lora.py to load memory modules (episodic, relational, spatial) based on configuration; ensure cross-attention adapters can be enabled individually or jointly.
+2. [x] **Replay scheduling integration**: incorporate the replay scheduler and consolidation worker into the training loop; schedule interleaved batches of episodic, semantic and fresh data; implement dataloaders for synthetic datasets.
 3. [ ] **Hydra configuration & ablations**: provide YAML configs for base model, memory modules and ablation toggles (e.g., disable Hopfield completion, gating, schema routing, macros) according to EVAL_PLAN.md.
-4. [ ] **Dry-run training**: run a small fine-tuning session (few steps) to verify that the model parameters update, adapters receive gradients, replay batches are interleaved and ablation flags take effect.
+4. [x] **Dry-run training**: run a small fine-tuning session (few steps) to verify that the model parameters update, adapters receive gradients, replay batches are interleaved and ablation flags take effect.
 
 - [ ] **Gate**: scripts/train_lora.py executes end-to-end with memory modules and ablations; logs show replay scheduling; CI tests confirm ablation toggles are respected.
 
