@@ -224,6 +224,19 @@ class PlaceGraph:
 
     # ------------------------------------------------------------------
     # Maintenance and logging
+    def decay(self, rate: float) -> None:
+        """Exponentially decay all positions toward the origin."""
+
+        factor = max(0.0, 1.0 - rate)
+        for place in self.encoder._cache.values():
+            x, y = place.coord
+            place.coord = (x * factor, y * factor)
+        px, py = self._position
+        self._position = (px * factor, py * factor)
+        if self._last_coord is not None:
+            lx, ly = self._last_coord
+            self._last_coord = (lx * factor, ly * factor)
+
     def prune(self, max_age: int) -> None:
         """Drop edges and places not observed within ``max_age`` steps."""
 
@@ -256,6 +269,9 @@ class PlaceGraph:
         def loop() -> None:
             while True:
                 time.sleep(interval)
+                rate = float(self.config.get("decay_rate", 0.0))
+                if rate > 0:
+                    self.decay(rate)
                 cfg = self.config.get("prune", {})
                 age = cfg.get("max_age")
                 if age is not None:
