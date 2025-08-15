@@ -15,8 +15,8 @@ loop does not run on CI.
 
 from __future__ import annotations
 
+import logging
 import os
-import random
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -31,9 +31,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
+from hippo_mem.episodic.replay import ReplayQueue
 from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
+from hippo_mem.consolidation.scheduler import PriorityReplayScheduler
 
 
 @dataclass
@@ -151,14 +153,14 @@ def train(cfg: TrainConfig) -> None:
         spat_adapter = SpatialAdapter(spat_cfg)
 
     # Simulate interleaved replay batches (50/30/20 default mix)
-    schedule = []
-    total = 10
-    schedule.extend(["episodic"] * int(cfg.batch_mix.episodic * total))
-    schedule.extend(["semantic"] * int(cfg.batch_mix.semantic * total))
-    remaining = total - len(schedule)
-    schedule.extend(["fresh"] * remaining)
-    random.shuffle(schedule)
-    for kind in schedule:
+    replay_queue = ReplayQueue()
+    replay_queue.add("dummy", np.zeros(hidden, dtype=np.float32), score=0.0)
+
+    scheduler = PriorityReplayScheduler(replay_queue, cfg.batch_mix)
+    schedule = scheduler.schedule(total=10, batch_size=1)
+
+    for kind, _ids in schedule:
+        logging.info("scheduled %s batch", kind)
         if kind == "episodic" and epi_adapter is not None:
             h = torch.zeros(1, 1, hidden)
             m = torch.zeros(1, 1, hidden)
