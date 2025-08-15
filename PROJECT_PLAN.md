@@ -19,9 +19,9 @@
 1. [x] **Repository & CI setup**: finalise directory structure, coding standards, Makefile and GitHub Actions; ensure flake8 / black and pytest run on each commit.
 2. [x] **Dataset generator**: implement deterministic synthetic generators for episodic, semantic and spatial suites (W4 stories, schema-fit/mismatch facts, grid worlds) as described in the evaluation plan. The existing scripts/build_datasets.py already provides this functionality.
 3. [x] **Evaluation harness**: build a lightweight evaluation script ( scripts/eval_bench.py ) capable of reading datasets, instantiating memory modules, computing metrics and writing metrics.json/csv and meta.json. Ensure ablation flags from EVAL_PLAN.md are supported.
-4. [ ] **Baseline training wrapper**: implement a small LoRA/QLoRA training script ( scripts/train_lora.py ) for dry-run smoke tests; integrate HuggingFace models and LoRA adapters with minimal memory modules.
+4. [x] **Baseline training wrapper**: implement a small LoRA/QLoRA training script ( scripts/train_lora.py ) for dry-run smoke tests; integrate HuggingFace models and LoRA adapters with minimal memory modules.
 
-- [ ] **Gate**: repository builds and tests pass; scripts/build_datasets.py generates JSONL files; scripts/eval_bench.py runs in dry-run mode and produces metrics files; CI shows a green status.
+- [x] **Gate**: repository builds and tests pass; scripts/build_datasets.py generates JSONL files; scripts/eval_bench.py runs in dry-run mode and produces metrics files; CI shows a green status.
 
 # Milestone 3 – Episodic memory (HEI‑NW) prototype
 
