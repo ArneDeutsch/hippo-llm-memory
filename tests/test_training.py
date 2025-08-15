@@ -2,7 +2,12 @@
 
 from types import SimpleNamespace
 
-from scripts.train_lora import TrainConfig, parse_args, train
+from scripts.train_lora import (
+    TrainConfig,
+    _load_model_and_tokenizer,
+    parse_args,
+    train,
+)
 
 
 def test_parse_args_dry_run() -> None:
@@ -31,3 +36,17 @@ def test_train_dry_run_skips_dataset(monkeypatch) -> None:
 
     cfg = TrainConfig(dry_run=True)
     train(cfg)
+
+
+def test_loads_real_model_offline(monkeypatch) -> None:
+    """Model and tokenizer load locally without network access."""
+
+    monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    monkeypatch.setenv("HF_MODEL_PATH", "models/tiny-gpt2")
+
+    cfg = TrainConfig(dry_run=True)
+    model, tokenizer = _load_model_and_tokenizer(cfg)
+
+    assert model is not None
+    assert tokenizer is not None

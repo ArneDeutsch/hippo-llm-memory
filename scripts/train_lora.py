@@ -15,6 +15,7 @@ loop does not run on CI.
 
 from __future__ import annotations
 
+import os
 import random
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -40,7 +41,9 @@ class TrainConfig:
     """Configuration for LoRA/QLoRA training."""
 
     # Model & data
-    model_name: str = "sshleifer/tiny-gpt2"
+    model_name: str = field(
+        default_factory=lambda: os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2")
+    )
     dataset_name: str = "imdb"
     output_dir: str = "outputs"
 
@@ -93,14 +96,15 @@ def _load_model_and_tokenizer(cfg: TrainConfig):
 
     quant_kwargs = {}
     try:  # bitsandbytes may be unavailable on some platforms
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16,
-        )
-        quant_kwargs["quantization_config"] = bnb_config
-        quant_kwargs["device_map"] = "auto"
+        if torch.cuda.is_available():
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.bfloat16,
+            )
+            quant_kwargs["quantization_config"] = bnb_config
+            quant_kwargs["device_map"] = "auto"
     except Exception:  # pragma: no cover - optional dependency
         pass
 
