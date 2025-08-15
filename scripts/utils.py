@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.replay import ReplayScheduler
@@ -13,8 +14,8 @@ def log_memory_status(
     store: EpisodicStore,
     kg: KnowledgeGraph,
     spatial_map: PlaceGraph,
-    scheduler: ReplayScheduler,
-    worker: ConsolidationWorker,
+    scheduler: Optional[ReplayScheduler],
+    worker: Optional[ConsolidationWorker],
 ) -> None:
     """Emit status information for all memory components."""
 
@@ -23,6 +24,6 @@ def log_memory_status(
         store.log_status(),
         kg.log_status(),
         spatial_map.log_status(),
-        scheduler.log_status(),
-        worker.log_status(),
+        scheduler.log_status() if scheduler else "disabled",
+        worker.log_status() if worker else "disabled",
     )
