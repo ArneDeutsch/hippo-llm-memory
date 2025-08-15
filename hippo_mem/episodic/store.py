@@ -70,7 +70,7 @@ class EpisodicStore:
         self.dim = dim
         base = faiss.index_factory(dim, index_str, faiss.METRIC_INNER_PRODUCT)
         self.index = faiss.IndexIDMap(base)
-        self.conn = sqlite3.connect(db_path)
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self._setup_db()
 
         # Buffers for PQ training
@@ -83,7 +83,7 @@ class EpisodicStore:
 
         # Configuration and logging
         self.config = config or {}
-        self._log = {"writes": 0, "recalls": 0, "hits": 0}
+        self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
 
     # ------------------------------------------------------------------
@@ -310,6 +310,7 @@ class EpisodicStore:
                     float(prune_cfg.get("min_salience", 0.1)),
                     prune_cfg.get("max_age"),
                 )
+                self._log["maintenance"] += 1
 
         t = threading.Thread(target=loop, daemon=True)
         t.start()

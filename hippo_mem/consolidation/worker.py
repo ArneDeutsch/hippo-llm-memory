@@ -46,6 +46,7 @@ class ConsolidationWorker(threading.Thread):
         self.batch_size = batch_size
         self.stop_event = threading.Event()
         self.log = logging.getLogger(__name__)
+        self._log = {"batches": 0}
 
         # Freeze the base model parameters if possible.
         params_fn = getattr(model, "parameters", None)
@@ -81,6 +82,7 @@ class ConsolidationWorker(threading.Thread):
 
         while not self.stop_event.is_set():
             batch = self.scheduler.next_batch(self.batch_size)
+            self._log["batches"] += 1
             for kind, _ in batch:
                 if self.stop_event.is_set():
                     break
@@ -117,9 +119,14 @@ class ConsolidationWorker(threading.Thread):
                     if self.optimizer is not None:
                         self.optimizer.zero_grad()
                         loss.backward()
-                        self.optimizer.step()
+                    self.optimizer.step()
                     self.log.debug("spatial adapter step")
             time.sleep(0.01)
+
+    def log_status(self) -> dict:
+        """Return counters for processed batches."""
+
+        return dict(self._log)
 
     # ------------------------------------------------------------------
     def stop(self) -> None:

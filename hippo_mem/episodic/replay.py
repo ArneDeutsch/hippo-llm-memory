@@ -147,6 +147,7 @@ class ReplayScheduler:
         self.kg = kg
         self.batch_mix = batch_mix
         self.queue = ReplayQueue()
+        self._log = {"batches": 0}
 
     def add_trace(
         self,
@@ -204,4 +205,10 @@ class ReplayScheduler:
         batch.extend([("fresh", None) for _ in range(n_fresh)])
 
         random.shuffle(batch)
+        self._log["batches"] += 1
         return batch
+
+    def log_status(self) -> dict:
+        """Return counters for scheduled batches."""
+
+        return dict(self._log)
