@@ -1,6 +1,7 @@
 """Tests for the episodic memory store."""
 
 import logging
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
@@ -9,8 +10,9 @@ import torch
 
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate
-from hippo_mem.episodic.replay import ReplayQueue
+from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
+from hippo_mem.relational.kg import KnowledgeGraph
 
 
 def test_one_shot_write_recall() -> None:
@@ -161,3 +163,51 @@ def test_replay_queue_avoids_consecutive_gradients() -> None:
     ids = queue.sample(3, grad_sim_threshold=0.99)
     for x, y in zip(ids, ids[1:]):
         assert {x, y} != {"a", "c"}
+
+
+def test_store_decay_prune_and_rollback() -> None:
+    """Decay and prune events can be rolled back."""
+
+    store = EpisodicStore(dim=2)
+    k1 = np.array([1.0, 0.0], dtype="float32")
+    k2 = np.array([0.0, 1.0], dtype="float32")
+    id1 = store.write(k1, TraceValue(provenance="a"))
+    id2 = store.write(k2, TraceValue(provenance="b"))
+
+    store.decay(rate=0.5)
+    store.prune(min_salience=0.75)
+    assert not store.recall(k1, k=1)
+
+    store.rollback(2)
+    r1 = store.recall(k1, k=1)[0]
+    r2 = store.recall(k2, k=1)[0]
+    assert r1.id == id1 and r1.salience == pytest.approx(1.0)
+    assert r2.id == id2 and r2.salience == pytest.approx(1.0)
+
+    ops = [e["op"] for e in store._maintenance_log]
+    assert ops.count("decay") >= 1
+    assert ops.count("prune") >= 1
+    assert len(ops) == 4
+
+
+def test_replay_scheduler_mix_and_unique_ids() -> None:
+    """Scheduler respects mix ratios and avoids duplicate episodic ids."""
+
+    mix = SimpleNamespace(episodic=0.5, semantic=0.3, fresh=0.2)
+    store = EpisodicStore(dim=2)
+    kg = KnowledgeGraph()
+    sched = ReplayScheduler(store, kg, batch_mix=mix)
+
+    key = np.array([1.0, 0.0], dtype="float32")
+    for i in range(5):
+        sched.add_trace(str(i), key, score=1.0 + i)
+
+    batch = sched.next_batch(10)
+    kinds = [k for k, _ in batch]
+    assert kinds.count("episodic") == 5
+    assert kinds.count("semantic") == 3
+    assert kinds.count("fresh") == 2
+
+    epi_ids = [tid for k, tid in batch if k == "episodic"]
+    assert None not in epi_ids
+    assert len(epi_ids) == len(set(epi_ids))
