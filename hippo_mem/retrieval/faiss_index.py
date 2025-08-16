@@ -91,3 +91,22 @@ class FaissIndex:
         mat = np.stack(self._vectors)
         dists = np.linalg.norm(mat - np.array(query, dtype="float32"), axis=1)
         return np.argsort(dists)[:k].tolist()
+
+    def remove(self, idx: int) -> None:
+        """Remove the vector stored at ``idx`` from the index."""
+
+        if idx < 0:
+            raise ValueError("index must be non-negative")
+
+        if faiss is not None:
+            ids = np.array([idx], dtype="int64")
+            self.index.remove_ids(ids)
+        elif idx < len(self._vectors):
+            del self._vectors[idx]
+
+    def __len__(self) -> int:
+        """Return the number of vectors currently stored."""
+
+        if faiss is not None:
+            return int(self.index.ntotal)
+        return len(self._vectors)
