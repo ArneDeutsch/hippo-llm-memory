@@ -56,6 +56,13 @@ def _git_sha() -> str:
         return "unknown"
 
 
+def _config_hash(cfg: DictConfig) -> str:
+    """Return a SHA256 hash of the resolved Hydra config."""
+
+    yaml_dump = OmegaConf.to_yaml(cfg, resolve=True)
+    return hashlib.sha256(yaml_dump.encode("utf-8")).hexdigest()
+
+
 def _init_modules(
     memory: Optional[object], ablate: Dict[str, object]
 ) -> Dict[str, Dict[str, object]]:
@@ -240,7 +247,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         for row in rows:
             writer.writerow(row)
 
-    cfg_hash = hashlib.sha256(OmegaConf.to_yaml(cfg, resolve=True).encode("utf-8")).hexdigest()
+    cfg_hash = _config_hash(cfg)
     meta = {
         "git_sha": _git_sha(),
         "model": cfg.get("model", "mock"),
