@@ -1,6 +1,7 @@
 """Tests for relational tuple extraction, KG retrieval and adapter fusion."""
 
 import numpy as np
+import pytest
 
 from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
@@ -52,3 +53,24 @@ def test_dual_path_fusion_deterministic() -> None:
 
     assert np.allclose(out1, out2)
     assert np.allclose(out1, expected)
+
+
+@pytest.mark.parametrize("threshold, expect_low", [(0.8, False), (0.2, True)])
+def test_schema_threshold_routes_confident_tuples(threshold: float, expect_low: bool) -> None:
+    """High schema threshold keeps low-confidence tuples out of the KG."""
+
+    kg = KnowledgeGraph(config={"schema_threshold": threshold})
+    kg.schema_index.add_schema("likes", "likes")
+
+    high = ("Alice", "likes", "Bob", "ctx", None, 0.9, 0)
+    low = ("Carol", "likes", "Dave", "ctx", None, 0.5, 1)
+
+    kg.ingest(high)
+    kg.ingest(low)
+
+    assert kg.graph.has_edge("Alice", "Bob")
+    assert kg.graph.has_edge("Carol", "Dave") == expect_low
+    if expect_low:
+        assert kg.schema_index.episodic_buffer == []
+    else:
+        assert kg.schema_index.episodic_buffer == [low]
