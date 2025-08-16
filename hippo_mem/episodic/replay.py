@@ -107,40 +107,30 @@ class ReplayQueue:
             return 0.0
         return float(np.dot(a, b) / denom)
 
-    def sample(self, k: int, *, grad_sim_threshold: float = 0.9) -> List[str]:
-        """Return ``k`` trace identifiers prioritising low gradient overlap."""
+    def _priority_scores(self) -> List[float]:
+        """Return priority scores for the current queue items."""
 
-        if not self.items:
-            return []
         now = self.step
-        priorities = []
+        priorities: List[float] = []
         for it in self.items:
             recency = 1.0 / (now - it.step + 1)
-            diversity_component = it.diversity_sig
-            if it.grad_overlap_proxy is not None:
-                diversity_component += it.grad_overlap_proxy
+            diversity_component = it.diversity_sig + (it.grad_overlap_proxy or 0.0)
             p = (
                 self.lambda1 * it.score
                 + self.lambda2 * recency
                 + self.lambda3 * diversity_component
             )
             priorities.append(p)
-        order = list(np.argsort(priorities)[::-1])
+        return priorities
+
+    def _select_indices(self, order: List[int], k: int, grad_sim_threshold: float) -> List[int]:
+        """Select indices respecting gradient overlap constraints."""
+
         selected: List[int] = []
-        skipped: List[int] = []
         last_grad: Optional[np.ndarray] = None
-        while order and len(selected) < k:
-            idx = order.pop(0)
-            item = self.items[idx]
-            if last_grad is not None and item.grad is not None:
-                if self._cosine(last_grad, item.grad) >= grad_sim_threshold:
-                    skipped.append(idx)
-                    continue
-            selected.append(idx)
-            if item.grad is not None:
-                last_grad = item.grad
-        while skipped and len(selected) < k:
-            idx = skipped.pop(0)
+        for idx in order:
+            if len(selected) >= k:
+                break
             item = self.items[idx]
             if last_grad is not None and item.grad is not None:
                 if self._cosine(last_grad, item.grad) >= grad_sim_threshold:
@@ -148,6 +138,16 @@ class ReplayQueue:
             selected.append(idx)
             if item.grad is not None:
                 last_grad = item.grad
+        return selected
+
+    def sample(self, k: int, *, grad_sim_threshold: float = 0.9) -> List[str]:
+        """Return ``k`` trace identifiers prioritising low gradient overlap."""
+
+        if not self.items:
+            return []
+        priorities = self._priority_scores()
+        order = list(np.argsort(priorities)[::-1])
+        selected = self._select_indices(order, k, grad_sim_threshold)
         return [self.items[i].trace_id for i in selected]
 
 

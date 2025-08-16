@@ -8,6 +8,18 @@ from hypothesis import strategies as st
 from hippo_mem.episodic.replay import ReplayQueue
 
 
+def test_priority_scores_reflect_weights() -> None:
+    """Priority scores should reflect weighting configuration."""
+
+    key1 = np.array([1.0, 0.0], dtype="float32")
+    key2 = np.array([0.0, 1.0], dtype="float32")
+    q = ReplayQueue(lambda1=1.0, lambda2=0.0, lambda3=0.0)
+    q.add("a", key1, score=0.1)
+    q.add("b", key2, score=0.9)
+    priorities = q._priority_scores()
+    assert priorities[0] < priorities[1]
+
+
 def test_replay_queue_weighting() -> None:
     """Queue prioritizes according to configured weights."""
 
@@ -58,5 +70,5 @@ def test_replay_queue_similarity_constraint(
     q.add("b", v2, score=0.9, grad=v2)
     q.add("c", v3, score=0.8, grad=v3)
     ids = q.sample(3, grad_sim_threshold=0.95)
-    for x, y in zip(ids, ids[1:]):
-        assert {x, y} != {"a", "b"}
+    assert "a" in ids
+    assert "b" not in ids
