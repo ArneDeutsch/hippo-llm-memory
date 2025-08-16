@@ -134,6 +134,32 @@ def test_gnn_update_and_rollback_restores_embeddings() -> None:
     assert np.allclose(kg.node_embeddings["B"], [0.0, 1.0])
 
 
+def test_gnn_update_toggle_affects_similarity() -> None:
+    """Message passing brings node embeddings closer to edge embeddings."""
+
+    no_mp = KnowledgeGraph(config={"gnn_updates": False})
+    with_mp = KnowledgeGraph(config={"gnn_updates": True})
+
+    args = {
+        "head": "A",
+        "relation": "rel",
+        "tail": "B",
+        "context": "ctx",
+        "head_embedding": [1.0, 0.0],
+        "tail_embedding": [0.0, 1.0],
+        "edge_embedding": [0.2, 0.8],
+    }
+
+    no_mp.upsert(**args)
+    with_mp.upsert(**args)
+
+    query = np.array([0.2, 0.8])
+    score_no = float(np.dot(no_mp.node_embeddings["A"], query))
+    score_yes = float(np.dot(with_mp.node_embeddings["A"], query))
+
+    assert score_yes > score_no
+
+
 def test_knowledgegraph_maintenance_log_records_events() -> None:
     """Prune operations are logged in the maintenance log."""
 
