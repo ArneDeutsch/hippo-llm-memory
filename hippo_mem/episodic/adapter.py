@@ -156,31 +156,21 @@ class EpisodicAdapter(nn.Module):
         bsz, q_len, _ = hidden_states.shape
         t_len = traces.shape[1]
 
-        q = self.q_proj(hidden_states).view(
-            bsz, q_len, self.num_heads, self.head_dim
-        )
+        q = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads, self.head_dim)
         q = q.transpose(1, 2)  # (b, h, q, d)
-        k = self.k_proj(traces).view(
-            bsz, t_len, self.num_kv_heads, self.head_dim
-        )
-        v = self.v_proj(traces).view(
-            bsz, t_len, self.num_kv_heads, self.head_dim
-        )
+        k = self.k_proj(traces).view(bsz, t_len, self.num_kv_heads, self.head_dim)
+        v = self.v_proj(traces).view(bsz, t_len, self.num_kv_heads, self.head_dim)
         k = k.transpose(1, 2)  # (b, kvh, t, d)
         v = v.transpose(1, 2)
         k = self._expand_kv(k)
         v = self._expand_kv(v)
 
-        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(
-            self.head_dim
-        )
+        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
         if attn_mask is not None:
             attn_scores = attn_scores + attn_mask[:, None, :, :]
         attn = F.softmax(attn_scores, dim=-1)
         attn = self.dropout(attn)
         context = torch.matmul(attn, v)
-        context = context.transpose(1, 2).contiguous().view(
-            bsz, q_len, self.hidden_size
-        )
+        context = context.transpose(1, 2).contiguous().view(bsz, q_len, self.hidden_size)
         out = self.o_proj(context)
         return hidden_states + out
