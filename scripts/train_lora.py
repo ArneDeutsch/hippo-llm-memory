@@ -216,6 +216,7 @@ def train(cfg: TrainConfig) -> None:
 
     # Simulate interleaved replay batches using a scheduler
     store_cfg = {
+        "hopfield": cfg.episodic.hopfield,
         "decay_rate": cfg.episodic_mem.decay_rate,
         "prune": {
             "min_salience": cfg.episodic_mem.prune_min_salience,

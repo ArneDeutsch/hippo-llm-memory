@@ -83,6 +83,10 @@ class AdapterConfig:
     lora_dropout: float = 0.0
     enabled: bool = False
     flash_attention: bool = False
+    # Whether Hopfield-style completion should be used. This flag is
+    # consumed by the training script to configure the accompanying
+    # ``EpisodicStore`` and is ignored by the adapter itself.
+    hopfield: bool = True
 
 
 class EpisodicAdapter(nn.Module):

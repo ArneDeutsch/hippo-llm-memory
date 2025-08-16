@@ -37,3 +37,6 @@ python_files = ["test_*.py"]
 [tool.setuptools]
 package-dir = {"" = "."}
 packages = ["hippo_mem"]
+
+[tool.mutmut]
+paths_to_mutate = ["hippo_mem/episodic", "hippo_mem/relational"]
