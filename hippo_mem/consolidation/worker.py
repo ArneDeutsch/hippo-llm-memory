@@ -79,18 +79,28 @@ class ConsolidationWorker(threading.Thread):
                 if "lora_" in name:
                     p.requires_grad_(True)
 
-        # Collect trainable parameters and ensure they actually require grads.
-        params = []
+        # Collect trainable parameters. If an adapter lacks trainable weights
+        # (e.g. LoRA disabled or ``r=0``) we simply skip optimisation for it
+        # instead of aborting initialisation.
+        params: list[torch.nn.Parameter] = []
         if episodic_adapter is not None:
             epi_params = [p for p in episodic_adapter.parameters() if p.requires_grad]
             if not epi_params:
-                raise ValueError("episodic_adapter has no trainable parameters")
-            params.extend(epi_params)
+                self.log.warning(
+                    "episodic_adapter has no trainable parameters; skipping optimisation"
+                )
+                self.epi_adapter = None
+            else:
+                params.extend(epi_params)
         if spatial_adapter is not None:
             spat_params = [p for p in spatial_adapter.parameters() if p.requires_grad]
             if not spat_params:
-                raise ValueError("spatial_adapter has no trainable parameters")
-            params.extend(spat_params)
+                self.log.warning(
+                    "spatial_adapter has no trainable parameters; skipping optimisation"
+                )
+                self.spat_adapter = None
+            else:
+                params.extend(spat_params)
         # ``RelationalAdapter`` is stateless in this toy setup.
         self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
 

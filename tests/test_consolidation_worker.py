@@ -4,7 +4,6 @@ import time
 from types import SimpleNamespace
 
 import numpy as np
-import pytest
 import torch
 
 from hippo_mem.consolidation.worker import ConsolidationWorker
@@ -72,8 +71,8 @@ def test_worker_updates_spatial_adapter() -> None:
     assert not torch.equal(before, after), "spatial adapter parameters should update"
 
 
-def test_worker_requires_gradients() -> None:
-    """Initialisation fails when adapters have no trainable params."""
+def test_worker_skips_without_trainable_params() -> None:
+    """Worker initialises and runs when adapters lack trainable params."""
 
     hidden = 4
     store = EpisodicStore(hidden)
@@ -85,8 +84,12 @@ def test_worker_requires_gradients() -> None:
     cfg = AdapterConfig(hidden_size=hidden, num_heads=1, lora_r=0, enabled=True)
     adapter = EpisodicAdapter(cfg)
 
-    with pytest.raises(ValueError):
-        ConsolidationWorker(scheduler, model, episodic_adapter=adapter)
+    worker = ConsolidationWorker(scheduler, model, episodic_adapter=adapter, batch_size=1)
+    assert worker.optimizer is None, "no optimiser when no trainable params"
+    worker.start()
+    time.sleep(0.05)
+    worker.stop()
+    worker.join(timeout=1)
 
 
 def test_worker_records_maintenance_logs() -> None:
