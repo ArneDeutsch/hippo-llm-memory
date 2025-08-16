@@ -1,5 +1,7 @@
 """Tests for relational tuple extraction, KG retrieval and adapter fusion."""
 
+import time
+
 import numpy as np
 import pytest
 from hypothesis import given, settings
@@ -199,6 +201,34 @@ def test_knowledgegraph_maintenance_log_records_events() -> None:
 
     assert kg._maintenance_log[0]["op"] == "prune"
     assert kg._maintenance_log[0]["min_conf"] == 0.6
+
+
+def test_prune_no_conditions_is_noop() -> None:
+    """Prune without criteria leaves graph unchanged."""
+
+    kg = KnowledgeGraph()
+    kg.upsert("A", "rel", "B", "ctx", conf=0.9)
+    kg.prune(min_conf=None, max_age=None)
+
+    assert kg.graph.has_edge("A", "B")
+    assert kg._history == []
+
+
+def test_prune_max_age_removes_stale_edges_and_orphans() -> None:
+    """Edges older than ``max_age`` are pruned and orphan nodes removed."""
+
+    kg = KnowledgeGraph()
+    old_time = str(time.time() - 10)
+    new_time = str(time.time())
+    kg.upsert("A", "rel", "B", "ctx", time=old_time, conf=1.0)
+    kg.upsert("B", "rel", "C", "ctx", time=new_time, conf=1.0)
+
+    kg.prune(max_age=5)
+
+    assert not kg.graph.has_edge("A", "B")
+    assert "A" not in kg.graph
+    assert kg.graph.has_edge("B", "C")
+    assert "B" in kg.graph and "C" in kg.graph
 
 
 def test_relational_adapter_gating_ablation() -> None:
