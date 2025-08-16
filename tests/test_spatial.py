@@ -1,3 +1,6 @@
+import torch
+
+from hippo_mem.spatial.adapter import AdapterConfig, SpatialAdapter
 from hippo_mem.spatial.macros import MacroLib
 from hippo_mem.spatial.map import PlaceGraph
 
@@ -52,3 +55,30 @@ def test_macro_replay_improves_success() -> None:
 
     improved = lib.suggest("s", "g", k=1)[0].name
     assert improved == "good"
+
+
+def test_spatial_adapter_integration() -> None:
+    """SpatialAdapter fuses hidden states with plan embeddings."""
+
+    g = PlaceGraph()
+    for ctx in ["s", "m", "g"]:
+        g.observe(ctx)
+    path = g.plan("s", "g")
+
+    lib = MacroLib()
+    lib.store("route", path)
+    macro = lib.suggest("s", "g", k=1)[0]
+
+    emb = [g.encoder.encode(c).coord for c in macro.trajectory]
+    plan = (
+        torch.tensor([[x, y, 0.0, 0.0] for x, y in emb], dtype=torch.float32)
+        .unsqueeze(0)
+        .requires_grad_()
+    )
+    hidden = torch.randn(1, 1, 4, requires_grad=True)
+
+    adapter = SpatialAdapter(AdapterConfig(hidden_size=4, num_heads=2))
+    out = adapter(hidden, plan)
+    assert out.shape == hidden.shape
+    out.sum().backward()
+    assert hidden.grad is not None and plan.grad is not None
