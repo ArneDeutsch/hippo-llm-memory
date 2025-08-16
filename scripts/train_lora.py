@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import os
+import random
 import time
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -55,6 +56,11 @@ class TrainConfig:
     )
     dataset_name: str = "imdb"
     output_dir: str = "outputs"
+
+    # Run metadata
+    seed: int = 0
+    run_name: str = "default"
+    notes: str = ""
 
     # Training hyper‑parameters
     per_device_train_batch_size: int = 1
@@ -158,11 +164,21 @@ def _load_model_and_tokenizer(cfg: TrainConfig):
     model = AutoModelForCausalLM.from_pretrained(cfg.model_name, **quant_kwargs)
     model.config.use_cache = False  # Needed for gradient checkpointing
     model.gradient_checkpointing_enable()
+    if cfg.efficiency.flash_attention:
+        try:
+            model.set_attn_implementation("flash_attention_2")
+        except Exception:  # pragma: no cover - optional dependency
+            logging.warning("FlashAttention not available; using standard attention")
     return model, tokenizer
 
 
 def train(cfg: TrainConfig) -> None:
     """Execute the training or dry‑run."""
+    random.seed(cfg.seed)
+    np.random.seed(cfg.seed)
+    torch.manual_seed(cfg.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(cfg.seed)
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
 

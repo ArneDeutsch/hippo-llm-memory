@@ -1,2 +1,12 @@
 # Default training configuration.
+
+# Run metadata for reproducibility.
+seed: 0
+run_name: default
+notes: ""
+
 learning_rate: 0.001
+
+# Efficiency toggles.
+efficiency:
+  flash_attention: false
