@@ -251,3 +251,15 @@ def test_sparse_encode_k_wta_idempotent(vec: np.ndarray, k: int) -> None:
     key2 = store.sparse_encode(dense, k)
     assert np.array_equal(key.indices, key2.indices)
     assert np.allclose(key.values, key2.values)
+
+
+def test_kwta_produces_sparse_indices() -> None:
+    """k-WTA encoding within ``write`` stores only the top-k indices."""
+
+    vec = np.array([0.1, 0.9, -0.8, 0.2], dtype="float32")
+    store = EpisodicStore(dim=4, k_wta=2)
+    store.write(vec, TraceValue(provenance="x"))
+    trace = store.recall(vec, k=1)[0]
+    assert trace.key.indices.size == 2
+    top2 = np.argsort(-np.abs(vec))[:2]
+    assert set(trace.key.indices.tolist()) == set(top2.tolist())
