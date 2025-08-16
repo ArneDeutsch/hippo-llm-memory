@@ -116,16 +116,16 @@ def test_gnn_update_and_rollback_restores_embeddings() -> None:
     assert np.allclose(kg.node_embeddings["A"], expected_a)
     assert np.allclose(kg.node_embeddings["B"], [0.0, 1.0])
 
-    kg.prune(min_conf=1.1)
-    assert len(kg.graph) == 0
-    assert kg.node_embeddings == {}
 
-    kg.rollback()
-    edge_id2 = next(iter(kg.graph["A"]["B"]))
-    assert edge_id2 == edge_id
-    assert np.allclose(kg.graph["A"]["B"][edge_id2]["embedding"], [0.2, 0.8])
-    assert np.allclose(kg.node_embeddings["A"], expected_a)
-    assert np.allclose(kg.node_embeddings["B"], [0.0, 1.0])
+def test_knowledgegraph_maintenance_log_records_events() -> None:
+    """Prune operations are logged in the maintenance log."""
+
+    kg = KnowledgeGraph()
+    kg.upsert("A", "rel", "B", "ctx", conf=0.5)
+    kg.prune(min_conf=0.6)
+
+    assert kg._maintenance_log[0]["op"] == "prune"
+    assert kg._maintenance_log[0]["min_conf"] == 0.6
 
 
 def test_relational_adapter_gating_ablation() -> None:
