@@ -1,5 +1,10 @@
 # Training configuration.
 
+# Run metadata for reproducibility.
+seed: 0
+run_name: default
+notes: ""
+
 # Relative weighting for episodic replay during training.
 replay_weight: 0.5
 
@@ -7,4 +12,8 @@ replay_weight: 0.5
 gating_weights:
   write: 1.0
   recall: 0.5
+
+# Efficiency toggles.
+efficiency:
+  flash_attention: false
 

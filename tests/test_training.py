@@ -19,6 +19,33 @@ def test_parse_args_dry_run() -> None:
     assert cfg.dry_run is True
 
 
+def test_train_sets_seeds(monkeypatch) -> None:
+    """Setting the seed propagates to RNG libraries."""
+
+    calls: dict[str, int] = {}
+
+    monkeypatch.setattr("scripts.train_lora.random.seed", lambda v: calls.setdefault("py", v))
+    monkeypatch.setattr("scripts.train_lora.np.random.seed", lambda v: calls.setdefault("np", v))
+    monkeypatch.setattr(
+        "scripts.train_lora.torch.manual_seed", lambda v: calls.setdefault("torch", v)
+    )
+    monkeypatch.setattr("scripts.train_lora.torch.cuda.is_available", lambda: False)
+
+    def fake_loader(_cfg: TrainConfig):
+        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
+        model.gradient_checkpointing_enable = lambda: None
+        model.set_attn_implementation = lambda *_a, **_k: None
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return model, tokenizer
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+
+    cfg = TrainConfig(dry_run=True, seed=123)
+    train(cfg)
+
+    assert calls == {"py": 123, "np": 123, "torch": 123}
+
+
 def test_train_dry_run_skips_dataset(monkeypatch) -> None:
     """``train`` short circuits before hitting the dataset when dry running."""
 
@@ -219,6 +246,35 @@ def test_replay_flag_controls_scheduler(monkeypatch) -> None:
     cfg = parse_args(["dry_run=true", "episodic.enabled=true", "replay.enabled=true"])
     train(cfg)
     assert calls == ["scheduler", "worker"]
+
+
+def test_flash_attention_toggle(monkeypatch) -> None:
+    """Setting efficiency.flash_attention uses flash attention kernels if available."""
+
+    called: dict[str, str] = {}
+
+    class DummyModel:
+        def __init__(self) -> None:
+            self.config = SimpleNamespace(use_cache=False, hidden_size=8)
+            self.gradient_checkpointing_enable = lambda: None
+
+        def set_attn_implementation(self, name: str) -> None:
+            called["impl"] = name
+
+    monkeypatch.setattr(
+        "scripts.train_lora.AutoModelForCausalLM.from_pretrained",
+        lambda *a, **k: DummyModel(),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.AutoTokenizer.from_pretrained",
+        lambda *a, **k: SimpleNamespace(pad_token=None, eos_token="<eos>"),
+    )
+
+    cfg = TrainConfig()
+    cfg.efficiency.flash_attention = True
+    _load_model_and_tokenizer(cfg)
+
+    assert called.get("impl") == "flash_attention_2"
 
 
 def test_cli_respects_ablation_flags(monkeypatch) -> None:
