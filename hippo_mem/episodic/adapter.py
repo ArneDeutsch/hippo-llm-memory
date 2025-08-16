@@ -8,9 +8,9 @@ not to provide a drop in replacement for the attention blocks used in large
 models but rather to exercise the integration points for memory retrieval.
 
 The layer supports a very small subset of LoRA/QLoRA style low rank updates so
-that it can be trained with the rest of the model when desired.  Multi-query and
-grouped-query attention are handled by allowing a different number of key/value
-heads to query heads.
+that it can be trained with the rest of the model when desired.  Multi-query
+and grouped-query attention are handled by allowing a different number of
+key/value heads to query heads.
 """
 
 from __future__ import annotations
@@ -50,8 +50,9 @@ class LoraLinear(nn.Linear):
             self.lora_B = nn.Parameter(torch.zeros(r, out_features))
             self.scaling = lora_alpha / r
             self.lora_dropout = nn.Dropout(lora_dropout)
-            # Use standard initialisation for A/B so the adapter starts close to
-            # zero but not exactly zero which would block gradients.
+            # Use standard initialisation for A/B so the adapter starts
+            # close to zero but not exactly zero which would block
+            # gradients.
             nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
             nn.init.zeros_(self.lora_B)
         else:
@@ -155,21 +156,31 @@ class EpisodicAdapter(nn.Module):
         bsz, q_len, _ = hidden_states.shape
         t_len = traces.shape[1]
 
-        q = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads, self.head_dim)
+        q = self.q_proj(hidden_states).view(
+            bsz, q_len, self.num_heads, self.head_dim
+        )
         q = q.transpose(1, 2)  # (b, h, q, d)
-        k = self.k_proj(traces).view(bsz, t_len, self.num_kv_heads, self.head_dim)
-        v = self.v_proj(traces).view(bsz, t_len, self.num_kv_heads, self.head_dim)
+        k = self.k_proj(traces).view(
+            bsz, t_len, self.num_kv_heads, self.head_dim
+        )
+        v = self.v_proj(traces).view(
+            bsz, t_len, self.num_kv_heads, self.head_dim
+        )
         k = k.transpose(1, 2)  # (b, kvh, t, d)
         v = v.transpose(1, 2)
         k = self._expand_kv(k)
         v = self._expand_kv(v)
 
-        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(
+            self.head_dim
+        )
         if attn_mask is not None:
             attn_scores = attn_scores + attn_mask[:, None, :, :]
         attn = F.softmax(attn_scores, dim=-1)
         attn = self.dropout(attn)
         context = torch.matmul(attn, v)
-        context = context.transpose(1, 2).contiguous().view(bsz, q_len, self.hidden_size)
+        context = context.transpose(1, 2).contiguous().view(
+            bsz, q_len, self.hidden_size
+        )
         out = self.o_proj(context)
         return hidden_states + out

@@ -1,5 +1,7 @@
 """Smoke tests for the LoRA/QLoRA training script."""
 
+import subprocess
+import sys
 from types import SimpleNamespace
 
 from scripts.train_lora import (
@@ -217,3 +219,24 @@ def test_replay_flag_controls_scheduler(monkeypatch) -> None:
     cfg = parse_args(["dry_run=true", "episodic.enabled=true", "replay.enabled=true"])
     train(cfg)
     assert calls == ["scheduler", "worker"]
+
+
+def test_cli_respects_ablation_flags(monkeypatch) -> None:
+    """Running the script with ablation flags disables components."""
+
+    monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    monkeypatch.setenv("HF_MODEL_PATH", "models/tiny-gpt2")
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "scripts.train_lora",
+        "dry_run=true",
+        "episodic.enabled=true",
+        "replay.enabled=false",
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    output = proc.stdout + proc.stderr
+    assert "scheduler=disabled" in output
+    assert "worker=disabled" in output
