@@ -45,64 +45,98 @@ class ConsolidationWorker(threading.Thread):
         lr: float = 1e-4,
     ) -> None:
         super().__init__(daemon=True)
+        self.batch_size = batch_size
+        self.log = logging.getLogger(__name__)
+        self._log = {"batches": 0}
+
+        self._setup_scheduler(
+            scheduler,
+            model,
+            episodic_adapter,
+            relational_adapter,
+            spatial_adapter,
+            lr,
+        )
+        self._setup_maintenance(
+            episodic_store,
+            kg_store,
+            spatial_map,
+            maintenance_interval,
+        )
+
+    # ------------------------------------------------------------------
+    def _setup_scheduler(
+        self,
+        scheduler: ReplayScheduler,
+        model: object,
+        episodic_adapter: Optional[EpisodicAdapter],
+        relational_adapter: Optional[RelationalAdapter],
+        spatial_adapter: Optional[SpatialAdapter],
+        lr: float,
+    ) -> None:
+        """Assign scheduler and prepare optimisation components."""
+
         self.scheduler = scheduler
         self.model = model
         self.epi_adapter = episodic_adapter
         self.rel_adapter = relational_adapter
         self.spat_adapter = spatial_adapter
-        self.epi_store = episodic_store
-        self.kg_store = kg_store
-        self.spatial_map = spatial_map
-        self.maintenance_interval = maintenance_interval
-        self._maintenance_thread: Optional[threading.Thread] = None
-        self.batch_size = batch_size
-        self.stop_event = threading.Event()
-        self.log = logging.getLogger(__name__)
-        self._log = {"batches": 0}
 
-        # Freeze the base model parameters if possible.
+        self._freeze_model(model)
+        self._freeze_adapter(self.epi_adapter)
+        self._freeze_adapter(self.spat_adapter)
+
+        params: list[torch.nn.Parameter] = []
+        if self.epi_adapter is not None:
+            epi_params = [p for p in self.epi_adapter.parameters() if p.requires_grad]
+            if not epi_params:
+                self.log.warning(
+                    "episodic_adapter has no trainable parameters; skipping optimisation",
+                )
+                self.epi_adapter = None
+            else:
+                params.extend(epi_params)
+        if self.spat_adapter is not None:
+            spat_params = [p for p in self.spat_adapter.parameters() if p.requires_grad]
+            if not spat_params:
+                self.log.warning(
+                    "spatial_adapter has no trainable parameters; skipping optimisation",
+                )
+                self.spat_adapter = None
+            else:
+                params.extend(spat_params)
+        self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
+
+    def _freeze_model(self, model: object) -> None:
         params_fn = getattr(model, "parameters", None)
         if callable(params_fn):
             for p in params_fn():
                 p.requires_grad_(False)
 
-        if episodic_adapter is not None:
-            for p in episodic_adapter.parameters():
-                p.requires_grad_(False)
-            for name, p in episodic_adapter.named_parameters():
-                if "lora_" in name:
-                    p.requires_grad_(True)
-        if spatial_adapter is not None:
-            for p in spatial_adapter.parameters():
-                p.requires_grad_(False)
-            for name, p in spatial_adapter.named_parameters():
-                if "lora_" in name:
-                    p.requires_grad_(True)
+    def _freeze_adapter(self, adapter: Optional[torch.nn.Module]) -> None:
+        if adapter is None:
+            return
+        for p in adapter.parameters():
+            p.requires_grad_(False)
+        for name, p in adapter.named_parameters():
+            if "lora_" in name:
+                p.requires_grad_(True)
 
-        # Collect trainable parameters. If an adapter lacks trainable weights
-        # (e.g. LoRA disabled or ``r=0``) we simply skip optimisation for it
-        # instead of aborting initialisation.
-        params: list[torch.nn.Parameter] = []
-        if episodic_adapter is not None:
-            epi_params = [p for p in episodic_adapter.parameters() if p.requires_grad]
-            if not epi_params:
-                self.log.warning(
-                    "episodic_adapter has no trainable parameters; skipping optimisation"
-                )
-                self.epi_adapter = None
-            else:
-                params.extend(epi_params)
-        if spatial_adapter is not None:
-            spat_params = [p for p in spatial_adapter.parameters() if p.requires_grad]
-            if not spat_params:
-                self.log.warning(
-                    "spatial_adapter has no trainable parameters; skipping optimisation"
-                )
-                self.spat_adapter = None
-            else:
-                params.extend(spat_params)
-        # ``RelationalAdapter`` is stateless in this toy setup.
-        self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
+    def _setup_maintenance(
+        self,
+        episodic_store: Optional[EpisodicStore],
+        kg_store: Optional[KnowledgeGraph],
+        spatial_map: Optional[PlaceGraph],
+        interval: float,
+    ) -> None:
+        """Store references and prepare the maintenance thread state."""
+
+        self.epi_store = episodic_store
+        self.kg_store = kg_store
+        self.spatial_map = spatial_map
+        self.maintenance_interval = interval
+        self._maintenance_thread: Optional[threading.Thread] = None
+        self.stop_event = threading.Event()
 
     # ------------------------------------------------------------------
     def _start_maintenance(self) -> None:
