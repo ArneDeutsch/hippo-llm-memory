@@ -3,6 +3,9 @@
 # Minimum confidence for ``SchemaIndex`` fast-track routing.
 schema_threshold: 0.7
 
+# Enable lightweight message-passing updates to node embeddings.
+gnn_updates: true
+
 # Pruning parameters for low-confidence or old tuples.
 prune:
   min_conf: 0.2

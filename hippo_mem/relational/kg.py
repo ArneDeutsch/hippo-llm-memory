@@ -27,6 +27,7 @@ class KnowledgeGraph:
         self.config = config or {}
         thresh = float(self.config.get("schema_threshold", 0.8))
         self.schema_index = SchemaIndex(threshold=thresh)
+        self._gnn_updates = bool(self.config.get("gnn_updates", True))
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
         self._history: list[dict[str, Any]] = []
@@ -145,8 +146,8 @@ class KnowledgeGraph:
             self.node_embeddings[head] = np.asarray(list(head_embedding), dtype=float)
         if tail_embedding is not None:
             self.node_embeddings[tail] = np.asarray(list(tail_embedding), dtype=float)
-
-        self._gnn_update([head, tail])
+        if self._gnn_updates:
+            self._gnn_update([head, tail])
         self._log["writes"] += 1
 
     def ingest(self, tup: TupleType) -> bool:
