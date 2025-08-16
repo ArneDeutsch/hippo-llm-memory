@@ -1,0 +1,105 @@
+- id: F-SHARED-001
+  type: functionality
+  priority: P0
+  rationale: "Missing MQA/GQA efficiency toggle despite design requirement"
+  steps:
+    - "Add efficiency.mqa_gqa flag in Hydra configs"
+    - "Plumb flag into EpisodicAdapter/SpatialAdapter to set num_kv_heads"
+    - "Update train_lora.py to expose toggle"
+    - "Add tests verifying grouped-query behaviour"
+  files: ["configs/train.yaml", "scripts/train_lora.py", "hippo_mem/episodic/adapter.py", "hippo_mem/spatial/adapter.py", "tests/test_training.py", "tests/test_episodic.py"]
+  est_hours: 6
+  deps: []
+- id: F-REL-001
+  type: functionality
+  priority: P1
+  rationale: "KnowledgeGraph lacks GNN-based embedding updates specified in design"
+  steps:
+    - "Integrate simple message-passing update when upserting edges"
+    - "Expose toggle in KG config"
+    - "Test embedding updates affect retrieval"
+  files: ["hippo_mem/relational/kg.py", "configs/memory/relational.yaml", "tests/test_relational.py"]
+  est_hours: 8
+  deps: []
+- id: T-REL-001
+  type: test
+  priority: P0
+  rationale: "`KnowledgeGraph.prune` rollback path untested"
+  steps:
+    - "Create edges with embeddings, prune by confidence"
+    - "Call rollback and assert graph restored including embeddings"
+  files: ["tests/test_relational.py"]
+  est_hours: 2
+  deps: []
+- id: T-REL-002
+  type: test
+  priority: P0
+  rationale: "`SchemaIndex.flush` not covered"
+  steps:
+    - "Buffer low-confidence tuples"
+    - "Increase confidence and call flush"
+    - "Assert tuples written to KG and buffer empty"
+  files: ["tests/test_relational.py"]
+  est_hours: 2
+  deps: []
+- id: T-RET-001
+  type: test
+  priority: P1
+  rationale: "`faiss_index.py` lacks basic add/search/delete coverage"
+  steps:
+    - "Instantiate index with PQ training"
+    - "Add vectors, perform search, remove ids"
+    - "Assert results and index size"
+  files: ["tests/test_retrieval.py"]
+  est_hours: 3
+  deps: []
+- id: T-ADAPT-001
+  type: test
+  priority: P1
+  rationale: "LoRA adapter helpers untested"
+  steps:
+    - "Write tests for load_adapter, merge_adapter, export_adapter"
+  files: ["tests/test_adapters.py", "hippo_mem/adapters/lora.py", "scripts/export_adapter.py"]
+  est_hours: 3
+  deps: []
+- id: T-EPI-001
+  type: test
+  priority: P1
+  rationale: "GQA expansion in EpisodicAdapter not exercised"
+  steps:
+    - "Create adapter with num_kv_heads=1 and num_heads>1"
+    - "Assert `_expand_kv` duplicates keys/values correctly"
+  files: ["tests/test_episodic.py"]
+  est_hours: 2
+  deps: []
+- id: R-CON-001
+  type: refactor
+  priority: P1
+  rationale: "`ConsolidationWorker.__init__` cyclomatic complexity 20"
+  steps:
+    - "Extract helper methods for scheduler setup and maintenance threads"
+    - "Add unit tests for new helpers"
+  files: ["hippo_mem/consolidation/worker.py", "tests/test_consolidation_worker.py"]
+  est_hours: 4
+  deps: []
+- id: R-EPI-001
+  type: refactor
+  priority: P1
+  rationale: "`ReplayQueue.sample` complexity 17"
+  steps:
+    - "Split priority calculation and scheduling into separate functions"
+    - "Simplify gradient-overlap handling"
+    - "Update tests accordingly"
+  files: ["hippo_mem/episodic/replay.py", "tests/test_replay_queue.py"]
+  est_hours: 4
+  deps: []
+- id: R-REL-001
+  type: refactor
+  priority: P2
+  rationale: "`KnowledgeGraph.prune` complexity 12"
+  steps:
+    - "Extract SQL condition builder and node cleanup into helpers"
+    - "Add tests for edge cases"
+  files: ["hippo_mem/relational/kg.py", "tests/test_relational.py"]
+  est_hours: 3
+  deps: [T-REL-001]
