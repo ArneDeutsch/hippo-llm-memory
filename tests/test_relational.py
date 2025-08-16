@@ -90,3 +90,37 @@ def test_schema_fast_track_routing_threshold() -> None:
     assert kg.graph.has_edge("Alice", "Book")
     assert si.fast_track(low, kg) is False
     assert si.episodic_buffer == [low]
+
+
+def test_gnn_update_and_rollback_restores_embeddings() -> None:
+    """Upserts with embeddings survive prune via rollback."""
+
+    kg = KnowledgeGraph()
+    kg.upsert(
+        "A",
+        "rel",
+        "B",
+        "ctx",
+        head_embedding=[1.0, 0.0],
+        tail_embedding=[0.0, 1.0],
+        edge_embedding=[0.2, 0.8],
+        conf=1.0,
+    )
+
+    edge_id = next(iter(kg.graph["A"]["B"]))
+    assert np.allclose(kg.graph["A"]["B"][edge_id]["embedding"], [0.2, 0.8])
+
+    expected_a = (np.array([1.0, 0.0]) + np.array([0.2, 0.8])) / 2.0
+    assert np.allclose(kg.node_embeddings["A"], expected_a)
+    assert np.allclose(kg.node_embeddings["B"], [0.0, 1.0])
+
+    kg.prune(min_conf=1.1)
+    assert len(kg.graph) == 0
+    assert kg.node_embeddings == {}
+
+    kg.rollback()
+    edge_id2 = next(iter(kg.graph["A"]["B"]))
+    assert edge_id2 == edge_id
+    assert np.allclose(kg.graph["A"]["B"][edge_id2]["embedding"], [0.2, 0.8])
+    assert np.allclose(kg.node_embeddings["A"], expected_a)
+    assert np.allclose(kg.node_embeddings["B"], [0.0, 1.0])
