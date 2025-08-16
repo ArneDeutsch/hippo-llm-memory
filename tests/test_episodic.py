@@ -41,14 +41,16 @@ def test_partial_cue_recall_under_distractors() -> None:
 
 
 def test_hopfield_completion_restores_sparse_cue() -> None:
-    """Hopfield completion reconstructs the full key from a partial cue."""
+    """Hopfield completion reconstructs the full key from a noisy partial cue."""
 
     store = EpisodicStore(dim=4)
     full = np.array([1.0, 1.0, 0.0, 0.0], dtype="float32")
     store.write(full, TraceValue(provenance="full"))
+    distractor = np.array([0.0, 0.0, 1.0, 1.0], dtype="float32")
+    store.write(distractor, TraceValue(provenance="noise"))
 
-    partial = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
-    completed = store.complete(partial, k=1)
+    partial = np.array([0.9, 0.1, 0.0, 0.0], dtype="float32")
+    completed = store.complete(partial, k=2)
 
     cos = float(np.dot(completed, full) / (np.linalg.norm(completed) * np.linalg.norm(full)))
     assert cos >= 0.9

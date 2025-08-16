@@ -74,3 +74,19 @@ def test_schema_threshold_routes_confident_tuples(threshold: float, expect_low: 
         assert kg.schema_index.episodic_buffer == []
     else:
         assert kg.schema_index.episodic_buffer == [low]
+
+
+def test_schema_fast_track_routing_threshold() -> None:
+    """Tuples meet KG insertion only when confidence crosses threshold."""
+
+    kg = KnowledgeGraph(config={"schema_threshold": 0.6})
+    si = kg.schema_index
+    si.add_schema("buy", "buy")
+
+    high = ("Alice", "buy", "Book", "ctx", None, 0.6, 0)
+    low = ("Bob", "buy", "Pen", "ctx", None, 0.59, 1)
+
+    assert si.fast_track(high, kg) is True
+    assert kg.graph.has_edge("Alice", "Book")
+    assert si.fast_track(low, kg) is False
+    assert si.episodic_buffer == [low]
