@@ -131,6 +131,7 @@ class TrainConfig:
     @dataclass
     class Efficiency:
         flash_attention: bool = False
+        mqa_gqa: Optional[str] = None
 
     efficiency: Efficiency = field(default_factory=Efficiency)
 
@@ -185,11 +186,24 @@ def train(cfg: TrainConfig) -> None:
     hidden = getattr(model.config, "hidden_size", cfg.episodic.hidden_size)
 
     epi_adapter: EpisodicAdapter | None = None
+    spat_adapter: SpatialAdapter | None = None
+
+    # Determine KV head counts based on efficiency flag
+    if cfg.efficiency.mqa_gqa == "mqa":
+        epi_kv_heads = 1
+        spat_kv_heads = 1
+    elif cfg.efficiency.mqa_gqa == "gqa":
+        epi_kv_heads = max(1, cfg.episodic.num_heads // 2)
+        spat_kv_heads = max(1, cfg.spatial.num_heads // 2)
+    else:
+        epi_kv_heads = cfg.episodic.num_kv_heads or cfg.episodic.num_heads
+        spat_kv_heads = cfg.spatial.num_kv_heads or cfg.spatial.num_heads
+
     if cfg.episodic.enabled:
         epi_cfg = AdapterConfig(
             hidden_size=hidden,
             num_heads=cfg.episodic.num_heads,
-            num_kv_heads=cfg.episodic.num_kv_heads,
+            num_kv_heads=epi_kv_heads,
             lora_r=cfg.episodic.lora_r,
             lora_alpha=cfg.episodic.lora_alpha,
             lora_dropout=cfg.episodic.lora_dropout,
@@ -202,11 +216,11 @@ def train(cfg: TrainConfig) -> None:
     if cfg.relational:
         rel_adapter = RelationalAdapter()
 
-    spat_adapter: SpatialAdapter | None = None
     if cfg.spatial.enabled:
         spat_cfg = SpatialAdapterConfig(
             hidden_size=hidden,
             num_heads=cfg.spatial.num_heads,
+            num_kv_heads=spat_kv_heads,
             lora_r=cfg.spatial.lora_r,
             lora_alpha=cfg.spatial.lora_alpha,
             lora_dropout=cfg.spatial.lora_dropout,
