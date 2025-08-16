@@ -11,6 +11,9 @@ from typing import Dict, Iterable, Optional, Sequence
 import networkx as nx
 import numpy as np
 
+from .schema import SchemaIndex
+from .tuples import TupleType
+
 
 class KnowledgeGraph:
     """Knowledge graph backed by NetworkX and SQLite."""
@@ -22,6 +25,8 @@ class KnowledgeGraph:
         self._init_db()
         self._load()
         self.config = config or {}
+        thresh = float(self.config.get("schema_threshold", 0.8))
+        self.schema_index = SchemaIndex(threshold=thresh)
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
 
@@ -139,6 +144,11 @@ class KnowledgeGraph:
 
         self._gnn_update([head, tail])
         self._log["writes"] += 1
+
+    def ingest(self, tup: TupleType) -> bool:
+        """Route a tuple through ``SchemaIndex`` and insert if confident."""
+
+        return self.schema_index.fast_track(tup, self)
 
     def _to_json(self, emb: Optional[Iterable[float]]) -> Optional[str]:
         if emb is None:

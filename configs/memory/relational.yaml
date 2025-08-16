@@ -1,6 +1,6 @@
 # Relational memory configuration.
 
-# Threshold on schema confidence before an edge is accepted.
+# Minimum confidence for ``SchemaIndex`` fast-track routing.
 schema_threshold: 0.7
 
 # Pruning parameters for low-confidence or old tuples.

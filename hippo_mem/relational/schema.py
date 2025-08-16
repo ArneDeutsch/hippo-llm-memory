@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
-from .kg import KnowledgeGraph
 from .tuples import TupleType
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .kg import KnowledgeGraph
 
 
 @dataclass
@@ -49,9 +51,27 @@ class SchemaIndex:
         if best_score >= self.threshold and tup[5] >= self.threshold:
             head, relation, tail, context, time, conf, prov = tup
             kg.upsert(head, relation, tail, context, time, conf, prov)
+            self.flush(kg)
             return True
         self.episodic_buffer.append(tup)
         return False
+
+    def flush(self, kg: KnowledgeGraph) -> None:
+        """Attempt to write buffered tuples to ``kg`` if they now meet the threshold."""
+
+        remaining: List[TupleType] = []
+        for tup in self.episodic_buffer:
+            best_score = 0.0
+            for schema in self.schemas.values():
+                s = self.score(schema, tup)
+                if s > best_score:
+                    best_score = s
+            if best_score >= self.threshold and tup[5] >= self.threshold:
+                head, relation, tail, context, time, conf, prov = tup
+                kg.upsert(head, relation, tail, context, time, conf, prov)
+            else:
+                remaining.append(tup)
+        self.episodic_buffer = remaining
 
 
 __all__ = ["SchemaIndex", "Schema"]
