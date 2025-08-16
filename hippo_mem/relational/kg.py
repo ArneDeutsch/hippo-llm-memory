@@ -221,9 +221,7 @@ class KnowledgeGraph:
         removed_edges: list[tuple[int, str, str, dict]] = []
         if conditions:
             where = " OR ".join(conditions)
-            cur.execute(
-                f"SELECT id, src, dst FROM edges WHERE {where}", params
-            )
+            cur.execute(f"SELECT id, src, dst FROM edges WHERE {where}", params)
             rows = cur.fetchall()
             for edge_id, src, dst in rows:
                 data = dict(self.graph[src][dst][edge_id])
@@ -246,9 +244,7 @@ class KnowledgeGraph:
             self._history.append(("prune", {"edges": removed_edges, "nodes": removed_nodes}))
             if self._maint_log_path:
                 with open(self._maint_log_path, "a") as fh:
-                    fh.write(
-                        f"{time.time()} prune {len(removed_edges)} {len(removed_nodes)}\n"
-                    )
+                    fh.write(f"{time.time()} prune {len(removed_edges)} {len(removed_nodes)}\n")
 
     def log_status(self) -> dict:
         return dict(self._log)

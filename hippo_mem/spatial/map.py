@@ -10,11 +10,11 @@ included to compute shortest paths between contexts.
 
 from __future__ import annotations
 
+import copy
 import heapq
 import math
 import threading
 import time
-import copy
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 

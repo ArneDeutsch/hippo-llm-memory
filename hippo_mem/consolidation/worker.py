@@ -89,9 +89,7 @@ class ConsolidationWorker(threading.Thread):
         self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
 
         if any([self.epi_store, self.rel_store, self.spat_store]):
-            self._maint_thread = threading.Thread(
-                target=self._maintenance_loop, daemon=True
-            )
+            self._maint_thread = threading.Thread(target=self._maintenance_loop, daemon=True)
             self._maint_thread.start()
 
     # ------------------------------------------------------------------
