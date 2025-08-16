@@ -111,6 +111,25 @@ def test_schema_fast_track_threshold() -> None:
     assert kg.schema_index.episodic_buffer == [low]
 
 
+def test_schema_index_flush_promotes_buffered_tuples() -> None:
+    """Buffered tuples are written once their confidence increases."""
+
+    kg = KnowledgeGraph(config={"schema_threshold": 0.8})
+    si = kg.schema_index
+    si.add_schema("rel", "rel")
+
+    tup = ("A", "rel", "B", "ctx", None, 0.4, 0)
+    assert si.fast_track(tup, kg) is False
+    assert not kg.graph.has_edge("A", "B")
+    assert si.episodic_buffer == [tup]
+
+    si.episodic_buffer[0] = ("A", "rel", "B", "ctx", None, 0.9, 0)
+    si.flush(kg)
+
+    assert kg.graph.has_edge("A", "B")
+    assert si.episodic_buffer == []
+
+
 def test_gnn_update_and_rollback_restores_embeddings() -> None:
     """Upserts with embeddings survive prune via rollback."""
 
@@ -123,15 +142,26 @@ def test_gnn_update_and_rollback_restores_embeddings() -> None:
         head_embedding=[1.0, 0.0],
         tail_embedding=[0.0, 1.0],
         edge_embedding=[0.2, 0.8],
-        conf=1.0,
+        conf=0.4,
     )
 
     edge_id = next(iter(kg.graph["A"]["B"]))
-    assert np.allclose(kg.graph["A"]["B"][edge_id]["embedding"], [0.2, 0.8])
+    edge_emb = kg.graph["A"]["B"][edge_id]["embedding"].copy()
+    expected_a = (np.array([1.0, 0.0]) + edge_emb) / 2.0
+    expected_b = np.array([0.0, 1.0])
 
-    expected_a = (np.array([1.0, 0.0]) + np.array([0.2, 0.8])) / 2.0
+    kg.prune(min_conf=0.5)
+    assert not kg.graph.has_edge("A", "B")
+    assert "A" not in kg.node_embeddings
+    assert "B" not in kg.node_embeddings
+
+    kg.rollback()
+    assert kg.graph.has_edge("A", "B")
+    restored_id = next(iter(kg.graph["A"]["B"]))
+    assert restored_id == edge_id
+    assert np.allclose(kg.graph["A"]["B"][restored_id]["embedding"], edge_emb)
     assert np.allclose(kg.node_embeddings["A"], expected_a)
-    assert np.allclose(kg.node_embeddings["B"], [0.0, 1.0])
+    assert np.allclose(kg.node_embeddings["B"], expected_b)
 
 
 def test_knowledgegraph_maintenance_log_records_events() -> None:
