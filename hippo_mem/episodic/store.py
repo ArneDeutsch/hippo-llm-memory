@@ -7,7 +7,7 @@ import sqlite3
 import threading
 import time
 from dataclasses import asdict, dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import faiss  # type: ignore
 import numpy as np
@@ -85,6 +85,10 @@ class EpisodicStore:
         self.config = config or {}
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
+        self._history: List[dict[str, Any]] = []
+        self._max_undo = int(self.config.get("max_undo", 5))
+        self._maintenance_log: List[dict[str, Any]] = []
+        self._log_file = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
     # SQLite helpers
@@ -123,6 +127,20 @@ class EpisodicStore:
         if not rows:
             return np.empty((0, self.dim), dtype="float32")
         return np.vstack([np.frombuffer(r[0], dtype="float32") for r in rows])
+
+    # ------------------------------------------------------------------
+    # Maintenance helpers
+    def _log_event(self, op: str, info: dict[str, Any]) -> None:
+        event = {"ts": time.time(), "op": op, **info}
+        self._maintenance_log.append(event)
+        if self._log_file:
+            with open(self._log_file, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(event) + "\n")
+
+    def _push_history(self, op: str, rows: list[Any]) -> None:
+        self._history.append({"op": op, "rows": rows})
+        if len(self._history) > self._max_undo:
+            self._history.pop(0)
 
     # ------------------------------------------------------------------
     # Encoding
@@ -262,8 +280,13 @@ class EpisodicStore:
 
         factor = max(0.0, 1.0 - rate)
         cur = self.conn.cursor()
+        cur.execute("SELECT id, salience FROM traces")
+        rows = cur.fetchall()
+        if rows:
+            self._push_history("decay", rows)
         cur.execute("UPDATE traces SET salience = salience * ?", (factor,))
         self.conn.commit()
+        self._log_event("decay", {"rate": rate})
 
     def prune(self, min_salience: float = 0.1, max_age: Optional[float] = None) -> None:
         """Remove traces whose salience or age fall below thresholds."""
@@ -281,10 +304,14 @@ class EpisodicStore:
         if not conditions:
             return
         where = " OR ".join(conditions)
-        cur.execute(f"SELECT id FROM traces WHERE {where}", params)
-        ids = [r[0] for r in cur.fetchall()]
-        for idx in ids:
-            self.delete(int(idx))
+        cur.execute(f"SELECT id, value, key, ts, salience FROM traces WHERE {where}", params)
+        rows = cur.fetchall()
+        if not rows:
+            return
+        self._push_history("prune", rows)
+        for row in rows:
+            self.delete(int(row[0]))
+        self._log_event("prune", {"min_salience": min_salience, "max_age": max_age})
 
     # ------------------------------------------------------------------
     # Logging and maintenance
@@ -315,3 +342,35 @@ class EpisodicStore:
         t = threading.Thread(target=loop, daemon=True)
         t.start()
         self._bg_thread = t
+
+    def rollback(self, n: int = 1) -> None:
+        """Rollback the last ``n`` maintenance operations."""
+
+        for _ in range(n):
+            if not self._history:
+                break
+            entry = self._history.pop()
+            op = entry["op"]
+            rows = entry["rows"]
+            cur = self.conn.cursor()
+            if op == "decay":
+                cur.executemany(
+                    "UPDATE traces SET salience=? WHERE id=?",
+                    [(s, i) for i, s in rows],
+                )
+            elif op == "prune":
+                for idx, value_json, key_blob, ts, salience in rows:
+                    cur.execute(
+                        "INSERT OR REPLACE INTO traces(id, value, key, ts, salience) VALUES (?,?,?,?,?)",
+                        (idx, value_json, key_blob, ts, salience),
+                    )
+                    key_vec = np.frombuffer(key_blob, dtype="float32").reshape(1, -1)
+                    faiss.normalize_L2(key_vec)
+                    ids = np.array([idx], dtype="int64")
+                    if self.index.is_trained:
+                        self.index.add_with_ids(key_vec, ids)
+                    else:
+                        self._pending_keys.append(key_vec[0])
+                        self._pending_ids.append(idx)
+            self.conn.commit()
+            self._log_event("rollback", {"op": op})

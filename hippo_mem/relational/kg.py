@@ -6,7 +6,7 @@ import json
 import sqlite3
 import threading
 import time
-from typing import Dict, Iterable, Optional, Sequence
+from typing import Any, Dict, Iterable, Optional, Sequence
 
 import networkx as nx
 import numpy as np
@@ -29,6 +29,10 @@ class KnowledgeGraph:
         self.schema_index = SchemaIndex(threshold=thresh)
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
+        self._history: list[dict[str, Any]] = []
+        self._max_undo = int(self.config.get("max_undo", 5))
+        self._maintenance_log: list[dict[str, Any]] = []
+        self._log_file = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
     # Database utilities
@@ -200,6 +204,20 @@ class KnowledgeGraph:
         return sub
 
     # ------------------------------------------------------------------
+    # Maintenance helpers
+    def _log_event(self, op: str, info: dict[str, Any]) -> None:
+        event = {"ts": time.time(), "op": op, **info}
+        self._maintenance_log.append(event)
+        if self._log_file:
+            with open(self._log_file, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(event) + "\n")
+
+    def _push_history(self, entry: dict[str, Any]) -> None:
+        self._history.append(entry)
+        if len(self._history) > self._max_undo:
+            self._history.pop(0)
+
+    # ------------------------------------------------------------------
     # Maintenance and logging
     def prune(self, min_conf: float = 0.0, max_age: Optional[float] = None) -> None:
         """Remove edges below confidence or older than ``max_age`` seconds."""
@@ -214,21 +232,34 @@ class KnowledgeGraph:
             cutoff = time.time() - max_age
             conditions.append("(time IS NOT NULL AND CAST(time AS REAL) < ?)")
             params.append(cutoff)
-        if conditions:
-            where = " OR ".join(conditions)
-            cur.execute(f"SELECT id, src, dst FROM edges WHERE {where}", params)
-            rows = cur.fetchall()
-            for edge_id, src, dst in rows:
-                if self.graph.has_edge(src, dst, key=edge_id):
-                    self.graph.remove_edge(src, dst, key=edge_id)
-                cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
-            self.conn.commit()
-
-        isolated = [n for n in list(self.graph.nodes()) if self.graph.degree(n) == 0]
-        for n in isolated:
-            self.graph.remove_node(n)
-            cur.execute("DELETE FROM nodes WHERE name=?", (n,))
+        if not conditions:
+            return
+        where = " OR ".join(conditions)
+        cur.execute(
+            f"SELECT id, src, relation, dst, context, time, conf, provenance, embedding FROM edges WHERE {where}",
+            params,
+        )
+        edges = cur.fetchall()
+        if not edges:
+            return
+        candidate_nodes = {e[1] for e in edges} | {e[3] for e in edges}
+        node_data = {n: self.node_embeddings.get(n) for n in candidate_nodes}
+        for edge_id, src, rel, dst, ctx, t, conf, prov, emb in edges:
+            if self.graph.has_edge(src, dst, key=edge_id):
+                self.graph.remove_edge(src, dst, key=edge_id)
+            cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
         self.conn.commit()
+
+        removed_nodes: list[tuple[str, Optional[np.ndarray]]] = []
+        for n in list(candidate_nodes):
+            if self.graph.degree(n) == 0:
+                self.graph.remove_node(n)
+                cur.execute("DELETE FROM nodes WHERE name=?", (n,))
+                removed_nodes.append((n, node_data.get(n)))
+                self.node_embeddings.pop(n, None)
+        self.conn.commit()
+        self._push_history({"op": "prune", "edges": edges, "nodes": removed_nodes})
+        self._log_event("prune", {"min_conf": min_conf, "max_age": max_age})
 
     def log_status(self) -> dict:
         return dict(self._log)
@@ -250,6 +281,49 @@ class KnowledgeGraph:
         t = threading.Thread(target=loop, daemon=True)
         t.start()
         self._bg_thread = t
+
+    def rollback(self, n: int = 1) -> None:
+        """Rollback the last ``n`` prune operations."""
+
+        for _ in range(n):
+            if not self._history:
+                break
+            entry = self._history.pop()
+            if entry.get("op") != "prune":
+                continue
+            edges = entry.get("edges", [])
+            nodes = entry.get("nodes", [])
+            cur = self.conn.cursor()
+            for name, emb in nodes:
+                self.graph.add_node(name)
+                cur.execute(
+                    "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
+                    (name, self._to_json(emb)),
+                )
+                if emb is not None:
+                    self.node_embeddings[name] = np.asarray(emb, dtype=float)
+            for edge in edges:
+                edge_id, src, rel, dst, ctx, t_, conf, prov, emb = edge
+                self.graph.add_edge(
+                    src,
+                    dst,
+                    key=edge_id,
+                    relation=rel,
+                    context=ctx,
+                    time=t_,
+                    conf=conf,
+                    provenance=prov,
+                )
+                if emb is not None:
+                    self.graph[src][dst][edge_id]["embedding"] = np.asarray(
+                        json.loads(emb), dtype=float
+                    )
+                cur.execute(
+                    "INSERT INTO edges(id, src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (edge_id, src, rel, dst, ctx, t_, conf, prov, emb),
+                )
+            self.conn.commit()
+            self._log_event("rollback", {"op": "prune"})
 
 
 __all__ = ["KnowledgeGraph"]

@@ -10,12 +10,14 @@ included to compute shortest paths between contexts.
 
 from __future__ import annotations
 
+import copy
 import heapq
+import json
 import math
 import threading
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -74,6 +76,10 @@ class PlaceGraph:
         self.config = config or {}
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
+        self._history: List[dict[str, Any]] = []
+        self._max_undo = int(self.config.get("max_undo", 5))
+        self._maintenance_log: List[dict[str, Any]] = []
+        self._log_file = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
     # Observation and graph construction
@@ -88,6 +94,33 @@ class PlaceGraph:
             # Encode for side effects (cache coordinates)
             self.encoder.encode(context)
         return node
+
+    # ------------------------------------------------------------------
+    # Maintenance helpers
+    def _snapshot_state(self) -> dict[str, Any]:
+        return {
+            "cache": copy.deepcopy(self.encoder._cache),
+            "c2id": dict(self._context_to_id),
+            "id2c": dict(self._id_to_context),
+            "graph": copy.deepcopy(self.graph),
+            "next_id": self._next_id,
+            "last_obs": self._last_obs,
+            "step": self._step,
+            "position": self._position,
+            "last_coord": self._last_coord,
+        }
+
+    def _log_event(self, op: str, info: dict[str, Any]) -> None:
+        event = {"ts": time.time(), "op": op, **info}
+        self._maintenance_log.append(event)
+        if self._log_file:
+            with open(self._log_file, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(event) + "\n")
+
+    def _push_history(self, op: str) -> None:
+        self._history.append({"op": op, "state": self._snapshot_state()})
+        if len(self._history) > self._max_undo:
+            self._history.pop(0)
 
     def observe(self, context: str) -> int:
         """Insert *context* into the graph and connect from previous.
@@ -226,7 +259,7 @@ class PlaceGraph:
     # Maintenance and logging
     def decay(self, rate: float) -> None:
         """Exponentially decay all positions toward the origin."""
-
+        self._push_history("decay")
         factor = max(0.0, 1.0 - rate)
         for place in self.encoder._cache.values():
             x, y = place.coord
@@ -236,10 +269,11 @@ class PlaceGraph:
         if self._last_coord is not None:
             lx, ly = self._last_coord
             self._last_coord = (lx * factor, ly * factor)
+        self._log_event("decay", {"rate": rate})
 
     def prune(self, max_age: int) -> None:
         """Drop edges and places not observed within ``max_age`` steps."""
-
+        self._push_history("prune")
         threshold = self._step - max_age
         for context, place in list(self.encoder._cache.items()):
             if place.last_seen < threshold:
@@ -258,6 +292,7 @@ class PlaceGraph:
                 if context is not None:
                     self._context_to_id.pop(context, None)
                 del self.graph[a]
+        self._log_event("prune", {"max_age": max_age})
 
     def log_status(self) -> dict:
         return dict(self._log)
@@ -281,3 +316,24 @@ class PlaceGraph:
         t = threading.Thread(target=loop, daemon=True)
         t.start()
         self._bg_thread = t
+
+    def rollback(self, n: int = 1) -> None:
+        """Rollback the last ``n`` maintenance operations."""
+
+        for _ in range(n):
+            if not self._history:
+                break
+            entry = self._history.pop()
+            state = entry.get("state")
+            if state is None:
+                continue
+            self.encoder._cache = state["cache"]
+            self._context_to_id = state["c2id"]
+            self._id_to_context = state["id2c"]
+            self.graph = state["graph"]
+            self._next_id = state["next_id"]
+            self._last_obs = state["last_obs"]
+            self._step = state["step"]
+            self._position = state["position"]
+            self._last_coord = state["last_coord"]
+            self._log_event("rollback", {"op": entry.get("op")})
