@@ -1,5 +1,6 @@
 """Tests for the background consolidation worker."""
 
+import threading
 import time
 from types import SimpleNamespace
 
@@ -122,3 +123,37 @@ def test_worker_records_maintenance_logs() -> None:
     assert any(e["op"] in {"decay", "prune"} for e in store._maintenance_log)
     assert kg._maintenance_log and kg._maintenance_log[-1]["op"] == "prune"
     assert any(e["op"] in {"decay", "prune"} for e in spat._maintenance_log)
+
+
+def test_setup_scheduler_freezes_non_lora() -> None:
+    """`_setup_scheduler` freezes base and adapter params except LoRA layers."""
+
+    hidden = 4
+    store = EpisodicStore(hidden)
+    kg = KnowledgeGraph()
+    scheduler = ReplayScheduler(store, kg, batch_mix=_BatchMix())
+    model = torch.nn.Linear(hidden, hidden)
+    cfg = AdapterConfig(hidden_size=hidden, num_heads=1, lora_r=hidden, enabled=True)
+    adapter = EpisodicAdapter(cfg)
+
+    worker = ConsolidationWorker(scheduler, model)
+    worker._setup_scheduler(scheduler, model, adapter, None, None, lr=1e-4)
+
+    assert all(not p.requires_grad for n, p in adapter.named_parameters() if "lora_" not in n)
+    assert all(p.requires_grad for n, p in adapter.named_parameters() if "lora_" in n)
+
+
+def test_setup_maintenance_sets_state() -> None:
+    """`_setup_maintenance` stores references and creates event."""
+
+    hidden = 2
+    store = EpisodicStore(hidden)
+    kg = KnowledgeGraph()
+    spat = PlaceGraph()
+    scheduler = ReplayScheduler(store, kg, batch_mix=_BatchMix())
+    worker = ConsolidationWorker(scheduler, torch.nn.Linear(hidden, hidden))
+    worker._setup_maintenance(store, kg, spat, 0.5)
+
+    assert worker.epi_store is store and worker.kg_store is kg
+    assert worker.spatial_map is spat and worker.maintenance_interval == 0.5
+    assert isinstance(worker.stop_event, threading.Event)
