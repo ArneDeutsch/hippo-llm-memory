@@ -94,6 +94,23 @@ def test_schema_fast_track_routing_threshold() -> None:
     assert si.episodic_buffer == [low]
 
 
+def test_schema_fast_track_threshold() -> None:
+    """Only above-threshold tuples are written; low-confidence buffered."""
+
+    kg = KnowledgeGraph(config={"schema_threshold": 0.5})
+    kg.schema_index.add_schema("rel", "rel")
+
+    high = ("Alice", "rel", "Bob", "ctx", None, 0.51, 0)
+    low = ("Carol", "rel", "Dave", "ctx", None, 0.49, 1)
+
+    kg.ingest(high)
+    kg.ingest(low)
+
+    assert kg.graph.has_edge("Alice", "Bob")
+    assert not kg.graph.has_edge("Carol", "Dave")
+    assert kg.schema_index.episodic_buffer == [low]
+
+
 def test_gnn_update_and_rollback_restores_embeddings() -> None:
     """Upserts with embeddings survive prune via rollback."""
 
