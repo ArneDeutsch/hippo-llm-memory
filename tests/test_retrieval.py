@@ -30,3 +30,17 @@ def test_faiss_index_train_smoke() -> None:
     index.train(data)
     index.add(data[0])
     assert index.search(data[0], k=1) == [0]
+
+
+def test_faiss_index_remove() -> None:
+    """Vectors can be removed from the index and the size updates."""
+    index = FaissIndex(dim=4, use_pq=True, m=2)
+    train_data = [[1.0 if i % 4 == j else 0.0 for j in range(4)] for i in range(256)]
+    index.train(train_data)
+    for vec in train_data[:2]:
+        index.add(vec)
+    assert len(index) == 2
+    assert index.search(train_data[1], k=1) == [1]
+    index.remove(1)
+    assert len(index) == 1
+    assert index.search(train_data[1], k=1) != [1]
