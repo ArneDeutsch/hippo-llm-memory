@@ -113,6 +113,22 @@ def test_placegraph_maintenance_and_rollback() -> None:
     assert g._context_to_id["start"] == start_id
 
 
+def test_placegraph_maintenance_log_records_events() -> None:
+    """Decay and prune operations are logged in the maintenance log."""
+
+    g = PlaceGraph()
+    g.observe("a")
+    g.observe("b")
+
+    g.decay(0.1)
+    g.prune(max_age=0)
+
+    ops = [e["op"] for e in g._maintenance_log]
+    assert ops == ["decay", "prune"]
+    assert g._maintenance_log[0]["rate"] == 0.1
+    assert g._maintenance_log[1]["max_age"] == 0
+
+
 @st.composite
 def _graph_fixture(draw) -> tuple[PlaceGraph, str, str]:
     n = draw(st.integers(min_value=2, max_value=5))
