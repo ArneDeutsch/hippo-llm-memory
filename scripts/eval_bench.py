@@ -253,6 +253,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         "model": cfg.get("model", "mock"),
         "config_hash": cfg_hash,
         "ablate": flat_ablate,
+        "seed": cfg.seed,
     }
     with (outdir / "meta.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f)
