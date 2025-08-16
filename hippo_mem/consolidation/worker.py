@@ -19,8 +19,11 @@ import torch
 
 from hippo_mem.episodic.adapter import EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
+from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.adapter import RelationalAdapter
+from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import SpatialAdapter
+from hippo_mem.spatial.map import PlaceGraph
 
 
 class ConsolidationWorker(threading.Thread):
@@ -34,6 +37,10 @@ class ConsolidationWorker(threading.Thread):
         episodic_adapter: Optional[EpisodicAdapter] = None,
         relational_adapter: Optional[RelationalAdapter] = None,
         spatial_adapter: Optional[SpatialAdapter] = None,
+        episodic_store: Optional[EpisodicStore] = None,
+        kg_store: Optional[KnowledgeGraph] = None,
+        spatial_map: Optional[PlaceGraph] = None,
+        maintenance_interval: float = 3600.0,
         batch_size: int = 4,
         lr: float = 1e-4,
     ) -> None:
@@ -43,6 +50,11 @@ class ConsolidationWorker(threading.Thread):
         self.epi_adapter = episodic_adapter
         self.rel_adapter = relational_adapter
         self.spat_adapter = spatial_adapter
+        self.epi_store = episodic_store
+        self.kg_store = kg_store
+        self.spatial_map = spatial_map
+        self.maintenance_interval = maintenance_interval
+        self._maintenance_thread: Optional[threading.Thread] = None
         self.batch_size = batch_size
         self.stop_event = threading.Event()
         self.log = logging.getLogger(__name__)
@@ -77,9 +89,48 @@ class ConsolidationWorker(threading.Thread):
         self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
 
     # ------------------------------------------------------------------
+    def _start_maintenance(self) -> None:
+        if self._maintenance_thread is not None:
+            return
+        if not any([self.epi_store, self.kg_store, self.spatial_map]):
+            return
+
+        def loop() -> None:
+            while not self.stop_event.is_set():
+                if self.epi_store is not None:
+                    rate = float(self.epi_store.config.get("decay_rate", 0.0))
+                    if rate > 0:
+                        self.epi_store.decay(rate)
+                    cfg = self.epi_store.config.get("prune", {})
+                    self.epi_store.prune(
+                        float(cfg.get("min_salience", 0.1)),
+                        cfg.get("max_age"),
+                    )
+                if self.kg_store is not None:
+                    cfg = self.kg_store.config.get("prune", {})
+                    self.kg_store.prune(
+                        float(cfg.get("min_conf", 0.0)),
+                        cfg.get("max_age"),
+                    )
+                if self.spatial_map is not None:
+                    rate = float(self.spatial_map.config.get("decay_rate", 0.0))
+                    if rate > 0:
+                        self.spatial_map.decay(rate)
+                    cfg = self.spatial_map.config.get("prune", {})
+                    age = cfg.get("max_age")
+                    if age is not None:
+                        self.spatial_map.prune(int(age))
+                time.sleep(self.maintenance_interval)
+
+        t = threading.Thread(target=loop, daemon=True)
+        t.start()
+        self._maintenance_thread = t
+
+    # ------------------------------------------------------------------
     def run(self) -> None:  # pragma: no cover - exercised via thread
         """Main worker loop."""
 
+        self._start_maintenance()
         while not self.stop_event.is_set():
             batch = self.scheduler.next_batch(self.batch_size)
             self._log["batches"] += 1
