@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 import time
@@ -11,6 +12,8 @@ from typing import Any, List, Optional
 
 import faiss  # type: ignore
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -228,7 +231,7 @@ class EpisodicStore:
         try:
             self.index.remove_ids(ids)
         except Exception:
-            pass
+            logger.exception("Failed to remove id %s from index", idx)
         cur = self.conn.cursor()
         cur.execute("DELETE FROM traces WHERE id=?", (idx,))
         self.conn.commit()
@@ -248,7 +251,7 @@ class EpisodicStore:
             try:
                 self.index.remove_ids(ids)
             except Exception:
-                pass
+                logger.exception("Failed to remove id %s during update", idx)
             if self.index.is_trained:
                 self.index.add_with_ids(key_arr, ids)
             else:
@@ -304,7 +307,8 @@ class EpisodicStore:
         if not conditions:
             return
         where = " OR ".join(conditions)
-        cur.execute(f"SELECT id, value, key, ts, salience FROM traces WHERE {where}", params)
+        query = "SELECT id, value, key, ts, salience FROM traces WHERE " + where
+        cur.execute(query, params)
         rows = cur.fetchall()
         if not rows:
             return
