@@ -8,10 +8,12 @@ import sqlite3
 import threading
 import time
 from dataclasses import asdict, dataclass
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import faiss  # type: ignore
 import numpy as np
+
+from .gating import DGKey, densify, k_wta
 
 logger = logging.getLogger(__name__)
 
@@ -28,21 +30,12 @@ class TraceValue:
 
 
 @dataclass
-class DGKey:
-    """Sparse k-WTA encoded key."""
-
-    indices: np.ndarray
-    values: np.ndarray
-    dim: int
-
-
-@dataclass
 class Trace:
     """A retrieved memory trace."""
 
     id: int
     value: TraceValue
-    key: np.ndarray
+    key: DGKey
     score: float
     ts: float
     salience: float
@@ -58,6 +51,7 @@ class EpisodicStore:
         index_str: str = "Flat",
         train_threshold: int = 100,
         *,
+        k_wta: int = 0,
         config: Optional[dict] = None,
     ) -> None:
         """Create a store with given key dimensionality.
@@ -71,6 +65,7 @@ class EpisodicStore:
         """
 
         self.dim = dim
+        self.k_wta = k_wta
         base = faiss.index_factory(dim, index_str, faiss.METRIC_INNER_PRODUCT)
         self.index = faiss.IndexIDMap(base)
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -150,25 +145,31 @@ class EpisodicStore:
     def sparse_encode(self, query: np.ndarray, k: int) -> DGKey:
         """k-Winner-Take-All sparse encoding of ``query``."""
 
-        q = np.asarray(query, dtype="float32").reshape(-1)
-        if k <= 0:
-            return DGKey(
-                indices=np.empty(0, dtype=np.int64), values=np.empty(0, dtype="float32"), dim=q.size
-            )
-        k = min(k, q.size)
-        idx = np.argpartition(-np.abs(q), k - 1)[:k]
-        vals = q[idx]
-        return DGKey(indices=idx.astype("int64"), values=vals.astype("float32"), dim=q.size)
+        return k_wta(query, k)
+
+    def _to_dense(self, key: DGKey) -> np.ndarray:
+        """Convert ``key`` back to a dense vector."""
+
+        return densify(key)
 
     # ------------------------------------------------------------------
     # Public API
-    def write(self, key: np.ndarray, value: TraceValue | str) -> int:
+    def write(self, key: Union[np.ndarray, DGKey], value: TraceValue | str) -> int:
         """Store a key/value pair."""
 
         if isinstance(value, str):
             value = TraceValue(provenance=value)
 
-        key_arr = np.asarray(key, dtype="float32").reshape(1, -1)
+        if isinstance(key, np.ndarray):
+            if self.k_wta > 0:
+                key = self.sparse_encode(key, self.k_wta)
+            else:
+                idxs = np.nonzero(key)[0]
+                key = DGKey(
+                    indices=idxs.astype("int64"), values=key[idxs].astype("float32"), dim=key.size
+                )
+
+        key_arr = self._to_dense(key).reshape(1, -1)
         faiss.normalize_L2(key_arr)
         ts = time.time()
         salience = float(len(value.salience_tags) if value.salience_tags else 1.0)
@@ -210,11 +211,16 @@ class EpisodicStore:
             value_json, key_vec, ts, salience = trace
             value_dict = json.loads(value_json)
             value = TraceValue(**value_dict)
+            dg_key = DGKey(
+                indices=np.nonzero(key_vec)[0].astype("int64"),
+                values=key_vec[np.nonzero(key_vec)].astype("float32"),
+                dim=self.dim,
+            )
             traces.append(
                 Trace(
                     id=int(idx),
                     value=value,
-                    key=key_vec,
+                    key=dg_key,
                     score=float(score),
                     ts=ts,
                     salience=salience,
@@ -237,7 +243,10 @@ class EpisodicStore:
         self.conn.commit()
 
     def update(
-        self, idx: int, key: Optional[np.ndarray] = None, value: Optional[TraceValue] = None
+        self,
+        idx: int,
+        key: Optional[Union[np.ndarray, DGKey]] = None,
+        value: Optional[TraceValue] = None,
     ) -> None:
         """Update the key and/or value for an existing trace."""
 
@@ -245,7 +254,17 @@ class EpisodicStore:
         if value is not None:
             cur.execute("UPDATE traces SET value=? WHERE id=?", (json.dumps(asdict(value)), idx))
         if key is not None:
-            key_arr = np.asarray(key, dtype="float32").reshape(1, -1)
+            if isinstance(key, np.ndarray):
+                if self.k_wta > 0:
+                    key = self.sparse_encode(key, self.k_wta)
+                else:
+                    idxs = np.nonzero(key)[0]
+                    key = DGKey(
+                        indices=idxs.astype("int64"),
+                        values=key[idxs].astype("float32"),
+                        dim=key.size,
+                    )
+            key_arr = self._to_dense(key).reshape(1, -1)
             faiss.normalize_L2(key_arr)
             ids = np.array([idx], dtype="int64")
             try:
@@ -268,7 +287,7 @@ class EpisodicStore:
         traces = self.recall(query, k)
         if not traces:
             return np.asarray(query, dtype="float32")
-        patterns = np.stack([t.key for t in traces])
+        patterns = np.stack([self._to_dense(t.key) for t in traces])
         q = np.asarray(query, dtype="float32")
         scores = patterns @ q
         weights = np.exp(self.beta * (scores - np.max(scores)))

@@ -10,6 +10,44 @@ import faiss  # type: ignore
 import numpy as np
 
 
+@dataclass
+class DGKey:
+    """Sparse k-WTA encoded key used by the episodic store."""
+
+    indices: np.ndarray
+    values: np.ndarray
+    dim: int
+
+
+def k_wta(query: np.ndarray, k: int) -> DGKey:
+    """Project ``query`` to a sparse key keeping the ``k`` largest magnitudes.
+
+    Args:
+        query: Dense input vector of shape ``(dim,)``.
+        k: Number of winners to keep. ``k <= 0`` yields an empty key.
+    """
+
+    q = np.asarray(query, dtype="float32").reshape(-1)
+    if k <= 0:
+        return DGKey(
+            indices=np.empty(0, dtype=np.int64),
+            values=np.empty(0, dtype="float32"),
+            dim=q.size,
+        )
+    k = min(k, q.size)
+    idx = np.argpartition(-np.abs(q), k - 1)[:k]
+    vals = q[idx]
+    return DGKey(indices=idx.astype("int64"), values=vals.astype("float32"), dim=q.size)
+
+
+def densify(key: DGKey) -> np.ndarray:
+    """Convert a :class:`DGKey` back to a dense ``float32`` vector."""
+
+    dense = np.zeros(key.dim, dtype="float32")
+    dense[key.indices] = key.values
+    return dense
+
+
 def surprise(prob: float) -> float:
     """Return the information content ``-log(p)`` of an event."""
 
