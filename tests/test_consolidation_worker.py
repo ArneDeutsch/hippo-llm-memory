@@ -4,6 +4,7 @@ import time
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 import torch
 
 from hippo_mem.consolidation.worker import ConsolidationWorker
@@ -11,6 +12,8 @@ from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
+from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
+from hippo_mem.spatial.adapter import SpatialAdapter
 
 
 class _BatchMix(SimpleNamespace):
@@ -41,3 +44,45 @@ def test_worker_updates_adapter() -> None:
 
     after = adapter.q_proj.lora_B
     assert not torch.equal(before, after), "adapter parameters should update"
+
+
+def test_worker_updates_spatial_adapter() -> None:
+    """Worker also updates the spatial adapter on fresh items."""
+
+    hidden = 4
+    store = EpisodicStore(hidden)
+    kg = KnowledgeGraph()
+    scheduler = ReplayScheduler(
+        store, kg, batch_mix=_BatchMix(episodic=0.0, semantic=0.0, fresh=1.0)
+    )
+
+    model = torch.nn.Linear(hidden, hidden)
+    spat_cfg = SpatialAdapterConfig(hidden_size=hidden, num_heads=1, lora_r=hidden, enabled=True)
+    adapter = SpatialAdapter(spat_cfg)
+    before = adapter.q_proj.lora_B.clone()
+
+    worker = ConsolidationWorker(scheduler, model, spatial_adapter=adapter, batch_size=1)
+    worker.start()
+    time.sleep(0.1)
+    worker.stop()
+    worker.join(timeout=1)
+
+    after = adapter.q_proj.lora_B
+    assert not torch.equal(before, after), "spatial adapter parameters should update"
+
+
+def test_worker_requires_gradients() -> None:
+    """Initialisation fails when adapters have no trainable params."""
+
+    hidden = 4
+    store = EpisodicStore(hidden)
+    kg = KnowledgeGraph()
+    scheduler = ReplayScheduler(store, kg, batch_mix=_BatchMix())
+    scheduler.add_trace("t1", np.zeros(hidden, dtype=np.float32), score=1.0)
+
+    model = torch.nn.Linear(hidden, hidden)
+    cfg = AdapterConfig(hidden_size=hidden, num_heads=1, lora_r=0, enabled=True)
+    adapter = EpisodicAdapter(cfg)
+
+    with pytest.raises(ValueError):
+        ConsolidationWorker(scheduler, model, episodic_adapter=adapter)

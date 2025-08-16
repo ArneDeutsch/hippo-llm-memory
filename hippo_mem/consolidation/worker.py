@@ -1,9 +1,9 @@
 """Background consolidation worker for replay-based finetuning.
 
 The worker runs in a daemon thread and periodically asks the
-:class:`~hippo_mem.episodic.replay.ReplayScheduler` for replay batches.  Based
+:class:`~hippo_mem.episodic.replay.ReplayScheduler` for replay batches. Based
 on the kind of replay item it performs a tiny optimisation step on the
-corresponding LoRA adapter while keeping the base model frozen.  This is a
+corresponding LoRA adapter while keeping the base model frozen. This is a
 light‑weight stand‑in for a more realistic consolidation process.
 """
 
@@ -79,12 +79,18 @@ class ConsolidationWorker(threading.Thread):
                 if "lora_" in name:
                     p.requires_grad_(True)
 
-        # Optimise only the parameters of the adapters.
+        # Collect trainable parameters and ensure they actually require grads.
         params = []
         if episodic_adapter is not None:
-            params.extend(episodic_adapter.parameters())
+            epi_params = [p for p in episodic_adapter.parameters() if p.requires_grad]
+            if not epi_params:
+                raise ValueError("episodic_adapter has no trainable parameters")
+            params.extend(epi_params)
         if spatial_adapter is not None:
-            params.extend(spatial_adapter.parameters())
+            spat_params = [p for p in spatial_adapter.parameters() if p.requires_grad]
+            if not spat_params:
+                raise ValueError("spatial_adapter has no trainable parameters")
+            params.extend(spat_params)
         # ``RelationalAdapter`` is stateless in this toy setup.
         self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
 
@@ -127,6 +133,49 @@ class ConsolidationWorker(threading.Thread):
         self._maintenance_thread = t
 
     # ------------------------------------------------------------------
+    def _optim_step(self, loss: torch.Tensor) -> None:
+        if self.optimizer is None:
+            return
+        if not loss.requires_grad:
+            raise RuntimeError("loss does not require gradients")
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+    def _step_episodic(self) -> None:
+        if self.epi_adapter is None:
+            return
+        h = torch.randn(1, 1, self.epi_adapter.hidden_size)
+        m = torch.randn(1, 1, self.epi_adapter.hidden_size)
+        out = self.epi_adapter(h, m)
+        loss = out.sum()
+        loss = loss + sum(
+            p.sum() for name, p in self.epi_adapter.named_parameters() if "lora_" in name
+        )
+        self._optim_step(loss)
+        self.log.debug("episodic adapter step")
+
+    def _step_semantic(self) -> None:
+        if self.rel_adapter is None:
+            return
+        q = np.zeros(1, dtype=float)
+        k = np.zeros((1, 1), dtype=float)
+        self.rel_adapter(q, k)
+        self.log.debug("relational adapter step")
+
+    def _step_fresh(self) -> None:
+        if self.spat_adapter is None:
+            return
+        h = torch.randn(1, 1, self.spat_adapter.hidden_size)
+        p = torch.randn(1, 1, self.spat_adapter.hidden_size)
+        out = self.spat_adapter(h, p)
+        loss = out.sum()
+        loss = loss + sum(
+            p.sum() for name, p in self.spat_adapter.named_parameters() if "lora_" in name
+        )
+        self._optim_step(loss)
+        self.log.debug("spatial adapter step")
+
     def run(self) -> None:  # pragma: no cover - exercised via thread
         """Main worker loop."""
 
@@ -137,41 +186,12 @@ class ConsolidationWorker(threading.Thread):
             for kind, _ in batch:
                 if self.stop_event.is_set():
                     break
-                if kind == "episodic" and self.epi_adapter is not None:
-                    h = torch.randn(1, 1, self.epi_adapter.hidden_size)
-                    m = torch.randn(1, 1, self.epi_adapter.hidden_size)
-                    out = self.epi_adapter(h, m)
-                    loss = out.sum()
-                    loss = loss + sum(
-                        p.sum()
-                        for name, p in self.epi_adapter.named_parameters()
-                        if "lora_" in name
-                    )
-                    if self.optimizer is not None:
-                        self.optimizer.zero_grad()
-                        loss.backward()
-                        self.optimizer.step()
-                    self.log.debug("episodic adapter step")
-                elif kind == "semantic" and self.rel_adapter is not None:
-                    q = np.zeros(1, dtype=float)
-                    k = np.zeros((1, 1), dtype=float)
-                    self.rel_adapter(q, k)
-                    self.log.debug("relational adapter step")
-                elif kind == "fresh" and self.spat_adapter is not None:
-                    h = torch.randn(1, 1, self.spat_adapter.hidden_size)
-                    p = torch.randn(1, 1, self.spat_adapter.hidden_size)
-                    out = self.spat_adapter(h, p)
-                    loss = out.sum()
-                    loss = loss + sum(
-                        p.sum()
-                        for name, p in self.spat_adapter.named_parameters()
-                        if "lora_" in name
-                    )
-                    if self.optimizer is not None:
-                        self.optimizer.zero_grad()
-                        loss.backward()
-                    self.optimizer.step()
-                    self.log.debug("spatial adapter step")
+                if kind == "episodic":
+                    self._step_episodic()
+                elif kind == "semantic":
+                    self._step_semantic()
+                elif kind == "fresh":
+                    self._step_fresh()
             time.sleep(0.01)
 
     def log_status(self) -> dict:
