@@ -19,8 +19,11 @@ import torch
 
 from hippo_mem.episodic.adapter import EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
+from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.adapter import RelationalAdapter
+from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import SpatialAdapter
+from hippo_mem.spatial.map import PlaceGraph
 
 
 class ConsolidationWorker(threading.Thread):
@@ -34,8 +37,12 @@ class ConsolidationWorker(threading.Thread):
         episodic_adapter: Optional[EpisodicAdapter] = None,
         relational_adapter: Optional[RelationalAdapter] = None,
         spatial_adapter: Optional[SpatialAdapter] = None,
+        episodic_store: Optional[EpisodicStore] = None,
+        relational_store: Optional[KnowledgeGraph] = None,
+        spatial_store: Optional[PlaceGraph] = None,
         batch_size: int = 4,
         lr: float = 1e-4,
+        maintenance_interval: float = 600.0,
     ) -> None:
         super().__init__(daemon=True)
         self.scheduler = scheduler
@@ -43,10 +50,15 @@ class ConsolidationWorker(threading.Thread):
         self.epi_adapter = episodic_adapter
         self.rel_adapter = relational_adapter
         self.spat_adapter = spatial_adapter
+        self.epi_store = episodic_store
+        self.rel_store = relational_store
+        self.spat_store = spatial_store
         self.batch_size = batch_size
         self.stop_event = threading.Event()
         self.log = logging.getLogger(__name__)
         self._log = {"batches": 0}
+        self._maintenance_interval = maintenance_interval
+        self._maint_thread: Optional[threading.Thread] = None
 
         # Freeze the base model parameters if possible.
         params_fn = getattr(model, "parameters", None)
@@ -75,6 +87,12 @@ class ConsolidationWorker(threading.Thread):
             params.extend(spatial_adapter.parameters())
         # ``RelationalAdapter`` is stateless in this toy setup.
         self.optimizer = torch.optim.Adam(params, lr=lr) if params else None
+
+        if any([self.epi_store, self.rel_store, self.spat_store]):
+            self._maint_thread = threading.Thread(
+                target=self._maintenance_loop, daemon=True
+            )
+            self._maint_thread.start()
 
     # ------------------------------------------------------------------
     def run(self) -> None:  # pragma: no cover - exercised via thread
@@ -133,6 +151,28 @@ class ConsolidationWorker(threading.Thread):
         """Signal the worker to exit."""
 
         self.stop_event.set()
+        if self._maint_thread is not None:
+            self._maint_thread.join(timeout=0.1)
+
+    # ------------------------------------------------------------------
+    def _maintenance_loop(self) -> None:  # pragma: no cover - thread
+        stores = [self.epi_store, self.rel_store, self.spat_store]
+        while not self.stop_event.is_set():
+            time.sleep(self._maintenance_interval)
+            for store in stores:
+                if store is None:
+                    continue
+                rate = float(getattr(store, "config", {}).get("decay_rate", 0.0))
+                if rate > 0 and hasattr(store, "decay"):
+                    store.decay(rate)
+                cfg = getattr(store, "config", {}).get("prune", {})
+                if cfg and hasattr(store, "prune"):
+                    if isinstance(cfg, dict):
+                        store.prune(**cfg)
+                    else:
+                        store.prune(cfg)
+                if hasattr(store, "_log"):
+                    store._log["maintenance"] = store._log.get("maintenance", 0) + 1
 
 
 __all__ = ["ConsolidationWorker"]

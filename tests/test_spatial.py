@@ -52,3 +52,14 @@ def test_macro_replay_improves_success() -> None:
 
     improved = lib.suggest("s", "g", k=1)[0].name
     assert improved == "good"
+
+
+def test_placegraph_rollback_recovers_pruned_node() -> None:
+    g = PlaceGraph()
+    g.observe("a")
+    g.observe("b")
+    g.decay(0.5)
+    g.prune(max_age=0)
+    assert "a" not in g._context_to_id
+    g.rollback(2)
+    assert "a" in g._context_to_id

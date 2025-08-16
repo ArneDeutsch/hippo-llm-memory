@@ -85,6 +85,9 @@ class EpisodicStore:
         self.config = config or {}
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
+        # Maintenance bookkeeping
+        self._history: List[tuple[str, object]] = []
+        self._maint_log_path = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
     # SQLite helpers
@@ -259,15 +262,17 @@ class EpisodicStore:
     # Forgetting
     def decay(self, rate: float) -> None:
         """Apply exponential decay to salience values."""
-
         factor = max(0.0, 1.0 - rate)
         cur = self.conn.cursor()
         cur.execute("UPDATE traces SET salience = salience * ?", (factor,))
         self.conn.commit()
+        self._history.append(("decay", rate))
+        if self._maint_log_path:
+            with open(self._maint_log_path, "a") as fh:
+                fh.write(f"{time.time()} decay {rate}\n")
 
     def prune(self, min_salience: float = 0.1, max_age: Optional[float] = None) -> None:
         """Remove traces whose salience or age fall below thresholds."""
-
         cur = self.conn.cursor()
         conditions: List[str] = []
         params: List[float] = []
@@ -281,10 +286,17 @@ class EpisodicStore:
         if not conditions:
             return
         where = " OR ".join(conditions)
-        cur.execute(f"SELECT id FROM traces WHERE {where}", params)
-        ids = [r[0] for r in cur.fetchall()]
-        for idx in ids:
+        cur.execute(f"SELECT id, value, key, ts, salience FROM traces WHERE {where}", params)
+        rows = cur.fetchall()
+        removed = []
+        for idx, value_json, key_blob, ts, sal in rows:
+            removed.append((idx, value_json, key_blob, ts, sal))
             self.delete(int(idx))
+        if removed:
+            self._history.append(("prune", removed))
+            if self._maint_log_path:
+                with open(self._maint_log_path, "a") as fh:
+                    fh.write(f"{time.time()} prune {len(removed)}\n")
 
     # ------------------------------------------------------------------
     # Logging and maintenance
@@ -315,3 +327,32 @@ class EpisodicStore:
         t = threading.Thread(target=loop, daemon=True)
         t.start()
         self._bg_thread = t
+
+    def rollback(self, n: int = 1) -> None:
+        """Undo the last ``n`` maintenance operations."""
+
+        cur = self.conn.cursor()
+        for _ in range(min(n, len(self._history))):
+            op, data = self._history.pop()
+            if op == "decay":
+                rate = float(data)
+                factor = max(0.0, 1.0 - rate)
+                if factor > 0:
+                    cur.execute("UPDATE traces SET salience = salience / ?", (factor,))
+                    self.conn.commit()
+            elif op == "prune":
+                for idx, value_json, key_blob, ts, sal in data:  # type: ignore
+                    cur.execute(
+                        "INSERT OR REPLACE INTO traces(id, value, key, ts, salience) VALUES (?,?,?,?,?)",
+                        (idx, value_json, key_blob, ts, sal),
+                    )
+                    key_vec = np.frombuffer(key_blob, dtype="float32")
+                    faiss.normalize_L2(key_vec.reshape(1, -1))
+                    if self.index.is_trained:
+                        self.index.add_with_ids(
+                            key_vec.reshape(1, -1), np.array([idx], dtype="int64")
+                        )
+                    else:
+                        self._pending_keys.append(key_vec)
+                        self._pending_ids.append(idx)
+                self.conn.commit()

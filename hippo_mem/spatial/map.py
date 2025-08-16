@@ -14,6 +14,7 @@ import heapq
 import math
 import threading
 import time
+import copy
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -74,6 +75,9 @@ class PlaceGraph:
         self.config = config or {}
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
+        # Maintenance bookkeeping
+        self._history: List[tuple[str, object]] = []
+        self._maint_log_path = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
     # Observation and graph construction
@@ -226,7 +230,6 @@ class PlaceGraph:
     # Maintenance and logging
     def decay(self, rate: float) -> None:
         """Exponentially decay all positions toward the origin."""
-
         factor = max(0.0, 1.0 - rate)
         for place in self.encoder._cache.values():
             x, y = place.coord
@@ -236,10 +239,20 @@ class PlaceGraph:
         if self._last_coord is not None:
             lx, ly = self._last_coord
             self._last_coord = (lx * factor, ly * factor)
+        self._history.append(("decay", rate))
+        if self._maint_log_path:
+            with open(self._maint_log_path, "a") as fh:
+                fh.write(f"{time.time()} decay {rate}\n")
 
     def prune(self, max_age: int) -> None:
         """Drop edges and places not observed within ``max_age`` steps."""
 
+        snapshot = (
+            copy.deepcopy(self.encoder._cache),
+            copy.deepcopy(self._context_to_id),
+            copy.deepcopy(self._id_to_context),
+            copy.deepcopy(self.graph),
+        )
         threshold = self._step - max_age
         for context, place in list(self.encoder._cache.items()):
             if place.last_seen < threshold:
@@ -258,6 +271,10 @@ class PlaceGraph:
                 if context is not None:
                     self._context_to_id.pop(context, None)
                 del self.graph[a]
+        self._history.append(("prune", snapshot))
+        if self._maint_log_path:
+            with open(self._maint_log_path, "a") as fh:
+                fh.write(f"{time.time()} prune\n")
 
     def log_status(self) -> dict:
         return dict(self._log)
@@ -281,3 +298,28 @@ class PlaceGraph:
         t = threading.Thread(target=loop, daemon=True)
         t.start()
         self._bg_thread = t
+
+    def rollback(self, n: int = 1) -> None:
+        """Undo the last ``n`` maintenance operations."""
+
+        for _ in range(min(n, len(self._history))):
+            op, data = self._history.pop()
+            if op == "decay":
+                rate = float(data)
+                factor = max(0.0, 1.0 - rate)
+                if factor > 0:
+                    inv = 1.0 / factor
+                    for place in self.encoder._cache.values():
+                        x, y = place.coord
+                        place.coord = (x * inv, y * inv)
+                    px, py = self._position
+                    self._position = (px * inv, py * inv)
+                    if self._last_coord is not None:
+                        lx, ly = self._last_coord
+                        self._last_coord = (lx * inv, ly * inv)
+            elif op == "prune":
+                cache, c2i, i2c, graph = data  # type: ignore
+                self.encoder._cache = cache
+                self._context_to_id = c2i
+                self._id_to_context = i2c
+                self.graph = graph

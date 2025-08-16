@@ -52,3 +52,12 @@ def test_dual_path_fusion_deterministic() -> None:
 
     assert np.allclose(out1, out2)
     assert np.allclose(out1, expected)
+
+
+def test_kg_rollback_restores_edge() -> None:
+    kg = KnowledgeGraph()
+    kg.upsert("A", "rel", "B", "ctx", conf=0.2)
+    kg.prune(min_conf=0.5)
+    assert kg.graph.number_of_edges() == 0
+    kg.rollback(1)
+    assert kg.graph.has_edge("A", "B")

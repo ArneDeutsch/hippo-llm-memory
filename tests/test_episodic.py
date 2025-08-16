@@ -87,3 +87,15 @@ def test_delete_removes_trace() -> None:
 
     results2 = store.recall(key2, k=1)
     assert results2 and results2[0].id == id2
+
+
+def test_episodic_rollback_restores_pruned_trace() -> None:
+    store = EpisodicStore(dim=4)
+    key = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+    tid = store.write(key, TraceValue(provenance="alpha"))
+    store.decay(0.5)
+    store.prune(min_salience=0.9)
+    assert store.recall(key, k=1) == []
+    store.rollback(2)
+    results = store.recall(key, k=1)
+    assert results and results[0].id == tid

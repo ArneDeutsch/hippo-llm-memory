@@ -29,6 +29,9 @@ class KnowledgeGraph:
         self.schema_index = SchemaIndex(threshold=thresh)
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
+        # Maintenance bookkeeping
+        self._history: list[tuple[str, object]] = []
+        self._maint_log_path = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
     # Database utilities
@@ -107,7 +110,8 @@ class KnowledgeGraph:
             (tail, self._to_json(tail_embedding)),
         )
         cur.execute(
-            "INSERT INTO edges(src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?)",
+            "INSERT INTO edges(src, relation, dst, context, time, conf, "
+            "provenance, embedding) VALUES (?,?,?,?,?,?,?,?)",
             (
                 head,
                 relation,
@@ -214,21 +218,37 @@ class KnowledgeGraph:
             cutoff = time.time() - max_age
             conditions.append("(time IS NOT NULL AND CAST(time AS REAL) < ?)")
             params.append(cutoff)
+        removed_edges: list[tuple[int, str, str, dict]] = []
         if conditions:
             where = " OR ".join(conditions)
-            cur.execute(f"SELECT id, src, dst FROM edges WHERE {where}", params)
+            cur.execute(
+                f"SELECT id, src, dst FROM edges WHERE {where}", params
+            )
             rows = cur.fetchall()
             for edge_id, src, dst in rows:
+                data = dict(self.graph[src][dst][edge_id])
+                removed_edges.append((edge_id, src, dst, data))
                 if self.graph.has_edge(src, dst, key=edge_id):
                     self.graph.remove_edge(src, dst, key=edge_id)
                 cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
             self.conn.commit()
 
         isolated = [n for n in list(self.graph.nodes()) if self.graph.degree(n) == 0]
+        removed_nodes: list[tuple[str, Optional[np.ndarray]]] = []
         for n in isolated:
+            removed_nodes.append((n, self.node_embeddings.get(n)))
             self.graph.remove_node(n)
             cur.execute("DELETE FROM nodes WHERE name=?", (n,))
+            self.node_embeddings.pop(n, None)
         self.conn.commit()
+
+        if removed_edges or removed_nodes:
+            self._history.append(("prune", {"edges": removed_edges, "nodes": removed_nodes}))
+            if self._maint_log_path:
+                with open(self._maint_log_path, "a") as fh:
+                    fh.write(
+                        f"{time.time()} prune {len(removed_edges)} {len(removed_nodes)}\n"
+                    )
 
     def log_status(self) -> dict:
         return dict(self._log)
@@ -250,6 +270,42 @@ class KnowledgeGraph:
         t = threading.Thread(target=loop, daemon=True)
         t.start()
         self._bg_thread = t
+
+    def rollback(self, n: int = 1) -> None:
+        """Undo the last ``n`` prune operations."""
+
+        cur = self.conn.cursor()
+        for _ in range(min(n, len(self._history))):
+            op, data = self._history.pop()
+            if op != "prune":
+                continue
+            payload = data  # type: ignore
+            for name, emb in payload.get("nodes", []):
+                self.graph.add_node(name)
+                cur.execute(
+                    "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
+                    (name, self._to_json(emb)),
+                )
+                if emb is not None:
+                    self.node_embeddings[name] = np.asarray(emb, dtype=float)
+            for edge_id, src, dst, attrs in payload.get("edges", []):
+                self.graph.add_edge(src, dst, key=edge_id, **attrs)
+                cur.execute(
+                    "INSERT INTO edges(id, src, relation, dst, context, time, conf, "
+                    "provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (
+                        edge_id,
+                        src,
+                        attrs.get("relation"),
+                        dst,
+                        attrs.get("context"),
+                        attrs.get("time"),
+                        attrs.get("conf"),
+                        attrs.get("provenance"),
+                        self._to_json(attrs.get("embedding")),
+                    ),
+                )
+            self.conn.commit()
 
 
 __all__ = ["KnowledgeGraph"]
