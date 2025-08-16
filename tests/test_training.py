@@ -296,3 +296,65 @@ def test_cli_respects_ablation_flags(monkeypatch) -> None:
     output = proc.stdout + proc.stderr
     assert "scheduler=disabled" in output
     assert "worker=disabled" in output
+
+
+def test_train_respects_hopfield_flag(monkeypatch) -> None:
+    """Setting ``episodic.hopfield=false`` bypasses completion calls."""
+
+    class DummyStore:
+        instance = None
+
+        def __init__(self, _hidden, config=None) -> None:
+            self.config = config or {}
+            self.complete_called = False
+            DummyStore.instance = self
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> dict:
+            return {}
+
+        def complete(self, query, k=1):  # pragma: no cover - should not run
+            self.complete_called = True
+            return query
+
+    class DummyKG:
+        def __init__(self, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> dict:
+            return {}
+
+    class DummyMap:
+        def __init__(self, path_integration=False, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> dict:
+            return {}
+
+    def fake_loader(_cfg: TrainConfig):
+        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
+        model.gradient_checkpointing_enable = lambda: None
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return model, tokenizer
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+
+    cfg = parse_args(["dry_run=true", "episodic.hopfield=false", "replay.enabled=false"])
+    train(cfg)
+
+    store = DummyStore.instance
+    assert store is not None
+    assert store.config["hopfield"] is False
+    assert store.complete_called is False

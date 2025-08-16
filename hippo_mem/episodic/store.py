@@ -283,6 +283,8 @@ class EpisodicStore:
     # Hopfield completion
     def complete(self, query: np.ndarray, k: int = 1) -> np.ndarray:
         """Return a Hopfield-based completion of ``query`` using recalled keys."""
+        if not self.config.get("hopfield", True):
+            return np.asarray(query, dtype="float32")
 
         traces = self.recall(query, k)
         if not traces:
