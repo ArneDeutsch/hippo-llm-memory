@@ -37,6 +37,20 @@ def test_partial_cue_recall_under_distractors() -> None:
     assert results and results[0].value.provenance == "target"
 
 
+def test_hopfield_completion_restores_sparse_cue() -> None:
+    """Hopfield completion reconstructs the full key from a partial cue."""
+
+    store = EpisodicStore(dim=4)
+    full = np.array([1.0, 1.0, 0.0, 0.0], dtype="float32")
+    store.write(full, TraceValue(provenance="full"))
+
+    partial = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+    completed = store.complete(partial, k=1)
+
+    cos = float(np.dot(completed, full) / (np.linalg.norm(completed) * np.linalg.norm(full)))
+    assert cos >= 0.9
+
+
 def test_gating_threshold_and_pin() -> None:
     """Gating blocks low-salience writes but pin overrides."""
 
