@@ -1,7 +1,5 @@
 """Replay queue utilities for episodic memory."""
 
-from __future__ import annotations
-
 import random
 import time
 from dataclasses import dataclass
@@ -23,6 +21,7 @@ class ReplayItem:
     step: int
     diversity_sig: float
     grad_overlap_proxy: Optional[float]
+    grad: Optional[np.ndarray]
     timestamp: float
 
 
@@ -71,6 +70,7 @@ class ReplayQueue:
         score: float,
         *,
         grad_overlap_proxy: Optional[float] = None,
+        grad: Optional[np.ndarray] = None,
         timestamp: float | None = None,
     ) -> None:
         """Add a trace with associated key and gating score ``S``."""
@@ -92,14 +92,23 @@ class ReplayQueue:
             step=self.step,
             diversity_sig=diversity,
             grad_overlap_proxy=grad_overlap_proxy,
+            grad=np.asarray(grad, dtype="float32") if grad is not None else None,
             timestamp=timestamp,
         )
         self.items.append(item)
         if len(self.items) > self.maxlen:
             self.items.pop(0)
 
-    def sample(self, k: int) -> List[str]:
-        """Return ``k`` trace identifiers in priority order."""
+    def _cosine(self, a: np.ndarray, b: np.ndarray) -> float:
+        """Return cosine similarity between vectors."""
+
+        denom = float(np.linalg.norm(a) * np.linalg.norm(b))
+        if denom == 0.0:
+            return 0.0
+        return float(np.dot(a, b) / denom)
+
+    def sample(self, k: int, *, grad_sim_threshold: float = 0.9) -> List[str]:
+        """Return ``k`` trace identifiers prioritising low gradient overlap."""
 
         if not self.items:
             return []
@@ -116,8 +125,30 @@ class ReplayQueue:
                 + self.lambda3 * diversity_component
             )
             priorities.append(p)
-        order = np.argsort(priorities)[::-1]
-        return [self.items[i].trace_id for i in order[:k]]
+        order = list(np.argsort(priorities)[::-1])
+        selected: List[int] = []
+        skipped: List[int] = []
+        last_grad: Optional[np.ndarray] = None
+        while order and len(selected) < k:
+            idx = order.pop(0)
+            item = self.items[idx]
+            if last_grad is not None and item.grad is not None:
+                if self._cosine(last_grad, item.grad) >= grad_sim_threshold:
+                    skipped.append(idx)
+                    continue
+            selected.append(idx)
+            if item.grad is not None:
+                last_grad = item.grad
+        while skipped and len(selected) < k:
+            idx = skipped.pop(0)
+            item = self.items[idx]
+            if last_grad is not None and item.grad is not None:
+                if self._cosine(last_grad, item.grad) >= grad_sim_threshold:
+                    continue
+            selected.append(idx)
+            if item.grad is not None:
+                last_grad = item.grad
+        return [self.items[i].trace_id for i in selected]
 
 
 class BatchMixLike(Protocol):
@@ -142,11 +173,13 @@ class ReplayScheduler:
         kg: KnowledgeGraph,
         *,
         batch_mix: BatchMixLike,
+        grad_sim_threshold: float = 0.9,
     ) -> None:
         self.store = store
         self.kg = kg
         self.batch_mix = batch_mix
         self.queue = ReplayQueue()
+        self.grad_sim_threshold = grad_sim_threshold
         self._log = {"batches": 0}
 
     def add_trace(
@@ -156,6 +189,7 @@ class ReplayScheduler:
         score: float,
         *,
         grad_overlap_proxy: Optional[float] = None,
+        grad: Optional[np.ndarray] = None,
         timestamp: float | None = None,
     ) -> None:
         """Proxy for :meth:`ReplayQueue.add` to enqueue traces."""
@@ -165,6 +199,7 @@ class ReplayScheduler:
             key,
             score,
             grad_overlap_proxy=grad_overlap_proxy,
+            grad=grad,
             timestamp=timestamp,
         )
 
@@ -184,7 +219,9 @@ class ReplayScheduler:
         n_epi = int(self.batch_mix.episodic * batch_size)
         n_sem = int(self.batch_mix.semantic * batch_size)
 
-        epi_ids = self.queue.sample(n_epi) if n_epi else []
+        epi_ids = (
+            self.queue.sample(n_epi, grad_sim_threshold=self.grad_sim_threshold) if n_epi else []
+        )
         # If we requested more episodic items than available fill with ``None``
         epi_ids.extend([None] * (n_epi - len(epi_ids)))
 

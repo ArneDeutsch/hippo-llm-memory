@@ -9,6 +9,7 @@ import torch
 
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate
+from hippo_mem.episodic.replay import ReplayQueue
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
 
 
@@ -145,3 +146,18 @@ def test_update_logs_index_error(caplog: pytest.LogCaptureFixture) -> None:
         with caplog.at_level(logging.ERROR):
             store.update(idx, key=new_key)
     assert "Failed to remove id" in caplog.text
+
+
+def test_replay_queue_avoids_consecutive_gradients() -> None:
+    """High-overlap gradients are not scheduled back-to-back."""
+
+    queue = ReplayQueue(lambda1=1.0, lambda2=0.0, lambda3=0.0)
+    g_a = np.array([1.0, 0.0], dtype="float32")
+    g_b = np.array([0.0, 1.0], dtype="float32")
+    g_c = np.array([1.0, 0.0], dtype="float32")
+    queue.add("a", g_a, score=1.0, grad=g_a)
+    queue.add("b", g_b, score=0.8, grad=g_b)
+    queue.add("c", g_a, score=0.9, grad=g_c)
+    ids = queue.sample(3, grad_sim_threshold=0.99)
+    for x, y in zip(ids, ids[1:]):
+        assert {x, y} != {"a", "c"}
