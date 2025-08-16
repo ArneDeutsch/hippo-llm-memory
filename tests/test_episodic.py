@@ -1,5 +1,8 @@
 """Tests for the episodic memory store."""
 
+import logging
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -87,3 +90,30 @@ def test_delete_removes_trace() -> None:
 
     results2 = store.recall(key2, k=1)
     assert results2 and results2[0].id == id2
+
+
+def test_delete_logs_index_error(caplog: pytest.LogCaptureFixture) -> None:
+    """Errors removing from FAISS index are logged."""
+
+    store = EpisodicStore(dim=4)
+    key = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+    idx = store.write(key, TraceValue(provenance="alpha"))
+
+    with patch.object(store.index, "remove_ids", side_effect=RuntimeError("boom")):
+        with caplog.at_level(logging.ERROR):
+            store.delete(idx)
+    assert "Failed to remove id" in caplog.text
+
+
+def test_update_logs_index_error(caplog: pytest.LogCaptureFixture) -> None:
+    """Update logs failures from FAISS removal."""
+
+    store = EpisodicStore(dim=4)
+    key = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+    idx = store.write(key, TraceValue(provenance="alpha"))
+
+    new_key = np.array([0.0, 1.0, 0.0, 0.0], dtype="float32")
+    with patch.object(store.index, "remove_ids", side_effect=RuntimeError("boom")):
+        with caplog.at_level(logging.ERROR):
+            store.update(idx, key=new_key)
+    assert "Failed to remove id" in caplog.text
