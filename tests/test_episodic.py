@@ -249,7 +249,7 @@ def test_sparse_encode_k_wta_idempotent(vec: np.ndarray, k: int) -> None:
     dense = np.zeros(vec.size, dtype="float32")
     dense[key.indices] = key.values
     key2 = store.sparse_encode(dense, k)
-    assert np.array_equal(key.indices, key2.indices)
+    assert np.array_equal(np.sort(key.indices), np.sort(key2.indices))
     assert np.allclose(key.values, key2.values)
 
 
