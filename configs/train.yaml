@@ -16,4 +16,5 @@ gating_weights:
 # Efficiency toggles.
 efficiency:
   flash_attention: false
+  mqa_gqa: null
 

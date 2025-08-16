@@ -277,6 +277,94 @@ def test_flash_attention_toggle(monkeypatch) -> None:
     assert called.get("impl") == "flash_attention_2"
 
 
+def test_train_respects_mqa_gqa_flag(monkeypatch) -> None:
+    """Setting efficiency.mqa_gqa adjusts adapter KV heads."""
+
+    def fake_loader(_cfg: TrainConfig):
+        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
+        model.gradient_checkpointing_enable = lambda: None
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return model, tokenizer
+
+    class DummyStore:
+        def __init__(self, _hidden, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:
+            return "store"
+
+    class DummyKG:
+        def __init__(self, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:
+            return "kg"
+
+    class DummyMap:
+        def __init__(self, path_integration=False, config=None) -> None:
+            pass
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def log_status(self) -> str:
+            return "map"
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+
+    captured: dict[str, int] = {}
+
+    def capture_epi(cfg):
+        captured["episodic"] = cfg.num_kv_heads
+        return SimpleNamespace()
+
+    def capture_spat(cfg):
+        captured["spatial"] = cfg.num_kv_heads
+        return SimpleNamespace()
+
+    monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", capture_epi)
+    monkeypatch.setattr("scripts.train_lora.SpatialAdapter", capture_spat)
+
+    cfg = parse_args(
+        [
+            "dry_run=true",
+            "episodic.enabled=true",
+            "spatial.enabled=true",
+            "replay.enabled=false",
+            "efficiency.mqa_gqa=gqa",
+            "episodic.num_heads=4",
+            "spatial.num_heads=4",
+        ]
+    )
+    train(cfg)
+    assert captured == {"episodic": 2, "spatial": 2}
+
+    captured.clear()
+    cfg = parse_args(
+        [
+            "dry_run=true",
+            "episodic.enabled=true",
+            "spatial.enabled=true",
+            "replay.enabled=false",
+            "efficiency.mqa_gqa=mqa",
+            "episodic.num_heads=4",
+            "spatial.num_heads=4",
+        ]
+    )
+    train(cfg)
+    assert captured == {"episodic": 1, "spatial": 1}
+
+
 def test_cli_respects_ablation_flags(monkeypatch) -> None:
     """Running the script with ablation flags disables components."""
 

@@ -99,6 +99,8 @@ class EpisodicAdapter(nn.Module):
         self.num_kv_heads = cfg.num_kv_heads or cfg.num_heads
         if self.hidden_size % self.num_heads != 0:
             raise ValueError("hidden_size must be divisible by num_heads")
+        if self.num_heads % self.num_kv_heads != 0:
+            raise ValueError("num_heads must be divisible by num_kv_heads")
         self.head_dim = self.hidden_size // self.num_heads
 
         self.q_proj = LoraLinear(
