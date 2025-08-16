@@ -153,6 +153,18 @@ def test_expand_kv_grouped_query() -> None:
     assert torch.equal(expanded[0, 3], x[0, 1])
 
 
+def test_expand_kv_multi_query() -> None:
+    """Multi-query attention duplicates K/V heads when ``num_kv_heads=1``."""
+
+    cfg = AdapterConfig(hidden_size=8, num_heads=4, num_kv_heads=1, enabled=True)
+    adapter = EpisodicAdapter(cfg)
+    x = torch.tensor([[[[1.0, 2.0], [3.0, 4.0]]]])  # (b=1, kvh=1, t=2, d=2)
+    expanded = adapter._expand_kv(x)
+    assert expanded.shape == (1, 4, 2, 2)
+    for h in range(adapter.num_heads):
+        assert torch.equal(expanded[0, h], x[0, 0])
+
+
 def test_update_logs_index_error(caplog: pytest.LogCaptureFixture) -> None:
     """Update logs failures from FAISS removal."""
 
