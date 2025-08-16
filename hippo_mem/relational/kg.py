@@ -220,10 +220,12 @@ class KnowledgeGraph:
 
     # ------------------------------------------------------------------
     # Maintenance and logging
-    def prune(self, min_conf: float = 0.0, max_age: Optional[float] = None) -> None:
-        """Remove edges below confidence or older than ``max_age`` seconds."""
 
-        cur = self.conn.cursor()
+    def _build_prune_conditions(
+        self, min_conf: Optional[float], max_age: Optional[float]
+    ) -> tuple[str, list[float]]:
+        """Return SQL ``WHERE`` clause and parameters for ``prune``."""
+
         conditions: list[str] = []
         params: list[float] = []
         if min_conf is not None:
@@ -233,9 +235,32 @@ class KnowledgeGraph:
             cutoff = time.time() - max_age
             conditions.append("(time IS NOT NULL AND CAST(time AS REAL) < ?)")
             params.append(cutoff)
-        if not conditions:
+        return " OR ".join(conditions), params
+
+    def _remove_orphan_nodes(
+        self,
+        candidate_nodes: set[str],
+        node_data: dict[str, Optional[np.ndarray]],
+        cur: sqlite3.Cursor,
+    ) -> list[tuple[str, Optional[np.ndarray]]]:
+        """Delete nodes with no remaining edges and return their data."""
+
+        removed: list[tuple[str, Optional[np.ndarray]]] = []
+        for n in list(candidate_nodes):
+            if self.graph.degree(n) == 0:
+                self.graph.remove_node(n)
+                cur.execute("DELETE FROM nodes WHERE name=?", (n,))
+                removed.append((n, node_data.get(n)))
+                self.node_embeddings.pop(n, None)
+        return removed
+
+    def prune(self, min_conf: float = 0.0, max_age: Optional[float] = None) -> None:
+        """Remove edges below confidence or older than ``max_age`` seconds."""
+
+        cur = self.conn.cursor()
+        where, params = self._build_prune_conditions(min_conf, max_age)
+        if not where:
             return
-        where = " OR ".join(conditions)
         cur.execute(
             f"SELECT id, src, relation, dst, context, time, conf, provenance, embedding FROM edges WHERE {where}",
             params,
@@ -251,13 +276,7 @@ class KnowledgeGraph:
             cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
         self.conn.commit()
 
-        removed_nodes: list[tuple[str, Optional[np.ndarray]]] = []
-        for n in list(candidate_nodes):
-            if self.graph.degree(n) == 0:
-                self.graph.remove_node(n)
-                cur.execute("DELETE FROM nodes WHERE name=?", (n,))
-                removed_nodes.append((n, node_data.get(n)))
-                self.node_embeddings.pop(n, None)
+        removed_nodes = self._remove_orphan_nodes(candidate_nodes, node_data, cur)
         self.conn.commit()
         self._push_history({"op": "prune", "edges": edges, "nodes": removed_nodes})
         self._log_event("prune", {"min_conf": min_conf, "max_age": max_age})
