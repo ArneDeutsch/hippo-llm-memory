@@ -98,6 +98,7 @@ def test_placegraph_maintenance_and_rollback() -> None:
     g.decay(0.5)
     assert g.encoder.encode("mid").coord != coords_before["mid"]
 
+    start_id = g._context_to_id["start"]
     g.prune(max_age=1)
     assert "start" not in g._context_to_id
 
@@ -105,3 +106,5 @@ def test_placegraph_maintenance_and_rollback() -> None:
     restored = {s: g.encoder.encode(s).coord for s in seq}
     assert restored == coords_before
     assert g.graph == graph_before
+    assert set(g._context_to_id.keys()) == set(seq)
+    assert g._context_to_id["start"] == start_id
