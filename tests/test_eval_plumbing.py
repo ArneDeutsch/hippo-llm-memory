@@ -9,6 +9,9 @@ from pathlib import Path
 
 import pytest
 
+sys.path.append(str(Path(__file__).resolve().parents[1] / "scripts"))
+from scripts import eval_bench
+
 
 @pytest.mark.parametrize("suite", ["episodic", "semantic", "spatial"])
 def test_eval_bench(tmp_path: Path, suite: str) -> None:
@@ -37,3 +40,26 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     csv_path = outdir / "metrics.csv"
     meta_path = outdir / "meta.json"
     assert csv_path.exists() and meta_path.exists()
+
+
+def test_ablate_disables_hopfield(tmp_path: Path) -> None:
+    """Ablation flags propagate to module configs and metadata."""
+
+    outdir = tmp_path / "abl"
+    cmd = [
+        sys.executable,
+        "scripts/eval_bench.py",
+        "suite=episodic",
+        "preset=memory/hei_nw",
+        "n=2",
+        "seed=0",
+        f"outdir={outdir}",
+        "+ablate.memory.episodic.hopfield=false",
+    ]
+    subprocess.run(cmd, check=True)
+
+    meta = json.loads((outdir / "meta.json").read_text())
+    assert meta["ablate"]["memory.episodic.hopfield"] is False
+
+    modules = eval_bench._init_modules("hei_nw", meta["ablate"])
+    assert modules["episodic"]["store"].config["hopfield"] is False

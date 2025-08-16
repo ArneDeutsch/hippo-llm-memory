@@ -15,8 +15,12 @@ from peft import PeftModel
 from transformers import PreTrainedModel
 
 
-def load_adapter(base_model: PreTrainedModel, adapter_path: Union[str, Path]) -> PeftModel:
-    """Load a LoRA adapter from ``adapter_path`` and attach it to ``base_model``."""
+def load_adapter(
+    base_model: PreTrainedModel,
+    adapter_path: Union[str, Path],
+) -> PeftModel:
+    """Load a LoRA adapter from ``adapter_path`` and attach it to
+    ``base_model``."""
 
     return PeftModel.from_pretrained(base_model, str(adapter_path))
 
@@ -24,8 +28,9 @@ def load_adapter(base_model: PreTrainedModel, adapter_path: Union[str, Path]) ->
 def merge_adapter(model: PeftModel) -> PreTrainedModel:
     """Merge the LoRA weights into the base model and return it.
 
-    The returned model is a standard :class:`~transformers.PreTrainedModel` with
-    no remaining PEFT hooks; it can be saved or used for inference as usual.
+    The returned model is a standard :class:`~transformers.PreTrainedModel`
+    with no remaining PEFT hooks; it can be saved or used for inference as
+    usual.
     """
 
     return model.merge_and_unload()

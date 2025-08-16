@@ -8,9 +8,9 @@ not to provide a drop in replacement for the attention blocks used in large
 models but rather to exercise the integration points for memory retrieval.
 
 The layer supports a very small subset of LoRA/QLoRA style low rank updates so
-that it can be trained with the rest of the model when desired.  Multi-query and
-grouped-query attention are handled by allowing a different number of key/value
-heads to query heads.
+that it can be trained with the rest of the model when desired.  Multi-query
+and grouped-query attention are handled by allowing a different number of
+key/value heads to query heads.
 """
 
 from __future__ import annotations
@@ -50,8 +50,9 @@ class LoraLinear(nn.Linear):
             self.lora_B = nn.Parameter(torch.zeros(r, out_features))
             self.scaling = lora_alpha / r
             self.lora_dropout = nn.Dropout(lora_dropout)
-            # Use standard initialisation for A/B so the adapter starts close to
-            # zero but not exactly zero which would block gradients.
+            # Use standard initialisation for A/B so the adapter starts
+            # close to zero but not exactly zero which would block
+            # gradients.
             nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
             nn.init.zeros_(self.lora_B)
         else:
