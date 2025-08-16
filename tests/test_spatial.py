@@ -1,3 +1,5 @@
+import copy
+
 import torch
 
 from hippo_mem.spatial.adapter import AdapterConfig, SpatialAdapter
@@ -82,3 +84,24 @@ def test_spatial_adapter_integration() -> None:
     assert out.shape == hidden.shape
     out.sum().backward()
     assert hidden.grad is not None and plan.grad is not None
+
+
+def test_placegraph_maintenance_and_rollback() -> None:
+    seq = ["start", "mid", "goal"]
+    g = PlaceGraph(path_integration=True)
+    for s in seq:
+        g.observe(s)
+
+    coords_before = {s: g.encoder.encode(s).coord for s in seq}
+    graph_before = copy.deepcopy(g.graph)
+
+    g.decay(0.5)
+    assert g.encoder.encode("mid").coord != coords_before["mid"]
+
+    g.prune(max_age=1)
+    assert "start" not in g._context_to_id
+
+    g.rollback(2)
+    restored = {s: g.encoder.encode(s).coord for s in seq}
+    assert restored == coords_before
+    assert g.graph == graph_before
