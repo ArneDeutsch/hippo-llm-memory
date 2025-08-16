@@ -82,6 +82,7 @@ class AdapterConfig:
     lora_alpha: int = 1
     lora_dropout: float = 0.0
     enabled: bool = False
+    flash_attention: bool = False
 
 
 class EpisodicAdapter(nn.Module):
@@ -129,6 +130,7 @@ class EpisodicAdapter(nn.Module):
             bias=False,
         )
         self.dropout = nn.Dropout(cfg.lora_dropout)
+        self.use_flash = cfg.flash_attention
 
     # ------------------------------------------------------------------
     def _expand_kv(self, x: Tensor) -> Tensor:
@@ -164,13 +166,25 @@ class EpisodicAdapter(nn.Module):
         v = v.transpose(1, 2)
         k = self._expand_kv(k)
         v = self._expand_kv(v)
-
-        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
-        if attn_mask is not None:
-            attn_scores = attn_scores + attn_mask[:, None, :, :]
-        attn = F.softmax(attn_scores, dim=-1)
-        attn = self.dropout(attn)
-        context = torch.matmul(attn, v)
+        if self.use_flash and hasattr(F, "scaled_dot_product_attention"):
+            mask = None
+            if attn_mask is not None:
+                mask = attn_mask[:, None, :, :]
+            context = F.scaled_dot_product_attention(
+                q,
+                k,
+                v,
+                attn_mask=mask,
+                dropout_p=self.dropout.p,
+                is_causal=False,
+            )
+        else:
+            attn_scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+            if attn_mask is not None:
+                attn_scores = attn_scores + attn_mask[:, None, :, :]
+            attn = F.softmax(attn_scores, dim=-1)
+            attn = self.dropout(attn)
+            context = torch.matmul(attn, v)
         context = context.transpose(1, 2).contiguous().view(bsz, q_len, self.hidden_size)
         out = self.o_proj(context)
         return hidden_states + out

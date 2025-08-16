@@ -5,7 +5,9 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
+import torch
 
+from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
 
@@ -105,6 +107,30 @@ def test_delete_logs_index_error(caplog: pytest.LogCaptureFixture) -> None:
         with caplog.at_level(logging.ERROR):
             store.delete(idx)
     assert "Failed to remove id" in caplog.text
+
+
+def test_flash_attention_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The adapter uses scaled_dot_product_attention when enabled."""
+
+    cfg = AdapterConfig(hidden_size=8, num_heads=2, flash_attention=True, enabled=True)
+    adapter = EpisodicAdapter(cfg)
+    hidden = torch.randn(1, 3, 8)
+    traces = torch.randn(1, 4, 8)
+
+    called = {}
+    orig = torch.nn.functional.scaled_dot_product_attention
+
+    def fake_sdp_attention(q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False):
+        called["hit"] = True
+        return orig(q, k, v, attn_mask=attn_mask, dropout_p=dropout_p, is_causal=is_causal)
+
+    monkeypatch.setattr(
+        "hippo_mem.episodic.adapter.F.scaled_dot_product_attention", fake_sdp_attention
+    )
+
+    out = adapter(hidden, traces)
+    assert called.get("hit")
+    assert out.shape == hidden.shape
 
 
 def test_update_logs_index_error(caplog: pytest.LogCaptureFixture) -> None:

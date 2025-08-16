@@ -122,6 +122,12 @@ class TrainConfig:
 
     spatial_mem: SpatialMaintenance = field(default_factory=SpatialMaintenance)
 
+    @dataclass
+    class Efficiency:
+        flash_attention: bool = False
+
+    efficiency: Efficiency = field(default_factory=Efficiency)
+
 
 # Register the config with Hydra so that `@hydra.main` can locate it.
 ConfigStore.instance().store(name="train_lora_config", node=TrainConfig)
@@ -172,6 +178,7 @@ def train(cfg: TrainConfig) -> None:
             lora_alpha=cfg.episodic.lora_alpha,
             lora_dropout=cfg.episodic.lora_dropout,
             enabled=True,
+            flash_attention=cfg.efficiency.flash_attention,
         )
         epi_adapter = EpisodicAdapter(epi_cfg)
 
