@@ -42,6 +42,7 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     assert csv_path.exists() and meta_path.exists()
     meta = json.loads(meta_path.read_text())
     assert len(meta.get("config_hash", "")) == 64
+    assert meta.get("seed") == 0
 
 
 def test_ablate_disables_hopfield(tmp_path: Path) -> None:

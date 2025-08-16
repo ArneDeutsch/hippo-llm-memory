@@ -1,6 +1,9 @@
 import copy
 
+import networkx as nx
 import torch
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from hippo_mem.spatial.adapter import AdapterConfig, SpatialAdapter
 from hippo_mem.spatial.macros import MacroLib
@@ -108,3 +111,46 @@ def test_placegraph_maintenance_and_rollback() -> None:
     assert g.graph == graph_before
     assert set(g._context_to_id.keys()) == set(seq)
     assert g._context_to_id["start"] == start_id
+
+
+@st.composite
+def _graph_fixture(draw) -> tuple[PlaceGraph, str, str]:
+    n = draw(st.integers(min_value=2, max_value=5))
+    g = PlaceGraph()
+    ctxs = [str(i) for i in range(n)]
+    for c in ctxs:
+        g.observe(c)
+    for i in range(n - 1):
+        a, b = ctxs[i], ctxs[i + 1]
+        ca, cb = g.encoder.encode(a).coord, g.encoder.encode(b).coord
+        cost = ((ca[0] - cb[0]) ** 2 + (ca[1] - cb[1]) ** 2) ** 0.5
+        g.connect(a, b, cost=cost)
+    for i in range(n - 2):
+        for j in range(i + 2, n):
+            if draw(st.booleans()):
+                a, b = ctxs[i], ctxs[j]
+                ca, cb = g.encoder.encode(a).coord, g.encoder.encode(b).coord
+                cost = ((ca[0] - cb[0]) ** 2 + (ca[1] - cb[1]) ** 2) ** 0.5
+                g.connect(a, b, cost=cost)
+    return g, ctxs[0], ctxs[-1]
+
+
+@settings(max_examples=25, deadline=None)
+@given(_graph_fixture())
+def test_planner_astar_matches_dijkstra(data: tuple[PlaceGraph, str, str]) -> None:
+    """A* and Dijkstra produce the same optimal path on random DAGs."""
+
+    g, start, goal = data
+    path_a = g.plan(start, goal, method="astar")
+    path_d = g.plan(start, goal, method="dijkstra")
+    assert path_a == path_d
+
+    G = nx.Graph()
+    for a, nbrs in g.graph.items():
+        for b, edge in nbrs.items():
+            G.add_edge(a, b, weight=edge.cost)
+    expected = nx.dijkstra_path_length(G, g._context_to_id[start], g._context_to_id[goal])
+    cost = 0.0
+    for u, v in zip(path_a, path_a[1:]):
+        cost += g.graph[g._context_to_id[u]][g._context_to_id[v]].cost
+    assert abs(cost - expected) < 1e-6

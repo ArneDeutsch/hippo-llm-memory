@@ -2,6 +2,8 @@
 
 import numpy as np
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
@@ -124,3 +126,36 @@ def test_gnn_update_and_rollback_restores_embeddings() -> None:
     assert np.allclose(kg.graph["A"]["B"][edge_id2]["embedding"], [0.2, 0.8])
     assert np.allclose(kg.node_embeddings["A"], expected_a)
     assert np.allclose(kg.node_embeddings["B"], [0.0, 1.0])
+
+
+def test_relational_adapter_gating_ablation() -> None:
+    """Ablating a path results in pure features from the other source."""
+
+    adapter = RelationalAdapter()
+    query = np.array([1.0, 0.0])
+    kg_feats = np.array([[1.0, 0.0]])
+    epi_feats = np.array([[0.0, 1.0]])
+
+    out_kg = adapter(query, kg_feats, epi_feats, kg_conf=1.0, episodic_conf=0.0)
+    assert np.allclose(out_kg, kg_feats[0])
+
+    out_epi = adapter(query, kg_feats, epi_feats, kg_conf=0.0, episodic_conf=1.0)
+    assert np.allclose(out_epi, epi_feats[0])
+
+
+@settings(max_examples=25, deadline=None)
+@given(
+    threshold=st.floats(min_value=0.0, max_value=1.0),
+    offset=st.floats(min_value=-0.1, max_value=0.1),
+)
+def test_schema_fast_track_threshold_property(threshold: float, offset: float) -> None:
+    """Tuples are promoted only when confidence meets threshold."""
+
+    conf = min(max(threshold + offset, 0.0), 1.0)
+    kg = KnowledgeGraph(config={"schema_threshold": threshold})
+    si = kg.schema_index
+    si.add_schema("rel", "rel")
+
+    tup = ("a", "rel", "b", "ctx", None, conf, 0)
+    result = si.fast_track(tup, kg)
+    assert result == (conf >= threshold)

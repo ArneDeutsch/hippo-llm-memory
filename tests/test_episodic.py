@@ -4,9 +4,12 @@ import logging
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import hypothesis.extra.numpy as hnp
 import numpy as np
 import pytest
 import torch
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate
@@ -211,3 +214,40 @@ def test_replay_scheduler_mix_and_unique_ids() -> None:
     epi_ids = [tid for k, tid in batch if k == "episodic"]
     assert None not in epi_ids
     assert len(epi_ids) == len(set(epi_ids))
+
+
+def test_faiss_index_trains_and_queries() -> None:
+    """Pending keys trigger index training and subsequent recalls succeed."""
+
+    store = EpisodicStore(dim=4, index_str="IVF1,Flat", train_threshold=5)
+    rng = np.random.default_rng(0)
+    keys = rng.normal(size=(5, 4)).astype("float32")
+    for i, key in enumerate(keys):
+        store.write(key, TraceValue(provenance=str(i)))
+
+    assert store.index.is_trained
+    res = store.recall(keys[0], k=1)
+    assert res and res[0].value.provenance == "0"
+
+
+@settings(max_examples=25, deadline=None)
+@given(
+    hnp.arrays(
+        np.float32,
+        hnp.array_shapes(min_dims=1, max_dims=1, min_side=1, max_side=16),
+        elements=st.floats(-1.0, 1.0),
+    ),
+    st.integers(min_value=1, max_value=16),
+)
+def test_sparse_encode_k_wta_idempotent(vec: np.ndarray, k: int) -> None:
+    """Encoding then decoding preserves the top-``k`` indices and values."""
+
+    store = EpisodicStore(dim=vec.size)
+    k = min(k, vec.size)
+    key = store.sparse_encode(vec, k)
+    assert key.indices.size == k
+    dense = np.zeros(vec.size, dtype="float32")
+    dense[key.indices] = key.values
+    key2 = store.sparse_encode(dense, k)
+    assert np.array_equal(key.indices, key2.indices)
+    assert np.allclose(key.values, key2.values)
