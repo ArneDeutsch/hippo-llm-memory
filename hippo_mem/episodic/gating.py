@@ -88,7 +88,12 @@ class GateDecision:
 
 
 class WriteGate:
-    """Combine surprise, novelty and reward/pin signals into a write decision."""
+    """Combine surprise, novelty, reward and pin signals into a write decision.
+
+    The final salience score is computed as
+
+    ``S = α·surprise + β·novelty + γ·reward + δ·pin``.
+    """
 
     def __init__(
         self,
@@ -97,7 +102,7 @@ class WriteGate:
         alpha: float = 0.5,
         beta: float = 0.5,
         gamma: float = 1.0,
-        delta: float = 0.0,
+        delta: float = 1.0,
     ) -> None:
         """Create a ``WriteGate``.
 
@@ -106,7 +111,7 @@ class WriteGate:
             alpha: Weight for the surprise term.
             beta: Weight for the novelty term.
             gamma: Weight for the reward term.
-            delta: Bias added to the final score.
+            delta: Weight for the pin term. Set ``delta=0`` to ignore ``pin``.
         """
 
         self.tau = tau
@@ -121,10 +126,13 @@ class WriteGate:
         query: np.ndarray,
         keys: np.ndarray,
         reward: float = 0.0,
+        pin: bool = False,
     ) -> float:
+        """Return the combined salience score for a potential write."""
+
         s = surprise(prob)
         n = novelty(query, keys)
-        return self.alpha * s + self.beta * n + self.gamma * reward + self.delta
+        return self.alpha * s + self.beta * n + self.gamma * reward + (self.delta if pin else 0.0)
 
     def __call__(
         self,
@@ -138,7 +146,5 @@ class WriteGate:
     ) -> GateDecision:
         if timestamp is None:
             timestamp = time.time()
-        if pin:
-            return GateDecision(True, float("inf"), provenance, timestamp)
-        sc = self.score(prob, query, keys, reward)
+        sc = self.score(prob, query, keys, reward, pin)
         return GateDecision(sc > self.tau, sc, provenance, timestamp)
