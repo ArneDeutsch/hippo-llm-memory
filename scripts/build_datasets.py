@@ -12,14 +12,15 @@ writes the generated items to a JSONL file.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 from pathlib import Path
 from typing import Dict, Iterable, List
 
 
-def generate_episodic(n: int, seed: int) -> List[Dict[str, str]]:
-    """Generate ``n`` W4 stories with associated queries.
+def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
+    """Generate ``size`` W4 stories with associated queries.
 
     Each item is a dictionary with ``prompt`` and ``answer`` fields.  The
     generator is completely deterministic given ``seed``.
@@ -33,7 +34,7 @@ def generate_episodic(n: int, seed: int) -> List[Dict[str, str]]:
     qtypes = ["who_at_where", "what_did_who", "where_was_who", "when_was_who"]
 
     tasks: List[Dict[str, str]] = []
-    for _ in range(n):
+    for _ in range(size):
         who = rng.choice(people)
         what = rng.choice(actions)
         where = rng.choice(places)
@@ -60,7 +61,7 @@ def generate_episodic(n: int, seed: int) -> List[Dict[str, str]]:
     return tasks
 
 
-def generate_semantic(n: int, seed: int) -> List[Dict[str, str]]:
+def generate_semantic(size: int, seed: int) -> List[Dict[str, str]]:
     """Generate simple two-hop reasoning facts.
 
     The template creates a purchase event and links the store to a city.  The
@@ -74,7 +75,7 @@ def generate_semantic(n: int, seed: int) -> List[Dict[str, str]]:
     cities = ["Paris", "London", "Rome", "Berlin"]
 
     tasks: List[Dict[str, str]] = []
-    for _ in range(n):
+    for _ in range(size):
         who = rng.choice(people)
         item = rng.choice(items)
         store = rng.choice(stores)
@@ -87,7 +88,7 @@ def generate_semantic(n: int, seed: int) -> List[Dict[str, str]]:
     return tasks
 
 
-def generate_spatial(n: int, seed: int) -> List[Dict[str, int]]:
+def generate_spatial(size: int, seed: int) -> List[Dict[str, int]]:
     """Generate grid based shortest-path questions.
 
     Each task asks for the Manhattan distance between two coordinates in a
@@ -95,11 +96,11 @@ def generate_spatial(n: int, seed: int) -> List[Dict[str, int]]:
     """
 
     rng = random.Random(seed)
-    size = 5
+    grid = 5
     tasks: List[Dict[str, int]] = []
-    for _ in range(n):
-        x1, y1 = rng.randint(0, size - 1), rng.randint(0, size - 1)
-        x2, y2 = rng.randint(0, size - 1), rng.randint(0, size - 1)
+    for _ in range(size):
+        x1, y1 = rng.randint(0, grid - 1), rng.randint(0, grid - 1)
+        x2, y2 = rng.randint(0, grid - 1), rng.randint(0, grid - 1)
         prompt = (
             f"Start at ({x1},{y1}) and move to ({x2},{y2}). " "What is the shortest path length?"
         )
@@ -116,7 +117,7 @@ SUITE_TO_GENERATOR = {
 }
 
 
-def generate_dataset(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
+def generate_dataset(suite: str, size: int, seed: int) -> List[Dict[str, object]]:
     """Dispatch to the generator for ``suite``.
 
     This helper simplifies programmatic use and is exercised in unit tests to
@@ -127,7 +128,7 @@ def generate_dataset(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
         generator = SUITE_TO_GENERATOR[suite]
     except KeyError as exc:  # pragma: no cover - defensive programming
         raise ValueError(f"Unknown suite: {suite}") from exc
-    return generator(n, seed)
+    return generator(size, seed)
 
 
 def write_jsonl(path: Path, items: Iterable[Dict[str, object]]) -> None:
@@ -139,25 +140,48 @@ def write_jsonl(path: Path, items: Iterable[Dict[str, object]]) -> None:
             f.write(json.dumps(obj) + "\n")
 
 
+def sha256_file(path: Path) -> str:
+    """Return the SHA256 checksum of ``path``."""
+
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def record_checksum(data_path: Path, checksum_file: Path) -> str:
+    """Append SHA256 of ``data_path`` to ``checksum_file`` and return it."""
+
+    digest = sha256_file(data_path)
+    checksum_file.parent.mkdir(parents=True, exist_ok=True)
+    with checksum_file.open("a", encoding="utf-8") as f:
+        f.write(f"{digest}  {data_path.name}\n")
+    return digest
+
+
 def main() -> None:
     """CLI entry point for building small synthetic datasets.
 
     Example:
 
-    ``python scripts/build_datasets.py --suite episodic --n 100 --seed 42 \
-    --out data/episodic.jsonl``
+    ``python scripts/build_datasets.py --suite episodic --size 100 --seed 42 \
+    --out data/episodic_100_42.jsonl``
     """
 
     parser = argparse.ArgumentParser(description="Build synthetic evaluation data")
     parser.add_argument("--suite", choices=SUITE_TO_GENERATOR.keys(), required=True)
-    parser.add_argument("--n", type=int, default=100, help="Number of items")
+    parser.add_argument("--size", type=int, default=100, help="Number of items")
+    parser.add_argument("--n", dest="size", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
     parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
     args = parser.parse_args()
 
     generator = SUITE_TO_GENERATOR[args.suite]
-    items = generator(args.n, args.seed)
+    items = generator(args.size, args.seed)
     write_jsonl(args.out, items)
+    checksum_path = args.out.parent / "checksums.txt"
+    record_checksum(args.out, checksum_path)
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point

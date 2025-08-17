@@ -9,8 +9,8 @@ def test_dataset_generators_deterministic(tmp_path: Path) -> None:
     """Datasets with same seed should produce identical JSONL outputs."""
 
     for suite in SUITES:
-        items1 = build_datasets.generate_dataset(suite, n=5, seed=123)
-        items2 = build_datasets.generate_dataset(suite, n=5, seed=123)
+        items1 = build_datasets.generate_dataset(suite, size=5, seed=123)
+        items2 = build_datasets.generate_dataset(suite, size=5, seed=123)
         assert items1 == items2
 
         file1 = tmp_path / f"{suite}_a.jsonl"
@@ -20,3 +20,9 @@ def test_dataset_generators_deterministic(tmp_path: Path) -> None:
 
         assert file1.read_text() == file2.read_text()
         assert len(file1.read_text().splitlines()) == 5
+
+        checksum_file = tmp_path / "checksums.txt"
+        hash_written = build_datasets.record_checksum(file1, checksum_file)
+        last_line = checksum_file.read_text().strip().splitlines()[-1]
+        assert last_line == f"{hash_written}  {file1.name}"
+        assert hash_written == build_datasets.sha256_file(file1)
