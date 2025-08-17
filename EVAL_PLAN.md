@@ -38,7 +38,8 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
 
 ## 3.3 Spatial/procedural suite (SMPD)
 
-- **Grid/graph worlds:** 5×5 grid and small graphs with labeled nodes/edges.
+- **Grid/graph worlds:** parameterisable N×N grids with random walls/obstacles
+  and small graphs with labeled nodes/edges.
 - **Planning tasks:** shortest path; “recall by place” questions.
 - **Procedural macros:** repeated multi‑step scripts (4–6 steps) to allow macro distillation.
 
@@ -134,7 +135,8 @@ idx,prompt,answer,pred,correct,latency_ms,flags
 echo "build W4/Schema/Grid fixtures"
 python scripts/build_datasets.py --out data/episodic.jsonl --suite episodic --size 1000 --seed 1337
 python scripts/build_datasets.py --out data/semantic.jsonl --suite semantic --size 1000 --seed 1337
-python scripts/build_datasets.py --out data/spatial.jsonl  --suite spatial  --size 1000 --seed 1337
+python scripts/build_datasets.py --out data/spatial.jsonl  --suite spatial  \
+  --size 1000 --seed 1337 --grid-size 5 --obstacle-density 0.2
 ```
 
 ## 9.2 Run baselines
