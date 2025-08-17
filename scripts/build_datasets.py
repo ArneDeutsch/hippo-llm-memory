@@ -6,7 +6,9 @@ data which still exercises the metric plumbing.  The functions below implement
 deterministic generators for the three suites described in ``EVAL_PLAN.md``.
 
 They can be used programmatically or via the ``main`` CLI entry point which
-writes the generated items to a JSONL file.
+writes the generated items to a JSONL file.  The semantic generator supports
+multi-hop chains and optional contradiction injection which can be toggled via
+CLI flags.
 """
 
 from __future__ import annotations
@@ -61,11 +63,16 @@ def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
     return tasks
 
 
-def generate_semantic(size: int, seed: int) -> List[Dict[str, str]]:
-    """Generate simple two-hop reasoning facts.
+def generate_semantic(
+    size: int, seed: int, hops: int = 2, contradictions: bool = False
+) -> List[Dict[str, str]]:
+    """Generate 2–3 hop fact chains with optional contradictions.
 
-    The template creates a purchase event and links the store to a city.  The
-    question requires resolving the city of purchase – a tiny multi-hop query.
+    ``hops`` controls the chain depth linking people, items, stores and
+    cities.  When ``hops`` is ``3`` an intermediate fact connecting the item
+    to the store is added.  If ``contradictions`` is ``True`` a second,
+    conflicting store→city fact is appended which the query requires
+    disambiguating.
     """
 
     rng = random.Random(seed)
@@ -81,8 +88,24 @@ def generate_semantic(size: int, seed: int) -> List[Dict[str, str]]:
         store = rng.choice(stores)
         city = rng.choice(cities)
 
-        text = f"{who} bought a {item} at {store}. {store} is in {city}."
-        question = f"In which city did {who} buy the {item}?"
+        sentences: List[str] = []
+        if hops == 2:
+            sentences.append(f"{who} bought a {item} at {store}.")
+        else:  # hops == 3
+            sentences.append(f"{who} bought a {item}.")
+            sentences.append(f"The {item} was sold at {store}.")
+        sentences.append(f"{store} is in {city}.")
+
+        if contradictions:
+            false_city = rng.choice([c for c in cities if c != city])
+            sentences.append(f"However, others report {store} is in {false_city}.")
+
+        text = " ".join(sentences)
+        if hops == 2:
+            question = f"In which city did {who} buy the {item}?"
+        else:
+            question = f"In which city was the {item} that {who} bought sold?"
+
         tasks.append({"prompt": f"{text} {question}", "answer": city})
 
     return tasks
@@ -117,18 +140,19 @@ SUITE_TO_GENERATOR = {
 }
 
 
-def generate_dataset(suite: str, size: int, seed: int) -> List[Dict[str, object]]:
+def generate_dataset(suite: str, size: int, seed: int, **kwargs: object) -> List[Dict[str, object]]:
     """Dispatch to the generator for ``suite``.
 
-    This helper simplifies programmatic use and is exercised in unit tests to
-    ensure all suites are deterministic for a given ``seed``.
+    Extra keyword arguments are forwarded to the underlying generator which
+    allows callers to tweak suite-specific options such as ``hops`` or
+    ``contradictions`` for the semantic tasks.
     """
 
     try:
         generator = SUITE_TO_GENERATOR[suite]
     except KeyError as exc:  # pragma: no cover - defensive programming
         raise ValueError(f"Unknown suite: {suite}") from exc
-    return generator(size, seed)
+    return generator(size, seed, **kwargs)
 
 
 def write_jsonl(path: Path, items: Iterable[Dict[str, object]]) -> None:
@@ -174,11 +198,27 @@ def main() -> None:
     parser.add_argument("--size", type=int, default=100, help="Number of items")
     parser.add_argument("--n", dest="size", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
+    parser.add_argument(
+        "--hops", type=int, choices=[2, 3], default=2, help="Hop depth for semantic facts"
+    )
+    parser.add_argument(
+        "--contradictions",
+        action="store_true",
+        help="Inject contradictory statements in semantic suite",
+    )
     parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
     args = parser.parse_args()
 
     generator = SUITE_TO_GENERATOR[args.suite]
-    items = generator(args.size, args.seed)
+    if args.suite == "semantic":
+        items = generator(
+            args.size,
+            args.seed,
+            hops=args.hops,
+            contradictions=args.contradictions,
+        )
+    else:
+        items = generator(args.size, args.seed)
     write_jsonl(args.out, items)
     checksum_path = args.out.parent / "checksums.txt"
     record_checksum(args.out, checksum_path)

@@ -26,3 +26,17 @@ def test_dataset_generators_deterministic(tmp_path: Path) -> None:
         last_line = checksum_file.read_text().strip().splitlines()[-1]
         assert last_line == f"{hash_written}  {file1.name}"
         assert hash_written == build_datasets.sha256_file(file1)
+
+
+def test_semantic_hops_and_contradictions() -> None:
+    """Semantic generator supports hop depth and contradiction injection."""
+
+    items1 = build_datasets.generate_semantic(size=1, seed=42, hops=3, contradictions=True)
+    items2 = build_datasets.generate_semantic(size=1, seed=42, hops=3, contradictions=True)
+    assert items1 == items2
+
+    prompt = items1[0]["prompt"]
+    # Two location statements: one true and one contradictory
+    assert prompt.count("is in") == 2
+    assert "However" in prompt and "was sold at" in prompt
+    assert items1[0]["answer"] in prompt

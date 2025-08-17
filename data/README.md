@@ -10,3 +10,12 @@ Each file follows the naming scheme `<suite>_<size>_<seed>.jsonl` where:
 
 Checksums for all datasets are recorded in `checksums.txt` in the same
 folder using the format `<sha256>  <filename>`.
+
+The semantic generator additionally supports:
+
+- `--hops {2,3}` – controls the depth of the fact chain linking people,
+  items, stores and cities.
+- `--contradictions` – when set, injects a conflicting store→city fact so
+  queries must resolve the correct location.
+
+Outputs follow the same `prompt`/`answer` schema regardless of these flags.
