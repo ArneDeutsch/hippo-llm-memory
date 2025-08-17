@@ -1,4 +1,47 @@
-"""Episodic write-gating utilities."""
+"""Algorithm Card: HEI-NW Gating
+
+Summary
+-------
+Combine neuromodulatory signals to decide when an episode should be written
+to long-term storage.  Integration relies on a cross-attention adapter that
+consumes recalled traces.
+
+Integration style
+-----------------
+Cross-attention adapter wired after a transformer block.
+
+Data structures
+---------------
+``DGKey`` sparse keys, ``TraceValue`` metadata payloads, ``AssocStore`` FAISS
+index, ``ReplayQueue`` for prioritized consolidation.
+
+Pipeline
+--------
+1. Encode residual stream -> ``DGKey`` via k-WTA.
+2. Compute ``S = α·surprise + β·novelty + γ·reward + δ·pin``.
+3. If ``S > τ`` persist (key, value) to ``AssocStore``.
+4. Enqueue trace into ``ReplayQueue`` for CA2-style replay.
+
+Design rationale & trade-offs
+-----------------------------
+Sparse keys limit interference; gating avoids store bloat.  Trade-off: missed
+rare events when threshold ``τ`` too high.
+
+Failure modes & diagnostics
+---------------------------
+High false negatives → inspect surprise/novelty stats; low recall → verify
+key sparsity and index health.
+
+Ablation switches & expected effects
+------------------------------------
+``use_gate=false`` writes all episodes, increasing interference.  ``replay.enabled=false``
+prevents consolidation.
+
+Contracts
+---------
+Persistence via FAISS + SQLite; gating score is a pure function ensuring
+idempotent decisions.
+"""
 
 from __future__ import annotations
 
@@ -12,7 +55,47 @@ import numpy as np
 
 @dataclass
 class DGKey:
-    """Sparse k-WTA encoded key used by the episodic store."""
+    """Sparse k-WTA encoded key.
+
+    Summary
+    -------
+    Represents the top-``k`` components of a dense vector.
+
+    Parameters
+    ----------
+    indices : numpy.ndarray
+        Winner indices with shape ``(k,)``.
+    values : numpy.ndarray
+        Winner magnitudes with shape ``(k,)``.
+    dim : int
+        Original dimensionality ``d``.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    Storage ``O(k)``.
+
+    Examples
+    --------
+    >>> key = DGKey(np.array([0, 2]), np.array([1.0, -0.5], dtype=np.float32), 4)
+    >>> densify(key).shape
+    (4,)
+
+    See Also
+    --------
+    k_wta, densify
+    """
 
     indices: np.ndarray
     values: np.ndarray
@@ -22,9 +105,43 @@ class DGKey:
 def k_wta(query: np.ndarray, k: int) -> DGKey:
     """Project ``query`` to a sparse key keeping the ``k`` largest magnitudes.
 
-    Args:
-        query: Dense input vector of shape ``(dim,)``.
-        k: Number of winners to keep. ``k <= 0`` yields an empty key.
+    Summary
+    -------
+    Implements k-winner-take-all encoding.
+
+    Parameters
+    ----------
+    query : numpy.ndarray
+        Dense input vector with shape ``(d,)``.
+    k : int
+        Number of winners; ``k <= 0`` returns an empty key.
+
+    Returns
+    -------
+    DGKey
+        Sparse representation of the top-``k`` elements.
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(d)`` for scanning ``query``.
+
+    Examples
+    --------
+    >>> q = np.array([0.1, -0.4, 0.3], dtype=np.float32)
+    >>> k_wta(q, 2).indices.shape
+    (2,)
+
+    See Also
+    --------
+    densify
     """
 
     q = np.asarray(query, dtype="float32").reshape(-1)
@@ -35,13 +152,51 @@ def k_wta(query: np.ndarray, k: int) -> DGKey:
             dim=q.size,
         )
     k = min(k, q.size)
+    # why: argpartition finds the largest magnitudes without full sort
     idx = np.argpartition(-np.abs(q), k - 1)[:k]
     vals = q[idx]
     return DGKey(indices=idx.astype("int64"), values=vals.astype("float32"), dim=q.size)
 
 
 def densify(key: DGKey) -> np.ndarray:
-    """Convert a :class:`DGKey` back to a dense ``float32`` vector."""
+    """Convert a sparse key back to a dense vector.
+
+    Summary
+    -------
+    Expand ``DGKey`` into a ``float32`` array of shape ``(d,)``.
+
+    Parameters
+    ----------
+    key : DGKey
+        Sparse key to expand.
+
+    Returns
+    -------
+    numpy.ndarray
+        Dense vector with zeros in non-winning positions.
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(d)`` to fill the dense array.
+
+    Examples
+    --------
+    >>> key = DGKey(np.array([1]), np.array([0.5], dtype=np.float32), 3)
+    >>> densify(key)
+    array([0. , 0.5, 0. ], dtype=float32)
+
+    See Also
+    --------
+    k_wta
+    """
 
     dense = np.zeros(key.dim, dtype="float32")
     dense[key.indices] = key.values
@@ -49,21 +204,87 @@ def densify(key: DGKey) -> np.ndarray:
 
 
 def surprise(prob: float) -> float:
-    """Return the information content ``-log(p)`` of an event."""
+    """Return the information content ``-log(p)`` of an event.
+
+    Summary
+    -------
+    Larger values indicate higher surprise.
+
+    Parameters
+    ----------
+    prob : float
+        Probability of the event, ``0 < prob ≤ 1``.
+
+    Returns
+    -------
+    float
+        Information content in nats.
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(1)``.
+
+    Examples
+    --------
+    >>> round(surprise(0.5), 3)
+    0.693
+
+    See Also
+    --------
+    novelty
+    """
 
     eps = 1e-8
     return -math.log(max(prob, eps))
 
 
 def novelty(query: np.ndarray, keys: np.ndarray) -> float:
-    """Compute novelty as ``1 - max_cos`` between ``query`` and stored ``keys``.
+    """Compute novelty as ``1 - max_cos`` between ``query`` and stored keys.
 
-    Args:
-        query: Query embedding of shape ``(dim,)``.
-        keys: Array of stored keys with shape ``(n, dim)``.
+    Summary
+    -------
+    Measures dissimilarity of ``query`` against catalogued keys.
 
-    Returns:
-        A float in ``[0, 1]`` where ``1`` means completely novel.
+    Parameters
+    ----------
+    query : numpy.ndarray
+        Query embedding with shape ``(d,)``.
+    keys : numpy.ndarray
+        Stored key matrix with shape ``(n, d)``.
+
+    Returns
+    -------
+    float
+        Score in ``[0, 1]`` where ``1`` means unseen.
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(n d)`` for cosine similarity.
+
+    Examples
+    --------
+    >>> novelty(np.zeros(2, dtype=np.float32), np.zeros((0, 2), dtype=np.float32))
+    1.0
+
+    See Also
+    --------
+    surprise
     """
 
     if keys.size == 0:
@@ -73,13 +294,55 @@ def novelty(query: np.ndarray, keys: np.ndarray) -> float:
     k = np.asarray(keys, dtype="float32")
     faiss.normalize_L2(q)
     faiss.normalize_L2(k)
+    # why: cosine similarity via dot product after L2 normalisation
     sims = k @ q[0]
     return 1.0 - float(np.max(sims))
 
 
 @dataclass
 class GateDecision:
-    """Result of a write-gating decision."""
+    """Result of a write-gating decision.
+
+    Summary
+    -------
+    Records whether an episode was written and under what score.
+
+    Parameters
+    ----------
+    allow : bool
+        ``True`` if the write should proceed.
+    score : float
+        Salience score ``S``.
+    provenance : str
+        Source identifier.
+    timestamp : float
+        Unix time in seconds.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(1)`` to construct.
+
+    Examples
+    --------
+    >>> GateDecision(True, 0.8, "unit", 0.0).allow
+    True
+
+    See Also
+    --------
+    WriteGate
+    """
 
     allow: bool
     score: float
@@ -90,9 +353,9 @@ class GateDecision:
 class WriteGate:
     """Combine surprise, novelty, reward and pin signals into a write decision.
 
-    The final salience score is computed as
-
-    ``S = α·surprise + β·novelty + γ·reward + δ·pin``.
+    Summary
+    -------
+    Implements ``S = α·surprise + β·novelty + γ·reward + δ·pin``.
     """
 
     def __init__(
@@ -104,14 +367,46 @@ class WriteGate:
         gamma: float = 1.0,
         delta: float = 1.0,
     ) -> None:
-        """Create a ``WriteGate``.
+        """Initialise the gate.
 
-        Args:
-            tau: Threshold above which an item is written.
-            alpha: Weight for the surprise term.
-            beta: Weight for the novelty term.
-            gamma: Weight for the reward term.
-            delta: Weight for the pin term. Set ``delta=0`` to ignore ``pin``.
+        Parameters
+        ----------
+        tau : float, optional
+            Threshold above which an item is written.
+        alpha : float, optional
+            Weight for the surprise term.
+        beta : float, optional
+            Weight for the novelty term.
+        gamma : float, optional
+            Weight for the reward term.
+        delta : float, optional
+            Weight for the pin term.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> gate = WriteGate(tau=0.1)
+        >>> gate.tau
+        0.1
+
+        See Also
+        --------
+        score, __call__
         """
 
         self.tau = tau
@@ -128,7 +423,48 @@ class WriteGate:
         reward: float = 0.0,
         pin: bool = False,
     ) -> float:
-        """Return the combined salience score for a potential write."""
+        """Return the combined salience score for a potential write.
+
+        Parameters
+        ----------
+        prob : float
+            Model probability of the observed token.
+        query : numpy.ndarray
+            Query embedding of shape ``(d,)``.
+        keys : numpy.ndarray
+            Matrix of stored keys with shape ``(n, d)``.
+        reward : float, optional
+            External reward signal.
+        pin : bool, optional
+            User override to force writing.
+
+        Returns
+        -------
+        float
+            Combined salience ``S``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(n d)`` dominated by ``novelty``.
+
+        Examples
+        --------
+        >>> gate = WriteGate()
+        >>> round(gate.score(0.5, np.zeros(1), np.zeros((0, 1))), 3)
+        0.346
+
+        See Also
+        --------
+        novelty, surprise
+        """
 
         s = surprise(prob)
         n = novelty(query, keys)
@@ -144,7 +480,55 @@ class WriteGate:
         provenance: str = "",
         timestamp: float | None = None,
     ) -> GateDecision:
+        """Decide whether to write an episode.
+
+        Parameters
+        ----------
+        prob : float
+            Model probability of the observed token.
+        query : numpy.ndarray
+            Query embedding of shape ``(d,)``.
+        keys : numpy.ndarray
+            Stored key matrix ``(n, d)``.
+        reward : float, optional
+            External reward signal.
+        pin : bool, optional
+            Force the decision irrespective of ``S``.
+        provenance : str, optional
+            Source identifier for logging.
+        timestamp : float, optional
+            Event time in seconds.
+
+        Returns
+        -------
+        GateDecision
+            Decision record with computed score.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(n d)`` via :meth:`score`.
+
+        Examples
+        --------
+        >>> gate = WriteGate(tau=0.0)
+        >>> gate(0.5, np.zeros(1), np.zeros((0, 1))).allow
+        True
+
+        See Also
+        --------
+        score
+        """
+
         if timestamp is None:
             timestamp = time.time()
         sc = self.score(prob, query, keys, reward, pin)
+        # why: compare to threshold to decide on write
         return GateDecision(sc > self.tau, sc, provenance, timestamp)

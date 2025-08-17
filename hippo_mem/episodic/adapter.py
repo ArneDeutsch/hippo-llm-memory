@@ -1,16 +1,45 @@
-"""Cross-attention adapter for episodic memory traces.
+"""Algorithm Card: HEI-NW Episodic Adapter
 
-This module provides a lightweight implementation of the ``EpisodicAdapter``
-layer used throughout the examples.  The adapter performs a single round of
-cross-attention between the hidden states of the language model and a set of
-recalled memory traces.  It is intentionally small – the goal of the project is
-not to provide a drop in replacement for the attention blocks used in large
-models but rather to exercise the integration points for memory retrieval.
+Summary
+-------
+Cross-attention adapter that fuses recalled episodic traces into the model.
 
-The layer supports a very small subset of LoRA/QLoRA style low rank updates so
-that it can be trained with the rest of the model when desired.  Multi-query
-and grouped-query attention are handled by allowing a different number of
-key/value heads to query heads.
+Integration style
+-----------------
+Inserted after a transformer block; attends over memory tokens.
+
+Data structures
+---------------
+``DGKey`` sparse keys, ``TraceValue`` payloads, ``AssocStore`` index,
+``ReplayQueue`` for consolidation.
+
+Pipeline
+--------
+1. Encode residual stream → ``DGKey`` via k-WTA.
+2. Gate writes using ``S = α·surprise + β·novelty + γ·reward + δ·pin``.
+3. Recall traces, optionally complete with Hopfield readout.
+4. ``EpisodicAdapter`` cross-attends to fused traces.
+5. ReplayScheduler feeds adapter during consolidation.
+
+Design rationale & trade-offs
+-----------------------------
+Low-rank updates (LoRA) keep adapter lightweight; MQA/GQA limit KV growth but
+add projection cost.
+
+Failure modes & diagnostics
+---------------------------
+Dimension mismatch → verify head counts; empty recalls → check gating and
+store.
+
+Ablation switches & expected effects
+------------------------------------
+``flash_attention=false`` falls back to slower attention; ``hopfield=false``
+reduces recall quality.
+
+Contracts
+---------
+Adapter has no internal state beyond parameters; repeated forwards are
+idempotent.
 """
 
 from __future__ import annotations
@@ -27,9 +56,9 @@ from torch import Tensor, nn
 class LoraLinear(nn.Linear):
     """``nn.Linear`` with an optional LoRA adaptation.
 
-    The implementation here is intentionally minimal; it provides just enough
-    features for the unit tests and examples.  When ``r`` is zero the layer
-    behaves exactly like :class:`~torch.nn.Linear`.
+    Summary
+    -------
+    Adds low-rank matrices ``A`` and ``B`` when ``r > 0``.
     """
 
     def __init__(
@@ -42,17 +71,58 @@ class LoraLinear(nn.Linear):
         lora_dropout: float = 0.0,
         bias: bool = False,
     ) -> None:
+        """Initialise the layer.
+
+        Parameters
+        ----------
+        in_features : int
+            Input feature dimension.
+        out_features : int
+            Output feature dimension.
+        r : int, optional
+            Rank of LoRA update; ``0`` disables LoRA.
+        lora_alpha : int, optional
+            Scaling factor ``α``.
+        lora_dropout : float, optional
+            Dropout probability for LoRA branch.
+        bias : bool, optional
+            Include bias term.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Allocates learnable parameters.
+
+        Complexity
+        ----------
+        ``O(in_features·out_features)`` for weight initialisation.
+
+        Examples
+        --------
+        >>> LoraLinear(2, 2, r=1).r
+        1
+
+        See Also
+        --------
+        EpisodicAdapter
+        """
+
         super().__init__(in_features, out_features, bias=bias)
         self.r = r
         if r > 0:
-            # LoRA decomposition: W = W + BA
+            # why: LoRA decomposition W = W + BA
             self.lora_A = nn.Parameter(torch.zeros(in_features, r))
             self.lora_B = nn.Parameter(torch.zeros(r, out_features))
             self.scaling = lora_alpha / r
             self.lora_dropout = nn.Dropout(lora_dropout)
-            # Use standard initialisation for A/B so the adapter starts
-            # close to zero but not exactly zero which would block
-            # gradients.
+            # why: initialise near zero yet allow gradients
             nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
             nn.init.zeros_(self.lora_B)
         else:
@@ -62,6 +132,41 @@ class LoraLinear(nn.Linear):
             self.lora_dropout = nn.Identity()
 
     def forward(self, x: Tensor) -> Tensor:  # pragma: no cover - thin wrapper
+        """Apply linear layer with optional LoRA branch.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor ``(..., in_features)``.
+
+        Returns
+        -------
+        torch.Tensor
+            Output tensor ``(..., out_features)``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(in_features·out_features)``.
+
+        Examples
+        --------
+        >>> layer = LoraLinear(2, 2, r=1)
+        >>> layer(torch.zeros(1,2)).shape
+        torch.Size([1, 2])
+
+        See Also
+        --------
+        __init__
+        """
+
         result = F.linear(x, self.weight, self.bias)
         if self.r > 0 and self.lora_A is not None and self.lora_B is not None:
             # (batch, *, in) -> (batch, *, r) -> (batch, *, out)
@@ -73,7 +178,58 @@ class LoraLinear(nn.Linear):
 
 @dataclass
 class AdapterConfig:
-    """Configuration options for :class:`EpisodicAdapter`."""
+    """Configuration options for :class:`EpisodicAdapter`.
+
+    Summary
+    -------
+    Holds architectural and LoRA hyper-parameters.
+
+    Parameters
+    ----------
+    hidden_size : int
+        Model dimensionality ``H``.
+    num_heads : int
+        Number of query heads.
+    num_kv_heads : int, optional
+        Number of key/value heads.
+    lora_r : int, optional
+        LoRA rank.
+    lora_alpha : int, optional
+        LoRA scaling factor.
+    lora_dropout : float, optional
+        Dropout probability for LoRA.
+    enabled : bool, optional
+        Whether adapter is active.
+    flash_attention : bool, optional
+        Use fused flash attention if available.
+    hopfield : bool, optional
+        Enable Hopfield completion in store.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(1)`` storage.
+
+    Examples
+    --------
+    >>> AdapterConfig(hidden_size=4, num_heads=1).enabled
+    False
+
+    See Also
+    --------
+    EpisodicAdapter
+    """
 
     hidden_size: int
     num_heads: int
@@ -90,9 +246,49 @@ class AdapterConfig:
 
 
 class EpisodicAdapter(nn.Module):
-    """Cross-attention over recalled episodic traces."""
+    """Cross-attention over recalled episodic traces.
+
+    Summary
+    -------
+    Performs multi-head attention between hidden states and memory traces.
+    """
 
     def __init__(self, cfg: AdapterConfig) -> None:
+        """Initialise projection layers.
+
+        Parameters
+        ----------
+        cfg : AdapterConfig
+            Configuration for sizes and LoRA options.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If head dimensions are incompatible.
+
+        Side Effects
+        ------------
+        Allocates projection layers.
+
+        Complexity
+        ----------
+        ``O(hidden_size²)`` for weight allocation.
+
+        Examples
+        --------
+        >>> cfg = AdapterConfig(hidden_size=4, num_heads=1)
+        >>> EpisodicAdapter(cfg).head_dim
+        4
+
+        See Also
+        --------
+        forward
+        """
+
         super().__init__()
         self.hidden_size = cfg.hidden_size
         self.num_heads = cfg.num_heads
@@ -140,7 +336,41 @@ class EpisodicAdapter(nn.Module):
 
     # ------------------------------------------------------------------
     def _expand_kv(self, x: Tensor) -> Tensor:
-        """Expand K/V heads to match query heads for MQA/GQA."""
+        """Expand K/V heads to match query heads for MQA/GQA.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Tensor with shape ``(B, kv_heads, T, D)``.
+
+        Returns
+        -------
+        torch.Tensor
+            Expanded tensor ``(B, heads, T, D)``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(B·T·D)``.
+
+        Examples
+        --------
+        >>> cfg = AdapterConfig(hidden_size=4, num_heads=2, num_kv_heads=1)
+        >>> adapter = EpisodicAdapter(cfg)
+        >>> adapter._expand_kv(torch.zeros(1,1,1,2)).shape
+        torch.Size([1, 2, 1, 2])
+
+        See Also
+        --------
+        forward
+        """
 
         if self.num_kv_heads == self.num_heads:
             return x
@@ -159,7 +389,47 @@ class EpisodicAdapter(nn.Module):
         traces: Tensor,
         attn_mask: Optional[Tensor] = None,
     ) -> Tensor:
-        """Fuse ``hidden_states`` with ``traces`` using cross-attention."""
+        """Fuse ``hidden_states`` with ``traces`` using cross-attention.
+
+        Parameters
+        ----------
+        hidden_states : torch.Tensor
+            Query states ``(B, Q, H)``.
+        traces : torch.Tensor
+            Memory traces ``(B, T, H)``.
+        attn_mask : torch.Tensor, optional
+            Attention mask ``(B, Q, T)``.
+
+        Returns
+        -------
+        torch.Tensor
+            Fused states ``(B, Q, H)``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(B·Q·T·H)``.
+
+        Examples
+        --------
+        >>> cfg = AdapterConfig(hidden_size=4, num_heads=1)
+        >>> adapter = EpisodicAdapter(cfg)
+        >>> hs = torch.zeros(1,1,4)
+        >>> tr = torch.zeros(1,1,4)
+        >>> adapter(hs, tr).shape
+        torch.Size([1, 1, 4])
+
+        See Also
+        --------
+        _expand_kv
+        """
 
         bsz, q_len, _ = hidden_states.shape
         t_len = traces.shape[1]
@@ -176,6 +446,7 @@ class EpisodicAdapter(nn.Module):
             mask = None
             if attn_mask is not None:
                 mask = attn_mask[:, None, :, :]
+            # why: use fused kernel for speed when available
             context = F.scaled_dot_product_attention(
                 q,
                 k,
