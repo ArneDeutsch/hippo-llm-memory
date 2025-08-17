@@ -42,3 +42,26 @@ def test_replay_scheduler_queue_ranking() -> None:
     sched.add_trace("b", key2, score=0.9)
     batch = sched.next_batch(1)
     assert batch[0] == ("episodic", "b")
+
+
+def test_schema_mismatch_replay_weighting() -> None:
+    """Low-confidence tuples stay episodic and get a larger replay share."""
+
+    kg = KnowledgeGraph(config={"schema_threshold": 0.8})
+    kg.schema_index.add_schema("rel", "rel")
+    low = ("A", "rel", "B", "ctx", None, 0.5, 0)
+    kg.ingest(low)
+    assert kg.graph.number_of_edges() == 0
+    assert kg.schema_index.episodic_buffer == [low]
+
+    mix = SimpleNamespace(episodic=0.7, semantic=0.3, fresh=0.0)
+    store = EpisodicStore(dim=2)
+    sched = ReplayScheduler(store, kg, batch_mix=mix)
+    sched.add_trace("low", np.array([1.0, 0.0], dtype="float32"), score=1.0)
+
+    batch = sched.next_batch(10)
+    kinds = [k for k, _ in batch]
+    assert kinds.count("episodic") == 7
+    assert kinds.count("semantic") == 3
+    epi_ids = [tid for k, tid in batch if k == "episodic"]
+    assert "low" in epi_ids
