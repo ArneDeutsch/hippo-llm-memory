@@ -105,6 +105,8 @@ class FaissIndex:
             self.index.remove_ids(ids)
         elif idx < len(self._vectors):
             del self._vectors[idx]
+        else:
+            raise IndexError("index out of range")
 
     def __len__(self) -> int:
         """Return the number of vectors currently stored."""
