@@ -82,8 +82,10 @@ class FaissIndex:
             raise ValueError(f"expected {self.dim} dimensions, got {len(query)}")
 
         if faiss is not None:
+            if self.use_pq and not self.index.is_trained:
+                return []
             _dists, idx = self.index.search(np.array([query], dtype="float32"), k)
-            return idx[0].tolist()
+            return [i for i in idx[0].tolist() if i != -1]
 
         if not self._vectors:
             return []
