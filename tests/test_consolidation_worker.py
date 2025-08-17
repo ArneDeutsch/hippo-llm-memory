@@ -1,5 +1,6 @@
 """Tests for the background consolidation worker."""
 
+import logging
 import threading
 import time
 from types import SimpleNamespace
@@ -157,3 +158,58 @@ def test_setup_maintenance_sets_state() -> None:
     assert worker.epi_store is store and worker.kg_store is kg
     assert worker.spatial_map is spat and worker.maintenance_interval == 0.5
     assert isinstance(worker.stop_event, threading.Event)
+
+
+def test_poll_queue_increments_and_returns() -> None:
+    """`poll_queue` fetches a batch and updates counters."""
+
+    class DummyScheduler:
+        def __init__(self) -> None:
+            self.batch = [("episodic", None)]
+
+        def next_batch(self, size: int) -> list[tuple[str, object]]:
+            assert size == 1
+            return self.batch
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1), batch_size=1)
+    batch = worker.poll_queue()
+    assert batch == [("episodic", None)]
+    assert worker.log_status()["batches"] == 1
+
+
+def test_step_adapters_dispatches() -> None:
+    """`step_adapters` routes items to the correct helper."""
+
+    class DummyScheduler:
+        def next_batch(self, size: int) -> list[tuple[str, object]]:  # pragma: no cover
+            return []
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1))
+    calls: list[str] = []
+    worker._step_episodic = lambda: calls.append("e")  # type: ignore[assignment]
+    worker._step_semantic = lambda: calls.append("s")  # type: ignore[assignment]
+    worker._step_fresh = lambda: calls.append("f")  # type: ignore[assignment]
+
+    worker.step_adapters([("episodic", None), ("semantic", None), ("fresh", None)])
+    assert calls == ["e", "s", "f"]
+
+
+def test_handle_errors_logs_and_stops(caplog) -> None:
+    """`handle_errors` logs exceptions and sets the stop flag."""
+
+    class DummyScheduler:
+        def next_batch(self, size: int) -> list[tuple[str, object]]:  # pragma: no cover
+            return []
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1))
+    with caplog.at_level(logging.ERROR):
+        result = worker.handle_errors(lambda: 42)
+    assert result == 42 and not worker.stop_event.is_set()
+
+    def boom() -> None:
+        raise RuntimeError("boom")
+
+    with caplog.at_level(logging.ERROR):
+        assert worker.handle_errors(boom) is None
+    assert worker.stop_event.is_set()
+    assert "consolidation step failed" in caplog.text
