@@ -1,0 +1,64 @@
+- id: T-RET-001
+  type: test
+  priority: P1
+  rationale: "`FaissIndex` lacks coverage for update/delete edge cases; low coverage (68%)【b12b3a†L24-L25】"
+  steps:
+    - "Add unit test covering add/update/remove and error handling in hippo_mem/retrieval/faiss_index.py"
+  files: ["tests/test_retrieval.py", "hippo_mem/retrieval/faiss_index.py"]
+  est_hours: 3
+  deps: []
+
+- id: T-EVAL-001
+  type: test
+  priority: P2
+  rationale: "No automated check that eval presets run and create outputs."
+  steps:
+    - "Invoke scripts/eval_bench.py with baselines/core, baselines/rag, baselines/longctx in dry-run mode"
+    - "Assert creation of runs/<date>/<preset>/<suite>/metrics.json"
+  files: ["tests/test_eval.py", "scripts/eval_bench.py"]
+  est_hours: 4
+  deps: []
+
+- id: T-DATA-001
+  type: test
+  priority: P2
+  rationale: "Dataset generator determinism across suites is untested."
+  steps:
+    - "Generate episodic/semantic/spatial datasets twice with same seeds"
+    - "Assert identical JSONL outputs and size"
+  files: ["tests/test_datasets.py", "scripts/build_datasets.py"]
+  est_hours: 3
+  deps: []
+
+- id: R-REL-001
+  type: refactor
+  priority: P2
+  rationale: "`KnowledgeGraph.prune` and `rollback` have CC 8 and heavy branching【d9ffdf†L17-L19】"
+  steps:
+    - "Split SQL condition building and graph mutation into helpers"
+    - "Simplify rollback by iterating over precomputed operations"
+  files: ["hippo_mem/relational/kg.py"]
+  est_hours: 5
+  deps: []
+
+- id: R-SPA-001
+  type: refactor
+  priority: P2
+  rationale: "`PlaceGraph.prune` complexity 9 indicates brittle maintenance code【d9ffdf†L33-L35】"
+  steps:
+    - "Refactor into separate node- and edge-pruning functions"
+    - "Add unit tests for pruning and rollback"
+  files: ["hippo_mem/spatial/map.py", "tests/test_spatial.py"]
+  est_hours: 5
+  deps: []
+
+- id: R-REL-002
+  type: refactor
+  priority: P3
+  rationale: "`extract_tuples` mixes parsing and scoring making extension hard【d9ffdf†L14-L16】"
+  steps:
+    - "Separate sentence splitting, time removal, and confidence scoring"
+    - "Expose smaller helpers for reuse"
+  files: ["hippo_mem/relational/tuples.py", "tests/test_relational.py"]
+  est_hours: 4
+  deps: []
