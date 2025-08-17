@@ -10,3 +10,16 @@ Each file follows the naming scheme `<suite>_<size>_<seed>.jsonl` where:
 
 Checksums for all datasets are recorded in `checksums.txt` in the same
 folder using the format `<sha256>  <filename>`.
+
+## Building datasets
+
+Use the CLI to generate datasets with explicit control over size, seed and
+the number of distractor events in episodic stories:
+
+```bash
+python scripts/build_datasets.py --suite episodic --size 200 --seed 1337 \
+    --distractors 2 --out data/episodic_200_1337.jsonl
+```
+
+The `--distractors` option only applies to the `episodic` suite and inserts
+the specified number of irrelevant sentences before the queried event.

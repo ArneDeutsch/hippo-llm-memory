@@ -19,11 +19,13 @@ from pathlib import Path
 from typing import Dict, Iterable, List
 
 
-def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
-    """Generate ``size`` W4 stories with associated queries.
+def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[str, str]]:
+    """Generate ``size`` W4 stories with optional distractor events.
 
-    Each item is a dictionary with ``prompt`` and ``answer`` fields.  The
-    generator is completely deterministic given ``seed``.
+    Each item is a dictionary with ``prompt`` and ``answer`` fields. The story
+    consists of ``distractors`` unrelated sentences followed by a relevant
+    sentence from which the query is derived. The generator is completely
+    deterministic given ``seed``.
     """
 
     rng = random.Random(seed)
@@ -40,7 +42,17 @@ def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
         where = rng.choice(places)
         when = rng.choice(times)
 
-        story = f"{who} {what} at the {where} on {when}."
+        # Build distractor sentences that precede the relevant event.
+        distractor_sents = []
+        for _ in range(distractors):
+            d_who = rng.choice(people)
+            d_what = rng.choice(actions)
+            d_where = rng.choice(places)
+            d_when = rng.choice(times)
+            distractor_sents.append(f"{d_who} {d_what} at the {d_where} on {d_when}.")
+
+        relevant = f"{who} {what} at the {where} on {when}."
+        story = " ".join(distractor_sents + [relevant])
         qtype = rng.choice(qtypes)
 
         if qtype == "who_at_where":
@@ -117,18 +129,20 @@ SUITE_TO_GENERATOR = {
 }
 
 
-def generate_dataset(suite: str, size: int, seed: int) -> List[Dict[str, object]]:
+def generate_dataset(suite: str, size: int, seed: int, **kwargs: int) -> List[Dict[str, object]]:
     """Dispatch to the generator for ``suite``.
 
-    This helper simplifies programmatic use and is exercised in unit tests to
-    ensure all suites are deterministic for a given ``seed``.
+    Extra keyword arguments are forwarded to the suite generator which allows
+    for suite-specific parameters such as the number of distractors in the
+    episodic tasks. The helper is used in unit tests to ensure deterministic
+    behaviour for a given ``seed``.
     """
 
     try:
         generator = SUITE_TO_GENERATOR[suite]
     except KeyError as exc:  # pragma: no cover - defensive programming
         raise ValueError(f"Unknown suite: {suite}") from exc
-    return generator(size, seed)
+    return generator(size, seed, **kwargs)
 
 
 def write_jsonl(path: Path, items: Iterable[Dict[str, object]]) -> None:
@@ -166,7 +180,7 @@ def main() -> None:
     Example:
 
     ``python scripts/build_datasets.py --suite episodic --size 100 --seed 42 \
-    --out data/episodic_100_42.jsonl``
+    --distractors 2 --out data/episodic_100_42.jsonl``
     """
 
     parser = argparse.ArgumentParser(description="Build synthetic evaluation data")
@@ -174,11 +188,17 @@ def main() -> None:
     parser.add_argument("--size", type=int, default=100, help="Number of items")
     parser.add_argument("--n", dest="size", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
+    parser.add_argument(
+        "--distractors",
+        type=int,
+        default=0,
+        help="Number of distractor events (episodic suite only)",
+    )
     parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
     args = parser.parse_args()
 
-    generator = SUITE_TO_GENERATOR[args.suite]
-    items = generator(args.size, args.seed)
+    extra = {"distractors": args.distractors} if args.suite == "episodic" else {}
+    items = generate_dataset(args.suite, args.size, args.seed, **extra)
     write_jsonl(args.out, items)
     checksum_path = args.out.parent / "checksums.txt"
     record_checksum(args.out, checksum_path)
