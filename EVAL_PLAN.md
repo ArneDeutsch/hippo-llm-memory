@@ -43,6 +43,22 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
 - **Planning tasks:** shortest path; “recall by place” questions.
 - **Procedural macros:** repeated multi‑step scripts (4–6 steps) to allow macro distillation.
 
+## 3.4 Generator coverage & gaps
+
+The current `scripts/build_datasets.py` covers core fixtures for W4 episodic
+stories, 2–3‑hop schema chains and grid worlds with macro paths. To fully test
+the algorithms in `research/experiment-synthesis.md` we also need:
+
+- **Reward/pin flags** in the episodic suite to exercise the neuromodulated
+  write gate and measure write precision/recall.
+- **Schema-fit labels over time** in the semantic suite to quantify
+  schema-accelerated consolidation.
+- **Sequential trajectories** in the spatial suite for path-integration stress
+  tests.
+
+Extending the generator with these fields is a prerequisite for the validation
+matrix below.
+
 # 4) Run matrix
 
 For each **suite**:
@@ -63,6 +79,18 @@ For each **suite**:
 ## 5.2 Compute & memory
 
 - Tokens processed, wall‑clock runtime per 100 queries (CPU timing acceptable for comparison), estimated KV‑cache MB, retrieval calls.
+
+## 5.3 Algorithm‑specific checks
+
+| Module & algorithm | Intended enhancement | Verification | Metrics |
+| --- | --- | --- | --- |
+| **HEI‑NW**: k‑WTA sparsity + Hopfield completion | Partial‑cue recall with low interference | Run episodic suite; ablate `episodic.use_sparsity` and `episodic.use_completion` | ΔEM/F1 vs. baseline, recall@k |
+| **HEI‑NW**: neuromodulated write gate | Store only salient/pinned episodes | Generate tasks with pin flags; compare writes with/without `episodic.use_gate` | write precision/recall, store size |
+| **HEI‑NW**: CA2 replay scheduler | Reduce interference via prioritized replay | Compare ΔEM after replay vs. `replay.enabled=false` | ΔEM after 1–3 cycles |
+| **SGC‑RSS**: schema fast‑track | Faster consolidation for schema‑fit facts | Semantic suite with schema-fit labels; ablate `relational.schema_fasttrack` | time-to-stabilize, multi-hop accuracy |
+| **SGC‑RSS**: contradiction detection | Avoid storing conflicting facts | Semantic generator with contradictions | contradiction rate |
+| **SMPD**: path integration | Robust localization over long trajectories | Spatial suite with sequential trajectories; ablate path integration | localization error, path success |
+| **SMPD**: macro distillation | Reuse learned procedures | Spatial macro tasks; ablate `spatial.macros` | steps reduction %, success rate |
 
 # 6) Ablations (toggles)
 
