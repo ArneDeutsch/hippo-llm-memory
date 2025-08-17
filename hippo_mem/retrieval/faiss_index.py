@@ -1,8 +1,14 @@
 """FAISS index utilities.
 
-This module wraps a tiny subset of the FAISS API that we rely on.  FAISS is an
-optional dependency; when it is not available we fall back to a simple
-``numpy`` based implementation so that tests can run without native extensions.
+Summary
+-------
+Wraps a tiny subset of the FAISS API with a NumPy fallback so tests run
+without native extensions. The index stores vectors ``(d,)`` and supports
+product quantisation.
+
+See Also
+--------
+hippo_mem.retrieval.embed
 """
 
 from __future__ import annotations
@@ -18,27 +24,58 @@ except Exception:  # pragma: no cover - fallback path
 
 
 class FaissIndex:
-    """Very small wrapper around :mod:`faiss` or a Python fallback.
+    """Minimal FAISS wrapper with NumPy fallback.
 
-    Only the bits of the API that are exercised in the unit tests are
-    implemented.  When :mod:`faiss` is not available the class falls back to a
-    tiny ``numpy`` based index so that tests can run without native
-    dependencies.
+    Summary
+    -------
+    Provides ``add``/``search`` over vectors ``(d,)`` using either
+    :mod:`faiss` or a pure NumPy store.
+
+    See Also
+    --------
+    embed_text
     """
 
     def __init__(self, dim: int, *, use_pq: bool = False, m: int = 8) -> None:
         """Create an empty index of dimension ``dim``.
 
+        Summary
+        -------
+        Initialise either a FAISS index or a NumPy list based on availability.
+
         Parameters
         ----------
-        dim:
-            Dimensionality of the vectors that will be stored in the index.
-        use_pq:
-            If ``True`` and FAISS is available an ``IndexPQ`` will be used which
-            requires an explicit training step.
-        m:
-            Number of sub-quantizers for product quantisation when ``use_pq`` is
-            enabled.  The default keeps things small for tests.
+        dim : int
+            Dimensionality of stored vectors.
+        use_pq : bool, optional
+            Use product quantisation when FAISS is available; default ``False``.
+        m : int, optional
+            Sub-quantizers for PQ; default ``8``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Allocates native FAISS structures when available.
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> FaissIndex(4)
+        <hippo_mem.retrieval.faiss_index.FaissIndex object...>
+
+        See Also
+        --------
+        train
         """
 
         self.dim = dim
@@ -48,12 +85,47 @@ class FaissIndex:
                 self.index = faiss.IndexPQ(dim, m, 8)
             else:
                 self.index = faiss.IndexFlatL2(dim)
-        else:  # fallback to a very small numpy based index
+        else:  # why: fallback keeps tests running without FAISS
             self._vectors: List[np.ndarray] = []
 
     # ------------------------------------------------------------------
     def train(self, data: Sequence[Sequence[float]]) -> None:
-        """Train the underlying index on ``data`` if required."""
+        """Train the underlying index if required.
+
+        Summary
+        -------
+        No-op unless product quantisation is enabled.
+
+        Parameters
+        ----------
+        data : sequence of sequence of float
+            Training vectors ``(n, d)``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Updates FAISS internal state when PQ is used.
+
+        Complexity
+        ----------
+        ``O(n d)`` for FAISS training.
+
+        Examples
+        --------
+        >>> idx = FaissIndex(2, use_pq=True)
+        >>> idx.train([[0.0, 0.0]])
+
+        See Also
+        --------
+        add
+        """
 
         if not self.use_pq or faiss is None:
             return  # nothing to do
@@ -65,7 +137,43 @@ class FaissIndex:
         self.index.train(mat)
 
     def add(self, vector: Sequence[float]) -> None:
-        """Add a single vector to the index."""
+        """Add a single vector.
+
+        Summary
+        -------
+        Inserts ``vector`` into FAISS or the fallback store.
+
+        Parameters
+        ----------
+        vector : sequence of float
+            Vector ``(d,)`` to index.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If ``vector`` has wrong dimensionality.
+
+        Side Effects
+        ------------
+        Mutates the underlying index.
+
+        Complexity
+        ----------
+        ``O(d)``.
+
+        Examples
+        --------
+        >>> idx = FaissIndex(2)
+        >>> idx.add([0.0, 0.1])
+
+        See Also
+        --------
+        search
+        """
 
         if len(vector) != self.dim:
             raise ValueError(f"expected {self.dim} dimensions, got {len(vector)}")
@@ -76,7 +184,48 @@ class FaissIndex:
             self._vectors.append(np.array(vector, dtype="float32"))
 
     def search(self, query: Sequence[float], k: int = 1) -> List[int]:
-        """Return indices of the ``k`` nearest neighbours for ``query``."""
+        """Return indices of the nearest neighbours.
+
+        Summary
+        -------
+        Finds ``k`` closest vectors to ``query`` using L2 distance.
+
+        Parameters
+        ----------
+        query : sequence of float
+            Query vector ``(d,)``.
+        k : int, optional
+            Number of neighbours to return; default ``1``.
+
+        Returns
+        -------
+        list of int
+            Indices of nearest neighbours.
+
+        Raises
+        ------
+        ValueError
+            If ``query`` dimensionality mismatches ``dim``.
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(n d)`` for fallback or FAISS search cost.
+
+        Examples
+        --------
+        >>> idx = FaissIndex(2)
+        >>> idx.add([0.0, 0.1])
+        >>> idx.search([0.0, 0.1])
+        [0]
+
+        See Also
+        --------
+        add
+        """
 
         if len(query) != self.dim:
             raise ValueError(f"expected {self.dim} dimensions, got {len(query)}")
@@ -95,7 +244,46 @@ class FaissIndex:
         return np.argsort(dists)[:k].tolist()
 
     def remove(self, idx: int) -> None:
-        """Remove the vector stored at ``idx`` from the index."""
+        """Remove the vector stored at ``idx``.
+
+        Summary
+        -------
+        Deletes a vector from the underlying index or fallback list.
+
+        Parameters
+        ----------
+        idx : int
+            Position of vector to remove.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If ``idx`` is negative.
+        IndexError
+            If ``idx`` is out of range in fallback mode.
+
+        Side Effects
+        ------------
+        Mutates the underlying index.
+
+        Complexity
+        ----------
+        ``O(n)`` in fallback mode due to list deletion.
+
+        Examples
+        --------
+        >>> idx = FaissIndex(2)
+        >>> idx.add([0.0, 0.1])
+        >>> idx.remove(0)
+
+        See Also
+        --------
+        add
+        """
 
         if idx < 0:
             raise ValueError("index must be non-negative")
@@ -109,7 +297,42 @@ class FaissIndex:
             raise IndexError("index out of range")
 
     def __len__(self) -> int:
-        """Return the number of vectors currently stored."""
+        """Return the number of stored vectors.
+
+        Summary
+        -------
+        Gives ``ntotal`` for FAISS or list length for fallback.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        int
+            Number of vectors in index.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> len(FaissIndex(2))
+        0
+
+        See Also
+        --------
+        add
+        """
 
         if faiss is not None:
             return int(self.index.ntotal)

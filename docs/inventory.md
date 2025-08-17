@@ -6,6 +6,7 @@
 - `hippo_mem/episodic/gating.py` — DG key encoding and neuromodulated write gate.
 - `hippo_mem/episodic/store.py` — FAISS-backed trace store with optional Hopfield completion.
 - `hippo_mem/episodic/replay.py` — prioritized replay queue and batch scheduler.
+-   Config: `configs/memory/episodic.yaml::{replay_weight,decay_rate,prune.*}`
 - `hippo_mem/episodic/adapter.py` — LoRA cross-attention over recalled traces.
 - `hippo_mem/episodic/index.py` — FAISS vector index wrapper.
 - `hippo_mem/episodic/db.py` — SQLite helper for trace metadata.
@@ -24,8 +25,10 @@
 ### Shared utilities
 - `hippo_mem/retrieval/embed.py` — deterministic placeholder text embedding.
 - `hippo_mem/retrieval/faiss_index.py` — FAISS index with NumPy fallback.
+  - Config: `configs/memory/episodic.yaml::index_str`
 - `hippo_mem/adapters/lora.py` — helper wrappers around PEFT LoRA adapters.
 - `hippo_mem/consolidation/worker.py` — background replay worker for adapter finetuning.
+  - Config: `configs/memory/{episodic,relational,spatial}.yaml::prune.*`
 
 ## scripts
 - `scripts/train_lora.py` — QLoRA trainer with optional memory modules.

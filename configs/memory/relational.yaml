@@ -1,13 +1,15 @@
 # Relational memory configuration.
 
-# Minimum confidence for ``SchemaIndex`` fast-track routing.
+# Summary: settings for SGC-RSS knowledge graph. Defaults mirror EVAL_PLAN §3.2.
+
+# Minimum confidence for ``SchemaIndex`` fast-track routing; default 0.7.
 schema_threshold: 0.7
 
-# Enable lightweight message-passing updates to node embeddings.
+# Enable lightweight message-passing updates to node embeddings; default true.
 gnn_updates: true
 
 # Pruning parameters for low-confidence or old tuples.
 prune:
-  min_conf: 0.2
-  max_age: 86400
+  min_conf: 0.2   # drop tuples below this confidence
+  max_age: 86400  # seconds (1 day)
 

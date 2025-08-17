@@ -1,42 +1,15 @@
-"""Algorithm Card: HEI-NW Replay
+"""Prioritised replay scheduler.
 
 Summary
 -------
-Prioritised replay scheduler for episodic consolidation.
+Implements CA2-style replay mixing 50% episodic, 30% semantic and 20% fresh
+items per batch. Ordering combines salience, recency and diversity to limit
+interference. Maintenance jobs such as decay, prune and merge are executed by
+the consolidation worker.
 
-Integration style
------------------
-Feeds cross-attention adapter via offline batches.
-
-Data structures
----------------
-``DGKey`` via ``ReplayItem``, ``AssocStore`` backing, ``ReplayQueue``.
-
-Pipeline
+See Also
 --------
-1. WriteGate selects trace and enqueues ``ReplayItem`` with ``S``.
-2. Queue orders by ``λ₁·S + λ₂·recency + λ₃·diversity``.
-3. Scheduler mixes episodic, semantic and fresh items.
-4. Trainer samples batches for consolidation.
-
-Design rationale & trade-offs
------------------------------
-Balances salience with diversity to reduce interference; additional bookkeeping
-adds CPU overhead.
-
-Failure modes & diagnostics
----------------------------
-Queue starvation → inspect ``log_status``; gradient overlap → adjust
-``grad_sim_threshold``.
-
-Ablation switches & expected effects
-------------------------------------
-``replay.enabled=false`` disables consolidation improving speed but reducing
-retention.
-
-Contracts
----------
-Queue operations are in-memory and idempotent per ``trace_id``.
+hippo_mem.consolidation.worker
 """
 
 import random
@@ -118,7 +91,12 @@ class ReplayQueue:
 
     Summary
     -------
-    Maintains ``ReplayItem`` objects sorted by a weighted priority.
+    Maintains ``ReplayItem`` objects sorted by a weighted priority to achieve
+    interference-aware ordering.
+
+    See Also
+    --------
+    ReplayScheduler
     """
 
     def __init__(
@@ -129,6 +107,50 @@ class ReplayQueue:
         lambda2: float = 0.3,
         lambda3: float = 0.2,
     ) -> None:
+        """Initialise an empty priority queue.
+
+        Summary
+        -------
+        Sets weighting coefficients for salience (λ₁), recency (λ₂) and
+        diversity (λ₃).
+
+        Parameters
+        ----------
+        maxlen : int, optional
+            Maximum queue length; default ``1024``.
+        lambda1 : float, optional
+            Weight for salience component; default ``0.5``.
+        lambda2 : float, optional
+            Weight for recency; default ``0.3``.
+        lambda3 : float, optional
+            Weight for diversity; default ``0.2``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> ReplayQueue(maxlen=10).maxlen
+        10
+
+        See Also
+        --------
+        add
+        """
+
         self.maxlen = maxlen
         self.items: List[ReplayItem] = []
         self.step = 0
@@ -137,11 +159,10 @@ class ReplayQueue:
         self.lambda3 = lambda3
 
     def _diversity(self, key: np.ndarray, keys: np.ndarray) -> float:
-        """Average cosine dissimilarity between ``key`` and ``keys``.
-
-        Summary
+        """Summary
         -------
-        Uses ``1 - mean_cos`` to favour novel items.
+        Compute average cosine dissimilarity between ``key`` and ``keys`` to
+        favour novel items.
 
         Parameters
         ----------
@@ -169,7 +190,7 @@ class ReplayQueue:
 
         Examples
         --------
-        >>> ReplayQueue()._diversity(np.zeros(1), np.zeros((0,1)))
+        >>> ReplayQueue()._diversity(np.zeros(1), np.zeros((0, 1)))
         1.0
 
         See Also
@@ -198,7 +219,9 @@ class ReplayQueue:
         grad: Optional[np.ndarray] = None,
         timestamp: float | None = None,
     ) -> None:
-        """Add a trace with associated key and gating score ``S``.
+        """Summary
+        -------
+        Add a trace with associated key and gating score ``S``.
 
         Parameters
         ----------
@@ -213,7 +236,7 @@ class ReplayQueue:
         grad : numpy.ndarray, optional
             Gradient estimate ``(d,)``.
         timestamp : float, optional
-            Event time.
+            Event time in seconds.
 
         Returns
         -------
@@ -423,11 +446,9 @@ class ReplayQueue:
         return selected
 
     def sample(self, k: int, *, grad_sim_threshold: float = 0.9) -> List[str]:
-        """Return ``k`` trace identifiers prioritising low gradient overlap.
-
-        Summary
+        """Summary
         -------
-        Provides identifiers for replay according to priority.
+        Return ``k`` trace identifiers prioritising low gradient overlap.
 
         Parameters
         ----------
@@ -491,6 +512,12 @@ class ReplayScheduler:
     Summary
     -------
     Wraps a :class:`ReplayQueue` and knowledge graph to produce replay batches.
+    Default mix is 50% episodic, 30% semantic and 20% fresh; metrics are logged
+    for diagnostics.
+
+    See Also
+    --------
+    ConsolidationWorker
     """
 
     def __init__(
@@ -501,7 +528,9 @@ class ReplayScheduler:
         batch_mix: BatchMixLike,
         grad_sim_threshold: float = 0.9,
     ) -> None:
-        """Initialise scheduler state.
+        """Summary
+        -------
+        Initialise scheduler state with replay ratios and gradient threshold.
 
         Parameters
         ----------
@@ -557,7 +586,9 @@ class ReplayScheduler:
         grad: Optional[np.ndarray] = None,
         timestamp: float | None = None,
     ) -> None:
-        """Proxy for :meth:`ReplayQueue.add` to enqueue traces.
+        """Summary
+        -------
+        Proxy for :meth:`ReplayQueue.add` to enqueue traces.
 
         Parameters
         ----------
@@ -570,9 +601,9 @@ class ReplayScheduler:
         grad_overlap_proxy : float, optional
             Gradient overlap proxy.
         grad : numpy.ndarray, optional
-            Gradient estimate.
+            Gradient estimate ``(d,)``.
         timestamp : float, optional
-            Event time.
+            Event time in seconds.
 
         Returns
         -------
@@ -610,7 +641,9 @@ class ReplayScheduler:
         )
 
     def next_batch(self, batch_size: int) -> List[Tuple[str, Optional[str]]]:
-        """Return a mixed batch of replay types.
+        """Summary
+        -------
+        Return a mixed batch of replay types.
 
         Parameters
         ----------
@@ -675,11 +708,9 @@ class ReplayScheduler:
         return batch
 
     def log_status(self) -> dict:
-        """Return counters for scheduled batches.
-
-        Summary
+        """Summary
         -------
-        Diagnostics for number of produced batches.
+        Return counters for scheduled batches.
 
         Parameters
         ----------
