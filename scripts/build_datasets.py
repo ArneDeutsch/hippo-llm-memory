@@ -116,6 +116,20 @@ SUITE_TO_GENERATOR = {
 }
 
 
+def generate_dataset(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
+    """Dispatch to the generator for ``suite``.
+
+    This helper simplifies programmatic use and is exercised in unit tests to
+    ensure all suites are deterministic for a given ``seed``.
+    """
+
+    try:
+        generator = SUITE_TO_GENERATOR[suite]
+    except KeyError as exc:  # pragma: no cover - defensive programming
+        raise ValueError(f"Unknown suite: {suite}") from exc
+    return generator(n, seed)
+
+
 def write_jsonl(path: Path, items: Iterable[Dict[str, object]]) -> None:
     """Write items to ``path`` in JSON Lines format."""
 
