@@ -10,3 +10,7 @@ Each file follows the naming scheme `<suite>_<size>_<seed>.jsonl` where:
 
 Checksums for all datasets are recorded in `checksums.txt` in the same
 folder using the format `<sha256>  <filename>`.
+
+For the spatial suite, `--grid-size` and `--obstacle-density` control the
+dimensions of the grid world and the fraction of blocked cells, enabling tests
+with walls and repeated macro paths.
