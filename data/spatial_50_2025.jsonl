@@ -1,50 +1,50 @@
-{"prompt": "Start at (4,0) and move to (3,1). What is the shortest path length?", "answer": 2}
-{"prompt": "Start at (4,0) and move to (2,3). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (4,1) and move to (0,3). What is the shortest path length?", "answer": 6}
-{"prompt": "Start at (3,0) and move to (0,0). What is the shortest path length?", "answer": 3}
-{"prompt": "Start at (1,3) and move to (0,3). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (0,4) and move to (0,4). What is the shortest path length?", "answer": 0}
-{"prompt": "Start at (4,0) and move to (1,1). What is the shortest path length?", "answer": 4}
-{"prompt": "Start at (0,1) and move to (3,3). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (2,4) and move to (0,4). What is the shortest path length?", "answer": 2}
-{"prompt": "Start at (0,4) and move to (1,1). What is the shortest path length?", "answer": 4}
-{"prompt": "Start at (0,1) and move to (4,0). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (0,1) and move to (4,2). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (0,4) and move to (3,2). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (3,4) and move to (1,2). What is the shortest path length?", "answer": 4}
-{"prompt": "Start at (4,3) and move to (4,3). What is the shortest path length?", "answer": 0}
-{"prompt": "Start at (3,0) and move to (4,3). What is the shortest path length?", "answer": 4}
-{"prompt": "Start at (4,0) and move to (2,4). What is the shortest path length?", "answer": 6}
-{"prompt": "Start at (1,2) and move to (1,4). What is the shortest path length?", "answer": 2}
-{"prompt": "Start at (4,4) and move to (2,1). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (2,2) and move to (2,2). What is the shortest path length?", "answer": 0}
-{"prompt": "Start at (0,4) and move to (1,2). What is the shortest path length?", "answer": 3}
-{"prompt": "Start at (4,2) and move to (4,1). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (0,2) and move to (4,4). What is the shortest path length?", "answer": 6}
-{"prompt": "Start at (4,4) and move to (4,4). What is the shortest path length?", "answer": 0}
-{"prompt": "Start at (1,4) and move to (3,2). What is the shortest path length?", "answer": 4}
-{"prompt": "Start at (4,1) and move to (2,4). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (0,4) and move to (4,3). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (0,1) and move to (1,1). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (1,1) and move to (3,4). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (1,2) and move to (4,0). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (0,4) and move to (3,1). What is the shortest path length?", "answer": 6}
-{"prompt": "Start at (1,1) and move to (1,2). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (2,1) and move to (2,2). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (1,3) and move to (1,4). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (3,1) and move to (0,4). What is the shortest path length?", "answer": 6}
-{"prompt": "Start at (1,1) and move to (3,2). What is the shortest path length?", "answer": 3}
-{"prompt": "Start at (4,4) and move to (1,0). What is the shortest path length?", "answer": 7}
-{"prompt": "Start at (2,4) and move to (2,2). What is the shortest path length?", "answer": 2}
-{"prompt": "Start at (4,3) and move to (2,2). What is the shortest path length?", "answer": 3}
-{"prompt": "Start at (0,1) and move to (2,4). What is the shortest path length?", "answer": 5}
-{"prompt": "Start at (3,4) and move to (3,4). What is the shortest path length?", "answer": 0}
-{"prompt": "Start at (4,3) and move to (2,2). What is the shortest path length?", "answer": 3}
-{"prompt": "Start at (0,1) and move to (4,1). What is the shortest path length?", "answer": 4}
-{"prompt": "Start at (2,0) and move to (2,1). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (1,3) and move to (1,4). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (0,0) and move to (1,2). What is the shortest path length?", "answer": 3}
-{"prompt": "Start at (2,4) and move to (0,0). What is the shortest path length?", "answer": 6}
-{"prompt": "Start at (4,0) and move to (4,4). What is the shortest path length?", "answer": 4}
-{"prompt": "Start at (2,2) and move to (1,2). What is the shortest path length?", "answer": 1}
-{"prompt": "Start at (4,2) and move to (1,0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 3) goal (4, 0). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 0) to (0, 1)?", "answer": "LLLLD"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 1). After moves ULDUD where do you end?", "answer": [3, 1], "trajectory": [[4, 1], [4, 0], [3, 0], [3, 1], [3, 0], [3, 1]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 1) goal (0, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 4). After moves LRUUD where do you end?", "answer": [4, 3], "trajectory": [[4, 4], [3, 4], [4, 4], [4, 3], [4, 2], [4, 3]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 0) goal (4, 4). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 0) to (0, 1)?", "answer": "LLLLD"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (0, 1). After moves RLRLD where do you end?", "answer": [0, 2], "trajectory": [[0, 1], [1, 1], [0, 1], [1, 1], [0, 1], [0, 2]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (3, 1) goal (1, 1). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (2, 1). After moves UDRUR where do you end?", "answer": [4, 0], "trajectory": [[2, 1], [2, 0], [2, 1], [3, 1], [3, 0], [4, 0]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 4) goal (1, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 0) to (0, 1)?", "answer": "LLLLD"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 2). After moves DDUDL where do you end?", "answer": [3, 4], "trajectory": [[4, 2], [4, 3], [4, 4], [4, 3], [4, 4], [3, 4]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 3) goal (4, 4). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 0) to (0, 1)?", "answer": "LLLLD"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (0, 1). After moves DUURR where do you end?", "answer": [2, 0], "trajectory": [[0, 1], [0, 2], [0, 1], [0, 0], [1, 0], [2, 0]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (1, 1) goal (3, 1). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 0). After moves LLRRL where do you end?", "answer": [3, 0], "trajectory": [[4, 0], [3, 0], [2, 0], [3, 0], [4, 0], [3, 0]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 2) goal (2, 1). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (2, 1). After moves ULDRU where do you end?", "answer": [2, 0], "trajectory": [[2, 1], [2, 0], [1, 0], [1, 1], [2, 1], [2, 0]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (3, 0) goal (2, 0). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 3). After moves UUDDD where do you end?", "answer": [4, 4], "trajectory": [[4, 3], [4, 2], [4, 1], [4, 2], [4, 3], [4, 4]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 3) goal (2, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 0) to (0, 1)?", "answer": "LLLLD"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (2, 0). After moves LDLDU where do you end?", "answer": [0, 1], "trajectory": [[2, 0], [1, 0], [1, 1], [0, 1], [0, 2], [0, 1]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (2, 1) goal (1, 1). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (1, 1). After moves LDUUD where do you end?", "answer": [0, 1], "trajectory": [[1, 1], [0, 1], [0, 2], [0, 1], [0, 0], [0, 1]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (1, 0) goal (3, 4). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (1, 1). After moves LDUUD where do you end?", "answer": [0, 1], "trajectory": [[1, 1], [0, 1], [0, 2], [0, 1], [0, 0], [0, 1]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (2, 1) goal (0, 1). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 0) to (0, 1)?", "answer": "LLLLD"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (2, 0). After moves LLRDL where do you end?", "answer": [0, 1], "trajectory": [[2, 0], [1, 0], [0, 0], [1, 0], [1, 1], [0, 1]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 4) goal (1, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (0, 1). After moves DUDUR where do you end?", "answer": [1, 1], "trajectory": [[0, 1], [0, 2], [0, 1], [0, 2], [0, 1], [1, 1]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (3, 0) goal (1, 1). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (1, 1) to (0, 1)?", "answer": "L"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (1, 0). After moves RRDLU where do you end?", "answer": [2, 0], "trajectory": [[1, 0], [2, 0], [3, 0], [3, 1], [2, 1], [2, 0]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (4, 1) goal (3, 4). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 0) to (0, 1)?", "answer": "LLLLD"}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (3, 4). After moves RUDUU where do you end?", "answer": [4, 2], "trajectory": [[3, 4], [4, 4], [4, 3], [4, 4], [4, 3], [4, 2]]}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. Start (0, 2) goal (1, 0). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 5x5 with obstacles [(0, 3), (0, 4), (1, 2), (1, 4), (2, 2), (2, 3), (2, 4), (3, 2), (3, 3)]. What move sequence leads from (4, 3) to (3, 0)?", "answer": "UULU"}

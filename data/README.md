@@ -18,11 +18,14 @@ python scripts/build_datasets.py --suite episodic --size 100 --seed 0 \
 
 `--size` and `--seed` control the number of items and RNG seed respectively,
 while `--distractors` sets the number of distractor events preceding the query
-for the episodic suite.
+for the episodic suite. Episodic records also expose `reward`/`pin` flags to
+exercise the neuromodulated write gate.
 
 Checksums for all datasets are recorded in `checksums.txt` in the same
 folder using the format `<sha256>  <filename>`.
 
 For the spatial suite, `--grid-size` and `--obstacle-density` control the
 dimensions of the grid world and the fraction of blocked cells, enabling tests
-with walls and repeated macro paths.
+with walls, macro paths and sequential trajectories for path integration.
+Semantic items include per-fact `schema_fit` labels with a `time` index to
+track consolidation speed.

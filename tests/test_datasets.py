@@ -36,3 +36,26 @@ def test_semantic_options() -> None:
 
     contradict = build_datasets.generate_semantic(1, seed=0, inject_contradictions=True)
     assert "However, others report" in contradict[0]["prompt"]
+
+
+def test_episodic_flags() -> None:
+    """Episodic items expose reward and pin flags."""
+
+    item = build_datasets.generate_episodic(1, seed=0)[0]
+    assert "reward" in item and "pin" in item
+
+
+def test_semantic_fact_labels() -> None:
+    """Semantic items include per-fact schema-fit metadata."""
+
+    item = build_datasets.generate_semantic(1, seed=0, hop_depth=3, inject_contradictions=True)[0]
+    facts = item["facts"]
+    assert facts and all("schema_fit" in f and "time" in f for f in facts)
+
+
+def test_spatial_trajectory() -> None:
+    """Spatial generator emits random walk trajectories for path integration."""
+
+    items = build_datasets.generate_spatial(3, seed=0)
+    traj_items = [t for t in items if "trajectory" in t]
+    assert traj_items and traj_items[0]["trajectory"][-1] == traj_items[0]["answer"]
