@@ -237,6 +237,14 @@ class KnowledgeGraph:
             params.append(cutoff)
         return " OR ".join(conditions), params
 
+    def _remove_edges(self, edges: Sequence[tuple], cur: sqlite3.Cursor) -> None:
+        """Delete ``edges`` from graph and SQLite store."""
+
+        for edge_id, src, _rel, dst, *_ in edges:
+            if self.graph.has_edge(src, dst, key=edge_id):
+                self.graph.remove_edge(src, dst, key=edge_id)
+            cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
+
     def _remove_orphan_nodes(
         self,
         candidate_nodes: set[str],
@@ -270,15 +278,15 @@ class KnowledgeGraph:
             return
         candidate_nodes = {e[1] for e in edges} | {e[3] for e in edges}
         node_data = {n: self.node_embeddings.get(n) for n in candidate_nodes}
-        for edge_id, src, rel, dst, ctx, t, conf, prov, emb in edges:
-            if self.graph.has_edge(src, dst, key=edge_id):
-                self.graph.remove_edge(src, dst, key=edge_id)
-            cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
+        self._remove_edges(edges, cur)
         self.conn.commit()
 
         removed_nodes = self._remove_orphan_nodes(candidate_nodes, node_data, cur)
         self.conn.commit()
-        self._push_history({"op": "prune", "edges": edges, "nodes": removed_nodes})
+
+        ops = [{"type": "edge", "data": e} for e in edges]
+        ops.extend({"type": "node", "data": n} for n in removed_nodes)
+        self._push_history({"op": "prune", "ops": ops})
         self._log_event("prune", {"min_conf": min_conf, "max_age": max_age})
 
     def log_status(self) -> dict:
@@ -311,39 +319,47 @@ class KnowledgeGraph:
             entry = self._history.pop()
             if entry.get("op") != "prune":
                 continue
-            edges = entry.get("edges", [])
-            nodes = entry.get("nodes", [])
             cur = self.conn.cursor()
-            for name, emb in nodes:
-                self.graph.add_node(name)
-                cur.execute(
-                    "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
-                    (name, self._to_json(emb)),
-                )
-                if emb is not None:
-                    self.node_embeddings[name] = np.asarray(emb, dtype=float)
-            for edge in edges:
-                edge_id, src, rel, dst, ctx, t_, conf, prov, emb = edge
-                self.graph.add_edge(
-                    src,
-                    dst,
-                    key=edge_id,
-                    relation=rel,
-                    context=ctx,
-                    time=t_,
-                    conf=conf,
-                    provenance=prov,
-                )
-                if emb is not None:
-                    self.graph[src][dst][edge_id]["embedding"] = np.asarray(
-                        json.loads(emb), dtype=float
-                    )
-                cur.execute(
-                    "INSERT INTO edges(id, src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
-                    (edge_id, src, rel, dst, ctx, t_, conf, prov, emb),
-                )
+            for op in entry.get("ops", []):
+                if op["type"] == "node":
+                    self._restore_node(op["data"], cur)
+                elif op["type"] == "edge":
+                    self._restore_edge(op["data"], cur)
             self.conn.commit()
             self._log_event("rollback", {"op": "prune"})
+
+    def _restore_node(self, data: tuple[str, Optional[np.ndarray]], cur: sqlite3.Cursor) -> None:
+        """Recreate a single node from ``rollback`` data."""
+
+        name, emb = data
+        self.graph.add_node(name)
+        cur.execute(
+            "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
+            (name, self._to_json(emb)),
+        )
+        if emb is not None:
+            self.node_embeddings[name] = np.asarray(emb, dtype=float)
+
+    def _restore_edge(self, edge: tuple, cur: sqlite3.Cursor) -> None:
+        """Recreate a single edge from ``rollback`` data."""
+
+        edge_id, src, rel, dst, ctx, t_, conf, prov, emb = edge
+        self.graph.add_edge(
+            src,
+            dst,
+            key=edge_id,
+            relation=rel,
+            context=ctx,
+            time=t_,
+            conf=conf,
+            provenance=prov,
+        )
+        if emb is not None:
+            self.graph[src][dst][edge_id]["embedding"] = np.asarray(json.loads(emb), dtype=float)
+        cur.execute(
+            "INSERT INTO edges(id, src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
+            (edge_id, src, rel, dst, ctx, t_, conf, prov, emb),
+        )
 
 
 __all__ = ["KnowledgeGraph"]
