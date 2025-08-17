@@ -19,11 +19,13 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Set
 
 
-def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
-    """Generate ``size`` W4 stories with associated queries.
+def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[str, str]]:
+    """Generate ``size`` W4 stories with distractor events and queries.
 
-    Each item is a dictionary with ``prompt`` and ``answer`` fields.  The
-    generator is completely deterministic given ``seed``.
+    Each item contains a multi-sentence story where the final sentence is the
+    relevant event followed by a query.  ``distractors`` controls how many
+    unrelated sentences precede the target event.  The generator is completely
+    deterministic given ``seed``.
     """
 
     rng = random.Random(seed)
@@ -35,14 +37,23 @@ def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
 
     tasks: List[Dict[str, str]] = []
     for _ in range(size):
+        # Build distractor sentences first
+        distractor_sents: List[str] = []
+        for _ in range(distractors):
+            dwho = rng.choice(people)
+            dwhat = rng.choice(actions)
+            dwhere = rng.choice(places)
+            dwhen = rng.choice(times)
+            distractor_sents.append(f"{dwho} {dwhat} at the {dwhere} on {dwhen}.")
+
+        # Target sentence that the query will reference
         who = rng.choice(people)
         what = rng.choice(actions)
         where = rng.choice(places)
         when = rng.choice(times)
+        target_sent = f"{who} {what} at the {where} on {when}."
 
-        story = f"{who} {what} at the {where} on {when}."
         qtype = rng.choice(qtypes)
-
         if qtype == "who_at_where":
             question = f"Who was at the {where}?"
             answer = who
@@ -56,6 +67,7 @@ def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
             question = f"When was {who} at the {where}?"
             answer = when
 
+        story = " ".join(distractor_sents + [target_sent])
         tasks.append({"prompt": f"{story} {question}", "answer": answer})
 
     return tasks
@@ -230,7 +242,7 @@ def main() -> None:
     Example:
 
     ``python scripts/build_datasets.py --suite episodic --size 100 --seed 42 \
-    --out data/episodic_100_42.jsonl``
+    --distractors 2 --out data/episodic_100_42.jsonl``
 
     For the spatial suite additional parameters control the grid world:
 
@@ -244,6 +256,12 @@ def main() -> None:
     parser.add_argument("--n", dest="size", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
     parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
+    parser.add_argument(
+        "--distractors",
+        type=int,
+        default=0,
+        help="Number of distractor sentences for episodic suite",
+    )
     parser.add_argument(
         "--grid-size",
         type=int,
@@ -266,6 +284,8 @@ def main() -> None:
             grid_size=args.grid_size,
             obstacle_density=args.obstacle_density,
         )
+    elif args.suite == "episodic":
+        items = generator(args.size, args.seed, distractors=args.distractors)
     else:
         items = generator(args.size, args.seed)
     write_jsonl(args.out, items)
