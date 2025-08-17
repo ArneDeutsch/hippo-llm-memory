@@ -64,25 +64,23 @@ def test_hopfield_completion_restores_sparse_cue() -> None:
     assert cos >= 0.9
 
 
-def test_gating_threshold_and_pin() -> None:
-    """Gating blocks low-salience writes but pin overrides."""
+def test_gating_threshold_and_pin_weight() -> None:
+    """Pin adds ``delta`` to the score but still requires threshold crossing."""
 
     store = EpisodicStore(dim=4)
-    gate = WriteGate(tau=0.5)
     key = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
     store.write(key, TraceValue(provenance="a"))
 
-    prob = 1.0  # no surprise
+    prob = 1.0  # no surprise, novelty is 0
     query = key
-    decision = gate(prob, query, store.keys())
-    if decision.allow:
-        store.write(query, TraceValue(provenance="b"))
-    assert store.index.ntotal == 1
 
+    gate = WriteGate(tau=0.5, alpha=0.0, beta=0.0, gamma=0.0, delta=0.0)
     decision = gate(prob, query, store.keys(), pin=True)
-    if decision.allow:
-        store.write(query, TraceValue(provenance="b"))
-    assert store.index.ntotal == 2
+    assert not decision.allow and decision.score == pytest.approx(0.0)
+
+    strong_gate = WriteGate(tau=0.5, alpha=0.0, beta=0.0, gamma=0.0, delta=1.0)
+    decision2 = strong_gate(prob, query, store.keys(), pin=True)
+    assert decision2.allow and decision2.score == pytest.approx(1.0)
 
 
 def test_delete_removes_trace() -> None:
