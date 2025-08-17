@@ -73,12 +73,37 @@ def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[s
     return tasks
 
 
-def generate_semantic(size: int, seed: int) -> List[Dict[str, str]]:
-    """Generate simple two-hop reasoning facts.
+def generate_semantic(
+    size: int,
+    seed: int,
+    hop_depth: int = 2,
+    inject_contradictions: bool = False,
+) -> List[Dict[str, str]]:
+    """Generate 2–3 hop fact chains linking people, items, stores and cities.
 
-    The template creates a purchase event and links the store to a city.  The
-    question requires resolving the city of purchase – a tiny multi-hop query.
+    Parameters
+    ----------
+    size:
+        Number of items to generate.
+    seed:
+        RNG seed for determinism.
+    hop_depth:
+        ``2`` creates a purchase event and links the store to a city.
+        ``3`` adds an intermediate hop linking the item to the store before
+        linking the store to the city.
+    inject_contradictions:
+        If ``True``, an additional contradictory statement about the store's
+        city is inserted, requiring disambiguation in the query.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        ``prompt``/``answer`` pairs. The prompt contains the fact chain and a
+        question asking for the city of purchase.
     """
+
+    if hop_depth not in {2, 3}:
+        raise ValueError("hop_depth must be 2 or 3")
 
     rng = random.Random(seed)
     people = ["Alice", "Bob", "Carol", "Dave"]
@@ -93,8 +118,22 @@ def generate_semantic(size: int, seed: int) -> List[Dict[str, str]]:
         store = rng.choice(stores)
         city = rng.choice(cities)
 
-        text = f"{who} bought a {item} at {store}. {store} is in {city}."
-        question = f"In which city did {who} buy the {item}?"
+        parts: List[str] = []
+        if hop_depth == 2:
+            parts.append(f"{who} bought a {item} at {store}.")
+        else:  # hop_depth == 3
+            parts.append(f"{who} bought a {item}.")
+            parts.append(f"The {item} was sold at {store}.")
+        parts.append(f"{store} is in {city}.")
+
+        if inject_contradictions:
+            false_city = rng.choice([c for c in cities if c != city])
+            parts.append(f"However, others report {store} is in {false_city}.")
+            question = f"Despite conflicting reports, in which city did {who} buy the {item}?"
+        else:
+            question = f"In which city did {who} buy the {item}?"
+
+        text = " ".join(parts)
         tasks.append({"prompt": f"{text} {question}", "answer": city})
 
     return tasks
@@ -248,6 +287,11 @@ def main() -> None:
 
     ``python scripts/build_datasets.py --suite spatial --size 50 --seed 0 \
     --grid-size 7 --obstacle-density 0.3 --out data/spatial.jsonl``
+
+    The semantic suite supports multi-hop chains and optional contradictions:
+
+    ``python scripts/build_datasets.py --suite semantic --size 20 --seed 0 \
+    --hop-depth 3 --contradict --out data/semantic.jsonl``
     """
 
     parser = argparse.ArgumentParser(description="Build synthetic evaluation data")
@@ -274,6 +318,17 @@ def main() -> None:
         default=0.2,
         help="Obstacle density for spatial suite",
     )
+    parser.add_argument(
+        "--hop-depth",
+        type=int,
+        default=2,
+        help="Hop depth (2 or 3) for semantic suite",
+    )
+    parser.add_argument(
+        "--contradict",
+        action="store_true",
+        help="Inject contradictory store locations for semantic suite",
+    )
     args = parser.parse_args()
 
     generator = SUITE_TO_GENERATOR[args.suite]
@@ -286,6 +341,13 @@ def main() -> None:
         )
     elif args.suite == "episodic":
         items = generator(args.size, args.seed, distractors=args.distractors)
+    elif args.suite == "semantic":
+        items = generator(
+            args.size,
+            args.seed,
+            hop_depth=args.hop_depth,
+            inject_contradictions=args.contradict,
+        )
     else:
         items = generator(args.size, args.seed)
     write_jsonl(args.out, items)

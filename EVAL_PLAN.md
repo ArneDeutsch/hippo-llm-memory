@@ -134,10 +134,15 @@ idx,prompt,answer,pred,correct,latency_ms,flags
 ```bash
 echo "build W4/Schema/Grid fixtures"
 python scripts/build_datasets.py --out data/episodic.jsonl --suite episodic --size 1000 --seed 1337
-python scripts/build_datasets.py --out data/semantic.jsonl --suite semantic --size 1000 --seed 1337
+python scripts/build_datasets.py --out data/semantic.jsonl --suite semantic --size 1000 --seed 1337 --hop-depth 3 --contradict
 python scripts/build_datasets.py --out data/spatial.jsonl  --suite spatial  \
   --size 1000 --seed 1337 --grid-size 5 --obstacle-density 0.2
 ```
+
+The semantic command above emits 2–3 hop chains linking people, items, stores
+and cities. Using ``--hop-depth 3`` adds an item→store hop, while
+``--contradict`` inserts a conflicting store location that the query
+disambiguates.
 
 ## 9.2 Run baselines
 
