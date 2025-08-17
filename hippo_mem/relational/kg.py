@@ -1,4 +1,45 @@
-"""Lightweight persistent knowledge graph implementation."""
+"""Semantic graph persistence and retrieval.
+
+Summary
+-------
+Implements a ``KnowledgeGraph`` storing tuples in a NetworkX multigraph
+with SQLite persistence. Tuples are routed via a :class:`SchemaIndex`
+and enriched with embeddings. Subgraph retrieval expands around
+top-matching nodes within a configurable radius.
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+
+Raises
+------
+None
+
+Side Effects
+------------
+Creates SQLite files and spawns optional background maintenance
+threads.
+
+Complexity
+----------
+Operations are linear in the number of affected nodes/edges.
+
+Examples
+--------
+>>> kg = KnowledgeGraph()
+>>> kg.upsert('Alice', 'knows', 'Bob', 'Alice knows Bob')
+>>> kg.retrieve([1.0, 0.0], k=1).number_of_nodes()
+2
+
+See Also
+--------
+hippo_mem.relational.schema.SchemaIndex
+hippo_mem.relational.tuples.extract_tuples
+"""
 
 from __future__ import annotations
 
@@ -16,7 +57,34 @@ from .tuples import TupleType
 
 
 class KnowledgeGraph:
-    """Knowledge graph backed by NetworkX and SQLite."""
+    """Persistent semantic graph with provenance tracking.
+
+    Summary
+    -------
+    Stores tuples in a NetworkX ``MultiDiGraph`` and mirrors them in an
+    SQLite database for durability. Schema-fit tuples can be fast-tracked
+    via :class:`SchemaIndex`.
+
+    Parameters
+    ----------
+    db_path : str, optional
+        SQLite path or ``":memory:"``.
+    config : Optional[dict], optional
+        Configuration flags such as ``schema_threshold`` and
+        ``gnn_updates``.
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    Opens a SQLite connection and optionally spawns a background thread.
+
+    See Also
+    --------
+    SchemaIndex
+    """
 
     def __init__(self, db_path: str = ":memory:", *, config: Optional[dict] = None) -> None:
         self.graph = nx.MultiDiGraph()
@@ -97,12 +165,54 @@ class KnowledgeGraph:
         tail_embedding: Optional[Iterable[float]] = None,
         edge_embedding: Optional[Iterable[float]] = None,
     ) -> None:
-        """Add or update a tuple in the graph and SQLite store."""
+        """Add or update a tuple in the graph and SQLite store.
+
+        Summary
+        -------
+        Inserts nodes/edges, persists them, and optionally updates node
+        embeddings via a tiny GNN-like averaging step.
+
+        Parameters
+        ----------
+        head, relation, tail, context, time, conf, provenance
+            Components of the tuple. ``provenance`` is an identifier for
+            audit/rollback.
+        head_embedding, tail_embedding, edge_embedding : Optional[Iterable[float]]
+            Embeddings with shape ``(D,)``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Writes to SQLite and mutates ``self.graph``.
+
+        Complexity
+        ----------
+        ``O(1)`` per upsert.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.upsert('A', 'rel', 'B', 'ctx')
+        >>> kg.graph.has_edge('A', 'B')
+        True
+
+        See Also
+        --------
+        ingest
+        """
 
         self.graph.add_node(head)
         self.graph.add_node(tail)
 
         cur = self.conn.cursor()
+        # why: persist tuple and provenance for rollback
         cur.execute(
             "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
             (head, self._to_json(head_embedding)),
@@ -151,8 +261,48 @@ class KnowledgeGraph:
         self._log["writes"] += 1
 
     def ingest(self, tup: TupleType) -> bool:
-        """Route a tuple through ``SchemaIndex`` and insert if confident."""
+        """Route a tuple through ``SchemaIndex`` and insert if confident.
 
+        Summary
+        -------
+        Delegates to :meth:`SchemaIndex.fast_track` to decide whether the
+        tuple belongs in the graph or should remain episodic.
+
+        Parameters
+        ----------
+        tup : TupleType
+            Tuple from :func:`hippo_mem.relational.tuples.extract_tuples`.
+
+        Returns
+        -------
+        bool
+            ``True`` if the tuple was inserted.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        May mutate the graph and ``SchemaIndex`` buffers.
+
+        Complexity
+        ----------
+        ``O(#schemas)`` comparison.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.schema_index.add_schema('likes', 'likes')
+        >>> kg.ingest(('A', 'likes', 'B', 'ctx', None, 0.9, 0))
+        True
+
+        See Also
+        --------
+        SchemaIndex.fast_track
+        """
+
+        # why: schema index gates tuples to reduce noisy graph writes
         return self.schema_index.fast_track(tup, self)
 
     def _to_json(self, emb: Optional[Iterable[float]]) -> Optional[str]:
@@ -161,7 +311,44 @@ class KnowledgeGraph:
         return json.dumps(list(map(float, emb)))
 
     def _gnn_update(self, nodes: Sequence[str]) -> None:
-        """Very small message-passing stub updating node embeddings."""
+        """Very small message-passing stub updating node embeddings.
+
+        Summary
+        -------
+        Averages incident edge embeddings into node embeddings when
+        available.
+
+        Parameters
+        ----------
+        nodes : Sequence[str]
+            Node names to update.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Mutates ``node_embeddings``.
+
+        Complexity
+        ----------
+        ``O(degree(n))`` per node.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.upsert('A', 'rel', 'B', 'ctx', edge_embedding=[1.0])
+        >>> kg._gnn_update(['A'])
+
+        See Also
+        --------
+        None
+        """
 
         for n in nodes:
             edges = [
@@ -185,7 +372,51 @@ class KnowledgeGraph:
     def retrieve(
         self, query_embedding: Iterable[float], k: int = 1, radius: int = 1
     ) -> nx.MultiDiGraph:
-        """Return a radius-``r`` subgraph around the top-``k`` nodes."""
+        """Return a radius-``r`` subgraph around the top-``k`` nodes.
+
+        Summary
+        -------
+        Scores stored node embeddings against ``query_embedding`` and
+        expands neighborhoods within ``radius``.
+
+        Parameters
+        ----------
+        query_embedding : Iterable[float]
+            Query vector of shape ``(D,)``.
+        k : int, optional
+            Number of seed nodes.
+        radius : int, optional
+            Breadth of subgraph expansion.
+
+        Returns
+        -------
+        nx.MultiDiGraph
+            Detached subgraph.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(|V|)`` for scoring plus expansion cost.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.upsert('A', 'rel', 'B', 'ctx', head_embedding=[1, 0])
+        >>> sub = kg.retrieve([1, 0])
+        >>> set(sub.nodes()) == {'A', 'B'}
+        True
+
+        See Also
+        --------
+        upsert
+        """
 
         if not self.node_embeddings:
             return nx.MultiDiGraph()
@@ -263,7 +494,48 @@ class KnowledgeGraph:
         return removed
 
     def prune(self, min_conf: float = 0.0, max_age: Optional[float] = None) -> None:
-        """Remove edges below confidence or older than ``max_age`` seconds."""
+        """Remove low-confidence or stale edges.
+
+        Summary
+        -------
+        Deletes edges that do not meet confidence or age criteria and
+        cleans up orphan nodes.
+
+        Parameters
+        ----------
+        min_conf : float, optional
+            Minimum confidence to retain.
+        max_age : Optional[float], optional
+            Maximum age in seconds.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Mutates graph and writes to SQLite; logs operations for rollback.
+
+        Complexity
+        ----------
+        ``O(#edges)`` affected.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.upsert('A', 'rel', 'B', 'ctx', conf=0.4)
+        >>> kg.prune(min_conf=0.5)
+        >>> kg.graph.number_of_edges()
+        0
+
+        See Also
+        --------
+        rollback
+        """
 
         cur = self.conn.cursor()
         where, params = self._build_prune_conditions(min_conf, max_age)
@@ -287,12 +559,61 @@ class KnowledgeGraph:
         ops = [{"type": "edge", "data": e} for e in edges]
         ops.extend({"type": "node", "data": n} for n in removed_nodes)
         self._push_history({"op": "prune", "ops": ops})
+        # why: track deletions for provenance and undo
         self._log_event("prune", {"min_conf": min_conf, "max_age": max_age})
 
     def log_status(self) -> dict:
+        """Return counters for writes, recalls, and maintenance events.
+
+        Summary
+        -------
+        Exposes lightweight statistics for monitoring.
+
+        Returns
+        -------
+        dict
+            Mapping of event name to count.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.log_status()['writes']
+        0
+
+        See Also
+        --------
+        _log_event
+        """
+
         return dict(self._log)
 
     def start_background_tasks(self, interval: float = 300.0) -> None:
+        """Start periodic maintenance in a background thread.
+
+        Summary
+        -------
+        Runs :meth:`prune` at fixed intervals.
+
+        Parameters
+        ----------
+        interval : float, optional
+            Sleep seconds between maintenance cycles.
+
+        Returns
+        -------
+        None
+
+        Side Effects
+        ------------
+        Spawns a daemon thread.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.start_background_tasks(interval=0.1)
+        >>> kg._bg_thread is not None
+        True
+        """
         if self._bg_thread is not None:
             return
 
@@ -311,7 +632,46 @@ class KnowledgeGraph:
         self._bg_thread = t
 
     def rollback(self, n: int = 1) -> None:
-        """Rollback the last ``n`` prune operations."""
+        """Rollback the last ``n`` prune operations.
+
+        Summary
+        -------
+        Restores previously pruned edges/nodes using logged history.
+
+        Parameters
+        ----------
+        n : int, optional
+            Number of prune operations to undo.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Mutates graph and SQLite store.
+
+        Complexity
+        ----------
+        ``O(#ops)`` in the restored batch.
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.upsert('A', 'rel', 'B', 'ctx', conf=0.4)
+        >>> kg.prune(min_conf=0.5)
+        >>> kg.rollback()
+        >>> kg.graph.has_edge('A', 'B')
+        True
+
+        See Also
+        --------
+        prune
+        """
 
         for _ in range(n):
             if not self._history:

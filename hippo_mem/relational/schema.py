@@ -1,4 +1,43 @@
-"""Simple schema index for routing relational tuples."""
+"""Schema prototypes and routing for SGC-RSS.
+
+Summary
+-------
+Defines lightweight schema prototypes used to route tuples. High-score
+tuples are written directly to the semantic graph; others are buffered
+for episodic replay.
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+
+Raises
+------
+None
+
+Side Effects
+------------
+None
+
+Complexity
+----------
+Scoring is ``O(#schemas)``.
+
+Examples
+--------
+>>> from hippo_mem.relational.schema import SchemaIndex
+>>> si = SchemaIndex(threshold=0.8)
+>>> si.add_schema('buy', 'buy')
+>>> si.score(si.schemas['buy'], ('A', 'buy', 'B', 'ctx', None, 1.0, 0))
+1.0
+
+See Also
+--------
+hippo_mem.relational.kg.KnowledgeGraph
+"""
 
 from __future__ import annotations
 
@@ -13,6 +52,28 @@ if TYPE_CHECKING:  # pragma: no cover
 
 @dataclass
 class Schema:
+    """Prototype describing expected tuple structure.
+
+    Summary
+    -------
+    Captures relation name and optional type hints for entities.
+
+    Parameters
+    ----------
+    name : str
+        Human-readable schema identifier.
+    relation : str
+        Relation token expected in tuples.
+    head_type : Optional[str], optional
+        Anticipated type for the head entity.
+    tail_type : Optional[str], optional
+        Anticipated type for the tail entity.
+
+    See Also
+    --------
+    SchemaIndex
+    """
+
     name: str
     relation: str
     head_type: Optional[str] = None
@@ -20,7 +81,18 @@ class Schema:
 
 
 class SchemaIndex:
-    """Store schema prototypes and route tuples based on confidence."""
+    """Store schema prototypes and route tuples based on confidence.
+
+    Summary
+    -------
+    Maintains prototypes and buffers low-confidence tuples until they
+    cross a threshold.
+
+    Parameters
+    ----------
+    threshold : float, optional
+        Minimum score and tuple confidence required for KG insertion.
+    """
 
     def __init__(self, threshold: float = 0.8) -> None:
         self.schemas: Dict[str, Schema] = {}
@@ -34,14 +106,56 @@ class SchemaIndex:
         head_type: Optional[str] = None,
         tail_type: Optional[str] = None,
     ) -> None:
+        """Register a new schema prototype.
+
+        Parameters
+        ----------
+        name, relation, head_type, tail_type
+            Attributes for the schema; ``head_type`` and ``tail_type`` are
+            optional type hints.
+        """
+
         self.schemas[name] = Schema(name, relation, head_type, tail_type)
 
     def score(self, schema: Schema, tup: TupleType) -> float:
+        """Return ``1.0`` when ``tup`` matches ``schema.relation``.
+
+        Parameters
+        ----------
+        schema : Schema
+            Prototype to evaluate.
+        tup : TupleType
+            Candidate tuple.
+
+        Returns
+        -------
+        float
+            Match confidence in ``[0, 1]``.
+        """
+
         head, relation, tail, *_ = tup
         return 1.0 if relation == schema.relation else 0.0
 
     def fast_track(self, tup: TupleType, kg: KnowledgeGraph) -> bool:
-        """Route ``tup`` to ``kg`` if confident enough, else keep in episodic buffer."""
+        """Route ``tup`` to ``kg`` if confident; otherwise buffer.
+
+        Summary
+        -------
+        Chooses the best schema score and inserts when both schema match
+        and tuple confidence exceed ``threshold``.
+
+        Parameters
+        ----------
+        tup : TupleType
+            Tuple to evaluate.
+        kg : KnowledgeGraph
+            Target graph for insertion.
+
+        Returns
+        -------
+        bool
+            ``True`` if the tuple was written to ``kg``.
+        """
 
         best_score = 0.0
         for schema in self.schemas.values():
@@ -51,13 +165,21 @@ class SchemaIndex:
         if best_score >= self.threshold and tup[5] >= self.threshold:
             head, relation, tail, context, time, conf, prov = tup
             kg.upsert(head, relation, tail, context, time, conf, prov)
+            # why: flushing handles newly qualified buffered tuples
             self.flush(kg)
             return True
+        # why: keep low-confidence tuples for episodic replay
         self.episodic_buffer.append(tup)
         return False
 
     def flush(self, kg: KnowledgeGraph) -> None:
-        """Attempt to write buffered tuples to ``kg`` if they now meet the threshold."""
+        """Promote buffered tuples meeting ``threshold`` to ``kg``.
+
+        Parameters
+        ----------
+        kg : KnowledgeGraph
+            Graph to receive promoted tuples.
+        """
 
         remaining: List[TupleType] = []
         for tup in self.episodic_buffer:
