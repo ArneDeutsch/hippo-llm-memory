@@ -1,4 +1,43 @@
-"""Replay queue utilities for episodic memory."""
+"""Algorithm Card: HEI-NW Replay
+
+Summary
+-------
+Prioritised replay scheduler for episodic consolidation.
+
+Integration style
+-----------------
+Feeds cross-attention adapter via offline batches.
+
+Data structures
+---------------
+``DGKey`` via ``ReplayItem``, ``AssocStore`` backing, ``ReplayQueue``.
+
+Pipeline
+--------
+1. WriteGate selects trace and enqueues ``ReplayItem`` with ``S``.
+2. Queue orders by ``λ₁·S + λ₂·recency + λ₃·diversity``.
+3. Scheduler mixes episodic, semantic and fresh items.
+4. Trainer samples batches for consolidation.
+
+Design rationale & trade-offs
+-----------------------------
+Balances salience with diversity to reduce interference; additional bookkeeping
+adds CPU overhead.
+
+Failure modes & diagnostics
+---------------------------
+Queue starvation → inspect ``log_status``; gradient overlap → adjust
+``grad_sim_threshold``.
+
+Ablation switches & expected effects
+------------------------------------
+``replay.enabled=false`` disables consolidation improving speed but reducing
+retention.
+
+Contracts
+---------
+Queue operations are in-memory and idempotent per ``trace_id``.
+"""
 
 import random
 import time
@@ -13,7 +52,56 @@ from hippo_mem.relational.kg import KnowledgeGraph
 
 @dataclass
 class ReplayItem:
-    """Metadata stored for replay scheduling."""
+    """Metadata stored for replay scheduling.
+
+    Summary
+    -------
+    Captures attributes required for priority computation.
+
+    Parameters
+    ----------
+    trace_id : str
+        Identifier of the trace in the store.
+    key : numpy.ndarray
+        Dense key vector ``(d,)``.
+    score : float
+        Gating score ``S``.
+    step : int
+        Global step when inserted.
+    diversity_sig : float
+        Diversity signature in ``[0, 1]``.
+    grad_overlap_proxy : float, optional
+        Approximation of gradient overlap.
+    grad : numpy.ndarray, optional
+        Gradient estimate ``(d,)``.
+    timestamp : float
+        Event time in seconds.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(1)`` to construct.
+
+    Examples
+    --------
+    >>> ReplayItem("t", np.zeros(1), 0.0, 0, 1.0, None, None, 0.0).trace_id
+    't'
+
+    See Also
+    --------
+    ReplayQueue
+    """
 
     trace_id: str
     key: np.ndarray
@@ -28,10 +116,9 @@ class ReplayItem:
 class ReplayQueue:
     """Replay queue mixing gating score, recency and diversity.
 
-    Items are ordered by a weighted combination of gating score ``S``, recency
-    and a diversity signature augmented by an optional gradient-overlap proxy.
-    ``lambda1``, ``lambda2`` and ``lambda3`` control the relative weighting of
-    these signals.
+    Summary
+    -------
+    Maintains ``ReplayItem`` objects sorted by a weighted priority.
     """
 
     def __init__(
@@ -50,7 +137,45 @@ class ReplayQueue:
         self.lambda3 = lambda3
 
     def _diversity(self, key: np.ndarray, keys: np.ndarray) -> float:
-        """Average cosine dissimilarity between ``key`` and ``keys``."""
+        """Average cosine dissimilarity between ``key`` and ``keys``.
+
+        Summary
+        -------
+        Uses ``1 - mean_cos`` to favour novel items.
+
+        Parameters
+        ----------
+        key : numpy.ndarray
+            Candidate key ``(d,)``.
+        keys : numpy.ndarray
+            Existing key matrix ``(n, d)``.
+
+        Returns
+        -------
+        float
+            Diversity score in ``[0, 1]``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(n d)``.
+
+        Examples
+        --------
+        >>> ReplayQueue()._diversity(np.zeros(1), np.zeros((0,1)))
+        1.0
+
+        See Also
+        --------
+        _priority_scores
+        """
 
         if keys.size == 0:
             return 1.0
@@ -73,7 +198,50 @@ class ReplayQueue:
         grad: Optional[np.ndarray] = None,
         timestamp: float | None = None,
     ) -> None:
-        """Add a trace with associated key and gating score ``S``."""
+        """Add a trace with associated key and gating score ``S``.
+
+        Parameters
+        ----------
+        trace_id : str
+            Identifier of the trace.
+        key : numpy.ndarray
+            Key vector ``(d,)``.
+        score : float
+            Gating score ``S``.
+        grad_overlap_proxy : float, optional
+            Proxy for gradient overlap.
+        grad : numpy.ndarray, optional
+            Gradient estimate ``(d,)``.
+        timestamp : float, optional
+            Event time.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Mutates the queue in place.
+
+        Complexity
+        ----------
+        ``O(n d)`` due to diversity computation.
+
+        Examples
+        --------
+        >>> q = ReplayQueue()
+        >>> q.add("t", np.zeros(1), 0.0)
+        >>> len(q.items)
+        1
+
+        See Also
+        --------
+        sample
+        """
 
         self.step += 1
         if timestamp is None:
@@ -100,7 +268,43 @@ class ReplayQueue:
             self.items.pop(0)
 
     def _cosine(self, a: np.ndarray, b: np.ndarray) -> float:
-        """Return cosine similarity between vectors."""
+        """Return cosine similarity between vectors.
+
+        Summary
+        -------
+        Safe cosine computation avoiding division by zero.
+
+        Parameters
+        ----------
+        a, b : numpy.ndarray
+            Vectors ``(d,)``.
+
+        Returns
+        -------
+        float
+            Cosine similarity ``[-1, 1]``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(d)``.
+
+        Examples
+        --------
+        >>> ReplayQueue()._cosine(np.ones(1), np.ones(1))
+        1.0
+
+        See Also
+        --------
+        _diversity
+        """
 
         denom = float(np.linalg.norm(a) * np.linalg.norm(b))
         if denom == 0.0:
@@ -108,7 +312,43 @@ class ReplayQueue:
         return float(np.dot(a, b) / denom)
 
     def _priority_scores(self) -> List[float]:
-        """Return priority scores for the current queue items."""
+        """Return priority scores for the current queue items.
+
+        Summary
+        -------
+        Combines gating score, recency and diversity components.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        list of float
+            Priority values aligned with ``self.items``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(n)``.
+
+        Examples
+        --------
+        >>> q = ReplayQueue()
+        >>> q._priority_scores()
+        []
+
+        See Also
+        --------
+        _select_indices
+        """
 
         now = self.step
         priorities: List[float] = []
@@ -124,7 +364,48 @@ class ReplayQueue:
         return priorities
 
     def _select_indices(self, order: List[int], k: int, grad_sim_threshold: float) -> List[int]:
-        """Select indices respecting gradient overlap constraints."""
+        """Select indices respecting gradient overlap constraints.
+
+        Summary
+        -------
+        Greedy selection avoiding highly similar gradients.
+
+        Parameters
+        ----------
+        order : list of int
+            Candidate indices sorted by priority.
+        k : int
+            Number of items to pick.
+        grad_sim_threshold : float
+            Maximum allowed cosine similarity.
+
+        Returns
+        -------
+        list of int
+            Selected indices.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(k d)``.
+
+        Examples
+        --------
+        >>> q = ReplayQueue()
+        >>> q._select_indices([], 1, 0.9)
+        []
+
+        See Also
+        --------
+        sample
+        """
 
         selected: List[int] = []
         last_grad: Optional[np.ndarray] = None
@@ -134,6 +415,7 @@ class ReplayQueue:
             item = self.items[idx]
             if last_grad is not None and item.grad is not None:
                 if self._cosine(last_grad, item.grad) >= grad_sim_threshold:
+                    # why: skip traces with similar gradients to preserve diversity
                     continue
             selected.append(idx)
             if item.grad is not None:
@@ -141,7 +423,46 @@ class ReplayQueue:
         return selected
 
     def sample(self, k: int, *, grad_sim_threshold: float = 0.9) -> List[str]:
-        """Return ``k`` trace identifiers prioritising low gradient overlap."""
+        """Return ``k`` trace identifiers prioritising low gradient overlap.
+
+        Summary
+        -------
+        Provides identifiers for replay according to priority.
+
+        Parameters
+        ----------
+        k : int
+            Number of traces.
+        grad_sim_threshold : float, optional
+            Maximum allowed cosine similarity.
+
+        Returns
+        -------
+        list of str
+            Selected trace identifiers.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(n log n)`` due to sorting.
+
+        Examples
+        --------
+        >>> q = ReplayQueue()
+        >>> q.sample(1)
+        []
+
+        See Also
+        --------
+        add
+        """
 
         if not self.items:
             return []
@@ -152,7 +473,12 @@ class ReplayQueue:
 
 
 class BatchMixLike(Protocol):
-    """Protocol describing the batch mix structure."""
+    """Protocol describing the batch mix structure.
+
+    Summary
+    -------
+    Exposes proportions of replay types.
+    """
 
     episodic: float
     semantic: float
@@ -162,9 +488,9 @@ class BatchMixLike(Protocol):
 class ReplayScheduler:
     """Scheduler that interleaves episodic, semantic and fresh items.
 
-    The scheduler maintains an internal :class:`ReplayQueue` for episodic
-    traces and produces batches mixing episodic replays, semantic recalls from
-    the knowledge graph and fresh data according to provided ratios.
+    Summary
+    -------
+    Wraps a :class:`ReplayQueue` and knowledge graph to produce replay batches.
     """
 
     def __init__(
@@ -175,6 +501,45 @@ class ReplayScheduler:
         batch_mix: BatchMixLike,
         grad_sim_threshold: float = 0.9,
     ) -> None:
+        """Initialise scheduler state.
+
+        Parameters
+        ----------
+        store : EpisodicStore
+            Backing episodic store.
+        kg : KnowledgeGraph
+            Semantic store for relational recalls.
+        batch_mix : BatchMixLike
+            Ratios of replay types.
+        grad_sim_threshold : float, optional
+            Gradient overlap threshold.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> from hippo_mem.relational.kg import KnowledgeGraph
+        >>> scheduler = ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})())
+
+        See Also
+        --------
+        next_batch
+        """
+
         self.store = store
         self.kg = kg
         self.batch_mix = batch_mix
@@ -192,7 +557,48 @@ class ReplayScheduler:
         grad: Optional[np.ndarray] = None,
         timestamp: float | None = None,
     ) -> None:
-        """Proxy for :meth:`ReplayQueue.add` to enqueue traces."""
+        """Proxy for :meth:`ReplayQueue.add` to enqueue traces.
+
+        Parameters
+        ----------
+        trace_id : str
+            Identifier of the trace.
+        key : numpy.ndarray
+            Key vector ``(d,)``.
+        score : float
+            Gating score ``S``.
+        grad_overlap_proxy : float, optional
+            Gradient overlap proxy.
+        grad : numpy.ndarray, optional
+            Gradient estimate.
+        timestamp : float, optional
+            Event time.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Enqueues item into internal queue.
+
+        Complexity
+        ----------
+        As in :meth:`ReplayQueue.add`.
+
+        Examples
+        --------
+        >>> scheduler = ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})())
+        >>> scheduler.add_trace('t', np.zeros(1), 0.0)
+
+        See Also
+        --------
+        next_batch
+        """
 
         self.queue.add(
             trace_id,
@@ -206,14 +612,39 @@ class ReplayScheduler:
     def next_batch(self, batch_size: int) -> List[Tuple[str, Optional[str]]]:
         """Return a mixed batch of replay types.
 
-        Args:
-            batch_size: Number of items to schedule.
+        Parameters
+        ----------
+        batch_size : int
+            Number of items to schedule.
 
-        Returns:
-            A list of ``(kind, identifier)`` tuples where ``kind`` is one of
-            ``"episodic"``, ``"semantic"`` or ``"fresh"``.  For episodic
-            items the identifier corresponds to a trace id selected by the
-            internal queue.  Identifiers for other kinds are ``None``.
+        Returns
+        -------
+        list of tuple of str and Optional[str]
+            Tuples ``(kind, identifier)`` with ``kind`` in
+            {``"episodic"``, ``"semantic"``, ``"fresh"``}. Episodic identifiers
+            reference trace ids; others are ``None``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Touches the knowledge graph for statistics.
+
+        Complexity
+        ----------
+        ``O(n log n)`` dominated by queue sampling.
+
+        Examples
+        --------
+        >>> scheduler = ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})())
+        >>> scheduler.next_batch(1)[0][0]
+        'episodic'
+
+        See Also
+        --------
+        add_trace
         """
 
         n_epi = int(self.batch_mix.episodic * batch_size)
@@ -222,13 +653,11 @@ class ReplayScheduler:
         epi_ids = (
             self.queue.sample(n_epi, grad_sim_threshold=self.grad_sim_threshold) if n_epi else []
         )
-        # If we requested more episodic items than available fill with ``None``
+        # why: ensure batch size even when queue short
         epi_ids.extend([None] * (n_epi - len(epi_ids)))
 
         if n_sem:
-            # Touch the KG to keep statistics/logs consistent; the actual
-            # returned graph is ignored by the training loop in this minimal
-            # implementation.
+            # why: touch KG for logging consistency even if result ignored
             try:
                 self.kg.retrieve(np.zeros(1, dtype=float), k=1)
             except Exception:  # pragma: no cover - safety net
@@ -246,6 +675,41 @@ class ReplayScheduler:
         return batch
 
     def log_status(self) -> dict:
-        """Return counters for scheduled batches."""
+        """Return counters for scheduled batches.
+
+        Summary
+        -------
+        Diagnostics for number of produced batches.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict
+            Copy of internal counters.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})()).log_status()['batches']
+        0
+
+        See Also
+        --------
+        next_batch
+        """
 
         return dict(self._log)
