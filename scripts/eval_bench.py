@@ -22,7 +22,7 @@ import hashlib
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -294,7 +294,7 @@ def main(cfg: DictConfig) -> None:
     else:
         outdir_path = (
             Path("runs")
-            / datetime.utcnow().strftime("%Y%m%d")
+            / datetime.now(UTC).strftime("%Y%m%d")
             / str(cfg.preset).replace("/", "_")
             / cfg.suite
         )
