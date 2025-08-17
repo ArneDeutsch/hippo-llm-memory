@@ -63,3 +63,32 @@ def test_faiss_index_edge_cases() -> None:
     for vec in train_data[:2]:
         index.add(vec)
     assert index.search(query, k=1) == [0]
+
+
+def test_faiss_index_update_and_error_handling(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Updating vectors and invalid operations raise appropriate errors."""
+    index = FaissIndex(dim=2)
+    # Initial add and update by remove+add cycle.
+    index.add([1.0, 0.0])
+    index.add([0.0, 1.0])
+    index.remove(1)
+    index.add([0.5, 0.5])  # updated vector
+    assert len(index) == 2
+    assert index.search([0.6, 0.4], k=1) == [1]
+
+    # Dimension mismatches.
+    with pytest.raises(ValueError):
+        index.add([1.0])
+    with pytest.raises(ValueError):
+        index.search([0.0], k=1)
+
+    # Negative index always raises.
+    with pytest.raises(ValueError):
+        index.remove(-1)
+
+    # Patch to numpy fallback to exercise out-of-range error.
+    monkeypatch.setattr("hippo_mem.retrieval.faiss_index.faiss", None)
+    fallback = FaissIndex(dim=2)
+    fallback.add([0.0, 1.0])
+    with pytest.raises(IndexError):
+        fallback.remove(10)
