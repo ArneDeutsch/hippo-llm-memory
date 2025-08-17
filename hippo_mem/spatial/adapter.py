@@ -1,6 +1,41 @@
-"""Cross-attention adapter for spatial plans and macros."""
+"""Cross-attention adapter for spatial plans.
 
-from __future__ import annotations
+Summary
+-------
+Provides a small module that fuses LLM hidden states with plan or macro
+embeddings using optional LoRA projections and group query attention.
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+
+Raises
+------
+None
+
+Side Effects
+------------
+None
+
+Complexity
+----------
+``O(B * T * H)`` where ``B`` is batch, ``T`` tokens, ``H`` heads.
+
+Examples
+--------
+>>> cfg = AdapterConfig(hidden_size=4, num_heads=2)
+>>> SpatialAdapter(cfg)  # doctest: +ELLIPSIS
+<hippo_mem.spatial.adapter.SpatialAdapter object at ...>
+
+See Also
+--------
+hippo_mem.spatial.map.PlaceGraph
+hippo_mem.spatial.macros.MacroLib
+"""
 
 import math
 from dataclasses import dataclass
@@ -15,7 +50,55 @@ from hippo_mem.episodic.adapter import LoraLinear
 
 @dataclass
 class AdapterConfig:
-    """Configuration for :class:`SpatialAdapter`."""
+    """Configuration for :class:`SpatialAdapter`.
+
+    Summary
+    -------
+    Defines projection sizes and LoRA settings.
+
+    Parameters
+    ----------
+    hidden_size : int
+        Model hidden dimension ``D``.
+    num_heads : int
+        Number of attention heads ``H``.
+    num_kv_heads : int, optional
+        K/V heads for GQA; defaults to ``num_heads``.
+    lora_r : int, optional
+        LoRA rank, by default ``0`` (disabled).
+    lora_alpha : int, optional
+        LoRA scaling factor, by default ``1``.
+    lora_dropout : float, optional
+        Dropout rate in ``[0,1]``.
+    enabled : bool, optional
+        Whether adapter is active.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(1)`` to instantiate.
+
+    Examples
+    --------
+    >>> AdapterConfig(hidden_size=4, num_heads=2)
+    AdapterConfig(hidden_size=4, num_heads=2, num_kv_heads=None, lora_r=0,
+                  lora_alpha=1, lora_dropout=0.0, enabled=False)
+
+    See Also
+    --------
+    SpatialAdapter
+    """
 
     hidden_size: int
     num_heads: int
@@ -27,9 +110,49 @@ class AdapterConfig:
 
 
 class SpatialAdapter(nn.Module):
-    """Cross-attention between LLM states and plan/macro embeddings."""
+    """Cross-attention between LLM states and plan/macro embeddings.
+
+    Summary
+    -------
+    Uses query/key/value projections (optionally LoRA-augmented) to fuse
+    token states with plan vectors.
+    """
 
     def __init__(self, cfg: AdapterConfig) -> None:
+        """Initialise projections and parameters.
+
+        Parameters
+        ----------
+        cfg : AdapterConfig
+            Adapter configuration.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If head sizes do not divide evenly.
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(D^2)`` parameter initialisation.
+
+        Examples
+        --------
+        >>> SpatialAdapter(AdapterConfig(hidden_size=4, num_heads=2))  # doctest: +ELLIPSIS
+        <hippo_mem.spatial.adapter.SpatialAdapter object at ...>
+
+        See Also
+        --------
+        AdapterConfig
+        """
+
         super().__init__()
         self.hidden_size = cfg.hidden_size
         self.num_heads = cfg.num_heads
@@ -76,7 +199,46 @@ class SpatialAdapter(nn.Module):
 
     # ------------------------------------------------------------------
     def _expand_kv(self, x: Tensor) -> Tensor:
-        """Expand K/V heads to match query heads for MQA/GQA."""
+        """Expand K/V heads to match query heads for MQA/GQA.
+
+        Summary
+        -------
+        Duplicates K/V heads when ``num_kv_heads`` < ``num_heads``.
+
+        Parameters
+        ----------
+        x : Tensor
+            Shape ``(B, K, T, D)`` where ``K`` is ``num_kv_heads``.
+
+        Returns
+        -------
+        Tensor
+            Shape ``(B, H, T, D)`` with expanded heads.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(B * H * T)``.
+
+        Examples
+        --------
+        >>> cfg = AdapterConfig(hidden_size=4, num_heads=2, num_kv_heads=1)
+        >>> ad = SpatialAdapter(cfg)
+        >>> x = torch.zeros(1, 1, 1, ad.head_dim)
+        >>> ad._expand_kv(x).shape
+        torch.Size([1, 2, 1, 2])
+
+        See Also
+        --------
+        forward
+        """
 
         if self.num_kv_heads == self.num_heads:
             return x
@@ -94,7 +256,52 @@ class SpatialAdapter(nn.Module):
         plans: Tensor,
         attn_mask: Optional[Tensor] = None,
     ) -> Tensor:
-        """Fuse ``hidden_states`` with ``plans`` using cross-attention."""
+        """Fuse ``hidden_states`` with ``plans`` using cross-attention.
+
+                Summary
+                -------
+                Projects inputs into ``num_heads`` and combines them via scaled
+        dot-product attention.
+
+                Parameters
+                ----------
+                hidden_states : Tensor
+                    Shape ``(B, T_q, D)``.
+                plans : Tensor
+                    Shape ``(B, T_p, D)``.
+                attn_mask : Tensor, optional
+                    Additive mask ``(B, T_q, T_p)``.
+
+                Returns
+                -------
+                Tensor
+                    Shape ``(B, T_q, D)`` fused representation.
+
+                Raises
+                ------
+                None
+
+                Side Effects
+                ------------
+                Modifies dropout RNG state.
+
+                Complexity
+                ----------
+                ``O(B * T_q * T_p * D)``.
+
+                Examples
+                --------
+                >>> cfg = AdapterConfig(hidden_size=4, num_heads=2)
+                >>> ad = SpatialAdapter(cfg)
+                >>> hs = torch.zeros(1, 1, 4)
+                >>> pl = torch.zeros(1, 1, 4)
+                >>> ad(hs, pl).shape
+                torch.Size([1, 1, 4])
+
+                See Also
+                --------
+                _expand_kv
+        """
 
         bsz, q_len, _ = hidden_states.shape
         t_len = plans.shape[1]
@@ -105,6 +312,7 @@ class SpatialAdapter(nn.Module):
         q = q.transpose(1, 2)
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
+        # why: expand K/V for grouped query attention
         k = self._expand_kv(k)
         v = self._expand_kv(v)
 

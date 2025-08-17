@@ -1,11 +1,44 @@
-"""Simple topological map with basic planning utilities.
+"""Deterministic place graph with lightweight planning utilities.
 
-This module provides :class:`PlaceGraph`, a very small graph structure
-for experiments with spatial memory.  Nodes are created from textual
-contexts via :meth:`observe` and assigned integer identifiers.  Each
-edge stores a transition ``cost`` and a ``success`` probability.  A
-tiny planner using either A* (default) or Dijkstra's algorithm is
-included to compute shortest paths between contexts.
+Summary
+-------
+Implements a small topological map used by the spatial/procedural memory
+module.  Context strings deterministically become nodes whose edges carry
+transition cost and success probability.  Planning uses A* or Dijkstra to
+produce optimal paths.
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+
+Raises
+------
+None
+
+Side Effects
+------------
+Maintenance helpers may write to an optional log file.
+
+Complexity
+----------
+Observation is ``O(1)``; planning is ``O(E log V)``.
+
+Examples
+--------
+>>> g = PlaceGraph()
+>>> g.observe("a"); g.observe("b")
+1
+>>> g.plan("a", "b")
+['a', 'b']
+
+See Also
+--------
+hippo_mem.spatial.algorithm_card
+hippo_mem.spatial.macros
 """
 
 from __future__ import annotations
@@ -22,7 +55,46 @@ from typing import Any, Dict, List, Optional, Tuple
 
 @dataclass
 class Edge:
-    """Connection information between two places."""
+    """Connection metadata between two places.
+
+    Summary
+    -------
+    Stores edge cost, success probability, and last observation step.
+
+    Parameters
+    ----------
+    cost : float, optional
+        Transition cost; arbitrary units, by default ``1.0``.
+    success : float, optional
+        Probability of success in ``[0, 1]``, by default ``1.0``.
+    last_seen : int, optional
+        Step index when edge was last traversed, by default ``0``.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(1)`` to instantiate.
+
+    Examples
+    --------
+    >>> Edge()
+    Edge(cost=1.0, success=1.0, last_seen=0)
+
+    See Also
+    --------
+    PlaceGraph
+    """
 
     cost: float = 1.0
     success: float = 1.0
@@ -31,7 +103,46 @@ class Edge:
 
 @dataclass
 class Place:
-    """A place in the environment with pseudo coordinates."""
+    """A place in the environment with pseudo coordinates.
+
+    Summary
+    -------
+    Holds coordinate and recency information for a context.
+
+    Parameters
+    ----------
+    name : str
+        Context string.
+    coord : Tuple[float, float]
+        Pseudo coordinates ``(x, y)``.
+    last_seen : int, optional
+        Step index of last observation, by default ``0``.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(1)``.
+
+    Examples
+    --------
+    >>> Place("a", (0.0, 0.0))
+    Place(name='a', coord=(0.0, 0.0), last_seen=0)
+
+    See Also
+    --------
+    Edge
+    """
 
     name: str
     coord: Tuple[float, float]
@@ -39,17 +150,57 @@ class Place:
 
 
 class ContextEncoder:
-    """Deterministic context→coordinate encoder.
+    """Deterministic context-to-coordinate encoder.
 
-    The encoder maps unique context strings to pseudo coordinates
-    derived from the hash of the string.  This keeps positions stable
-    across runs without relying on any external resources.
+    Summary
+    -------
+    Maps strings to pseudo coordinates derived from their hash so that
+    map growth is deterministic across runs.
     """
 
     def __init__(self) -> None:
         self._cache: Dict[str, Place] = {}
 
     def encode(self, context: str) -> Place:
+        """Return ``Place`` for ``context``.
+
+        Summary
+        -------
+        Assigns a stable pseudo coordinate to ``context`` and caches the
+        result.
+
+        Parameters
+        ----------
+        context : str
+            Textual identifier for the place.
+
+        Returns
+        -------
+        Place
+            Encoded place entry.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Cache grows with unique contexts.
+
+        Complexity
+        ----------
+        ``O(1)`` average.
+
+        Examples
+        --------
+        >>> enc = ContextEncoder(); enc.encode("a").name
+        'a'
+
+        See Also
+        --------
+        Place
+        """
+
         if context not in self._cache:
             h = hash(context)
             x = (h & 0xFFFF) / 1000.0
@@ -59,9 +210,55 @@ class ContextEncoder:
 
 
 class PlaceGraph:
-    """Graph of observed places with light‑weight planning."""
+    """Graph of observed places with lightweight planning.
+
+    Summary
+    -------
+    Maintains nodes for contexts, supports deterministic growth via
+    :meth:`observe`, and plans optimal paths using A* or Dijkstra.
+    """
 
     def __init__(self, path_integration: bool = False, *, config: Optional[dict] = None) -> None:
+        """Initialise the graph.
+
+        Summary
+        -------
+        Create an empty map optionally enabling path integration to track
+        relative movement.
+
+        Parameters
+        ----------
+        path_integration : bool, optional
+            If ``True``, update coordinates by relative displacements.
+        config : dict, optional
+            Maintenance settings such as ``decay_rate``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        May spawn maintenance thread later.
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> PlaceGraph()
+        <class 'hippo_mem.spatial.map.PlaceGraph'>
+
+        See Also
+        --------
+        ContextEncoder
+        """
+
         self.encoder = ContextEncoder()
         self._context_to_id: Dict[str, int] = {}
         self._id_to_context: Dict[int, str] = {}
@@ -84,6 +281,8 @@ class PlaceGraph:
     # ------------------------------------------------------------------
     # Observation and graph construction
     def _ensure_node(self, context: str) -> int:
+        """Return node id for ``context`` creating it if absent."""
+
         node = self._context_to_id.get(context)
         if node is None:
             node = self._next_id
@@ -91,7 +290,7 @@ class PlaceGraph:
             self._context_to_id[context] = node
             self._id_to_context[node] = context
             self.graph.setdefault(node, {})
-            # Encode for side effects (cache coordinates)
+            # why: cache coordinates for deterministic heuristics
             self.encoder.encode(context)
         return node
 
@@ -123,11 +322,44 @@ class PlaceGraph:
             self._history.pop(0)
 
     def observe(self, context: str) -> int:
-        """Insert *context* into the graph and connect from previous.
+        """Insert ``context`` into the graph.
 
-        Observing a sequence of contexts grows the graph deterministically
-        and adds an undirected edge between consecutive observations with
-        unit cost and success probability of one.
+        Summary
+        -------
+        Grows the map deterministically and links consecutive observations
+        with undirected unit-cost edges.
+
+        Parameters
+        ----------
+        context : str
+            Context to record.
+
+        Returns
+        -------
+        int
+            Node identifier assigned to ``context``.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Updates internal step counter and edge timestamps.
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> g = PlaceGraph(); g.observe("a")
+        0
+
+        See Also
+        --------
+        connect
+        plan
         """
 
         self._step += 1
@@ -140,6 +372,7 @@ class PlaceGraph:
                 self._position = (0.0, 0.0)
                 self._last_coord = coord
             else:
+                # why: integrate displacement for path integration
                 dx = coord[0] - self._last_coord[0]
                 dy = coord[1] - self._last_coord[1]
                 self._position = (self._position[0] + dx, self._position[1] + dy)
@@ -161,7 +394,45 @@ class PlaceGraph:
         cost: float = 1.0,
         success: float = 1.0,
     ) -> None:
-        """Explicitly connect two contexts."""
+        """Explicitly connect two contexts.
+
+        Summary
+        -------
+        Add bidirectional edge with given ``cost`` and ``success``.
+
+        Parameters
+        ----------
+        a_context, b_context : str
+            Endpoints to connect.
+        cost : float, optional
+            Transition cost, by default ``1.0``.
+        success : float, optional
+            Success probability, by default ``1.0``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Updates edge timestamps.
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> g = PlaceGraph(); g.connect("a", "b")
+
+        See Also
+        --------
+        observe
+        """
 
         a = self._ensure_node(a_context)
         b = self._ensure_node(b_context)
@@ -178,6 +449,7 @@ class PlaceGraph:
         *,
         step: Optional[int] = None,
     ) -> None:
+        # why: track last_seen for TTL pruning
         edge = self.graph[a].get(b)
         if edge is None:
             self.graph[a][b] = Edge(cost, success, last_seen=step or self._step)
@@ -189,7 +461,49 @@ class PlaceGraph:
     # ------------------------------------------------------------------
     # Planning utilities
     def plan(self, start: str, goal: str, method: str = "astar") -> List[str]:
-        """Return the shortest path between *start* and *goal* contexts."""
+        """Return the shortest path between contexts.
+
+        Summary
+        -------
+        Use A* or Dijkstra to compute an optimal path from ``start`` to ``goal``.
+
+        Parameters
+        ----------
+        start, goal : str
+            Start and goal contexts.
+        method : str, optional
+            ``"astar"`` (default) or ``"dijkstra"``.
+
+        Returns
+        -------
+        List[str]
+            Sequence of contexts including start and goal. Empty list if
+            disconnected.
+
+        Raises
+        ------
+        ValueError
+            If ``method`` is unknown.
+
+        Side Effects
+        ------------
+        Increments recall counters and hit statistics.
+
+        Complexity
+        ----------
+        ``O(E log V)``.
+
+        Examples
+        --------
+        >>> g = PlaceGraph(); g.observe("a"); g.observe("b")
+        >>> g.plan("a", "b")
+        ['a', 'b']
+
+        See Also
+        --------
+        _a_star
+        _dijkstra
+        """
 
         s = self._ensure_node(start)
         g = self._ensure_node(goal)
@@ -258,9 +572,50 @@ class PlaceGraph:
     # ------------------------------------------------------------------
     # Maintenance and logging
     def decay(self, rate: float) -> None:
-        """Exponentially decay all positions toward the origin."""
+        """Exponentially decay all positions toward the origin.
+
+        Summary
+        -------
+        Shrinks coordinates to model positional drift.
+
+        Parameters
+        ----------
+        rate : float
+            Decay rate ``0–1``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Records operation for rollback.
+
+        Complexity
+        ----------
+        ``O(n)`` over stored places.
+
+        Examples
+        --------
+        >>> g = PlaceGraph(); g.observe("a")
+        >>> before = g.encoder.encode("a").coord
+        >>> g.decay(0.5)
+        >>> g.encoder.encode("a").coord != before
+        True
+
+        See Also
+        --------
+        prune
+        rollback
+        """
+
         self._push_history("decay")
         factor = max(0.0, 1.0 - rate)
+        # why: dampen coordinates to limit drift
         for place in self.encoder._cache.values():
             x, y = place.coord
             place.coord = (x * factor, y * factor)
@@ -275,6 +630,7 @@ class PlaceGraph:
     # Pruning helpers
     def _prune_nodes(self, threshold: int) -> None:
         """Remove nodes whose last observation predates ``threshold``."""
+
         for context, place in list(self.encoder._cache.items()):
             if place.last_seen < threshold:
                 node = self._context_to_id.pop(context, None)
@@ -287,6 +643,7 @@ class PlaceGraph:
 
     def _prune_edges(self, threshold: int) -> None:
         """Remove edges older than ``threshold`` and drop isolated nodes."""
+
         for a in list(self.graph.keys()):
             for b in list(self.graph[a].keys()):
                 if self.graph[a][b].last_seen < threshold or b not in self._id_to_context:
@@ -298,17 +655,94 @@ class PlaceGraph:
                 del self.graph[a]
 
     def prune(self, max_age: int) -> None:
-        """Drop edges and places not observed within ``max_age`` steps."""
+        """Drop edges and places not observed within ``max_age`` steps.
+
+        Summary
+        -------
+        Prevents unbounded map growth by removing stale items.
+
+        Parameters
+        ----------
+        max_age : int
+            Maximum allowed age in steps.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Records snapshot for rollback.
+
+        Complexity
+        ----------
+        ``O(n)`` over nodes and edges.
+
+        Examples
+        --------
+        >>> g = PlaceGraph(); g.observe("a")
+        >>> g.prune(max_age=0)
+
+        See Also
+        --------
+        decay
+        rollback
+        """
+
         self._push_history("prune")
         threshold = self._step - max_age
+        # why: drop stale nodes to bound map size
         self._prune_nodes(threshold)
         self._prune_edges(threshold)
         self._log_event("prune", {"max_age": max_age})
 
     def log_status(self) -> dict:
+        """Return counters for writes, recalls, hits, and maintenance."""
+
         return dict(self._log)
 
     def start_background_tasks(self, interval: float = 100.0) -> None:
+        """Launch periodic decay/prune thread.
+
+        Summary
+        -------
+        Offloads maintenance to a daemon thread.
+
+        Parameters
+        ----------
+        interval : float, optional
+            Sleep interval in seconds, by default ``100.0``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Spawns a background thread.
+
+        Complexity
+        ----------
+        ``O(1)`` to start; ongoing work is backgrounded.
+
+        Examples
+        --------
+        >>> g = PlaceGraph(); g.start_background_tasks()  # doctest: +ELLIPSIS
+
+        See Also
+        --------
+        decay
+        prune
+        """
+
         if self._bg_thread is not None:
             return
 
@@ -329,7 +763,43 @@ class PlaceGraph:
         self._bg_thread = t
 
     def rollback(self, n: int = 1) -> None:
-        """Rollback the last ``n`` maintenance operations."""
+        """Rollback the last ``n`` maintenance operations.
+
+        Summary
+        -------
+        Restore state snapshots captured before decay or prune.
+
+        Parameters
+        ----------
+        n : int, optional
+            Number of operations to undo, by default ``1``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Alters internal structures and logs a rollback event.
+
+        Complexity
+        ----------
+        ``O(n)`` relative to number of stored snapshots.
+
+        Examples
+        --------
+        >>> g = PlaceGraph(); g.observe("a"); g.decay(0.1)
+        >>> g.rollback(1)
+
+        See Also
+        --------
+        decay
+        prune
+        """
 
         for _ in range(n):
             if not self._history:
@@ -348,3 +818,6 @@ class PlaceGraph:
             self._position = state["position"]
             self._last_coord = state["last_coord"]
             self._log_event("rollback", {"op": entry.get("op")})
+
+
+__all__ = ["PlaceGraph", "ContextEncoder", "Edge", "Place"]
