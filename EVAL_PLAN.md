@@ -132,9 +132,9 @@ idx,prompt,answer,pred,correct,latency_ms,flags
 
 ```bash
 echo "build W4/Schema/Grid fixtures"
-python scripts/build_datasets.py --out data/episodic.jsonl --suite episodic --n 1000 --seed 1337
-python scripts/build_datasets.py --out data/semantic.jsonl --suite semantic --n 1000 --seed 1337
-python scripts/build_datasets.py --out data/spatial.jsonl  --suite spatial  --n 1000 --seed 1337
+python scripts/build_datasets.py --out data/episodic.jsonl --suite episodic --size 1000 --seed 1337
+python scripts/build_datasets.py --out data/semantic.jsonl --suite semantic --size 1000 --seed 1337
+python scripts/build_datasets.py --out data/spatial.jsonl  --suite spatial  --size 1000 --seed 1337
 ```
 
 ## 9.2 Run baselines
