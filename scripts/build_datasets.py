@@ -19,13 +19,14 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Set
 
 
-def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[str, str]]:
+def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[str, object]]:
     """Generate ``size`` W4 stories with distractor events and queries.
 
     Each item contains a multi-sentence story where the final sentence is the
     relevant event followed by a query.  ``distractors`` controls how many
     unrelated sentences precede the target event.  The generator is completely
-    deterministic given ``seed``.
+    deterministic given ``seed``.  Episodes are annotated with ``reward`` and
+    ``pin`` flags used by the neuromodulated write gate.
     """
 
     rng = random.Random(seed)
@@ -35,7 +36,7 @@ def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[s
     times = ["Monday", "Tuesday", "Wednesday", "Thursday"]
     qtypes = ["who_at_where", "what_did_who", "where_was_who", "when_was_who"]
 
-    tasks: List[Dict[str, str]] = []
+    tasks: List[Dict[str, object]] = []
     for _ in range(size):
         # Build distractor sentences first
         distractor_sents: List[str] = []
@@ -68,7 +69,16 @@ def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[s
             answer = when
 
         story = " ".join(distractor_sents + [target_sent])
-        tasks.append({"prompt": f"{story} {question}", "answer": answer})
+        reward = rng.random() < 0.3
+        pin = rng.random() < 0.1
+        tasks.append(
+            {
+                "prompt": f"{story} {question}",
+                "answer": answer,
+                "reward": reward,
+                "pin": pin,
+            }
+        )
 
     return tasks
 
@@ -78,7 +88,7 @@ def generate_semantic(
     seed: int,
     hop_depth: int = 2,
     inject_contradictions: bool = False,
-) -> List[Dict[str, str]]:
+) -> List[Dict[str, object]]:
     """Generate 2–3 hop fact chains linking people, items, stores and cities.
 
     Parameters
@@ -97,9 +107,9 @@ def generate_semantic(
 
     Returns
     -------
-    list[dict[str, str]]
-        ``prompt``/``answer`` pairs. The prompt contains the fact chain and a
-        question asking for the city of purchase.
+    list[dict[str, object]]
+        ``prompt``/``answer`` pairs plus ``facts`` metadata.  Each fact carries
+        a ``schema_fit`` label and ``time`` index for consolidation studies.
     """
 
     if hop_depth not in {2, 3}:
@@ -111,7 +121,7 @@ def generate_semantic(
     stores = ["StoreA", "StoreB", "StoreC"]
     cities = ["Paris", "London", "Rome", "Berlin"]
 
-    tasks: List[Dict[str, str]] = []
+    tasks: List[Dict[str, object]] = []
     for _ in range(size):
         who = rng.choice(people)
         item = rng.choice(items)
@@ -119,22 +129,33 @@ def generate_semantic(
         city = rng.choice(cities)
 
         parts: List[str] = []
+        facts: List[Dict[str, object]] = []
         if hop_depth == 2:
-            parts.append(f"{who} bought a {item} at {store}.")
+            sent = f"{who} bought a {item} at {store}."
+            parts.append(sent)
+            facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
         else:  # hop_depth == 3
-            parts.append(f"{who} bought a {item}.")
-            parts.append(f"The {item} was sold at {store}.")
-        parts.append(f"{store} is in {city}.")
+            sent = f"{who} bought a {item}."
+            parts.append(sent)
+            facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
+            sent = f"The {item} was sold at {store}."
+            parts.append(sent)
+            facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
+        sent = f"{store} is in {city}."
+        parts.append(sent)
+        facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
 
         if inject_contradictions:
             false_city = rng.choice([c for c in cities if c != city])
-            parts.append(f"However, others report {store} is in {false_city}.")
+            sent = f"However, others report {store} is in {false_city}."
+            parts.append(sent)
+            facts.append({"text": sent, "schema_fit": False, "time": len(facts)})
             question = f"Despite conflicting reports, in which city did {who} buy the {item}?"
         else:
             question = f"In which city did {who} buy the {item}?"
 
         text = " ".join(parts)
-        tasks.append({"prompt": f"{text} {question}", "answer": city})
+        tasks.append({"prompt": f"{text} {question}", "answer": city, "facts": facts})
 
     return tasks
 
@@ -145,12 +166,13 @@ def generate_spatial(
     grid_size: int = 5,
     obstacle_density: float = 0.2,
 ) -> List[Dict[str, object]]:
-    """Generate grid-world tasks with obstacles and macro paths.
+    """Generate grid-world tasks with obstacles, macros and trajectories.
 
-    Half of the tasks ask for the shortest path length between two coordinates
-    while avoiding obstacles.  The other half repeat **macro paths**—pre-computed
-    shortest routes between fixed start/goal pairs—to encourage procedural
-    sequence learning.
+    A third of the tasks ask for the shortest path length between two
+    coordinates while avoiding obstacles.  Another third repeat **macro paths**—
+    pre-computed shortest routes between fixed start/goal pairs—to encourage
+    procedural sequence learning.  The remaining tasks present random walk
+    trajectories and ask for the final coordinate to stress path integration.
     """
 
     from collections import deque
@@ -200,7 +222,7 @@ def generate_spatial(
 
     tasks: List[Dict[str, object]] = []
     for i in range(size):
-        if i % 2 == 0:  # shortest path queries
+        if i % 3 == 0:  # shortest path queries
             while True:
                 start, goal = random_cell(), random_cell()
                 if start == goal or start in obstacles or goal in obstacles:
@@ -213,13 +235,41 @@ def generate_spatial(
                     )
                     tasks.append({"prompt": prompt, "answer": len(path)})
                     break
-        else:  # macro path sequences
+        elif i % 3 == 1:  # macro path sequences
             macro = rng.choice(macros)
             prompt = (
                 f"Grid {grid_size}x{grid_size} with obstacles {sorted(obstacles)}. "
                 f"What move sequence leads from {macro['start']} to {macro['goal']}?"
             )
             tasks.append({"prompt": prompt, "answer": macro["steps"]})
+        else:  # random walk trajectory
+            while True:
+                start = random_cell()
+                if start in obstacles:
+                    continue
+                pos = start
+                trajectory = [start]
+                moves = []
+                for _ in range(5):
+                    options = []
+                    for dx, dy, step in [(-1, 0, "L"), (1, 0, "R"), (0, -1, "U"), (0, 1, "D")]:
+                        nx, ny = pos[0] + dx, pos[1] + dy
+                        nxt = (nx, ny)
+                        if 0 <= nx < grid_size and 0 <= ny < grid_size and nxt not in obstacles:
+                            options.append((dx, dy, step))
+                    if not options:
+                        break
+                    dx, dy, step = rng.choice(options)
+                    pos = (pos[0] + dx, pos[1] + dy)
+                    trajectory.append(pos)
+                    moves.append(step)
+                if moves:
+                    prompt = (
+                        f"Grid {grid_size}x{grid_size} with obstacles {sorted(obstacles)}. "
+                        f"Start {start}. After moves {''.join(moves)} where do you end?"
+                    )
+                    tasks.append({"prompt": prompt, "answer": pos, "trajectory": trajectory})
+                    break
 
     return tasks
 

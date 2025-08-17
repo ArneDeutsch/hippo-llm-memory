@@ -29,12 +29,14 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
 - **W4 stories:** short, templated stories with tuples (who, what, where, when). Example size: 100–1,000 items.
 - **Partial‑cue queries:** (who\@where?), (what\@who?), etc., after N distractors.
 - **Delay condition:** evaluate immediately and after one replay cycle (“sleep”).
+- **Reward/pin flags:** mark salient or pinned episodes for write‑gate precision/recall tests.
 
 ## 3.2 Semantic/relational suite (SGC‑RSS)
 
 - **Schema‑fit/mismatch facts:** generate frames (e.g., `buy(person,item,store,time)`) and off‑schema variants.
 - **Multi‑hop questions:** 2–3 hop queries spanning linked tuples.
 - **Contradictions:** inject conflicting facts; probe contradiction detection/avoidance.
+- **Schema-fit labels over time:** tag each fact with a schema-fit flag and time index to track consolidation speed.
 
 ## 3.3 Spatial/procedural suite (SMPD)
 
@@ -42,22 +44,13 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
   and small graphs with labeled nodes/edges.
 - **Planning tasks:** shortest path; “recall by place” questions.
 - **Procedural macros:** repeated multi‑step scripts (4–6 steps) to allow macro distillation.
+- **Sequential trajectories:** random walk paths for path-integration stress tests.
 
-## 3.4 Generator coverage & gaps
+## 3.4 Generator coverage
 
-The current `scripts/build_datasets.py` covers core fixtures for W4 episodic
-stories, 2–3‑hop schema chains and grid worlds with macro paths. To fully test
-the algorithms in `research/experiment-synthesis.md` we also need:
-
-- **Reward/pin flags** in the episodic suite to exercise the neuromodulated
-  write gate and measure write precision/recall.
-- **Schema-fit labels over time** in the semantic suite to quantify
-  schema-accelerated consolidation.
-- **Sequential trajectories** in the spatial suite for path-integration stress
-  tests.
-
-Extending the generator with these fields is a prerequisite for the validation
-matrix below.
+`scripts/build_datasets.py` now emits the above features – reward/pin flags,
+temporal schema-fit labels and sequential trajectories – providing full
+coverage for the validation matrix below.
 
 # 4) Run matrix
 
