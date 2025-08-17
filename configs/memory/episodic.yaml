@@ -1,22 +1,23 @@
 # Episodic memory configuration.
 
 # FAISS index parameters for product quantization.
-index_str: "IVF10,PQ4"
+index_str: "IVF10,PQ4"  # see DESIGN.md for recommended small index layout
 
 # Number of active units in k-Winner-Take-All encoding.
-k_wta: 8
+k_wta: 8  # int, sparsity level for DG-like encoding
 
 # Simple gating weights controlling write/recall balance.
 gating_weights:
-  write: 1.0
-  recall: 0.5
+  write: 1.0   # scaling factor for write gate
+  recall: 0.5  # scaling factor for recall gating
 
 # Relative weighting for replay sampling.
+# Higher weight biases scheduler toward episodic items.
 replay_weight: 0.8
 
 # Maintenance settings.
-decay_rate: 0.01
+decay_rate: 0.01       # fraction of salience removed each maintenance cycle
 prune:
-  min_salience: 0.1
-  max_age: 3600
+  min_salience: 0.1    # drop traces below this salience
+  max_age: 3600        # seconds, remove traces older than this
 

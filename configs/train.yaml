@@ -1,20 +1,21 @@
 # Training configuration.
 
 # Run metadata for reproducibility.
-seed: 0
-run_name: default
-notes: ""
+seed: 0            # int, RNG seed for all components
+run_name: default  # str, experiment identifier used in logs
+notes: ""          # str, free-form annotation stored in meta.json
 
 # Relative weighting for episodic replay during training.
+# 0.5 yields the 50/30/20 mix from EVAL_PLAN: episodic/semantic/fresh.
 replay_weight: 0.5
 
 # Global gating weights.
 gating_weights:
-  write: 1.0
-  recall: 0.5
+  write: 1.0   # weight for write gate (higher means more writes)
+  recall: 0.5  # weight for recall gating in training
 
 # Efficiency toggles.
 efficiency:
-  flash_attention: false
-  mqa_gqa: null
+  flash_attention: false  # enable flash-attention kernels when true
+  mqa_gqa: null           # set to "mqa" or "gqa" to reduce KV memory
 

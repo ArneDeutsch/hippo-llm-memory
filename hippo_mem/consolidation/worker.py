@@ -1,10 +1,16 @@
-"""Background consolidation worker for replay-based finetuning.
+"""Consolidation worker consuming replay batches and running maintenance.
 
-The worker runs in a daemon thread and periodically asks the
-:class:`~hippo_mem.episodic.replay.ReplayScheduler` for replay batches. Based
-on the kind of replay item it performs a tiny optimisation step on the
-corresponding LoRA adapter while keeping the base model frozen. This is a
-light‑weight stand‑in for a more realistic consolidation process.
+Summary
+-------
+This module hosts a daemon thread that requests batches from the
+``ReplayScheduler`` and applies 50/30/20 episodic/semantic/fresh mixes to
+fine-tune adapters.  It also triggers maintenance jobs—decay, prune, and merge
+operations—on the underlying stores to avoid growth and interference.
+
+See Also
+--------
+hippo_mem.episodic.replay.ReplayScheduler
+    Provides the replay batches processed here.
 """
 
 from __future__ import annotations
@@ -27,7 +33,60 @@ from hippo_mem.spatial.map import PlaceGraph
 
 
 class ConsolidationWorker(threading.Thread):
-    """Background thread that fine‑tunes memory adapters using replay."""
+    """Daemon thread that applies replay updates and store maintenance.
+
+    Summary
+    -------
+    Consumes batches from a ``ReplayScheduler`` to fine-tune LoRA adapters while
+    the base model stays frozen.  Between batches it launches decay, prune, and
+    merge operations for episodic, semantic, and spatial stores.
+
+    Parameters
+    ----------
+    scheduler:
+        Source of replay batches.
+    model:
+        Base model whose parameters remain frozen.
+    episodic_adapter, relational_adapter, spatial_adapter:
+        Optional adapters to optimise.
+    episodic_store, kg_store, spatial_map:
+        Stores subjected to maintenance jobs.
+    maintenance_interval:
+        Seconds between maintenance passes.
+    batch_size:
+        Number of items to request per scheduler batch.
+    lr:
+        Learning rate for adapter optimisation.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    Spawns background threads and mutates adapters.
+
+    Complexity
+    ----------
+    Depends on adapter size; maintenance loops run in ``O(n)`` over store
+    entries.
+
+    Examples
+    --------
+    >>> mix = type("Mix", (), {"episodic": 1.0, "semantic": 0.0, "fresh": 0.0})()
+    >>> sched = ReplayScheduler(EpisodicStore(), KnowledgeGraph(), batch_mix=mix)
+    >>> worker = ConsolidationWorker(sched, object(), batch_size=1)
+    >>> worker.log_status()["batches"]
+    0
+
+    See Also
+    --------
+    hippo_mem.episodic.replay.ReplayScheduler
+    """
 
     def __init__(
         self,
@@ -222,14 +281,90 @@ class ConsolidationWorker(threading.Thread):
 
     # ------------------------------------------------------------------
     def poll_queue(self) -> list[tuple[str, object]]:
-        """Fetch a batch from the scheduler and increment counters."""
+        """Fetch a batch from the scheduler and increment counters.
+
+        Summary
+        -------
+        Requests ``batch_size`` items from the scheduler and records the
+        invocation.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        list[tuple[str, object]]
+            Replay items as ``(kind, identifier)`` pairs.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Updates internal batch counters.
+
+        Complexity
+        ----------
+        Delegates to :class:`ReplayScheduler`.
+
+        Examples
+        --------
+        >>> mix = type("Mix", (), {"episodic": 1.0, "semantic": 0.0, "fresh": 0.0})()
+        >>> sched = ReplayScheduler(EpisodicStore(), KnowledgeGraph(), batch_mix=mix)
+        >>> worker = ConsolidationWorker(sched, object(), batch_size=1)
+        >>> worker.poll_queue()
+        [('episodic', None)]
+
+        See Also
+        --------
+        step_adapters
+        """
 
         batch = self.scheduler.next_batch(self.batch_size)
         self._log["batches"] += 1
         return batch
 
     def step_adapters(self, batch: list[tuple[str, object]]) -> None:
-        """Run adapter optimisation steps for items in ``batch``."""
+        """Run adapter optimisation steps for items in ``batch``.
+
+        Summary
+        -------
+        Dispatches optimisation routines depending on item kind.
+
+        Parameters
+        ----------
+        batch:
+            List of ``(kind, identifier)`` tuples.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Updates adapter parameters and emits debug logs.
+
+        Complexity
+        ----------
+        ``O(k)`` where ``k`` is batch size.
+
+        Examples
+        --------
+        >>> mix = type("Mix", (), {"episodic": 1.0, "semantic": 0.0, "fresh": 0.0})()
+        >>> sched = ReplayScheduler(EpisodicStore(), KnowledgeGraph(), batch_mix=mix)
+        >>> worker = ConsolidationWorker(sched, object(), batch_size=1)
+        >>> worker.step_adapters([('episodic', None)])
+
+        See Also
+        --------
+        poll_queue
+        """
 
         for kind, _ in batch:
             if self.stop_event.is_set():
@@ -244,7 +379,50 @@ class ConsolidationWorker(threading.Thread):
     T = TypeVar("T")
 
     def handle_errors(self, fn: Callable[..., T], *args: Any, **kwargs: Any) -> Optional[T]:
-        """Execute ``fn`` and stop the worker if it raises."""
+        """Execute ``fn`` and stop the worker if it raises.
+
+        Summary
+        -------
+        Wrapper that logs exceptions and signals shutdown.
+
+        Parameters
+        ----------
+        fn:
+            Callable to execute.
+        *args, **kwargs:
+            Arguments passed to ``fn``.
+
+        Returns
+        -------
+        Optional[T]
+            Result of ``fn`` or ``None`` if an exception occurred.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Logs exceptions and sets ``stop_event`` on failure.
+
+        Complexity
+        ----------
+        Same as ``fn``.
+
+        Examples
+        --------
+        >>> worker = ConsolidationWorker(
+        ...     ReplayScheduler(EpisodicStore(), KnowledgeGraph(), batch_mix=type('M',(),{'episodic':1,'semantic':0,'fresh':0})()),
+        ...     object(),
+        ...     batch_size=1,
+        ... )
+        >>> worker.handle_errors(lambda x: x + 1, 1)
+        2
+
+        See Also
+        --------
+        run
+        """
 
         try:
             return fn(*args, **kwargs)
@@ -254,7 +432,45 @@ class ConsolidationWorker(threading.Thread):
             return None
 
     def run(self) -> None:  # pragma: no cover - exercised via thread
-        """Main worker loop."""
+        """Main worker loop.
+
+        Summary
+        -------
+        Continuously polls the scheduler, optimises adapters, and runs
+        maintenance until ``stop_event`` is set.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Runs maintenance threads and sleeps briefly between iterations.
+
+        Complexity
+        ----------
+        Depends on scheduler and adapters; each loop iteration is roughly
+        ``O(k)`` for ``k`` batch size.
+
+        Examples
+        --------
+        >>> mix = type("Mix", (), {"episodic": 1.0, "semantic": 0.0, "fresh": 0.0})()
+        >>> sched = ReplayScheduler(EpisodicStore(), KnowledgeGraph(), batch_mix=mix)
+        >>> worker = ConsolidationWorker(sched, object(), batch_size=1)
+        >>> worker.start(); worker.stop(); worker.join()
+
+        See Also
+        --------
+        stop
+        """
 
         self._start_maintenance()
         while not self.stop_event.is_set():
@@ -265,13 +481,87 @@ class ConsolidationWorker(threading.Thread):
             time.sleep(0.01)
 
     def log_status(self) -> dict:
-        """Return counters for processed batches."""
+        """Return counters for processed batches.
+
+        Summary
+        -------
+        Provides diagnostics about processed batches.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict
+            Dictionary with diagnostic counters.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> mix = type("Mix", (), {"episodic": 1.0, "semantic": 0.0, "fresh": 0.0})()
+        >>> sched = ReplayScheduler(EpisodicStore(), KnowledgeGraph(), batch_mix=mix)
+        >>> worker = ConsolidationWorker(sched, object(), batch_size=1)
+        >>> worker.log_status()
+        {'batches': 0}
+
+        See Also
+        --------
+        poll_queue
+        """
 
         return dict(self._log)
 
     # ------------------------------------------------------------------
     def stop(self) -> None:
-        """Signal the worker to exit."""
+        """Signal the worker to exit.
+
+        Summary
+        -------
+        Sets the internal stop flag so background threads can terminate.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Sets ``stop_event``.
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> mix = type("Mix", (), {"episodic": 1.0, "semantic": 0.0, "fresh": 0.0})()
+        >>> sched = ReplayScheduler(EpisodicStore(), KnowledgeGraph(), batch_mix=mix)
+        >>> worker = ConsolidationWorker(sched, object(), batch_size=1)
+        >>> worker.stop()
+
+        See Also
+        --------
+        run
+        """
 
         self.stop_event.set()
 

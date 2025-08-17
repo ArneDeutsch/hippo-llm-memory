@@ -48,3 +48,15 @@
 | `relational.schema_fasttrack` | SGC-RSS | True | bypass schema-based KG routing | Hydra `+ablate=relational.schema_fasttrack=false` |
 | `spatial.macros` | SMPD | True | ignore MacroLib suggestions | Hydra `+ablate=spatial.macros=false` |
 | `spatial.path_integration` | SMPD | True | disable path integration in PlaceGraph | Hydra `+ablate=spatial.path_integration=false` |
+
+## Key configuration fields
+
+| Key | Default | Description | Module |
+| --- | --- | --- | --- |
+| `train.replay_weight` | 0.5 | fraction of batches drawn from replay (50/30/20 mix) | `configs/train.yaml` |
+| `train.gating_weights.write` | 1.0 | global multiplier for write decisions | `configs/train.yaml` |
+| `memory.episodic.replay_weight` | 0.8 | bias toward episodic items in scheduler | `hippo_mem/episodic/replay.py` |
+| `memory.episodic.decay_rate` | 0.01 | salience decay per maintenance pass | `hippo_mem/consolidation/worker.py` |
+| `memory.relational.schema_threshold` | 0.7 | confidence needed for schema fast-track | `hippo_mem/relational/schema.py` |
+| `memory.relational.prune.max_age` | 86400 | seconds before tuples expire | `hippo_mem/consolidation/worker.py` |
+| `memory.spatial.prune.max_age` | 1000 | steps before places/edges expire | `hippo_mem/consolidation/worker.py` |

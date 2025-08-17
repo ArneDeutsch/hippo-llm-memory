@@ -2,9 +2,9 @@
 
 # Gating weight controlling transition updates.
 gating_weights:
-  transition: 1.0
+  transition: 1.0  # float, higher encourages map updates
 
 # Remove places and edges that haven't been observed for a number of steps.
 prune:
-  max_age: 1000
+  max_age: 1000  # int, forget nodes/edges older than this many steps
 
