@@ -44,3 +44,22 @@ def test_faiss_index_remove() -> None:
     index.remove(1)
     assert len(index) == 1
     assert index.search(train_data[1], k=1) != [1]
+
+
+def test_faiss_index_edge_cases() -> None:
+    """Search should handle empty and untrained PQ indices consistently."""
+    index = FaissIndex(dim=4, use_pq=True, m=2)
+    query = [1.0, 0.0, 0.0, 0.0]
+
+    # Search before any training or vectors have been added.
+    assert index.search(query, k=1) == []
+
+    # Train the index but do not add vectors yet; still expect no hits.
+    train_data = [[1.0 if i % 4 == j else 0.0 for j in range(4)] for i in range(256)]
+    index.train(train_data)
+    assert index.search(query, k=1) == []
+
+    # After adding vectors the nearest neighbour should be returned.
+    for vec in train_data[:2]:
+        index.add(vec)
+    assert index.search(query, k=1) == [0]
