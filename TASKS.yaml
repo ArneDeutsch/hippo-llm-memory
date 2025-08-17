@@ -1,0 +1,52 @@
+- id: F-EPI-001
+  type: functionality
+  priority: P0
+  rationale: "Write gate lacks explicit pin weight (δ·pin) from DESIGN §5.1"
+  steps:
+    - "Add pin coefficient to WriteGate.score and include in docs"
+    - "Extend tests for pin weight influence"
+  files: ["hippo_mem/episodic/gating.py", "tests/test_episodic.py"]
+  est_hours: 4
+  deps: []
+
+- id: T-OPS-002
+  type: test
+  priority: P0
+  rationale: "Mutmut fails due to missing package path"
+  steps:
+    - "Configure PYTHONPATH in mutmut to include repo root"
+    - "Run mutation tests in CI and target score ≥90%"
+  files: ["pyproject.toml", "Makefile", "tests/"]
+  est_hours: 3
+  deps: []
+
+- id: T-EVAL-003
+  type: test
+  priority: P1
+  rationale: "FAISS index wrapper below coverage threshold"
+  steps:
+    - "Implement test_faiss_index_edge_cases from TEST_GAPS.md"
+  files: ["hippo_mem/retrieval/faiss_index.py", "tests/test_retrieval.py"]
+  est_hours: 2
+  deps: []
+
+- id: R-CON-004
+  type: refactor
+  priority: P1
+  rationale: "ConsolidationWorker.run complexity B"
+  steps:
+    - "Split run() into poll_queue, step_adapters, and handle_errors"
+    - "Add unit tests for each helper"
+  files: ["hippo_mem/consolidation/worker.py", "tests/test_consolidation_worker.py"]
+  est_hours: 5
+  deps: []
+
+- id: T-SPAT-005
+  type: test
+  priority: P1
+  rationale: "Planner optimality property-based test missing"
+  steps:
+    - "Add Hypothesis-based test_planner_optimality_property"
+  files: ["tests/test_spatial.py"]
+  est_hours: 2
+  deps: []
