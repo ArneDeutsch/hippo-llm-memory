@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Optional
+from typing import Any, Callable, Optional, TypeVar
 
 import numpy as np
 import torch
@@ -220,22 +220,48 @@ class ConsolidationWorker(threading.Thread):
         self._optim_step(loss)
         self.log.debug("spatial adapter step")
 
+    # ------------------------------------------------------------------
+    def poll_queue(self) -> list[tuple[str, object]]:
+        """Fetch a batch from the scheduler and increment counters."""
+
+        batch = self.scheduler.next_batch(self.batch_size)
+        self._log["batches"] += 1
+        return batch
+
+    def step_adapters(self, batch: list[tuple[str, object]]) -> None:
+        """Run adapter optimisation steps for items in ``batch``."""
+
+        for kind, _ in batch:
+            if self.stop_event.is_set():
+                break
+            if kind == "episodic":
+                self._step_episodic()
+            elif kind == "semantic":
+                self._step_semantic()
+            elif kind == "fresh":
+                self._step_fresh()
+
+    T = TypeVar("T")
+
+    def handle_errors(self, fn: Callable[..., T], *args: Any, **kwargs: Any) -> Optional[T]:
+        """Execute ``fn`` and stop the worker if it raises."""
+
+        try:
+            return fn(*args, **kwargs)
+        except Exception:  # pragma: no cover - defensive
+            self.log.exception("consolidation step failed")
+            self.stop_event.set()
+            return None
+
     def run(self) -> None:  # pragma: no cover - exercised via thread
         """Main worker loop."""
 
         self._start_maintenance()
         while not self.stop_event.is_set():
-            batch = self.scheduler.next_batch(self.batch_size)
-            self._log["batches"] += 1
-            for kind, _ in batch:
-                if self.stop_event.is_set():
-                    break
-                if kind == "episodic":
-                    self._step_episodic()
-                elif kind == "semantic":
-                    self._step_semantic()
-                elif kind == "fresh":
-                    self._step_fresh()
+            batch = self.handle_errors(self.poll_queue)
+            if batch is None:
+                break
+            self.handle_errors(self.step_adapters, batch)
             time.sleep(0.01)
 
     def log_status(self) -> dict:
