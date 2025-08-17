@@ -1,10 +1,15 @@
 """Background consolidation worker for replay-based finetuning.
 
-The worker runs in a daemon thread and periodically asks the
-:class:`~hippo_mem.episodic.replay.ReplayScheduler` for replay batches. Based
-on the kind of replay item it performs a tiny optimisation step on the
-corresponding LoRA adapter while keeping the base model frozen. This is a
-light‑weight stand‑in for a more realistic consolidation process.
+Summary
+-------
+Runs in a daemon thread, polling the scheduler for batches mixed at 50%
+episodic, 30% semantic and 20% fresh. Applies adapter updates and triggers
+maintenance jobs (decay, prune, merge) on stores. Metrics are logged and the
+worker stops on failures for rollback safety.
+
+See Also
+--------
+hippo_mem.episodic.replay.ReplayScheduler
 """
 
 from __future__ import annotations
@@ -27,7 +32,17 @@ from hippo_mem.spatial.map import PlaceGraph
 
 
 class ConsolidationWorker(threading.Thread):
-    """Background thread that fine‑tunes memory adapters using replay."""
+    """Background thread that fine‑tunes memory adapters using replay.
+
+    Summary
+    -------
+    Consumes mixed replay batches to update LoRA adapters and run maintenance
+    jobs.
+
+    See Also
+    --------
+    ReplayScheduler
+    """
 
     def __init__(
         self,
@@ -44,6 +59,60 @@ class ConsolidationWorker(threading.Thread):
         batch_size: int = 4,
         lr: float = 1e-4,
     ) -> None:
+        """Summary
+        -------
+        Construct the worker and prepare scheduler, adapters and maintenance.
+
+        Parameters
+        ----------
+        scheduler : ReplayScheduler
+            Source of replay batches.
+        model : object
+            Base model kept frozen during consolidation.
+        episodic_adapter : EpisodicAdapter, optional
+            Adapter updated from episodic batches.
+        relational_adapter : RelationalAdapter, optional
+            Adapter updated from semantic batches.
+        spatial_adapter : SpatialAdapter, optional
+            Adapter updated from fresh batches.
+        episodic_store : EpisodicStore, optional
+            Store subject to decay/prune maintenance.
+        kg_store : KnowledgeGraph, optional
+            Semantic store with pruning.
+        spatial_map : PlaceGraph, optional
+            Map subject to decay and pruning.
+        maintenance_interval : float, optional
+            Seconds between maintenance runs; default ``3600``.
+        batch_size : int, optional
+            Number of replay items per optimisation step; default ``4``.
+        lr : float, optional
+            Learning rate for adapter optimisation; default ``1e-4``.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Spawns maintenance thread and initialises optimiser state.
+
+        Complexity
+        ----------
+        ``O(1)`` setup.
+
+        Examples
+        --------
+        >>> worker = ConsolidationWorker(ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})()), object())
+
+        See Also
+        --------
+        run
+        """
+
         super().__init__(daemon=True)
         self.batch_size = batch_size
         self.log = logging.getLogger(__name__)
@@ -222,18 +291,83 @@ class ConsolidationWorker(threading.Thread):
 
     # ------------------------------------------------------------------
     def poll_queue(self) -> list[tuple[str, object]]:
-        """Fetch a batch from the scheduler and increment counters."""
+        """Summary
+        -------
+        Fetch a batch from the scheduler and increment counters.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        list of tuple of str and object
+            Batch of replay items.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Updates internal batch counter.
+
+        Complexity
+        ----------
+        ``O(1)`` plus scheduler cost.
+
+        Examples
+        --------
+        >>> worker.poll_queue()  # doctest: +SKIP
+
+        See Also
+        --------
+        step_adapters
+        """
 
         batch = self.scheduler.next_batch(self.batch_size)
+        # why: track how many batches processed
         self._log["batches"] += 1
         return batch
 
     def step_adapters(self, batch: list[tuple[str, object]]) -> None:
-        """Run adapter optimisation steps for items in ``batch``."""
+        """Summary
+        -------
+        Run adapter optimisation steps for items in ``batch``.
+
+        Parameters
+        ----------
+        batch : list of tuple of str and object
+            Replay items from :meth:`poll_queue`.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Updates adapter parameters and may log debug messages.
+
+        Complexity
+        ----------
+        ``O(n)`` for ``n`` items in ``batch``.
+
+        Examples
+        --------
+        >>> worker.step_adapters([("episodic", object())])  # doctest: +SKIP
+
+        See Also
+        --------
+        poll_queue
+        """
 
         for kind, _ in batch:
             if self.stop_event.is_set():
-                break
+                break  # why: allow graceful shutdown
             if kind == "episodic":
                 self._step_episodic()
             elif kind == "semantic":
@@ -244,7 +378,45 @@ class ConsolidationWorker(threading.Thread):
     T = TypeVar("T")
 
     def handle_errors(self, fn: Callable[..., T], *args: Any, **kwargs: Any) -> Optional[T]:
-        """Execute ``fn`` and stop the worker if it raises."""
+        """Summary
+        -------
+        Execute ``fn`` and stop the worker if it raises.
+
+        Parameters
+        ----------
+        fn : Callable[..., T]
+            Function to execute.
+        *args : Any
+            Positional arguments for ``fn``.
+        **kwargs : Any
+            Keyword arguments for ``fn``.
+
+        Returns
+        -------
+        Optional[T]
+            Result of ``fn`` or ``None`` on failure.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Logs the exception and sets ``stop_event`` for rollback.
+
+        Complexity
+        ----------
+        ``O(1)`` plus cost of ``fn``.
+
+        Examples
+        --------
+        >>> worker.handle_errors(lambda: 1)
+        1
+
+        See Also
+        --------
+        run
+        """
 
         try:
             return fn(*args, **kwargs)
@@ -254,7 +426,38 @@ class ConsolidationWorker(threading.Thread):
             return None
 
     def run(self) -> None:  # pragma: no cover - exercised via thread
-        """Main worker loop."""
+        """Summary
+        -------
+        Main worker loop consuming scheduler batches and stepping adapters.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Starts maintenance thread and sleeps between batches.
+
+        Complexity
+        ----------
+        Depends on scheduler and adapter costs.
+
+        Examples
+        --------
+        >>> worker.start()  # doctest: +SKIP
+
+        See Also
+        --------
+        stop
+        """
 
         self._start_maintenance()
         while not self.stop_event.is_set():
@@ -265,13 +468,77 @@ class ConsolidationWorker(threading.Thread):
             time.sleep(0.01)
 
     def log_status(self) -> dict:
-        """Return counters for processed batches."""
+        """Summary
+        -------
+        Return counters for processed batches.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict
+            Copy of internal counters.
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        None
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> ConsolidationWorker(ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})()), object()).log_status()['batches']
+        0
+
+        See Also
+        --------
+        poll_queue
+        """
 
         return dict(self._log)
 
     # ------------------------------------------------------------------
     def stop(self) -> None:
-        """Signal the worker to exit."""
+        """Summary
+        -------
+        Signal the worker to exit.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        None
+
+        Side Effects
+        ------------
+        Sets ``stop_event`` which halts loops.
+
+        Complexity
+        ----------
+        ``O(1)``.
+
+        Examples
+        --------
+        >>> worker.stop()
+
+        See Also
+        --------
+        run
+        """
 
         self.stop_event.set()
 

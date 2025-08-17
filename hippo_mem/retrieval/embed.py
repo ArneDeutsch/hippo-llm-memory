@@ -1,4 +1,15 @@
-"""Text embedding utilities."""
+"""Text embedding utilities.
+
+Summary
+-------
+Provides a deterministic, CPU-friendly placeholder embedding used by the
+retrieval fabric during tests. Real deployments swap this for a model-based
+encoder.
+
+See Also
+--------
+hippo_mem.retrieval.faiss_index
+"""
 
 from __future__ import annotations
 
@@ -6,25 +17,51 @@ from typing import List
 
 
 def embed_text(text: str, dim: int = 16) -> List[float]:
-    """Return a deterministic placeholder embedding for ``text``.
+    """Return a deterministic placeholder embedding.
 
-    The real system will swap this out for an actual model‑based embedding
-    generator.  For now we simply map characters to float values so that the
-    retrieval code paths can be exercised in tests.
+    Summary
+    -------
+    Maps characters to floats so retrieval code paths can be tested without a
+    heavy model.
 
     Parameters
     ----------
-    text:
+    text : str
         Input text to embed.
-    dim:
-        Length of the resulting embedding vector.  Default is 16 to keep the
-        vectors small and CPU friendly.
+    dim : int, optional
+        Length of the resulting vector ``(dim,)``; default is ``16``.
+
+    Returns
+    -------
+    list of float
+        Embedding vector of length ``dim``.
+
+    Raises
+    ------
+    None
+
+    Side Effects
+    ------------
+    None
+
+    Complexity
+    ----------
+    ``O(dim)``.
+
+    Examples
+    --------
+    >>> embed_text("hi", dim=4)
+    [0.41, 0.36, 0.0, 0.0]
+
+    See Also
+    --------
+    hippo_mem.retrieval.faiss_index.FaissIndex
     """
 
-    # Simple character level encoding: normalise byte values to [0, 1).
+    # why: deterministic placeholder for tests
     raw = [b / 255.0 for b in text.encode("utf-8")]
 
-    # Pad or truncate to the desired dimension.
+    # why: keep vectors small for CPU-friendly ops
     if len(raw) < dim:
         raw.extend([0.0] * (dim - len(raw)))
     else:

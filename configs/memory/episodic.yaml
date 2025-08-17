@@ -1,22 +1,24 @@
 # Episodic memory configuration.
 
-# FAISS index parameters for product quantization.
+# Summary: settings for HEI-NW episodic store. Defaults mirror EVAL_PLAN §3.1.
+
+# FAISS index parameters for product quantization; default "IVF10,PQ4".
 index_str: "IVF10,PQ4"
 
-# Number of active units in k-Winner-Take-All encoding.
+# Number of active units in k-Winner-Take-All encoding; default 8.
 k_wta: 8
 
 # Simple gating weights controlling write/recall balance.
 gating_weights:
-  write: 1.0
-  recall: 0.5
+  write: 1.0   # default weight for write score
+  recall: 0.5  # default weight for recall score
 
-# Relative weighting for replay sampling.
+# Relative weighting for replay sampling; higher favours episodic items.
 replay_weight: 0.8
 
-# Maintenance settings.
-decay_rate: 0.01
+# Maintenance settings for nightly jobs.
+decay_rate: 0.01          # fraction of salience decay per run
 prune:
-  min_salience: 0.1
-  max_age: 3600
+  min_salience: 0.1       # drop traces below this score
+  max_age: 3600           # seconds; see EVAL_PLAN §8
 
