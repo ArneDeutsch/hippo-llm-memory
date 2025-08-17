@@ -20,6 +20,28 @@ from typing import List, Optional, Tuple
 TupleType = Tuple[str, str, str, str, Optional[str], float, int]
 
 
+def split_sentences(text: str) -> List[str]:
+    """Split ``text`` into sentences using basic punctuation."""
+
+    return [s for s in re.split(r"[.?!]\s*", text.strip()) if s]
+
+
+def strip_time(sent: str) -> tuple[str, Optional[str]]:
+    """Remove temporal markers like ``in 2020`` and return ``(sent, year)``."""
+
+    time_match = re.search(r"\b(\d{4})\b", sent)
+    if not time_match:
+        return sent, None
+    time = time_match.group(1)
+    sent_no_time = re.sub(
+        rf"\b(?:in|on|at)\s*{time}\b",
+        "",
+        sent,
+        flags=re.IGNORECASE,
+    ).strip()
+    return sent_no_time, time
+
+
 def _parse_triplet(sent: str) -> Tuple[str, str, str]:
     """Very small heuristic parser returning ``(head, relation, tail)``."""
 
@@ -32,50 +54,27 @@ def _parse_triplet(sent: str) -> Tuple[str, str, str]:
     return head, relation, tail
 
 
+def score_confidence(relation: str, tail: str, time: Optional[str] = None) -> float:
+    """Heuristic confidence score from relation/tail length and time."""
+
+    rel_len = len(relation.split()) + len(tail.split())
+    conf = min(1.0, rel_len / 3.0)
+    if time is not None:
+        conf = min(1.0, conf + 0.1)
+    return conf
+
+
 def extract_tuples(text: str, threshold: float = 0.0) -> List[TupleType]:
-    """Extract ``(head, relation, tail, context, time, conf, provenance)`` tuples.
-
-    The extractor is intentionally lightweight. It splits the text into
-    sentences using common punctuation, treats tokens before the first verb as
-    the head noun phrase, the first verb as the relation, and the remainder of
-    the sentence as the tail object phrase.
-
-    Args:
-        text: Free form text potentially containing several sentences.
-        threshold: Minimum confidence required for returned tuples.
-
-    Returns:
-        A list of 7-tuples ``(head, relation, tail, context, time, conf,
-        provenance)``. ``time`` will be ``None`` if no temporal expression was
-        detected. ``provenance`` is the sentence index.
-    """
+    """Extract ``(head, relation, tail, context, time, conf, provenance)`` tuples."""
 
     tuples: List[TupleType] = []
-    for idx, sent in enumerate(re.split(r"[.?!]\s*", text.strip())):
-        if not sent:
-            continue
-
-        time_match = re.search(r"\b(\d{4})\b", sent)
-        time = time_match.group(1) if time_match else None
-
-        sent_no_time = sent
-        if time is not None:
-            sent_no_time = re.sub(
-                rf"\b(?:in|on|at)\s*{time}\b",
-                "",
-                sent,
-                flags=re.IGNORECASE,
-            ).strip()
-
+    for idx, sent in enumerate(split_sentences(text)):
+        sent_no_time, time = strip_time(sent)
         head, relation, tail = _parse_triplet(sent_no_time)
         if not relation or not tail:
             continue
 
-        rel_len = len(relation.split()) + len(tail.split())
-        conf = min(1.0, rel_len / 3.0)
-        if time is not None:
-            conf = min(1.0, conf + 0.1)
-
+        conf = score_confidence(relation, tail, time)
         if conf < threshold:
             continue
 
@@ -84,4 +83,10 @@ def extract_tuples(text: str, threshold: float = 0.0) -> List[TupleType]:
     return tuples
 
 
-__all__ = ["extract_tuples", "TupleType"]
+__all__ = [
+    "extract_tuples",
+    "TupleType",
+    "split_sentences",
+    "strip_time",
+    "score_confidence",
+]

@@ -9,7 +9,12 @@ from hypothesis import strategies as st
 
 from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
-from hippo_mem.relational.tuples import extract_tuples
+from hippo_mem.relational.tuples import (
+    extract_tuples,
+    score_confidence,
+    split_sentences,
+    strip_time,
+)
 
 
 def test_tuple_precision() -> None:
@@ -27,6 +32,25 @@ def test_tuple_precision() -> None:
     correct = preds & gold
     precision = len(correct) / len(preds)
     assert precision >= 0.9
+
+
+def test_sentence_helpers() -> None:
+    """Sentence splitting and time stripping helpers work."""
+
+    text = "Alice met Bob in 2020. Carol built rockets!"
+    sents = split_sentences(text)
+    assert sents == ["Alice met Bob in 2020", "Carol built rockets"]
+
+    cleaned, year = strip_time(sents[0])
+    assert cleaned == "Alice met Bob" and year == "2020"
+
+
+def test_confidence_scoring() -> None:
+    """Temporal information slightly boosts confidence."""
+
+    base = score_confidence("visited", "Paris")
+    with_time = score_confidence("visited", "Paris", time="2020")
+    assert with_time > base
 
 
 def test_multi_hop_retrieval() -> None:
