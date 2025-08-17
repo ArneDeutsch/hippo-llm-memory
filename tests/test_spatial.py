@@ -170,3 +170,31 @@ def test_planner_astar_matches_dijkstra(data: tuple[PlaceGraph, str, str]) -> No
     for u, v in zip(path_a, path_a[1:]):
         cost += g.graph[g._context_to_id[u]][g._context_to_id[v]].cost
     assert abs(cost - expected) < 1e-6
+
+
+@settings(max_examples=25, deadline=None)
+@given(_graph_fixture())
+def test_planner_optimality_property(data: tuple[PlaceGraph, str, str]) -> None:
+    """Planner returns a minimal-cost path on random graphs."""
+
+    g, start, goal = data
+    path = g.plan(start, goal, method="astar")
+    assert path == g.plan(start, goal, method="dijkstra")
+
+    cost = 0.0
+    for u, v in zip(path, path[1:]):
+        cost += g.graph[g._context_to_id[u]][g._context_to_id[v]].cost
+
+    G = nx.Graph()
+    for a, nbrs in g.graph.items():
+        for b, edge in nbrs.items():
+            G.add_edge(a, b, weight=edge.cost)
+    start_id = g._context_to_id[start]
+    goal_id = g._context_to_id[goal]
+    min_cost = float("inf")
+    for p in nx.all_simple_paths(G, start_id, goal_id):
+        c = 0.0
+        for a, b in zip(p, p[1:]):
+            c += G[a][b]["weight"]
+        min_cost = min(min_cost, c)
+    assert abs(cost - min_cost) < 1e-6
