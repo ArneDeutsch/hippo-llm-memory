@@ -148,17 +148,19 @@ def _flatten_ablate(ablate: Optional[DictConfig | str]) -> Dict[str, object]:
     return flat
 
 
-def evaluate(cfg: DictConfig, outdir: Path) -> None:
-    """Run evaluation for ``cfg.suite`` and write metrics to ``outdir``."""
-
-    suite = cfg.suite
-    n = cfg.n
-    seed = cfg.seed
-    preset = cfg.preset
+def generate_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
+    """Return ``n`` tasks for ``suite`` using ``seed``."""
 
     generator = SUITE_TO_GENERATOR[suite]
-    tasks = generator(n, seed)
+    return generator(n, seed)
 
+
+def run_suite(
+    cfg: DictConfig,
+) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
+    """Execute the evaluation logic and return rows and metrics."""
+
+    tasks = generate_tasks(cfg.suite, cfg.n, cfg.seed)
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
@@ -208,7 +210,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             }
         )
 
-    em = correct / n if n else 0.0
+    em = correct / cfg.n if cfg.n else 0.0
     mem_usage: Dict[str, object] = {}
     if "episodic" in modules:
         mem_usage["episodic"] = modules["episodic"]["store"]._log
@@ -218,13 +220,24 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         mem_usage["spatial"] = modules["spatial"]["map"]._log
 
     metrics = {
-        "suite": suite,
-        "n": n,
-        "seed": seed,
-        "preset": preset,
-        "metrics": {suite: {"em": em}, "compute": {"tokens": total_tokens}},
+        "suite": cfg.suite,
+        "n": cfg.n,
+        "seed": cfg.seed,
+        "preset": cfg.preset,
+        "metrics": {cfg.suite: {"em": em}, "compute": {"tokens": total_tokens}},
         "memory": mem_usage,
     }
+    return rows, metrics, flat_ablate
+
+
+def write_outputs(
+    outdir: Path,
+    rows: List[Dict[str, object]],
+    metrics: Dict[str, object],
+    flat_ablate: Dict[str, object],
+    cfg: DictConfig,
+) -> None:
+    """Write metrics and metadata to ``outdir``."""
 
     outdir.mkdir(parents=True, exist_ok=True)
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
@@ -257,6 +270,13 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     }
     with (outdir / "meta.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f)
+
+
+def evaluate(cfg: DictConfig, outdir: Path) -> None:
+    """Run evaluation for ``cfg.suite`` and write metrics to ``outdir``."""
+
+    rows, metrics, flat_ablate = run_suite(cfg)
+    write_outputs(outdir, rows, metrics, flat_ablate, cfg)
 
 
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")

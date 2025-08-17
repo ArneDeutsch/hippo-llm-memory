@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import sqlite3
 import threading
 import time
 from dataclasses import asdict, dataclass
@@ -13,7 +12,9 @@ from typing import Any, List, Optional, Union
 import faiss  # type: ignore
 import numpy as np
 
+from .db import TraceDB
 from .gating import DGKey, densify, k_wta
+from .index import VectorIndex
 
 logger = logging.getLogger(__name__)
 
@@ -66,15 +67,8 @@ class EpisodicStore:
 
         self.dim = dim
         self.k_wta = k_wta
-        base = faiss.index_factory(dim, index_str, faiss.METRIC_INNER_PRODUCT)
-        self.index = faiss.IndexIDMap(base)
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
-        self._setup_db()
-
-        # Buffers for PQ training
-        self._pending_keys: List[np.ndarray] = []
-        self._pending_ids: List[int] = []
-        self.train_threshold = train_threshold
+        self.index = VectorIndex(dim, index_str, train_threshold)
+        self.db = TraceDB(db_path)
 
         # Hopfield parameter (inverse temperature)
         self.beta = 1.0
@@ -89,42 +83,10 @@ class EpisodicStore:
         self._log_file = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
-    # SQLite helpers
-    def _setup_db(self) -> None:
-        cur = self.conn.cursor()
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS traces (id INTEGER PRIMARY KEY, value TEXT, key BLOB, ts REAL, salience REAL)"
-        )
-        self.conn.commit()
-
-    def _insert_trace(self, key: np.ndarray, value_json: str, ts: float, salience: float) -> int:
-        cur = self.conn.cursor()
-        cur.execute(
-            "INSERT INTO traces(value, key, ts, salience) VALUES (?, ?, ?, ?)",
-            (value_json, key.tobytes(), ts, salience),
-        )
-        self.conn.commit()
-        return int(cur.lastrowid)
-
-    def _get_trace(self, idx: int) -> Optional[tuple[str, np.ndarray, float, float]]:
-        cur = self.conn.cursor()
-        cur.execute("SELECT value, key, ts, salience FROM traces WHERE id=?", (idx,))
-        row = cur.fetchone()
-        if not row:
-            return None
-        value, key_blob, ts, salience = row
-        key = np.frombuffer(key_blob, dtype="float32")
-        return value, key, float(ts), float(salience)
-
     def keys(self) -> np.ndarray:
         """Return all stored key vectors."""
 
-        cur = self.conn.cursor()
-        cur.execute("SELECT key FROM traces")
-        rows = cur.fetchall()
-        if not rows:
-            return np.empty((0, self.dim), dtype="float32")
-        return np.vstack([np.frombuffer(r[0], dtype="float32") for r in rows])
+        return self.db.keys(self.dim)
 
     # ------------------------------------------------------------------
     # Maintenance helpers
@@ -173,22 +135,8 @@ class EpisodicStore:
         faiss.normalize_L2(key_arr)
         ts = time.time()
         salience = float(len(value.salience_tags) if value.salience_tags else 1.0)
-        idx = self._insert_trace(key_arr[0], json.dumps(asdict(value)), ts, salience)
-
-        if self.index.is_trained:
-            ids = np.array([idx], dtype="int64")
-            self.index.add_with_ids(key_arr, ids)
-        else:
-            self._pending_keys.append(key_arr[0])
-            self._pending_ids.append(idx)
-            if len(self._pending_keys) >= self.train_threshold:
-                train_mat = np.vstack(self._pending_keys)
-                faiss.normalize_L2(train_mat)
-                self.index.train(train_mat)
-                ids = np.array(self._pending_ids, dtype="int64")
-                self.index.add_with_ids(train_mat, ids)
-                self._pending_keys.clear()
-                self._pending_ids.clear()
+        idx = self.db.insert(key_arr[0], json.dumps(asdict(value)), ts, salience)
+        self.index.add(key_arr, idx)
         self._log["writes"] += 1
         return idx
 
@@ -205,7 +153,7 @@ class EpisodicStore:
         for score, idx in zip(scores[0], ids[0]):
             if idx == -1:
                 continue
-            trace = self._get_trace(int(idx))
+            trace = self.db.get(int(idx))
             if trace is None:
                 continue
             value_json, key_vec, ts, salience = trace
@@ -233,14 +181,8 @@ class EpisodicStore:
     def delete(self, idx: int) -> None:
         """Delete a trace by ``idx``."""
 
-        ids = np.array([idx], dtype="int64")
-        try:
-            self.index.remove_ids(ids)
-        except Exception:
-            logger.exception("Failed to remove id %s from index", idx)
-        cur = self.conn.cursor()
-        cur.execute("DELETE FROM traces WHERE id=?", (idx,))
-        self.conn.commit()
+        self.index.remove(idx)
+        self.db.delete(idx)
 
     def update(
         self,
@@ -250,9 +192,8 @@ class EpisodicStore:
     ) -> None:
         """Update the key and/or value for an existing trace."""
 
-        cur = self.conn.cursor()
         if value is not None:
-            cur.execute("UPDATE traces SET value=? WHERE id=?", (json.dumps(asdict(value)), idx))
+            self.db.update_value(idx, json.dumps(asdict(value)))
         if key is not None:
             if isinstance(key, np.ndarray):
                 if self.k_wta > 0:
@@ -266,18 +207,8 @@ class EpisodicStore:
                     )
             key_arr = self._to_dense(key).reshape(1, -1)
             faiss.normalize_L2(key_arr)
-            ids = np.array([idx], dtype="int64")
-            try:
-                self.index.remove_ids(ids)
-            except Exception:
-                logger.exception("Failed to remove id %s during update", idx)
-            if self.index.is_trained:
-                self.index.add_with_ids(key_arr, ids)
-            else:
-                self._pending_keys.append(key_arr[0])
-                self._pending_ids.append(idx)
-            cur.execute("UPDATE traces SET key=? WHERE id=?", (key_arr[0].tobytes(), idx))
-        self.conn.commit()
+            self.index.update(key_arr, idx)
+            self.db.update_key(idx, key_arr[0])
 
     # ------------------------------------------------------------------
     # Hopfield completion
@@ -303,34 +234,16 @@ class EpisodicStore:
         """Apply exponential decay to salience values."""
 
         factor = max(0.0, 1.0 - rate)
-        cur = self.conn.cursor()
-        cur.execute("SELECT id, salience FROM traces")
-        rows = cur.fetchall()
+        rows = self.db.decay(factor)
         if rows:
             self._push_history("decay", rows)
-        cur.execute("UPDATE traces SET salience = salience * ?", (factor,))
-        self.conn.commit()
         self._log_event("decay", {"rate": rate})
 
     def prune(self, min_salience: float = 0.1, max_age: Optional[float] = None) -> None:
         """Remove traces whose salience or age fall below thresholds."""
 
-        cur = self.conn.cursor()
-        conditions: List[str] = []
-        params: List[float] = []
-        if min_salience is not None:
-            conditions.append("salience < ?")
-            params.append(min_salience)
-        if max_age is not None:
-            cutoff = time.time() - max_age
-            conditions.append("ts < ?")
-            params.append(cutoff)
-        if not conditions:
-            return
-        where = " OR ".join(conditions)
-        query = "SELECT id, value, key, ts, salience FROM traces WHERE " + where
-        cur.execute(query, params)
-        rows = cur.fetchall()
+        cutoff = time.time() - max_age if max_age is not None else None
+        rows = self.db.fetch_prune_candidates(min_salience, cutoff)
         if not rows:
             return
         self._push_history("prune", rows)
@@ -377,25 +290,15 @@ class EpisodicStore:
             entry = self._history.pop()
             op = entry["op"]
             rows = entry["rows"]
-            cur = self.conn.cursor()
             if op == "decay":
-                cur.executemany(
-                    "UPDATE traces SET salience=? WHERE id=?",
-                    [(s, i) for i, s in rows],
-                )
+                self.db.restore_salience(rows)
             elif op == "prune":
+                self.db.restore_rows(rows)
                 for idx, value_json, key_blob, ts, salience in rows:
-                    cur.execute(
-                        "INSERT OR REPLACE INTO traces(id, value, key, ts, salience) VALUES (?,?,?,?,?)",
-                        (idx, value_json, key_blob, ts, salience),
-                    )
                     key_vec = np.frombuffer(key_blob, dtype="float32").reshape(1, -1)
                     faiss.normalize_L2(key_vec)
-                    ids = np.array([idx], dtype="int64")
-                    if self.index.is_trained:
-                        self.index.add_with_ids(key_vec, ids)
-                    else:
-                        self._pending_keys.append(key_vec[0])
-                        self._pending_ids.append(idx)
-            self.conn.commit()
+                    self.index.add(key_vec, int(idx))
             self._log_event("rollback", {"op": op})
+
+
+__all__ = ["TraceValue", "Trace", "EpisodicStore"]
