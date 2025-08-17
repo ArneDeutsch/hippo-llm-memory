@@ -18,7 +18,7 @@ import hashlib
 import json
 import random
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Set
 
 
 def generate_episodic(size: int, seed: int) -> List[Dict[str, str]]:
@@ -111,24 +111,87 @@ def generate_semantic(
     return tasks
 
 
-def generate_spatial(size: int, seed: int) -> List[Dict[str, int]]:
-    """Generate grid based shortest-path questions.
+def generate_spatial(
+    size: int,
+    seed: int,
+    grid_size: int = 5,
+    obstacle_density: float = 0.2,
+) -> List[Dict[str, object]]:
+    """Generate grid-world tasks with obstacles and macro paths.
 
-    Each task asks for the Manhattan distance between two coordinates in a
-    5×5 grid.
+    Half of the tasks ask for the shortest path length between two coordinates
+    while avoiding obstacles.  The other half repeat **macro paths**—pre-computed
+    shortest routes between fixed start/goal pairs—to encourage procedural
+    sequence learning.
     """
 
+    from collections import deque
+
     rng = random.Random(seed)
-    grid = 5
-    tasks: List[Dict[str, int]] = []
-    for _ in range(size):
-        x1, y1 = rng.randint(0, grid - 1), rng.randint(0, grid - 1)
-        x2, y2 = rng.randint(0, grid - 1), rng.randint(0, grid - 1)
-        prompt = (
-            f"Start at ({x1},{y1}) and move to ({x2},{y2}). " "What is the shortest path length?"
-        )
-        answer = abs(x1 - x2) + abs(y1 - y2)
-        tasks.append({"prompt": prompt, "answer": answer})
+
+    obstacles: Set[tuple[int, int]] = set()
+    for x in range(grid_size):
+        for y in range(grid_size):
+            if rng.random() < obstacle_density:
+                obstacles.add((x, y))
+
+    def bfs(start: tuple[int, int], goal: tuple[int, int]) -> List[str] | None:
+        queue: deque[tuple[tuple[int, int], List[str]]] = deque([(start, [])])
+        seen = {start}
+        moves = [(-1, 0, "L"), (1, 0, "R"), (0, -1, "U"), (0, 1, "D")]
+        while queue:
+            (x, y), path = queue.popleft()
+            if (x, y) == goal:
+                return path
+            for dx, dy, step in moves:
+                nx, ny = x + dx, y + dy
+                nxt = (nx, ny)
+                if (
+                    0 <= nx < grid_size
+                    and 0 <= ny < grid_size
+                    and nxt not in obstacles
+                    and nxt not in seen
+                ):
+                    queue.append((nxt, path + [step]))
+                    seen.add(nxt)
+        return None
+
+    def random_cell() -> tuple[int, int]:
+        return rng.randint(0, grid_size - 1), rng.randint(0, grid_size - 1)
+
+    macros: List[Dict[str, object]] = []
+    for _ in range(3):
+        while True:
+            start, goal = random_cell(), random_cell()
+            if start == goal or start in obstacles or goal in obstacles:
+                continue
+            path = bfs(start, goal)
+            if path:
+                macros.append({"start": start, "goal": goal, "steps": "".join(path)})
+                break
+
+    tasks: List[Dict[str, object]] = []
+    for i in range(size):
+        if i % 2 == 0:  # shortest path queries
+            while True:
+                start, goal = random_cell(), random_cell()
+                if start == goal or start in obstacles or goal in obstacles:
+                    continue
+                path = bfs(start, goal)
+                if path:
+                    prompt = (
+                        f"Grid {grid_size}x{grid_size} with obstacles {sorted(obstacles)}. "
+                        f"Start {start} goal {goal}. What is the shortest path length?"
+                    )
+                    tasks.append({"prompt": prompt, "answer": len(path)})
+                    break
+        else:  # macro path sequences
+            macro = rng.choice(macros)
+            prompt = (
+                f"Grid {grid_size}x{grid_size} with obstacles {sorted(obstacles)}. "
+                f"What move sequence leads from {macro['start']} to {macro['goal']}?"
+            )
+            tasks.append({"prompt": prompt, "answer": macro["steps"]})
 
     return tasks
 
@@ -145,7 +208,8 @@ def generate_dataset(suite: str, size: int, seed: int, **kwargs: object) -> List
 
     Extra keyword arguments are forwarded to the underlying generator which
     allows callers to tweak suite-specific options such as ``hops`` or
-    ``contradictions`` for the semantic tasks.
+    ``contradictions`` for the semantic tasks or grid size or obstacle
+    density for the spatial suite.
     """
 
     try:
@@ -191,6 +255,11 @@ def main() -> None:
 
     ``python scripts/build_datasets.py --suite episodic --size 100 --seed 42 \
     --out data/episodic_100_42.jsonl``
+
+    For the spatial suite additional parameters control the grid world:
+
+    ``python scripts/build_datasets.py --suite spatial --size 50 --seed 0 \
+    --grid-size 7 --obstacle-density 0.3 --out data/spatial.jsonl``
     """
 
     parser = argparse.ArgumentParser(description="Build synthetic evaluation data")
@@ -207,6 +276,18 @@ def main() -> None:
         help="Inject contradictory statements in semantic suite",
     )
     parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
+    parser.add_argument(
+        "--grid-size",
+        type=int,
+        default=5,
+        help="Grid size for spatial suite",
+    )
+    parser.add_argument(
+        "--obstacle-density",
+        type=float,
+        default=0.2,
+        help="Obstacle density for spatial suite",
+    )
     args = parser.parse_args()
 
     generator = SUITE_TO_GENERATOR[args.suite]
@@ -216,6 +297,12 @@ def main() -> None:
             args.seed,
             hops=args.hops,
             contradictions=args.contradictions,
+    elif args.suite == "spatial":
+        items = generator(
+            args.size,
+            args.seed,
+            grid_size=args.grid_size,
+            obstacle_density=args.obstacle_density,
         )
     else:
         items = generator(args.size, args.seed)

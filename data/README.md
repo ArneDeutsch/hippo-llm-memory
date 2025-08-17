@@ -19,3 +19,8 @@ The semantic generator additionally supports:
   queries must resolve the correct location.
 
 Outputs follow the same `prompt`/`answer` schema regardless of these flags.
+
+For the spatial suite, `--grid-size` and `--obstacle-density` control the
+dimensions of the grid world and the fraction of blocked cells, enabling tests
+with walls and repeated macro paths.
+
