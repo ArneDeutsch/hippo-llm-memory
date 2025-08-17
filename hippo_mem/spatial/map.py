@@ -271,27 +271,38 @@ class PlaceGraph:
             self._last_coord = (lx * factor, ly * factor)
         self._log_event("decay", {"rate": rate})
 
-    def prune(self, max_age: int) -> None:
-        """Drop edges and places not observed within ``max_age`` steps."""
-        self._push_history("prune")
-        threshold = self._step - max_age
+    # ------------------------------------------------------------------
+    # Pruning helpers
+    def _prune_nodes(self, threshold: int) -> None:
+        """Remove nodes whose last observation predates ``threshold``."""
         for context, place in list(self.encoder._cache.items()):
             if place.last_seen < threshold:
                 node = self._context_to_id.pop(context, None)
                 if node is not None:
                     self._id_to_context.pop(node, None)
                     self.graph.pop(node, None)
+                    for nbrs in self.graph.values():
+                        nbrs.pop(node, None)
                 del self.encoder._cache[context]
 
+    def _prune_edges(self, threshold: int) -> None:
+        """Remove edges older than ``threshold`` and drop isolated nodes."""
         for a in list(self.graph.keys()):
             for b in list(self.graph[a].keys()):
-                if self.graph[a][b].last_seen < threshold:
+                if self.graph[a][b].last_seen < threshold or b not in self._id_to_context:
                     del self.graph[a][b]
             if not self.graph[a]:
                 context = self._id_to_context.pop(a, None)
                 if context is not None:
                     self._context_to_id.pop(context, None)
                 del self.graph[a]
+
+    def prune(self, max_age: int) -> None:
+        """Drop edges and places not observed within ``max_age`` steps."""
+        self._push_history("prune")
+        threshold = self._step - max_age
+        self._prune_nodes(threshold)
+        self._prune_edges(threshold)
         self._log_event("prune", {"max_age": max_age})
 
     def log_status(self) -> dict:

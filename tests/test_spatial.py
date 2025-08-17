@@ -129,6 +129,49 @@ def test_placegraph_maintenance_log_records_events() -> None:
     assert g._maintenance_log[1]["max_age"] == 0
 
 
+def test_prune_removes_stale_edges_only() -> None:
+    g = PlaceGraph()
+    for ctx in ["a", "b", "c"]:
+        g.observe(ctx)
+    g.connect("a", "c")
+    g._step = 10
+    for ctx in ["a", "b", "c"]:
+        g.encoder.encode(ctx).last_seen = 10
+    a, b, c = (g._context_to_id[x] for x in ["a", "b", "c"])
+    g.graph[a][b].last_seen = 1
+    g.graph[b][a].last_seen = 1
+    g.graph[a][c].last_seen = 9
+    g.graph[c][a].last_seen = 9
+    g.graph[b][c].last_seen = 9
+    g.graph[c][b].last_seen = 9
+
+    g.prune(max_age=5)
+    assert set(g._context_to_id.keys()) == {"a", "b", "c"}
+    assert b not in g.graph[a]
+    assert a not in g.graph[b]
+    assert c in g.graph[a] and a in g.graph[c]
+
+
+def test_prune_and_rollback_restore_state() -> None:
+    g = PlaceGraph()
+    for ctx in ["a", "b", "c"]:
+        g.observe(ctx)
+    snapshot_graph = copy.deepcopy(g.graph)
+    snapshot_ctx = dict(g._context_to_id)
+
+    g._step = 10
+    g.encoder.encode("a").last_seen = 1
+    g.encoder.encode("b").last_seen = 9
+    g.encoder.encode("c").last_seen = 9
+
+    g.prune(max_age=5)
+    assert "a" not in g._context_to_id
+
+    g.rollback(1)
+    assert g.graph == snapshot_graph
+    assert g._context_to_id == snapshot_ctx
+
+
 @st.composite
 def _graph_fixture(draw) -> tuple[PlaceGraph, str, str]:
     n = draw(st.integers(min_value=2, max_value=5))
