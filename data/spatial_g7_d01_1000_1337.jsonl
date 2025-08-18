@@ -1,0 +1,1000 @@
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (6, 1). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4). After moves RDLDU where do you end?", "answer": [1, 5], "trajectory": [[1, 4], [2, 4], [2, 5], [1, 5], [1, 6], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4) goal (3, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves URLDR where do you end?", "answer": [6, 2], "trajectory": [[5, 2], [5, 1], [6, 1], [5, 1], [5, 2], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (2, 6). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3). After moves DULDR where do you end?", "answer": [1, 4], "trajectory": [[1, 3], [1, 4], [1, 3], [0, 3], [0, 4], [1, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2) goal (4, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves RLDUD where do you end?", "answer": [3, 3], "trajectory": [[3, 2], [4, 2], [3, 2], [3, 3], [3, 2], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (2, 5). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves RRRRU where do you end?", "answer": [6, 4], "trajectory": [[2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [6, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (4, 2). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves UDRDL where do you end?", "answer": [1, 6], "trajectory": [[1, 5], [1, 4], [1, 5], [2, 5], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3) goal (4, 5). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves LDRDR where do you end?", "answer": [3, 2], "trajectory": [[2, 0], [1, 0], [1, 1], [2, 1], [2, 2], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4) goal (2, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2). After moves LURDU where do you end?", "answer": [6, 1], "trajectory": [[6, 2], [5, 2], [5, 1], [6, 1], [6, 2], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3) goal (1, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves LRDLR where do you end?", "answer": [6, 6], "trajectory": [[6, 5], [5, 5], [6, 5], [6, 6], [5, 6], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (3, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves LDLDL where do you end?", "answer": [0, 3], "trajectory": [[3, 1], [2, 1], [2, 2], [1, 2], [1, 3], [0, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (2, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves LRDUU where do you end?", "answer": [6, 4], "trajectory": [[6, 5], [5, 5], [6, 5], [6, 6], [6, 5], [6, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0) goal (5, 6). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4). After moves LDDUU where do you end?", "answer": [0, 4], "trajectory": [[1, 4], [0, 4], [0, 5], [0, 6], [0, 5], [0, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (1, 3). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves DUUUL where do you end?", "answer": [5, 3], "trajectory": [[6, 5], [6, 6], [6, 5], [6, 4], [6, 3], [5, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (1, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves RUDDU where do you end?", "answer": [6, 5], "trajectory": [[5, 5], [6, 5], [6, 4], [6, 5], [6, 6], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (0, 5). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves ULRLL where do you end?", "answer": [0, 5], "trajectory": [[2, 6], [2, 5], [1, 5], [2, 5], [1, 5], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5) goal (5, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves RLLRD where do you end?", "answer": [1, 6], "trajectory": [[1, 5], [2, 5], [1, 5], [0, 5], [1, 5], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (1, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves DRUDR where do you end?", "answer": [3, 6], "trajectory": [[1, 5], [1, 6], [2, 6], [2, 5], [2, 6], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (0, 0). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves DLRUD where do you end?", "answer": [6, 6], "trajectory": [[6, 5], [6, 6], [5, 6], [6, 6], [6, 5], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0) goal (0, 6). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves DLDUU where do you end?", "answer": [0, 0], "trajectory": [[1, 0], [1, 1], [0, 1], [0, 2], [0, 1], [0, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (2, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves UUUUR where do you end?", "answer": [1, 2], "trajectory": [[0, 6], [0, 5], [0, 4], [0, 3], [0, 2], [1, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (2, 0). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0). After moves RRRDD where do you end?", "answer": [3, 2], "trajectory": [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (1, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6). After moves LLLRL where do you end?", "answer": [2, 6], "trajectory": [[5, 6], [4, 6], [3, 6], [2, 6], [3, 6], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6) goal (1, 3). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6). After moves LLURD where do you end?", "answer": [3, 6], "trajectory": [[4, 6], [3, 6], [2, 6], [2, 5], [3, 5], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3) goal (4, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5). After moves DUURD where do you end?", "answer": [1, 5], "trajectory": [[0, 5], [0, 6], [0, 5], [0, 4], [1, 4], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6) goal (2, 0). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4). After moves URLLD where do you end?", "answer": [3, 4], "trajectory": [[4, 4], [4, 3], [5, 3], [4, 3], [3, 3], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0) goal (6, 3). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves DLRUD where do you end?", "answer": [3, 6], "trajectory": [[3, 5], [3, 6], [2, 6], [3, 6], [3, 5], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (1, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5). After moves UDULR where do you end?", "answer": [4, 4], "trajectory": [[4, 5], [4, 4], [4, 5], [4, 4], [3, 4], [4, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0) goal (1, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves RRDUR where do you end?", "answer": [6, 1], "trajectory": [[3, 1], [4, 1], [5, 1], [5, 2], [5, 1], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2) goal (0, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1). After moves DULDU where do you end?", "answer": [0, 1], "trajectory": [[1, 1], [1, 2], [1, 1], [0, 1], [0, 2], [0, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2) goal (1, 5). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves LDRLL where do you end?", "answer": [4, 2], "trajectory": [[6, 1], [5, 1], [5, 2], [6, 2], [5, 2], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (0, 2). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4). After moves DDLLL where do you end?", "answer": [0, 6], "trajectory": [[3, 4], [3, 5], [3, 6], [2, 6], [1, 6], [0, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6) goal (2, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1). After moves LUDUD where do you end?", "answer": [4, 1], "trajectory": [[5, 1], [4, 1], [4, 0], [4, 1], [4, 0], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (2, 0). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0). After moves DUDUD where do you end?", "answer": [6, 1], "trajectory": [[6, 0], [6, 1], [6, 0], [6, 1], [6, 0], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4) goal (3, 4). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves RDRDD where do you end?", "answer": [2, 6], "trajectory": [[0, 3], [1, 3], [1, 4], [2, 4], [2, 5], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (1, 6). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves DUDUR where do you end?", "answer": [4, 5], "trajectory": [[3, 5], [3, 6], [3, 5], [3, 6], [3, 5], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (5, 3). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2). After moves URUDU where do you end?", "answer": [1, 0], "trajectory": [[0, 2], [0, 1], [1, 1], [1, 0], [1, 1], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (1, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves LLDRD where do you end?", "answer": [4, 5], "trajectory": [[5, 3], [4, 3], [3, 3], [3, 4], [4, 4], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5) goal (2, 5). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0). After moves DLDDD where do you end?", "answer": [3, 4], "trajectory": [[4, 0], [4, 1], [3, 1], [3, 2], [3, 3], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (6, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4). After moves RRLLD where do you end?", "answer": [0, 5], "trajectory": [[0, 4], [1, 4], [2, 4], [1, 4], [0, 4], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5) goal (0, 4). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4). After moves DLURD where do you end?", "answer": [4, 5], "trajectory": [[4, 4], [4, 5], [3, 5], [3, 4], [4, 4], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (1, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves URDUU where do you end?", "answer": [6, 0], "trajectory": [[5, 2], [5, 1], [6, 1], [6, 2], [6, 1], [6, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (0, 4). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves LRUUL where do you end?", "answer": [5, 1], "trajectory": [[6, 3], [5, 3], [6, 3], [6, 2], [6, 1], [5, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0) goal (5, 5). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3). After moves UUURL where do you end?", "answer": [1, 0], "trajectory": [[1, 3], [1, 2], [1, 1], [1, 0], [2, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (4, 5). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5). After moves UDRDR where do you end?", "answer": [2, 6], "trajectory": [[0, 5], [0, 4], [0, 5], [1, 5], [1, 6], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2) goal (0, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves DDUDU where do you end?", "answer": [6, 2], "trajectory": [[6, 1], [6, 2], [6, 3], [6, 2], [6, 3], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6) goal (3, 1). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves RDUUU where do you end?", "answer": [6, 3], "trajectory": [[5, 5], [6, 5], [6, 6], [6, 5], [6, 4], [6, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (5, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves DLRUR where do you end?", "answer": [6, 5], "trajectory": [[5, 5], [5, 6], [4, 6], [5, 6], [5, 5], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (1, 3). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2). After moves UDUDD where do you end?", "answer": [6, 3], "trajectory": [[6, 2], [6, 1], [6, 2], [6, 1], [6, 2], [6, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (3, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves LDRLU where do you end?", "answer": [1, 5], "trajectory": [[2, 5], [1, 5], [1, 6], [2, 6], [1, 6], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (2, 2). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves LULDU where do you end?", "answer": [3, 2], "trajectory": [[5, 3], [4, 3], [4, 2], [3, 2], [3, 3], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5) goal (0, 4). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves RRDUD where do you end?", "answer": [3, 6], "trajectory": [[1, 5], [2, 5], [3, 5], [3, 6], [3, 5], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6) goal (6, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0). After moves DDLLU where do you end?", "answer": [4, 1], "trajectory": [[6, 0], [6, 1], [6, 2], [5, 2], [4, 2], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6) goal (3, 4). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1). After moves RUDRU where do you end?", "answer": [2, 0], "trajectory": [[0, 1], [1, 1], [1, 0], [1, 1], [2, 1], [2, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (6, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6). After moves RRLRU where do you end?", "answer": [6, 5], "trajectory": [[4, 6], [5, 6], [6, 6], [5, 6], [6, 6], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (0, 1). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves ULRLR where do you end?", "answer": [2, 4], "trajectory": [[2, 5], [2, 4], [1, 4], [2, 4], [1, 4], [2, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (0, 4). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves ULRDU where do you end?", "answer": [2, 4], "trajectory": [[2, 5], [2, 4], [1, 4], [2, 4], [2, 5], [2, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3) goal (5, 1). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves UDLUU where do you end?", "answer": [2, 0], "trajectory": [[3, 2], [3, 1], [3, 2], [2, 2], [2, 1], [2, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6) goal (1, 2). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2). After moves DDLDU where do you end?", "answer": [3, 4], "trajectory": [[4, 2], [4, 3], [4, 4], [3, 4], [3, 5], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4) goal (2, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2). After moves DLURU where do you end?", "answer": [4, 1], "trajectory": [[4, 2], [4, 3], [3, 3], [3, 2], [4, 2], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (6, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6). After moves UUUDD where do you end?", "answer": [6, 5], "trajectory": [[6, 6], [6, 5], [6, 4], [6, 3], [6, 4], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (6, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0). After moves DDRUD where do you end?", "answer": [5, 2], "trajectory": [[4, 0], [4, 1], [4, 2], [5, 2], [5, 1], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4) goal (3, 1). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1). After moves RUDLD where do you end?", "answer": [5, 2], "trajectory": [[5, 1], [6, 1], [6, 0], [6, 1], [5, 1], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5) goal (4, 6). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves ULUUD where do you end?", "answer": [4, 1], "trajectory": [[5, 3], [5, 2], [4, 2], [4, 1], [4, 0], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (4, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves LRLRD where do you end?", "answer": [2, 6], "trajectory": [[2, 5], [1, 5], [2, 5], [1, 5], [2, 5], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5) goal (6, 4). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves RRLLU where do you end?", "answer": [3, 0], "trajectory": [[3, 1], [4, 1], [5, 1], [4, 1], [3, 1], [3, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (4, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0). After moves DLDUR where do you end?", "answer": [6, 1], "trajectory": [[6, 0], [6, 1], [5, 1], [5, 2], [5, 1], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (3, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves URRRU where do you end?", "answer": [6, 0], "trajectory": [[3, 2], [3, 1], [4, 1], [5, 1], [6, 1], [6, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (4, 0). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves DUUDD where do you end?", "answer": [6, 6], "trajectory": [[6, 5], [6, 6], [6, 5], [6, 4], [6, 5], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3) goal (5, 2). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves ULRDD where do you end?", "answer": [3, 3], "trajectory": [[3, 2], [3, 1], [2, 1], [3, 1], [3, 2], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (4, 5). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0). After moves RRRDD where do you end?", "answer": [3, 2], "trajectory": [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (1, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4). After moves UUULD where do you end?", "answer": [5, 2], "trajectory": [[6, 4], [6, 3], [6, 2], [6, 1], [5, 1], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6) goal (0, 0). What is the shortest path length?", "answer": 12}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2). After moves RUUDU where do you end?", "answer": [1, 0], "trajectory": [[0, 2], [1, 2], [1, 1], [1, 0], [1, 1], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (6, 4). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1). After moves ULLRD where do you end?", "answer": [3, 1], "trajectory": [[4, 1], [4, 0], [3, 0], [2, 0], [3, 0], [3, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (1, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves URDUL where do you end?", "answer": [3, 4], "trajectory": [[3, 5], [3, 4], [4, 4], [4, 5], [4, 4], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5) goal (1, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0). After moves LRLLL where do you end?", "answer": [1, 0], "trajectory": [[4, 0], [3, 0], [4, 0], [3, 0], [2, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0) goal (1, 1). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6). After moves LUDLL where do you end?", "answer": [2, 6], "trajectory": [[5, 6], [4, 6], [4, 5], [4, 6], [3, 6], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1) goal (1, 4). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves ULDUL where do you end?", "answer": [3, 1], "trajectory": [[5, 2], [5, 1], [4, 1], [4, 2], [4, 1], [3, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5) goal (3, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6). After moves LUURD where do you end?", "answer": [4, 5], "trajectory": [[4, 6], [3, 6], [3, 5], [3, 4], [4, 4], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4) goal (3, 3). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves DLRUL where do you end?", "answer": [1, 0], "trajectory": [[2, 0], [2, 1], [1, 1], [2, 1], [2, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (3, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2). After moves LRULR where do you end?", "answer": [6, 1], "trajectory": [[6, 2], [5, 2], [6, 2], [6, 1], [5, 1], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (1, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1). After moves URLRD where do you end?", "answer": [1, 1], "trajectory": [[0, 1], [0, 0], [1, 0], [0, 0], [1, 0], [1, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6) goal (4, 1). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2). After moves DLDRU where do you end?", "answer": [1, 3], "trajectory": [[1, 2], [1, 3], [0, 3], [0, 4], [1, 4], [1, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3) goal (0, 4). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves ULRUL where do you end?", "answer": [2, 1], "trajectory": [[3, 3], [3, 2], [2, 2], [3, 2], [3, 1], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2) goal (5, 6). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves UUDLD where do you end?", "answer": [1, 6], "trajectory": [[2, 6], [2, 5], [2, 4], [2, 5], [1, 5], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6) goal (4, 1). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6). After moves LULRU where do you end?", "answer": [4, 4], "trajectory": [[5, 6], [4, 6], [4, 5], [3, 5], [4, 5], [4, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (2, 1). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves LRDUL where do you end?", "answer": [5, 5], "trajectory": [[6, 5], [5, 5], [6, 5], [6, 6], [6, 5], [5, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (0, 0). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0). After moves DDLRL where do you end?", "answer": [2, 2], "trajectory": [[3, 0], [3, 1], [3, 2], [2, 2], [3, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0) goal (3, 4). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves DUUDU where do you end?", "answer": [3, 0], "trajectory": [[3, 1], [3, 2], [3, 1], [3, 0], [3, 1], [3, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 1) goal (3, 0). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4). After moves UUUDL where do you end?", "answer": [5, 2], "trajectory": [[6, 4], [6, 3], [6, 2], [6, 1], [6, 2], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (4, 5). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0). After moves LDRDU where do you end?", "answer": [4, 1], "trajectory": [[4, 0], [3, 0], [3, 1], [4, 1], [4, 2], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2) goal (4, 0). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves DRRUU where do you end?", "answer": [3, 4], "trajectory": [[1, 5], [1, 6], [2, 6], [3, 6], [3, 5], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1) goal (1, 6). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4). After moves LUURR where do you end?", "answer": [3, 2], "trajectory": [[2, 4], [1, 4], [1, 3], [1, 2], [2, 2], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (1, 5). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves DRLUR where do you end?", "answer": [3, 5], "trajectory": [[2, 5], [2, 6], [3, 6], [2, 6], [2, 5], [3, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5) goal (4, 2). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves RURLD where do you end?", "answer": [4, 2], "trajectory": [[3, 2], [4, 2], [4, 1], [5, 1], [4, 1], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (6, 6). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves DRDLR where do you end?", "answer": [4, 3], "trajectory": [[3, 1], [3, 2], [4, 2], [4, 3], [3, 3], [4, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (4, 3). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves LURRD where do you end?", "answer": [6, 3], "trajectory": [[5, 3], [4, 3], [4, 2], [5, 2], [6, 2], [6, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6) goal (6, 6). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves LUUDU where do you end?", "answer": [1, 0], "trajectory": [[2, 2], [1, 2], [1, 1], [1, 0], [1, 1], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3) goal (4, 4). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4). After moves RRRLL where do you end?", "answer": [2, 4], "trajectory": [[1, 4], [2, 4], [3, 4], [4, 4], [3, 4], [2, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (0, 6). What is the shortest path length?", "answer": 10}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves UURUR where do you end?", "answer": [4, 3], "trajectory": [[2, 6], [2, 5], [2, 4], [3, 4], [3, 3], [4, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5) goal (1, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2). After moves DUUUR where do you end?", "answer": [1, 0], "trajectory": [[0, 2], [0, 3], [0, 2], [0, 1], [0, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 1) goal (0, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6). After moves RRLLU where do you end?", "answer": [1, 5], "trajectory": [[1, 6], [2, 6], [3, 6], [2, 6], [1, 6], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (1, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4). After moves DRULR where do you end?", "answer": [1, 4], "trajectory": [[0, 4], [0, 5], [1, 5], [1, 4], [0, 4], [1, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3) goal (6, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3). After moves LDDRD where do you end?", "answer": [4, 6], "trajectory": [[4, 3], [3, 3], [3, 4], [3, 5], [4, 5], [4, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (5, 1). What is the shortest path length?", "answer": 10}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2). After moves RLLDU where do you end?", "answer": [0, 2], "trajectory": [[1, 2], [2, 2], [1, 2], [0, 2], [0, 3], [0, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 1) goal (4, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1). After moves DDRDD where do you end?", "answer": [6, 5], "trajectory": [[5, 1], [5, 2], [5, 3], [6, 3], [6, 4], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (3, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1). After moves RDURU where do you end?", "answer": [6, 0], "trajectory": [[4, 1], [5, 1], [5, 2], [5, 1], [6, 1], [6, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2) goal (0, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0). After moves RLDUR where do you end?", "answer": [1, 0], "trajectory": [[0, 0], [1, 0], [0, 0], [0, 1], [0, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6) goal (6, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5). After moves RRDLR where do you end?", "answer": [6, 6], "trajectory": [[4, 5], [5, 5], [6, 5], [6, 6], [5, 6], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (2, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves LRDLR where do you end?", "answer": [1, 6], "trajectory": [[1, 5], [0, 5], [1, 5], [1, 6], [0, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2) goal (1, 6). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0). After moves DUDUD where do you end?", "answer": [6, 1], "trajectory": [[6, 0], [6, 1], [6, 0], [6, 1], [6, 0], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (1, 0). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves LLDLR where do you end?", "answer": [4, 2], "trajectory": [[6, 1], [5, 1], [4, 1], [4, 2], [3, 2], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (3, 0). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves RLLRR where do you end?", "answer": [6, 3], "trajectory": [[5, 3], [6, 3], [5, 3], [4, 3], [5, 3], [6, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (1, 5). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6). After moves RUDLU where do you end?", "answer": [1, 5], "trajectory": [[1, 6], [2, 6], [2, 5], [2, 6], [1, 6], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (4, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6). After moves RLLRR where do you end?", "answer": [4, 6], "trajectory": [[3, 6], [4, 6], [3, 6], [2, 6], [3, 6], [4, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5) goal (0, 1). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves DDDUU where do you end?", "answer": [6, 4], "trajectory": [[6, 3], [6, 4], [6, 5], [6, 6], [6, 5], [6, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (6, 0). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves RLDRL where do you end?", "answer": [0, 4], "trajectory": [[0, 3], [1, 3], [0, 3], [0, 4], [1, 4], [0, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2) goal (1, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves LULRR where do you end?", "answer": [2, 5], "trajectory": [[2, 6], [1, 6], [1, 5], [0, 5], [1, 5], [2, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (0, 0). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves DRUUU where do you end?", "answer": [1, 1], "trajectory": [[0, 3], [0, 4], [1, 4], [1, 3], [1, 2], [1, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (4, 5). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6). After moves LLUDL where do you end?", "answer": [1, 6], "trajectory": [[4, 6], [3, 6], [2, 6], [2, 5], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3) goal (1, 2). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves RLULU where do you end?", "answer": [0, 3], "trajectory": [[1, 5], [2, 5], [1, 5], [1, 4], [0, 4], [0, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (4, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2). After moves DDDLD where do you end?", "answer": [0, 6], "trajectory": [[1, 2], [1, 3], [1, 4], [1, 5], [0, 5], [0, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (4, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves LUULD where do you end?", "answer": [3, 4], "trajectory": [[5, 5], [4, 5], [4, 4], [4, 3], [3, 3], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (0, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves RDDUD where do you end?", "answer": [3, 4], "trajectory": [[2, 2], [3, 2], [3, 3], [3, 4], [3, 3], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (6, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves ULRDR where do you end?", "answer": [6, 2], "trajectory": [[5, 2], [5, 1], [4, 1], [5, 1], [5, 2], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (5, 2). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2). After moves DUDDU where do you end?", "answer": [0, 3], "trajectory": [[0, 2], [0, 3], [0, 2], [0, 3], [0, 4], [0, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (4, 2). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves DDDDU where do you end?", "answer": [1, 3], "trajectory": [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (0, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves DRDUD where do you end?", "answer": [4, 5], "trajectory": [[3, 3], [3, 4], [4, 4], [4, 5], [4, 4], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4) goal (0, 4). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6). After moves LUDRL where do you end?", "answer": [5, 6], "trajectory": [[6, 6], [5, 6], [5, 5], [5, 6], [6, 6], [5, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5) goal (1, 1). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves RLRLR where do you end?", "answer": [6, 5], "trajectory": [[5, 5], [6, 5], [5, 5], [6, 5], [5, 5], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1) goal (0, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 1). After moves DLUUD where do you end?", "answer": [1, 1], "trajectory": [[2, 1], [2, 2], [1, 2], [1, 1], [1, 0], [1, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (0, 6). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves DRDRD where do you end?", "answer": [4, 3], "trajectory": [[2, 0], [2, 1], [3, 1], [3, 2], [4, 2], [4, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (6, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves UDUUU where do you end?", "answer": [0, 3], "trajectory": [[0, 6], [0, 5], [0, 6], [0, 5], [0, 4], [0, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (1, 0). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves DRRLU where do you end?", "answer": [4, 5], "trajectory": [[3, 5], [3, 6], [4, 6], [5, 6], [4, 6], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5) goal (6, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6). After moves ULLRL where do you end?", "answer": [4, 5], "trajectory": [[6, 6], [6, 5], [5, 5], [4, 5], [5, 5], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0) goal (6, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves UDUDU where do you end?", "answer": [2, 4], "trajectory": [[2, 5], [2, 4], [2, 5], [2, 4], [2, 5], [2, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5) goal (3, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2). After moves ULDDU where do you end?", "answer": [5, 2], "trajectory": [[6, 2], [6, 1], [5, 1], [5, 2], [5, 3], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5) goal (0, 1). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves LLDDR where do you end?", "answer": [5, 5], "trajectory": [[6, 3], [5, 3], [4, 3], [4, 4], [4, 5], [5, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (6, 2). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves URDRU where do you end?", "answer": [2, 5], "trajectory": [[0, 6], [0, 5], [1, 5], [1, 6], [2, 6], [2, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (0, 5). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves DRRUD where do you end?", "answer": [3, 6], "trajectory": [[1, 5], [1, 6], [2, 6], [3, 6], [3, 5], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6) goal (1, 1). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves LLRRL where do you end?", "answer": [2, 2], "trajectory": [[3, 2], [2, 2], [1, 2], [2, 2], [3, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (4, 5). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2). After moves DUUUR where do you end?", "answer": [1, 0], "trajectory": [[0, 2], [0, 3], [0, 2], [0, 1], [0, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0) goal (0, 1). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1). After moves RDULU where do you end?", "answer": [0, 0], "trajectory": [[0, 1], [1, 1], [1, 2], [1, 1], [0, 1], [0, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5) goal (0, 4). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves URRRR where do you end?", "answer": [4, 2], "trajectory": [[0, 3], [0, 2], [1, 2], [2, 2], [3, 2], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2) goal (5, 3). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1). After moves RLDRR where do you end?", "answer": [2, 2], "trajectory": [[0, 1], [1, 1], [0, 1], [0, 2], [1, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2) goal (5, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves LLRUL where do you end?", "answer": [1, 0], "trajectory": [[3, 1], [2, 1], [1, 1], [2, 1], [2, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1) goal (2, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves LRUDU where do you end?", "answer": [6, 0], "trajectory": [[6, 1], [5, 1], [6, 1], [6, 0], [6, 1], [6, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (0, 2). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves DRUDL where do you end?", "answer": [5, 6], "trajectory": [[5, 5], [5, 6], [6, 6], [6, 5], [6, 6], [5, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5) goal (2, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0). After moves DLLUR where do you end?", "answer": [2, 0], "trajectory": [[3, 0], [3, 1], [2, 1], [1, 1], [1, 0], [2, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (5, 6). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0). After moves DRLLL where do you end?", "answer": [2, 1], "trajectory": [[4, 0], [4, 1], [5, 1], [4, 1], [3, 1], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0) goal (3, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0). After moves DDUDL where do you end?", "answer": [5, 2], "trajectory": [[6, 0], [6, 1], [6, 2], [6, 1], [6, 2], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5) goal (6, 0). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves DLDUU where do you end?", "answer": [5, 1], "trajectory": [[6, 1], [6, 2], [5, 2], [5, 3], [5, 2], [5, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (4, 0). What is the shortest path length?", "answer": 10}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves DDLLL where do you end?", "answer": [3, 3], "trajectory": [[6, 1], [6, 2], [6, 3], [5, 3], [4, 3], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (4, 0). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4). After moves DLDLL where do you end?", "answer": [1, 6], "trajectory": [[4, 4], [4, 5], [3, 5], [3, 6], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6) goal (1, 2). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2). After moves RUUDU where do you end?", "answer": [2, 0], "trajectory": [[1, 2], [2, 2], [2, 1], [2, 0], [2, 1], [2, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4) goal (4, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves RRLDU where do you end?", "answer": [3, 0], "trajectory": [[2, 0], [3, 0], [4, 0], [3, 0], [3, 1], [3, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (5, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4). After moves DDUDL where do you end?", "answer": [5, 6], "trajectory": [[6, 4], [6, 5], [6, 6], [6, 5], [6, 6], [5, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0) goal (0, 1). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2). After moves LRURD where do you end?", "answer": [5, 2], "trajectory": [[4, 2], [3, 2], [4, 2], [4, 1], [5, 1], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1) goal (6, 0). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0). After moves RRRRD where do you end?", "answer": [4, 1], "trajectory": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1) goal (5, 3). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4). After moves UDLUR where do you end?", "answer": [4, 3], "trajectory": [[4, 4], [4, 3], [4, 4], [3, 4], [3, 3], [4, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0) goal (0, 3). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves RUDDD where do you end?", "answer": [1, 5], "trajectory": [[0, 3], [1, 3], [1, 2], [1, 3], [1, 4], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5) goal (4, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves RUDDD where do you end?", "answer": [1, 5], "trajectory": [[0, 3], [1, 3], [1, 2], [1, 3], [1, 4], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3) goal (2, 5). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1). After moves LRDDU where do you end?", "answer": [5, 2], "trajectory": [[5, 1], [4, 1], [5, 1], [5, 2], [5, 3], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (6, 0). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves DDDUL where do you end?", "answer": [5, 5], "trajectory": [[6, 3], [6, 4], [6, 5], [6, 6], [6, 5], [5, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5) goal (2, 1). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4). After moves UDUUR where do you end?", "answer": [4, 2], "trajectory": [[3, 4], [3, 3], [3, 4], [3, 3], [3, 2], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5) goal (0, 5). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves DLRLU where do you end?", "answer": [5, 5], "trajectory": [[6, 5], [6, 6], [5, 6], [6, 6], [5, 6], [5, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4) goal (0, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1). After moves LDDUD where do you end?", "answer": [3, 3], "trajectory": [[4, 1], [3, 1], [3, 2], [3, 3], [3, 2], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6) goal (1, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves LRDUL where do you end?", "answer": [5, 1], "trajectory": [[6, 1], [5, 1], [6, 1], [6, 2], [6, 1], [5, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5) goal (6, 4). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2). After moves ULRUL where do you end?", "answer": [0, 0], "trajectory": [[1, 2], [1, 1], [0, 1], [1, 1], [1, 0], [0, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (2, 6). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2). After moves RLLDD where do you end?", "answer": [3, 4], "trajectory": [[4, 2], [5, 2], [4, 2], [3, 2], [3, 3], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (0, 5). What is the shortest path length?", "answer": 11}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves LUDDL where do you end?", "answer": [1, 6], "trajectory": [[3, 5], [2, 5], [2, 4], [2, 5], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1) goal (0, 5). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2). After moves RRRUL where do you end?", "answer": [2, 1], "trajectory": [[0, 2], [1, 2], [2, 2], [3, 2], [3, 1], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (1, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves UDUDL where do you end?", "answer": [5, 1], "trajectory": [[6, 1], [6, 0], [6, 1], [6, 0], [6, 1], [5, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5) goal (0, 3). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5). After moves LRUDD where do you end?", "answer": [4, 6], "trajectory": [[4, 5], [3, 5], [4, 5], [4, 4], [4, 5], [4, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (4, 4). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0). After moves RDDDD where do you end?", "answer": [1, 4], "trajectory": [[0, 0], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5) goal (1, 3). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0). After moves DLLDU where do you end?", "answer": [2, 1], "trajectory": [[4, 0], [4, 1], [3, 1], [2, 1], [2, 2], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (1, 4). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves DRLRU where do you end?", "answer": [2, 0], "trajectory": [[1, 0], [1, 1], [2, 1], [1, 1], [2, 1], [2, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4) goal (6, 0). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves UULDR where do you end?", "answer": [2, 1], "trajectory": [[2, 2], [2, 1], [2, 0], [1, 0], [1, 1], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4) goal (6, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4). After moves LRLRR where do you end?", "answer": [3, 4], "trajectory": [[2, 4], [1, 4], [2, 4], [1, 4], [2, 4], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (0, 3). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4). After moves DRLLL where do you end?", "answer": [1, 5], "trajectory": [[3, 4], [3, 5], [4, 5], [3, 5], [2, 5], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (1, 4). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves URLUU where do you end?", "answer": [0, 0], "trajectory": [[0, 3], [0, 2], [1, 2], [0, 2], [0, 1], [0, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (4, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves URDLL where do you end?", "answer": [4, 2], "trajectory": [[5, 2], [5, 1], [6, 1], [6, 2], [5, 2], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0) goal (2, 4). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3). After moves ULLRL where do you end?", "answer": [2, 2], "trajectory": [[4, 3], [4, 2], [3, 2], [2, 2], [3, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (6, 6). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2). After moves URLUL where do you end?", "answer": [3, 0], "trajectory": [[4, 2], [4, 1], [5, 1], [4, 1], [4, 0], [3, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4) goal (3, 1). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2). After moves RRUUR where do you end?", "answer": [3, 0], "trajectory": [[0, 2], [1, 2], [2, 2], [2, 1], [2, 0], [3, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4) goal (3, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6). After moves UULRU where do you end?", "answer": [3, 3], "trajectory": [[3, 6], [3, 5], [3, 4], [2, 4], [3, 4], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (5, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2). After moves RLLRU where do you end?", "answer": [1, 1], "trajectory": [[1, 2], [2, 2], [1, 2], [0, 2], [1, 2], [1, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (0, 4). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6). After moves RULLD where do you end?", "answer": [3, 6], "trajectory": [[4, 6], [5, 6], [5, 5], [4, 5], [3, 5], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2) goal (5, 3). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves LDUDR where do you end?", "answer": [5, 3], "trajectory": [[5, 2], [4, 2], [4, 3], [4, 2], [4, 3], [5, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (4, 3). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6). After moves LURDL where do you end?", "answer": [5, 6], "trajectory": [[6, 6], [5, 6], [5, 5], [6, 5], [6, 6], [5, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (0, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves LDDLU where do you end?", "answer": [4, 2], "trajectory": [[6, 1], [5, 1], [5, 2], [5, 3], [4, 3], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (2, 1). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4). After moves LRLDL where do you end?", "answer": [0, 5], "trajectory": [[2, 4], [1, 4], [2, 4], [1, 4], [1, 5], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5) goal (3, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves DDDDL where do you end?", "answer": [0, 4], "trajectory": [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [0, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (3, 6). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves DLRDL where do you end?", "answer": [1, 2], "trajectory": [[2, 0], [2, 1], [1, 1], [2, 1], [2, 2], [1, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5) goal (1, 3). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6). After moves LLLRL where do you end?", "answer": [1, 6], "trajectory": [[4, 6], [3, 6], [2, 6], [1, 6], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6) goal (3, 1). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves RDDRU where do you end?", "answer": [4, 3], "trajectory": [[2, 2], [3, 2], [3, 3], [3, 4], [4, 4], [4, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (2, 0). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves RLUUL where do you end?", "answer": [1, 0], "trajectory": [[2, 2], [3, 2], [2, 2], [2, 1], [2, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (0, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves LRLDU where do you end?", "answer": [5, 5], "trajectory": [[6, 5], [5, 5], [6, 5], [5, 5], [5, 6], [5, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (2, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0). After moves RDRRD where do you end?", "answer": [6, 2], "trajectory": [[3, 0], [4, 0], [4, 1], [5, 1], [6, 1], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (3, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves RDUDD where do you end?", "answer": [3, 4], "trajectory": [[2, 2], [3, 2], [3, 3], [3, 2], [3, 3], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5) goal (6, 1). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves LDURR where do you end?", "answer": [6, 5], "trajectory": [[5, 5], [4, 5], [4, 6], [4, 5], [5, 5], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2) goal (3, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves UUDRD where do you end?", "answer": [1, 6], "trajectory": [[0, 6], [0, 5], [0, 4], [0, 5], [1, 5], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2) goal (6, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves RDRRU where do you end?", "answer": [4, 5], "trajectory": [[1, 5], [2, 5], [2, 6], [3, 6], [4, 6], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1) goal (3, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves LDRUD where do you end?", "answer": [1, 6], "trajectory": [[1, 5], [0, 5], [0, 6], [1, 6], [1, 5], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (2, 5). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4). After moves DDUDU where do you end?", "answer": [0, 5], "trajectory": [[0, 4], [0, 5], [0, 6], [0, 5], [0, 6], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (4, 6). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves DLRDD where do you end?", "answer": [1, 3], "trajectory": [[1, 0], [1, 1], [0, 1], [1, 1], [1, 2], [1, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (2, 5). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves RULRU where do you end?", "answer": [6, 1], "trajectory": [[5, 3], [6, 3], [6, 2], [5, 2], [6, 2], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (0, 3). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves DRURD where do you end?", "answer": [5, 2], "trajectory": [[3, 1], [3, 2], [4, 2], [4, 1], [5, 1], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4) goal (6, 1). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves RLULU where do you end?", "answer": [2, 1], "trajectory": [[3, 3], [4, 3], [3, 3], [3, 2], [2, 2], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (2, 5). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves URLUR where do you end?", "answer": [3, 4], "trajectory": [[2, 6], [2, 5], [3, 5], [2, 5], [2, 4], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5) goal (4, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4). After moves RLLDL where do you end?", "answer": [0, 5], "trajectory": [[2, 4], [3, 4], [2, 4], [1, 4], [1, 5], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (3, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6). After moves RUUUU where do you end?", "answer": [6, 2], "trajectory": [[5, 6], [6, 6], [6, 5], [6, 4], [6, 3], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (1, 4). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4). After moves LRRDL where do you end?", "answer": [1, 5], "trajectory": [[1, 4], [0, 4], [1, 4], [2, 4], [2, 5], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (0, 3). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves RDRRL where do you end?", "answer": [3, 1], "trajectory": [[1, 0], [2, 0], [2, 1], [3, 1], [4, 1], [3, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6) goal (6, 2). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves LDURD where do you end?", "answer": [1, 1], "trajectory": [[1, 0], [0, 0], [0, 1], [0, 0], [1, 0], [1, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (6, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3). After moves RRDDD where do you end?", "answer": [6, 6], "trajectory": [[4, 3], [5, 3], [6, 3], [6, 4], [6, 5], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6) goal (2, 6). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0). After moves DDUUL where do you end?", "answer": [3, 0], "trajectory": [[4, 0], [4, 1], [4, 2], [4, 1], [4, 0], [3, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (6, 1). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6). After moves UDLRL where do you end?", "answer": [5, 6], "trajectory": [[6, 6], [6, 5], [6, 6], [5, 6], [6, 6], [5, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6) goal (4, 2). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves LDRLL where do you end?", "answer": [0, 6], "trajectory": [[2, 5], [1, 5], [1, 6], [2, 6], [1, 6], [0, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0) goal (3, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves UDURU where do you end?", "answer": [3, 3], "trajectory": [[2, 5], [2, 4], [2, 5], [2, 4], [3, 4], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3) goal (3, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1). After moves DLRRU where do you end?", "answer": [6, 1], "trajectory": [[5, 1], [5, 2], [4, 2], [5, 2], [6, 2], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4) goal (0, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1). After moves URDLD where do you end?", "answer": [0, 2], "trajectory": [[0, 1], [0, 0], [1, 0], [1, 1], [0, 1], [0, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5) goal (1, 0). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves LRLRL where do you end?", "answer": [4, 3], "trajectory": [[5, 3], [4, 3], [5, 3], [4, 3], [5, 3], [4, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1) goal (3, 0). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves LRULR where do you end?", "answer": [2, 5], "trajectory": [[2, 6], [1, 6], [2, 6], [2, 5], [1, 5], [2, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0) goal (2, 4). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves RRRUL where do you end?", "answer": [2, 5], "trajectory": [[0, 6], [1, 6], [2, 6], [3, 6], [3, 5], [2, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (4, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves URLRL where do you end?", "answer": [5, 2], "trajectory": [[5, 3], [5, 2], [6, 2], [5, 2], [6, 2], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (1, 0). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2). After moves DDLRL where do you end?", "answer": [3, 4], "trajectory": [[4, 2], [4, 3], [4, 4], [3, 4], [4, 4], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (3, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4). After moves LRRRD where do you end?", "answer": [3, 5], "trajectory": [[1, 4], [0, 4], [1, 4], [2, 4], [3, 4], [3, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (3, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6). After moves UDRUL where do you end?", "answer": [3, 5], "trajectory": [[3, 6], [3, 5], [3, 6], [4, 6], [4, 5], [3, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (3, 5). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves DDDDD where do you end?", "answer": [6, 6], "trajectory": [[6, 1], [6, 2], [6, 3], [6, 4], [6, 5], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5) goal (6, 0). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5). After moves DUDRR where do you end?", "answer": [2, 6], "trajectory": [[0, 5], [0, 6], [0, 5], [0, 6], [1, 6], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (2, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves LLUDD where do you end?", "answer": [3, 6], "trajectory": [[5, 5], [4, 5], [3, 5], [3, 4], [3, 5], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6) goal (2, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves RRRRR where do you end?", "answer": [6, 5], "trajectory": [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (4, 1). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves UDDUR where do you end?", "answer": [1, 3], "trajectory": [[0, 3], [0, 2], [0, 3], [0, 4], [0, 3], [1, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6) goal (1, 2). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4). After moves DRDUD where do you end?", "answer": [1, 6], "trajectory": [[0, 4], [0, 5], [1, 5], [1, 6], [1, 5], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (5, 6). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5). After moves DUUDR where do you end?", "answer": [1, 5], "trajectory": [[0, 5], [0, 6], [0, 5], [0, 4], [0, 5], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5) goal (2, 4). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5). After moves RRDUD where do you end?", "answer": [6, 6], "trajectory": [[4, 5], [5, 5], [6, 5], [6, 6], [6, 5], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4) goal (3, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves DRLRL where do you end?", "answer": [1, 1], "trajectory": [[1, 0], [1, 1], [2, 1], [1, 1], [2, 1], [1, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3) goal (1, 5). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves UULDL where do you end?", "answer": [4, 2], "trajectory": [[6, 3], [6, 2], [6, 1], [5, 1], [5, 2], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1) goal (0, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves DUURL where do you end?", "answer": [0, 2], "trajectory": [[0, 3], [0, 4], [0, 3], [0, 2], [1, 2], [0, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (0, 4). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3). After moves LRDDR where do you end?", "answer": [2, 5], "trajectory": [[1, 3], [0, 3], [1, 3], [1, 4], [1, 5], [2, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (1, 6). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves ULRRR where do you end?", "answer": [4, 4], "trajectory": [[2, 5], [2, 4], [1, 4], [2, 4], [3, 4], [4, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (3, 0). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves UULLL where do you end?", "answer": [3, 1], "trajectory": [[6, 3], [6, 2], [6, 1], [5, 1], [4, 1], [3, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6) goal (1, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves RUULD where do you end?", "answer": [0, 5], "trajectory": [[0, 6], [1, 6], [1, 5], [1, 4], [0, 4], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (3, 1). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves DDULU where do you end?", "answer": [5, 1], "trajectory": [[6, 1], [6, 2], [6, 3], [6, 2], [5, 2], [5, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6) goal (0, 6). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves RLLLU where do you end?", "answer": [0, 5], "trajectory": [[2, 6], [3, 6], [2, 6], [1, 6], [0, 6], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (4, 6). What is the shortest path length?", "answer": 10}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves UDLRU where do you end?", "answer": [6, 2], "trajectory": [[6, 3], [6, 2], [6, 3], [5, 3], [6, 3], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (0, 4). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves LLRRL where do you end?", "answer": [2, 2], "trajectory": [[3, 2], [2, 2], [1, 2], [2, 2], [3, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (3, 1). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0). After moves DRULD where do you end?", "answer": [0, 1], "trajectory": [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0], [0, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0) goal (4, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5). After moves LLDRU where do you end?", "answer": [5, 5], "trajectory": [[6, 5], [5, 5], [4, 5], [4, 6], [5, 6], [5, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2) goal (1, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves LRRLD where do you end?", "answer": [2, 1], "trajectory": [[2, 0], [1, 0], [2, 0], [3, 0], [2, 0], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0) goal (0, 4). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves URLRU where do you end?", "answer": [6, 0], "trajectory": [[5, 2], [5, 1], [6, 1], [5, 1], [6, 1], [6, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 1) goal (4, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves DRLLL where do you end?", "answer": [1, 6], "trajectory": [[3, 5], [3, 6], [4, 6], [3, 6], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (2, 6). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 1). After moves RDLRU where do you end?", "answer": [3, 1], "trajectory": [[2, 1], [3, 1], [3, 2], [2, 2], [3, 2], [3, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (5, 2). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2). After moves LULUD where do you end?", "answer": [4, 1], "trajectory": [[6, 2], [5, 2], [5, 1], [4, 1], [4, 0], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0) goal (3, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves DRUUL where do you end?", "answer": [2, 4], "trajectory": [[2, 5], [2, 6], [3, 6], [3, 5], [3, 4], [2, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1) goal (2, 5). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves DULLD where do you end?", "answer": [4, 4], "trajectory": [[6, 3], [6, 4], [6, 3], [5, 3], [4, 3], [4, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (5, 3). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0). After moves LDLUD where do you end?", "answer": [1, 1], "trajectory": [[3, 0], [2, 0], [2, 1], [1, 1], [1, 0], [1, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6) goal (4, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves ULRDL where do you end?", "answer": [1, 6], "trajectory": [[2, 6], [2, 5], [1, 5], [2, 5], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0) goal (2, 6). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves LDRUD where do you end?", "answer": [5, 6], "trajectory": [[5, 5], [4, 5], [4, 6], [5, 6], [5, 5], [5, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (5, 5). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4). After moves DLDRU where do you end?", "answer": [4, 5], "trajectory": [[4, 4], [4, 5], [3, 5], [3, 6], [4, 6], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6) goal (0, 0). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves DLLDU where do you end?", "answer": [1, 4], "trajectory": [[3, 3], [3, 4], [2, 4], [1, 4], [1, 5], [1, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1) goal (1, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves DRRLL where do you end?", "answer": [1, 6], "trajectory": [[1, 5], [1, 6], [2, 6], [3, 6], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 2) goal (3, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves RRDRD where do you end?", "answer": [6, 4], "trajectory": [[3, 2], [4, 2], [5, 2], [5, 3], [6, 3], [6, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0) goal (0, 6). What is the shortest path length?", "answer": 10}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0). After moves DRRUD where do you end?", "answer": [2, 1], "trajectory": [[0, 0], [0, 1], [1, 1], [2, 1], [2, 0], [2, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 2) goal (4, 1). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves UDLDR where do you end?", "answer": [1, 6], "trajectory": [[1, 5], [1, 4], [1, 5], [0, 5], [0, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1) goal (5, 2). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3). After moves UDDDR where do you end?", "answer": [2, 5], "trajectory": [[1, 3], [1, 2], [1, 3], [1, 4], [1, 5], [2, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (6, 1). What is the shortest path length?", "answer": 11}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1). After moves RRRUD where do you end?", "answer": [4, 1], "trajectory": [[1, 1], [2, 1], [3, 1], [4, 1], [4, 0], [4, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (1, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves LLRRD where do you end?", "answer": [3, 3], "trajectory": [[3, 2], [2, 2], [1, 2], [2, 2], [3, 2], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3) goal (5, 5). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves LLDDR where do you end?", "answer": [1, 2], "trajectory": [[2, 0], [1, 0], [0, 0], [0, 1], [0, 2], [1, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (3, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3). After moves ULLLU where do you end?", "answer": [3, 1], "trajectory": [[6, 3], [6, 2], [5, 2], [4, 2], [3, 2], [3, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (0, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6). After moves RUDLR where do you end?", "answer": [6, 6], "trajectory": [[5, 6], [6, 6], [6, 5], [6, 6], [5, 6], [6, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (5, 6). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0). After moves DDLLR where do you end?", "answer": [2, 2], "trajectory": [[3, 0], [3, 1], [3, 2], [2, 2], [1, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (1, 3). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves URDRD where do you end?", "answer": [4, 3], "trajectory": [[2, 2], [2, 1], [3, 1], [3, 2], [4, 2], [4, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (3, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 1). After moves LDUUL where do you end?", "answer": [0, 0], "trajectory": [[2, 1], [1, 1], [1, 2], [1, 1], [1, 0], [0, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (2, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves URLUU where do you end?", "answer": [3, 0], "trajectory": [[3, 3], [3, 2], [4, 2], [3, 2], [3, 1], [3, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6) goal (4, 2). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves RLRRR where do you end?", "answer": [6, 5], "trajectory": [[3, 5], [4, 5], [3, 5], [4, 5], [5, 5], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (5, 3). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5). After moves RULRU where do you end?", "answer": [1, 3], "trajectory": [[0, 5], [1, 5], [1, 4], [0, 4], [1, 4], [1, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 3) goal (2, 5). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 6). After moves UDULR where do you end?", "answer": [2, 5], "trajectory": [[2, 6], [2, 5], [2, 6], [2, 5], [1, 5], [2, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2) goal (2, 0). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4). After moves UUUDD where do you end?", "answer": [1, 3], "trajectory": [[1, 4], [1, 3], [1, 2], [1, 1], [1, 2], [1, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (1, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves URULR where do you end?", "answer": [1, 4], "trajectory": [[0, 6], [0, 5], [1, 5], [1, 4], [0, 4], [1, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (3, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves UDDUD where do you end?", "answer": [6, 2], "trajectory": [[6, 1], [6, 0], [6, 1], [6, 2], [6, 1], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (2, 1). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves LULRL where do you end?", "answer": [3, 4], "trajectory": [[5, 5], [4, 5], [4, 4], [3, 4], [4, 4], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (6, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves UDRLD where do you end?", "answer": [3, 4], "trajectory": [[3, 3], [3, 2], [3, 3], [4, 3], [3, 3], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5) goal (6, 6). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2). After moves ULURL where do you end?", "answer": [2, 0], "trajectory": [[3, 2], [3, 1], [2, 1], [2, 0], [3, 0], [2, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5) goal (1, 6). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1). After moves DULDD where do you end?", "answer": [3, 3], "trajectory": [[4, 1], [4, 2], [4, 1], [3, 1], [3, 2], [3, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5) goal (2, 6). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5). After moves RLDRL where do you end?", "answer": [1, 6], "trajectory": [[1, 5], [2, 5], [1, 5], [1, 6], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (4, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4). After moves UUURR where do you end?", "answer": [3, 1], "trajectory": [[1, 4], [1, 3], [1, 2], [1, 1], [2, 1], [3, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2) goal (1, 6). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4). After moves DLLDL where do you end?", "answer": [3, 6], "trajectory": [[6, 4], [6, 5], [5, 5], [4, 5], [4, 6], [3, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (6, 0). What is the shortest path length?", "answer": 8}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 5). After moves DUULD where do you end?", "answer": [1, 5], "trajectory": [[2, 5], [2, 6], [2, 5], [2, 4], [1, 4], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (1, 3). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves DRDLR where do you end?", "answer": [1, 5], "trajectory": [[0, 3], [0, 4], [1, 4], [1, 5], [0, 5], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (1, 2). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves LRUDU where do you end?", "answer": [5, 1], "trajectory": [[5, 2], [4, 2], [5, 2], [5, 1], [5, 2], [5, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3) goal (5, 5). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves ULDRD where do you end?", "answer": [3, 2], "trajectory": [[3, 1], [3, 0], [2, 0], [2, 1], [3, 1], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3) goal (1, 2). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1). After moves DRUUD where do you end?", "answer": [6, 1], "trajectory": [[5, 1], [5, 2], [6, 2], [6, 1], [6, 0], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (0, 6). What is the shortest path length?", "answer": 12}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4). After moves UUURR where do you end?", "answer": [6, 1], "trajectory": [[4, 4], [4, 3], [4, 2], [4, 1], [5, 1], [6, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (4, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4). After moves ULRUL where do you end?", "answer": [5, 2], "trajectory": [[6, 4], [6, 3], [5, 3], [6, 3], [6, 2], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (5, 3). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6). After moves LRLRU where do you end?", "answer": [4, 5], "trajectory": [[4, 6], [3, 6], [4, 6], [3, 6], [4, 6], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1) goal (3, 0). What is the shortest path length?", "answer": 1}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0). After moves LLLDD where do you end?", "answer": [0, 2], "trajectory": [[3, 0], [2, 0], [1, 0], [0, 0], [0, 1], [0, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 2) goal (0, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 2). After moves UDUDD where do you end?", "answer": [6, 3], "trajectory": [[6, 2], [6, 1], [6, 2], [6, 1], [6, 2], [6, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0) goal (0, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2). After moves DDRRD where do you end?", "answer": [3, 5], "trajectory": [[1, 2], [1, 3], [1, 4], [2, 4], [3, 4], [3, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (5, 2). What is the shortest path length?", "answer": 9}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves DLURR where do you end?", "answer": [4, 5], "trajectory": [[3, 5], [3, 6], [2, 6], [2, 5], [3, 5], [4, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (4, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 0). After moves LRLLR where do you end?", "answer": [1, 0], "trajectory": [[2, 0], [1, 0], [2, 0], [1, 0], [0, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4) goal (3, 6). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0). After moves RDRRR where do you end?", "answer": [5, 1], "trajectory": [[1, 0], [2, 0], [2, 1], [3, 1], [4, 1], [5, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3) goal (3, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6). After moves LLLLL where do you end?", "answer": [1, 6], "trajectory": [[6, 6], [5, 6], [4, 6], [3, 6], [2, 6], [1, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6) goal (6, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves LLRRD where do you end?", "answer": [6, 2], "trajectory": [[6, 1], [5, 1], [4, 1], [5, 1], [6, 1], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1) goal (5, 3). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves RLUDU where do you end?", "answer": [3, 2], "trajectory": [[3, 3], [4, 3], [3, 3], [3, 2], [3, 3], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 4) goal (5, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves DLDLD where do you end?", "answer": [3, 5], "trajectory": [[5, 2], [5, 3], [4, 3], [4, 4], [3, 4], [3, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 5) goal (1, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves UDRDL where do you end?", "answer": [0, 4], "trajectory": [[0, 3], [0, 2], [0, 3], [1, 3], [1, 4], [0, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3) goal (6, 6). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 1). After moves ULRLR where do you end?", "answer": [4, 0], "trajectory": [[4, 1], [4, 0], [3, 0], [4, 0], [3, 0], [4, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 0) goal (3, 3). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 5). After moves RUDUD where do you end?", "answer": [6, 5], "trajectory": [[5, 5], [6, 5], [6, 4], [6, 5], [6, 4], [6, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3) goal (5, 1). What is the shortest path length?", "answer": 6}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3). After moves URLUD where do you end?", "answer": [3, 2], "trajectory": [[3, 3], [3, 2], [4, 2], [3, 2], [3, 1], [3, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4) goal (1, 6). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 2). After moves RUDLR where do you end?", "answer": [6, 2], "trajectory": [[5, 2], [6, 2], [6, 1], [6, 2], [5, 2], [6, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 5) goal (3, 4). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6). After moves RUUDL where do you end?", "answer": [1, 5], "trajectory": [[1, 6], [2, 6], [2, 5], [2, 4], [2, 5], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (6, 3). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4). After moves RLRLD where do you end?", "answer": [0, 5], "trajectory": [[0, 4], [1, 4], [0, 4], [1, 4], [0, 4], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 0) goal (3, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6). After moves RRLRL where do you end?", "answer": [2, 6], "trajectory": [[1, 6], [2, 6], [3, 6], [2, 6], [3, 6], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6) goal (0, 5). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 5). After moves RLRUD where do you end?", "answer": [1, 5], "trajectory": [[0, 5], [1, 5], [0, 5], [1, 5], [1, 4], [1, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 4) goal (4, 5). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 4). After moves UDRDL where do you end?", "answer": [3, 5], "trajectory": [[3, 4], [3, 3], [3, 4], [4, 4], [4, 5], [3, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 3) goal (4, 2). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5). After moves DRLLL where do you end?", "answer": [2, 6], "trajectory": [[4, 5], [4, 6], [5, 6], [4, 6], [3, 6], [2, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 6) goal (3, 6). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 4). After moves ULUUD where do you end?", "answer": [5, 2], "trajectory": [[6, 4], [6, 3], [5, 3], [5, 2], [5, 1], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (5, 2). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 0). After moves RLDDL where do you end?", "answer": [2, 2], "trajectory": [[3, 0], [4, 0], [3, 0], [3, 1], [3, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 2) goal (1, 5). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (6, 1). After moves UDLDL where do you end?", "answer": [4, 2], "trajectory": [[6, 1], [6, 0], [6, 1], [5, 1], [5, 2], [4, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 1) goal (0, 2). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 6). After moves ULUDU where do you end?", "answer": [0, 4], "trajectory": [[1, 6], [1, 5], [0, 5], [0, 4], [0, 5], [0, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (1, 1). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2). After moves LLUDU where do you end?", "answer": [0, 1], "trajectory": [[2, 2], [1, 2], [0, 2], [0, 1], [0, 2], [0, 1]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 4) goal (1, 0). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1). After moves RLRDL where do you end?", "answer": [5, 2], "trajectory": [[5, 1], [6, 1], [5, 1], [6, 1], [6, 2], [5, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6) goal (4, 3). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3). After moves RLRLR where do you end?", "answer": [1, 3], "trajectory": [[0, 3], [1, 3], [0, 3], [1, 3], [0, 3], [1, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 6) goal (1, 4). What is the shortest path length?", "answer": 5}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1). After moves ULLLR where do you end?", "answer": [1, 0], "trajectory": [[3, 1], [3, 0], [2, 0], [1, 0], [0, 0], [1, 0]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 0) goal (0, 4). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 6). After moves URDLR where do you end?", "answer": [4, 6], "trajectory": [[3, 6], [3, 5], [4, 5], [4, 6], [3, 6], [4, 6]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 0) goal (6, 5). What is the shortest path length?", "answer": 10}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4). After moves RRLUU where do you end?", "answer": [1, 2], "trajectory": [[0, 4], [1, 4], [2, 4], [1, 4], [1, 3], [1, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 1) goal (4, 2). What is the shortest path length?", "answer": 2}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 3). After moves URUDD where do you end?", "answer": [6, 3], "trajectory": [[5, 3], [5, 2], [6, 2], [6, 1], [6, 2], [6, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 6) goal (0, 4). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 1). After moves UDDRR where do you end?", "answer": [2, 2], "trajectory": [[0, 1], [0, 0], [0, 1], [0, 2], [1, 2], [2, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 4) goal (3, 3). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 6). After moves UDUDU where do you end?", "answer": [0, 5], "trajectory": [[0, 6], [0, 5], [0, 6], [0, 5], [0, 6], [0, 5]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (0, 3) goal (1, 0). What is the shortest path length?", "answer": 4}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (6, 4) to (2, 0)?", "answer": "ULLLULUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 3). After moves RLRUD where do you end?", "answer": [5, 3], "trajectory": [[4, 3], [5, 3], [4, 3], [5, 3], [5, 2], [5, 3]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (4, 5) goal (6, 4). What is the shortest path length?", "answer": 3}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (0, 6) to (4, 5)?", "answer": "RRRRU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (1, 3). After moves ULUDR where do you end?", "answer": [1, 2], "trajectory": [[1, 3], [1, 2], [0, 2], [0, 1], [0, 2], [1, 2]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (5, 1) goal (2, 5). What is the shortest path length?", "answer": 7}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. What move sequence leads from (4, 6) to (1, 4)?", "answer": "LLLUU"}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (3, 5). After moves RLUDU where do you end?", "answer": [3, 4], "trajectory": [[3, 5], [4, 5], [3, 5], [3, 4], [3, 5], [3, 4]]}
+{"prompt": "Grid 7x7 with obstacles [(2, 3), (5, 0), (5, 4)]. Start (2, 2) goal (6, 2). What is the shortest path length?", "answer": 4}
