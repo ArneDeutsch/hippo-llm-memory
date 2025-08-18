@@ -2,11 +2,16 @@
 
 **Objective**
 
-Generate baseline datasets, run baseline evaluations and establish reference metrics.
+Generate baseline datasets and run mock baseline evaluations with `scripts/eval_bench.py` to
+validate the pipeline. The script currently uses a mock model that simply returns the ground
+truth, so this milestone establishes the evaluation flow but does **not** produce real
+performance baselines.
 
 **Gate**
 
-Baseline datasets exist with checksums; baseline metrics files are generated and aggregated; report summarises baseline performance.
+Baseline datasets exist with checksums; mock baseline metrics files are generated and
+aggregated; report summarises the pipeline behaviour. True baseline metrics will require
+integrating actual model inference in a later milestone.
 
 ## Tasks
 
