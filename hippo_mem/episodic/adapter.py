@@ -87,15 +87,6 @@ class LoraLinear(nn.Linear):
             Dropout probability for LoRA branch.
         bias : bool, optional
             Include bias term.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Allocates learnable parameters.
@@ -143,15 +134,6 @@ class LoraLinear(nn.Linear):
         -------
         torch.Tensor
             Output tensor ``(..., out_features)``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(in_features·out_features)``.
@@ -204,23 +186,6 @@ class AdapterConfig:
         Use fused flash attention if available.
     hopfield : bool, optional
         Enable Hopfield completion in store.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)`` storage.
-
     Examples
     --------
     >>> AdapterConfig(hidden_size=4, num_heads=1).enabled
@@ -260,11 +225,6 @@ class EpisodicAdapter(nn.Module):
         ----------
         cfg : AdapterConfig
             Configuration for sizes and LoRA options.
-
-        Returns
-        -------
-        None
-
         Raises
         ------
         ValueError
@@ -347,15 +307,6 @@ class EpisodicAdapter(nn.Module):
         -------
         torch.Tensor
             Expanded tensor ``(B, heads, T, D)``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(B·T·D)``.
@@ -404,15 +355,6 @@ class EpisodicAdapter(nn.Module):
         -------
         torch.Tensor
             Fused states ``(B, Q, H)``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(B·Q·T·H)``.

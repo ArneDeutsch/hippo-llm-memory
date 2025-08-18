@@ -51,23 +51,9 @@ class FaissIndex:
             Use product quantisation when FAISS is available; default ``False``.
         m : int, optional
             Sub-quantizers for PQ; default ``8``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Allocates native FAISS structures when available.
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> FaissIndex(4)
@@ -100,15 +86,6 @@ class FaissIndex:
         ----------
         data : sequence of sequence of float
             Training vectors ``(n, d)``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Updates FAISS internal state when PQ is used.
@@ -147,11 +124,6 @@ class FaissIndex:
         ----------
         vector : sequence of float
             Vector ``(d,)`` to index.
-
-        Returns
-        -------
-        None
-
         Raises
         ------
         ValueError
@@ -206,11 +178,6 @@ class FaissIndex:
         ------
         ValueError
             If ``query`` dimensionality mismatches ``dim``.
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n d)`` for fallback or FAISS search cost.
@@ -254,11 +221,6 @@ class FaissIndex:
         ----------
         idx : int
             Position of vector to remove.
-
-        Returns
-        -------
-        None
-
         Raises
         ------
         ValueError
@@ -302,28 +264,10 @@ class FaissIndex:
         Summary
         -------
         Gives ``ntotal`` for FAISS or list length for fallback.
-
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         int
             Number of vectors in index.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> len(FaissIndex(2))

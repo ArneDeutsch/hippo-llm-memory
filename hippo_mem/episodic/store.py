@@ -78,23 +78,6 @@ class TraceValue:
         Tags contributing to initial salience.
     provenance : str, optional
         Source identifier.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)`` storage.
-
     Examples
     --------
     >>> TraceValue(provenance="unit").provenance
@@ -134,23 +117,6 @@ class Trace:
         Unix timestamp.
     salience : float
         Current salience value.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)`` to instantiate.
-
     Examples
     --------
     >>> Trace(1, TraceValue(), DGKey(np.array([]), np.array([], dtype=np.float32), 0), 0.0, 0.0, 0.0).id
@@ -203,23 +169,9 @@ class EpisodicStore:
             Number of winners for sparse encoding; ``0`` keeps dense keys.
         config : dict, optional
             Additional configuration options.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Opens SQLite connection and builds FAISS index.
-
-        Complexity
-        ----------
-        ``O(1)`` initialisation plus index setup.
-
         Examples
         --------
         >>> store = EpisodicStore(4)
@@ -255,24 +207,10 @@ class EpisodicStore:
         Summary
         -------
         Retrieve dense representations of every stored key.
-
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         numpy.ndarray
         Array with shape ``(n, d)``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n d)`` to load from the database.
@@ -323,15 +261,6 @@ class EpisodicStore:
         -------
         DGKey
             Sparse key representing ``query``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(d)``.
@@ -364,15 +293,6 @@ class EpisodicStore:
         -------
         numpy.ndarray
             Dense vector ``(d,)``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(d)``.
@@ -410,11 +330,6 @@ class EpisodicStore:
         -------
         int
             Assigned trace identifier.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Writes to SQLite and FAISS indices.
@@ -474,11 +389,6 @@ class EpisodicStore:
         -------
         list of Trace
             Retrieved traces sorted by similarity.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Increments internal counters.
@@ -546,23 +456,9 @@ class EpisodicStore:
         ----------
         idx : int
             Trace identifier.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Modifies persistent storage.
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> store = EpisodicStore(2)
@@ -599,15 +495,6 @@ class EpisodicStore:
             New key.
         value : TraceValue, optional
             New metadata.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Mutates persistent storage.
@@ -665,15 +552,6 @@ class EpisodicStore:
         -------
         numpy.ndarray
             Completed vector of shape ``(d,)``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(k d)``.
@@ -717,15 +595,6 @@ class EpisodicStore:
         ----------
         rate : float
             Decay rate ``0 ≤ rate ≤ 1``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Persists updated salience and logs operation.
@@ -763,15 +632,6 @@ class EpisodicStore:
             Minimum allowed salience.
         max_age : float, optional
             Maximum age in seconds.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Writes deletions to persistent storage and logs operation.
@@ -807,28 +667,10 @@ class EpisodicStore:
         Summary
         -------
         Provides diagnostic counters since instantiation.
-
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         dict
             Copy of internal counters.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> EpisodicStore(1).log_status()["writes"]
@@ -852,23 +694,9 @@ class EpisodicStore:
         ----------
         interval : float, optional
             Sleep time between maintenance runs in seconds.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Launches a background thread.
-
-        Complexity
-        ----------
-        ``O(1)`` to start; maintenance cost deferred.
-
         Examples
         --------
         >>> store = EpisodicStore(1)
@@ -911,15 +739,6 @@ class EpisodicStore:
         ----------
         n : int, optional
             Number of steps to undo.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Modifies store contents and logs event.

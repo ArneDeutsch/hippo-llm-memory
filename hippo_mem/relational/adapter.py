@@ -5,23 +5,6 @@ Summary
 Implements deterministic fusion of semantic graph features and episodic
 trace features. Each path uses a simple attention mechanism, and outputs
 are gated by confidence scores.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
-Side Effects
-------------
-None
-
 Complexity
 ----------
 Attention is ``O(ND)`` for ``N`` features of dimension ``D``.
@@ -112,11 +95,6 @@ class RelationalAdapter:
         -------
         np.ndarray
             Fused representation ``(D,)``.
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O((N_k + N_e) D)``.

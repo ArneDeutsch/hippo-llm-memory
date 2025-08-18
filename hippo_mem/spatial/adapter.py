@@ -4,23 +4,6 @@ Summary
 -------
 Provides a small module that fuses LLM hidden states with plan or macro
 embeddings using optional LoRA projections and group query attention.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
-Side Effects
-------------
-None
-
 Complexity
 ----------
 ``O(B * T * H)`` where ``B`` is batch, ``T`` tokens, ``H`` heads.
@@ -72,23 +55,6 @@ class AdapterConfig:
         Dropout rate in ``[0,1]``.
     enabled : bool, optional
         Whether adapter is active.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)`` to instantiate.
-
     Examples
     --------
     >>> AdapterConfig(hidden_size=4, num_heads=2)
@@ -125,20 +91,10 @@ class SpatialAdapter(nn.Module):
         ----------
         cfg : AdapterConfig
             Adapter configuration.
-
-        Returns
-        -------
-        None
-
         Raises
         ------
         ValueError
             If head sizes do not divide evenly.
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(D^2)`` parameter initialisation.
@@ -214,15 +170,6 @@ class SpatialAdapter(nn.Module):
         -------
         Tensor
             Shape ``(B, H, T, D)`` with expanded heads.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(B * H * T)``.
@@ -276,11 +223,6 @@ class SpatialAdapter(nn.Module):
                 -------
                 Tensor
                     Shape ``(B, T_q, D)`` fused representation.
-
-                Raises
-                ------
-                None
-
                 Side Effects
                 ------------
                 Modifies dropout RNG state.

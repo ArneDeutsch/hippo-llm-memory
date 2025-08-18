@@ -4,19 +4,6 @@ Summary
 -------
 Stores trajectories that solve tasks and ranks them by empirical success rate
 for later suggestion.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
 Side Effects
 ------------
 Macros accumulate in memory; provide ``update_stats`` to age entries.
@@ -65,23 +52,6 @@ class Macro:
         ``(successes, total)`` trials.
     last_update : int
         Monotonic counter for recency tracking.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    Instantiation is ``O(1)``.
-
     Examples
     --------
     >>> Macro("m", ["s", "g"], "s->g", 2, (0, 0), 0)
@@ -129,15 +99,6 @@ class MacroLib:
             Macro identifier.
         trajectory : Sequence[str]
             Ordered contexts representing the procedure.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Updates internal time counter.
@@ -184,11 +145,6 @@ class MacroLib:
             Name of the macro to update.
         success : bool
             ``True`` if execution succeeded.
-
-        Returns
-        -------
-        None
-
         Raises
         ------
         KeyError
@@ -197,11 +153,6 @@ class MacroLib:
         Side Effects
         ------------
         Advances ``last_update`` for recency bias.
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> lib = MacroLib(); lib.store("m", ["s", "g"])
@@ -245,15 +196,6 @@ class MacroLib:
         -------
         List[Macro]
             Ranked macro list.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n log n)`` where ``n`` is the number of candidate macros.
@@ -298,19 +240,6 @@ class MacroLib:
         -------
         float
             Estimated success probability.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> lib = MacroLib(); lib.store("m", ["s", "g"])

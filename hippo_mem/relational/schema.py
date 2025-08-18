@@ -5,23 +5,6 @@ Summary
 Defines lightweight schema prototypes used to route tuples. High-score
 tuples are written directly to the semantic graph; others are buffered
 for episodic replay.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
-Side Effects
-------------
-None
-
 Complexity
 ----------
 Scoring is ``O(#schemas)``.

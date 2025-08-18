@@ -5,23 +5,6 @@ Summary
 Concise reference for the PlaceGraph map, planning utilities, macro library,
 and tool endpoints used by the spatial/procedural memory module.  This module
 has no executable code; it serves as a documentation anchor for developers.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
-Side Effects
-------------
-None
-
 Complexity
 ----------
 Not applicable.

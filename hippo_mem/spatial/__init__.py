@@ -5,19 +5,6 @@ Summary
 Provides the spatial/procedural memory (SMPD) components: deterministic
 ``PlaceGraph`` maps, a ``MacroLib`` of reusable trajectories, and
 ``SpatialAdapter`` for cross-attention with plan embeddings.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
 Side Effects
 ------------
 Importing submodules may allocate small caches.

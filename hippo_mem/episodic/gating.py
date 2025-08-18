@@ -69,19 +69,6 @@ class DGKey:
         Winner magnitudes with shape ``(k,)``.
     dim : int
         Original dimensionality ``d``.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     Storage ``O(k)``.
@@ -120,15 +107,6 @@ def k_wta(query: np.ndarray, k: int) -> DGKey:
     -------
     DGKey
         Sparse representation of the top-``k`` elements.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(d)`` for scanning ``query``.
@@ -174,15 +152,6 @@ def densify(key: DGKey) -> np.ndarray:
     -------
     numpy.ndarray
         Dense vector with zeros in non-winning positions.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(d)`` to fill the dense array.
@@ -219,19 +188,6 @@ def surprise(prob: float) -> float:
     -------
     float
         Information content in nats.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)``.
-
     Examples
     --------
     >>> round(surprise(0.5), 3)
@@ -264,15 +220,6 @@ def novelty(query: np.ndarray, keys: np.ndarray) -> float:
     -------
     float
         Score in ``[0, 1]`` where ``1`` means unseen.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(n d)`` for cosine similarity.
@@ -317,23 +264,6 @@ class GateDecision:
         Source identifier.
     timestamp : float
         Unix time in seconds.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)`` to construct.
-
     Examples
     --------
     >>> GateDecision(True, 0.8, "unit", 0.0).allow
@@ -381,23 +311,6 @@ class WriteGate:
             Weight for the reward term.
         delta : float, optional
             Weight for the pin term.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> gate = WriteGate(tau=0.1)
@@ -442,15 +355,6 @@ class WriteGate:
         -------
         float
             Combined salience ``S``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n d)`` dominated by ``novelty``.
@@ -503,15 +407,6 @@ class WriteGate:
         -------
         GateDecision
             Decision record with computed score.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n d)`` via :meth:`score`.
