@@ -6,19 +6,6 @@ Implements a ``KnowledgeGraph`` storing tuples in a NetworkX multigraph
 with SQLite persistence. Tuples are routed via a :class:`SchemaIndex`
 and enriched with embeddings. Subgraph retrieval expands around
 top-matching nodes within a configurable radius.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
 Side Effects
 ------------
 Creates SQLite files and spawns optional background maintenance
@@ -72,11 +59,6 @@ class KnowledgeGraph:
     config : Optional[dict], optional
         Configuration flags such as ``schema_threshold`` and
         ``gnn_updates``.
-
-    Raises
-    ------
-    None
-
     Side Effects
     ------------
     Opens a SQLite connection and optionally spawns a background thread.
@@ -179,23 +161,9 @@ class KnowledgeGraph:
             audit/rollback.
         head_embedding, tail_embedding, edge_embedding : Optional[Iterable[float]]
             Embeddings with shape ``(D,)``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Writes to SQLite and mutates ``self.graph``.
-
-        Complexity
-        ----------
-        ``O(1)`` per upsert.
-
         Examples
         --------
         >>> kg = KnowledgeGraph()
@@ -277,11 +245,6 @@ class KnowledgeGraph:
         -------
         bool
             ``True`` if the tuple was inserted.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         May mutate the graph and ``SchemaIndex`` buffers.
@@ -322,15 +285,6 @@ class KnowledgeGraph:
         ----------
         nodes : Sequence[str]
             Node names to update.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Mutates ``node_embeddings``.
@@ -392,15 +346,6 @@ class KnowledgeGraph:
         -------
         nx.MultiDiGraph
             Detached subgraph.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(|V|)`` for scoring plus expansion cost.
@@ -507,15 +452,6 @@ class KnowledgeGraph:
             Minimum confidence to retain.
         max_age : Optional[float], optional
             Maximum age in seconds.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Mutates graph and writes to SQLite; logs operations for rollback.
@@ -598,11 +534,6 @@ class KnowledgeGraph:
         ----------
         interval : float, optional
             Sleep seconds between maintenance cycles.
-
-        Returns
-        -------
-        None
-
         Side Effects
         ------------
         Spawns a daemon thread.
@@ -642,15 +573,6 @@ class KnowledgeGraph:
         ----------
         n : int, optional
             Number of prune operations to undo.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Mutates graph and SQLite store.

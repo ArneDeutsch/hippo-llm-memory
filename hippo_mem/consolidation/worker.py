@@ -87,23 +87,9 @@ class ConsolidationWorker(threading.Thread):
             Number of replay items per optimisation step; default ``4``.
         lr : float, optional
             Learning rate for adapter optimisation; default ``1e-4``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Spawns maintenance thread and initialises optimiser state.
-
-        Complexity
-        ----------
-        ``O(1)`` setup.
-
         Examples
         --------
         >>> worker = ConsolidationWorker(ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})()), object())
@@ -294,28 +280,13 @@ class ConsolidationWorker(threading.Thread):
         """Summary
         -------
         Fetch a batch from the scheduler and increment counters.
-
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         list of tuple of str and object
             Batch of replay items.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Updates internal batch counter.
-
-        Complexity
-        ----------
-        ``O(1)`` plus scheduler cost.
-
         Examples
         --------
         >>> worker.poll_queue()  # doctest: +SKIP
@@ -339,15 +310,6 @@ class ConsolidationWorker(threading.Thread):
         ----------
         batch : list of tuple of str and object
             Replay items from :meth:`poll_queue`.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Updates adapter parameters and may log debug messages.
@@ -395,19 +357,9 @@ class ConsolidationWorker(threading.Thread):
         -------
         Optional[T]
             Result of ``fn`` or ``None`` on failure.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Logs the exception and sets ``stop_event`` for rollback.
-
-        Complexity
-        ----------
-        ``O(1)`` plus cost of ``fn``.
-
         Examples
         --------
         >>> worker.handle_errors(lambda: 1)
@@ -429,19 +381,6 @@ class ConsolidationWorker(threading.Thread):
         """Summary
         -------
         Main worker loop consuming scheduler batches and stepping adapters.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Starts maintenance thread and sleeps between batches.
@@ -471,28 +410,10 @@ class ConsolidationWorker(threading.Thread):
         """Summary
         -------
         Return counters for processed batches.
-
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         dict
             Copy of internal counters.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> ConsolidationWorker(ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})()), object()).log_status()['batches']
@@ -510,27 +431,9 @@ class ConsolidationWorker(threading.Thread):
         """Summary
         -------
         Signal the worker to exit.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Sets ``stop_event`` which halts loops.
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> worker.stop()

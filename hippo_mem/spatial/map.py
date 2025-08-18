@@ -6,19 +6,6 @@ Implements a small topological map used by the spatial/procedural memory
 module.  Context strings deterministically become nodes whose edges carry
 transition cost and success probability.  Planning uses A* or Dijkstra to
 produce optimal paths.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
 Side Effects
 ------------
 Maintenance helpers may write to an optional log file.
@@ -69,23 +56,6 @@ class Edge:
         Probability of success in ``[0, 1]``, by default ``1.0``.
     last_seen : int, optional
         Step index when edge was last traversed, by default ``0``.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)`` to instantiate.
-
     Examples
     --------
     >>> Edge()
@@ -117,23 +87,6 @@ class Place:
         Pseudo coordinates ``(x, y)``.
     last_seen : int, optional
         Step index of last observation, by default ``0``.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)``.
-
     Examples
     --------
     >>> Place("a", (0.0, 0.0))
@@ -178,19 +131,9 @@ class ContextEncoder:
         -------
         Place
             Encoded place entry.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Cache grows with unique contexts.
-
-        Complexity
-        ----------
-        ``O(1)`` average.
-
         Examples
         --------
         >>> enc = ContextEncoder(); enc.encode("a").name
@@ -232,23 +175,9 @@ class PlaceGraph:
             If ``True``, update coordinates by relative displacements.
         config : dict, optional
             Maintenance settings such as ``decay_rate``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         May spawn maintenance thread later.
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> PlaceGraph()
@@ -338,19 +267,9 @@ class PlaceGraph:
         -------
         int
             Node identifier assigned to ``context``.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Updates internal step counter and edge timestamps.
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> g = PlaceGraph(); g.observe("a")
@@ -408,23 +327,9 @@ class PlaceGraph:
             Transition cost, by default ``1.0``.
         success : float, optional
             Success probability, by default ``1.0``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Updates edge timestamps.
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> g = PlaceGraph(); g.connect("a", "b")
@@ -582,15 +487,6 @@ class PlaceGraph:
         ----------
         rate : float
             Decay rate ``0–1``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Records operation for rollback.
@@ -665,15 +561,6 @@ class PlaceGraph:
         ----------
         max_age : int
             Maximum allowed age in steps.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Records snapshot for rollback.
@@ -716,23 +603,9 @@ class PlaceGraph:
         ----------
         interval : float, optional
             Sleep interval in seconds, by default ``100.0``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Spawns a background thread.
-
-        Complexity
-        ----------
-        ``O(1)`` to start; ongoing work is backgrounded.
-
         Examples
         --------
         >>> g = PlaceGraph(); g.start_background_tasks()  # doctest: +ELLIPSIS
@@ -773,15 +646,6 @@ class PlaceGraph:
         ----------
         n : int, optional
             Number of operations to undo, by default ``1``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Alters internal structures and logs a rollback event.

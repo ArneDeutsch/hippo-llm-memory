@@ -9,23 +9,6 @@ persisted as a ``SemanticGraph`` backed by SQLite/NetworkX. A
 dual-path adapter deterministically fuses subgraph features with
 episodic traces, and schema-fit tuples are fast-tracked to the graph
 for quick consolidation.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
-Side Effects
-------------
-None
-
 Complexity
 ----------
 All components are designed for small graphs (≤10^4 edges) and run in

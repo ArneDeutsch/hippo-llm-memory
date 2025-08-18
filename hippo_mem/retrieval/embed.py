@@ -35,15 +35,6 @@ def embed_text(text: str, dim: int = 16) -> List[float]:
     -------
     list of float
         Embedding vector of length ``dim``.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(dim)``.

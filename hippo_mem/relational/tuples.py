@@ -6,23 +6,6 @@ Provide lightweight tuple extraction for SGC-RSS. Each sentence is parsed
 into ``(head, relation, tail, context, time, conf, provenance)`` with
 rudimentary heuristics. Precision reaches ≈0.9 when ``threshold >= 0.5``
 as verified in unit tests.
-
-Parameters
-----------
-None
-
-Returns
--------
-None
-
-Raises
-------
-None
-
-Side Effects
-------------
-None
-
 Complexity
 ----------
 All helpers operate in ``O(n)`` time where ``n`` is the number of
@@ -64,15 +47,6 @@ def split_sentences(text: str) -> List[str]:
     -------
     List[str]
         Sentences without trailing punctuation.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(len(text))``
@@ -106,15 +80,6 @@ def strip_time(sent: str) -> tuple[str, Optional[str]]:
     -------
     tuple[str, Optional[str]]
         Sentence sans time marker and the extracted year.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(len(sent))``
@@ -158,15 +123,6 @@ def _parse_triplet(sent: str) -> Tuple[str, str, str]:
     -------
     Tuple[str, str, str]
         Parsed tuple; empty strings when parts are missing.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(len(sent))``
@@ -211,15 +167,6 @@ def score_confidence(relation: str, tail: str, time: Optional[str] = None) -> fl
     -------
     float
         Confidence in ``[0, 1]``.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     ``O(len(relation) + len(tail))``
@@ -261,15 +208,6 @@ def extract_tuples(text: str, threshold: float = 0.0) -> List[TupleType]:
     -------
     List[TupleType]
         ``(head, relation, tail, context, time, conf, provenance)`` tuples.
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
     Complexity
     ----------
     Linear in number of sentences.

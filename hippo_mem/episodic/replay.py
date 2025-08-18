@@ -49,23 +49,6 @@ class ReplayItem:
         Gradient estimate ``(d,)``.
     timestamp : float
         Event time in seconds.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    None
-
-    Side Effects
-    ------------
-    None
-
-    Complexity
-    ----------
-    ``O(1)`` to construct.
-
     Examples
     --------
     >>> ReplayItem("t", np.zeros(1), 0.0, 0, 1.0, None, None, 0.0).trace_id
@@ -124,23 +107,6 @@ class ReplayQueue:
             Weight for recency; default ``0.3``.
         lambda3 : float, optional
             Weight for diversity; default ``0.2``.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> ReplayQueue(maxlen=10).maxlen
@@ -175,15 +141,6 @@ class ReplayQueue:
         -------
         float
             Diversity score in ``[0, 1]``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n d)``.
@@ -237,15 +194,6 @@ class ReplayQueue:
             Gradient estimate ``(d,)``.
         timestamp : float, optional
             Event time in seconds.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Mutates the queue in place.
@@ -306,15 +254,6 @@ class ReplayQueue:
         -------
         float
             Cosine similarity ``[-1, 1]``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(d)``.
@@ -340,24 +279,10 @@ class ReplayQueue:
         Summary
         -------
         Combines gating score, recency and diversity components.
-
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         list of float
             Priority values aligned with ``self.items``.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n)``.
@@ -406,15 +331,6 @@ class ReplayQueue:
         -------
         list of int
             Selected indices.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(k d)``.
@@ -461,15 +377,6 @@ class ReplayQueue:
         -------
         list of str
             Selected trace identifiers.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
         Complexity
         ----------
         ``O(n log n)`` due to sorting.
@@ -542,23 +449,6 @@ class ReplayScheduler:
             Ratios of replay types.
         grad_sim_threshold : float, optional
             Gradient overlap threshold.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> from hippo_mem.relational.kg import KnowledgeGraph
@@ -604,15 +494,6 @@ class ReplayScheduler:
             Gradient estimate ``(d,)``.
         timestamp : float, optional
             Event time in seconds.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Enqueues item into internal queue.
@@ -656,11 +537,6 @@ class ReplayScheduler:
             Tuples ``(kind, identifier)`` with ``kind`` in
             {``"episodic"``, ``"semantic"``, ``"fresh"``}. Episodic identifiers
             reference trace ids; others are ``None``.
-
-        Raises
-        ------
-        None
-
         Side Effects
         ------------
         Touches the knowledge graph for statistics.
@@ -711,28 +587,10 @@ class ReplayScheduler:
         """Summary
         -------
         Return counters for scheduled batches.
-
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         dict
             Copy of internal counters.
-
-        Raises
-        ------
-        None
-
-        Side Effects
-        ------------
-        None
-
-        Complexity
-        ----------
-        ``O(1)``.
-
         Examples
         --------
         >>> ReplayScheduler(EpisodicStore(1), KnowledgeGraph(), batch_mix=type('B',(),{'episodic':1.0,'semantic':0.0,'fresh':0.0})()).log_status()['batches']
