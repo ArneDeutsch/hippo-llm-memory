@@ -8,12 +8,16 @@ Each file follows the naming scheme `<suite>_<size>_<seed>.jsonl` where:
 - `size` is the number of items in the dataset.
 - `seed` is the RNG seed used for deterministic generation.
 
-Datasets can be regenerated via the CLI.  For example, to create an episodic
-set with two distractor sentences per story:
+Episodic variants that include two distractor sentences per story use the
+prefix `episodic_d2_` and follow the pattern
+`episodic_d2_<size>_<seed>.jsonl`.
+
+Datasets can be regenerated via the CLI.  For example, to create such an
+episodic set:
 
 ```bash
 python scripts/build_datasets.py --suite episodic --size 100 --seed 0 \
-  --distractors 2 --out data/episodic_100_0.jsonl
+  --distractors 2 --out data/episodic_d2_100_0.jsonl
 ```
 
 `--size` and `--seed` control the number of items and RNG seed respectively,
