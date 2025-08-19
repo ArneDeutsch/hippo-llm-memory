@@ -96,10 +96,10 @@
 **Work packages**
 
 1. [x] **Dataset generation**: use scripts/build_datasets.py to produce episodic, semantic and spatial JSONL datasets at small (50), medium (200) and large (1 000) sizes with several seeds ; store them under data/ with checksums.
-2. [ ] **Baseline runs**: execute scripts/eval_bench.py for the baselines core, rag and longctx presets defined in the evaluation plan; run each suite for all dataset sizes and seeds; store results under runs/YYYYMMDD/baselines/ with metrics and meta files.
-3. [ ] **Result aggregation**: develop scripts/report.py to aggregate baseline metrics into tables and plots; compare baselines across suites (episodic, semantic, spatial); output a report in reports/ .
+2. [x] **Baseline runs**: execute scripts/eval_bench.py for the baselines core, rag and longctx presets defined in the evaluation plan; run each suite for all dataset sizes and seeds; store results under runs/YYYYMMDD/baselines/ with metrics and meta files.
+3. [x] **Result aggregation**: develop scripts/report.py to aggregate baseline metrics into tables and plots; compare baselines across suites (episodic, semantic, spatial); output a report in reports/ .
 
-- [ ] **Gate**: baseline datasets exist with checksums; baseline metrics files are generated and aggregated; report summarises baseline performance.
+- [x] **Gate**: baseline datasets exist with checksums; baseline metrics files are generated and aggregated; report summarises baseline performance.
 
 # Milestone 9 – Memory‑augmented training, evaluation & ablations
 
