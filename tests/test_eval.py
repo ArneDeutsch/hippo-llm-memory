@@ -20,5 +20,5 @@ def test_baseline_presets_create_metrics(tmp_path: Path) -> None:
             "dry_run=true",
         ]
         subprocess.run(cmd, check=True, cwd=tmp_path)
-        outdir = tmp_path / "runs" / date / preset.replace("/", "_") / "episodic"
+        outdir = tmp_path / "runs" / date / "baselines" / Path(preset).name / "episodic"
         assert (outdir / "metrics.json").exists()
