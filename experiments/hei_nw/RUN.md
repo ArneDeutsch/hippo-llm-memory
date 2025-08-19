@@ -25,6 +25,19 @@
 
 - After merging PRs, run LoRA training with `scripts/train_lora.py` and enable the **EpisodicAdapter** via config.
 
+### Recommended LoRA defaults
+
+| parameter | value |
+|-----------|-------|
+| learning_rate | 2e-4 |
+| gradient_accumulation_steps | 16 |
+| max_steps | 500 |
+| lora_r | 8 |
+| lora_alpha | 16 |
+| lora_dropout | 0.05 |
+
+These values mirror common small-model recipes: the Alpaca-LoRA script uses `lora_r=8`, `lora_alpha=16`, and `lora_dropout=0.05`, while QLoRA defaults to a `2e-4` learning rate.
+
 ## Training & evaluation commands
 
 ```bash

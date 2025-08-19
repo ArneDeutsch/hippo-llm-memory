@@ -33,6 +33,19 @@
 
 - Train a small scoring head (LoRA) to prefer macro‑augmented plans; evaluate path optimality and task latency.
 
+### Recommended LoRA defaults
+
+| parameter | value |
+|-----------|-------|
+| learning_rate | 2e-4 |
+| gradient_accumulation_steps | 16 |
+| max_steps | 500 |
+| lora_r | 8 |
+| lora_alpha | 16 |
+| lora_dropout | 0.05 |
+
+Derived from the Alpaca‑LoRA setup (rank 8, alpha 16, dropout 0.05) with the QLoRA learning rate of 2e‑4; gradient accumulation emulates a larger batch on a 12 GB GPU.
+
 ## Training & evaluation commands
 
 ```bash

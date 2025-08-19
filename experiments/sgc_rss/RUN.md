@@ -23,6 +23,21 @@
 
 - Enable **RelationalAdapter** in configs and fine‑tune with interleaved replay batches.
 
+### Recommended LoRA defaults
+
+Use the same baseline hyperparameters as HEI‑NW:
+
+| parameter | value |
+|-----------|-------|
+| learning_rate | 2e-4 |
+| gradient_accumulation_steps | 16 |
+| max_steps | 500 |
+| lora_r | 8 |
+| lora_alpha | 16 |
+| lora_dropout | 0.05 |
+
+These settings follow the Alpaca‑LoRA recipe (rank 8, alpha 16, dropout 0.05) and QLoRA’s default 2e‑4 learning rate.
+
 ## Training & evaluation commands
 
 ```bash
