@@ -15,6 +15,7 @@ loop does not run on CI.
 
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 import random
@@ -173,6 +174,29 @@ def _load_model_and_tokenizer(cfg: TrainConfig):
     return model, tokenizer
 
 
+def _init_sft_trainer(model, dataset, training_args, tokenizer, peft_config):
+    """Instantiate :class:`~trl.SFTTrainer` handling API changes.
+
+    Recent versions of TRL renamed the ``tokenizer`` argument to
+    ``processing_class``.  This helper inspects the signature of
+    :class:`~trl.SFTTrainer` at runtime and forwards the tokenizer using the
+    appropriate parameter name to remain compatible across releases.
+    """
+
+    kwargs = {
+        "model": model,
+        "train_dataset": dataset,
+        "args": training_args,
+        "peft_config": peft_config,
+    }
+    sig = inspect.signature(SFTTrainer.__init__)
+    if "tokenizer" in sig.parameters:
+        kwargs["tokenizer"] = tokenizer
+    elif "processing_class" in sig.parameters:
+        kwargs["processing_class"] = tokenizer
+    return SFTTrainer(**kwargs)
+
+
 def train(cfg: TrainConfig) -> None:
     """Execute the training or dry‑run."""
     random.seed(cfg.seed)
@@ -308,12 +332,12 @@ def train(cfg: TrainConfig) -> None:
             gradient_checkpointing=True,
         )
 
-        trainer = SFTTrainer(
-            model=model,
-            train_dataset=dataset,
-            args=training_args,
-            tokenizer=tokenizer,
-            peft_config=peft_config,
+        trainer = _init_sft_trainer(
+            model,
+            dataset,
+            training_args,
+            tokenizer,
+            peft_config,
         )
 
         trainer.train()
