@@ -1,0 +1,1 @@
+{"suite": "episodic", "n": 50, "seed": 4242, "preset": "baselines/rag", "metrics": {"episodic": {"em": 1.0}, "compute": {"tokens": 639}}, "memory": {}}

@@ -1,0 +1,1001 @@
+idx,prompt,answer,pred,correct,latency_ms,flags
+0,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (3, 4). What is the shortest path length?",7,7,1,0.0,pre_replay
+1,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+2,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves RLURR where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+3,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (4, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+4,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+5,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves RUDUL where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+6,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (4, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+7,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+8,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves DUDUU where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+9,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+10,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+11,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves DRRUL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+12,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+13,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+14,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves RDUDD where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+15,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (1, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+16,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+17,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves DDLDU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+18,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (0, 0). What is the shortest path length?",6,6,1,0.0,pre_replay
+19,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+20,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves DDUDU where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+21,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (2, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+22,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+23,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LUURR where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+24,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (0, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+25,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+26,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves UDRLL where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+27,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (3, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+28,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+29,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves DLULR where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+30,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+31,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+32,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LDUDU where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+33,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (1, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+34,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+35,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UULLR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+36,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (0, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+37,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+38,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves DDULR where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+39,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (2, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+40,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+41,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LRDDR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+42,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (1, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+43,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+44,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UULLL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+45,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (0, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+46,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+47,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LURDU where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+48,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (3, 4). What is the shortest path length?",5,5,1,0.0,pre_replay
+49,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+50,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LLDUR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+51,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (1, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+52,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+53,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves ULDLR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+54,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (3, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+55,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+56,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves ULDUR where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+57,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (2, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+58,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+59,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves ULULD where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+60,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (4, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+61,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+62,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves DLDDR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+63,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (4, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+64,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+65,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves RLUDU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+66,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+67,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+68,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves URLRU where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+69,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (4, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+70,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+71,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UUDDU where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+72,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (0, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+73,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+74,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves LDRLR where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+75,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (2, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+76,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+77,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves UDULL where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+78,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (1, 4). What is the shortest path length?",2,2,1,0.0,pre_replay
+79,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+80,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves RUDUR where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+81,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+82,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+83,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves DLUUL where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+84,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+85,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+86,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves ULUUL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+87,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (4, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+88,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+89,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves DULDU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+90,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (3, 4). What is the shortest path length?",1,1,1,0.0,pre_replay
+91,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+92,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves UDDDL where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+93,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (2, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+94,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+95,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves DLLUL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+96,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (3, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+97,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+98,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves DUDUD where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+99,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (0, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+100,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+101,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves DULLL where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+102,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (1, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+103,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+104,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves RDLDD where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+105,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (4, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+106,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+107,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves UUDUD where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+108,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (2, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+109,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+110,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves ULRUD where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+111,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (0, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+112,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+113,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves UDDDU where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+114,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (0, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+115,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+116,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves ULUDR where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+117,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (3, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+118,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+119,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves RDUDD where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+120,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (1, 4). What is the shortest path length?",2,2,1,0.0,pre_replay
+121,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+122,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves DUUDD where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+123,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (1, 3). What is the shortest path length?",6,6,1,0.0,pre_replay
+124,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+125,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves UDULR where do you end?","(4, 0)","(4, 0)",1,0.0,pre_replay
+126,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (3, 4). What is the shortest path length?",3,3,1,0.0,pre_replay
+127,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+128,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves UUULR where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+129,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (1, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+130,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+131,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RRLDL where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+132,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (1, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+133,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+134,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves DUDLR where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+135,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (1, 4). What is the shortest path length?",4,4,1,0.0,pre_replay
+136,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+137,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves DUDRR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+138,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 4). What is the shortest path length?",5,5,1,0.0,pre_replay
+139,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+140,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves URLRR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+141,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+142,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+143,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves LDRUU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+144,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (2, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+145,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+146,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves LURUU where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+147,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (1, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+148,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+149,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves UDULU where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+150,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (4, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+151,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+152,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RLRDL where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+153,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (4, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+154,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+155,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves URDUL where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+156,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (1, 4). What is the shortest path length?",2,2,1,0.0,pre_replay
+157,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+158,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves ULLRR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+159,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (1, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+160,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+161,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves DUDLU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+162,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+163,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+164,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RDLRL where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+165,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (3, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+166,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+167,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves DLLLR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+168,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (0, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+169,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+170,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves RUUDU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+171,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (2, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+172,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+173,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves URDUU where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+174,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (3, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+175,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+176,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LLDRR where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+177,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (2, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+178,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+179,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves URLRR where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+180,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (1, 4). What is the shortest path length?",3,3,1,0.0,pre_replay
+181,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+182,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves DRDRL where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+183,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+184,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+185,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves DLDDR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+186,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (4, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+187,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+188,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves RUDLD where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+189,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (0, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+190,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+191,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves LLDDR where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+192,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (1, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+193,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+194,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves UUURD where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+195,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (0, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+196,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+197,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves DULDL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+198,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+199,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+200,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves DULUL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+201,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (3, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+202,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+203,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves LRLRR where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+204,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (2, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+205,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+206,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves LRDLR where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+207,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+208,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+209,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves DRULU where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+210,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (3, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+211,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+212,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UDDLU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+213,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (0, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+214,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+215,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RLDRL where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+216,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (1, 4). What is the shortest path length?",5,5,1,0.0,pre_replay
+217,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+218,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves URUDL where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+219,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (3, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+220,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+221,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LDURD where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+222,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (3, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+223,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+224,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves DUUUL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+225,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (4, 1). What is the shortest path length?",6,6,1,0.0,pre_replay
+226,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+227,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves RLRLR where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+228,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (4, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+229,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+230,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves DUUDR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+231,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+232,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+233,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves ULRLD where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+234,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+235,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+236,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves RLDRR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+237,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (1, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+238,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+239,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves LRLUU where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+240,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (2, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+241,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+242,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves UDDDU where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+243,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (3, 4). What is the shortest path length?",3,3,1,0.0,pre_replay
+244,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+245,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves LUUDU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+246,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (4, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+247,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+248,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves RLLRL where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+249,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+250,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+251,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves UDUUL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+252,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (2, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+253,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+254,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves LRURL where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+255,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (2, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+256,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+257,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves DLLDL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+258,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (3, 0). What is the shortest path length?",1,1,1,0.0,pre_replay
+259,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+260,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LDRRL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+261,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+262,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+263,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves UULRL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+264,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (4, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+265,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+266,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RLDUR where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+267,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (1, 0). What is the shortest path length?",1,1,1,0.0,pre_replay
+268,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+269,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves DRDUD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+270,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (2, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+271,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+272,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LDRRL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+273,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (1, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+274,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+275,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves URDLR where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+276,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (0, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+277,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+278,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DDLRR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+279,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (0, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+280,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+281,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves RUDLR where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+282,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (4, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+283,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+284,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LLUUL where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+285,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (4, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+286,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+287,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves LLRLU where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+288,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (0, 0). What is the shortest path length?",1,1,1,0.0,pre_replay
+289,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+290,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves DURUD where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+291,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+292,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+293,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DRDLU where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+294,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (4, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+295,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+296,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves DLRDR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+297,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+298,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+299,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves RURUD where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+300,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (0, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+301,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+302,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves ULRDL where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+303,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (0, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+304,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+305,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves UDDUU where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+306,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (2, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+307,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+308,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves URLLR where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+309,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (1, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+310,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+311,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UDLLR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+312,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (3, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+313,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+314,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LDLDD where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+315,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (1, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+316,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+317,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves DLDDU where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+318,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (4, 2). What is the shortest path length?",6,6,1,0.0,pre_replay
+319,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+320,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves LDURD where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+321,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (0, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+322,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+323,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves URRLR where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+324,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (3, 4). What is the shortest path length?",7,7,1,0.0,pre_replay
+325,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+326,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves LLRLU where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+327,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (1, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+328,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+329,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LDRDD where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+330,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+331,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+332,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves URDRD where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+333,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+334,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+335,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DDRRU where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+336,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (0, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+337,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+338,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves DRUDR where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+339,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (3, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+340,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+341,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves DULRR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+342,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+343,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+344,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves DUUUR where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+345,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (0, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+346,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+347,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves RDULU where do you end?","(0, 0)","(0, 0)",1,0.0,pre_replay
+348,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (4, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+349,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+350,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves LRDLL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+351,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (2, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+352,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+353,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves RDRUD where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+354,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (1, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+355,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+356,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves RURRD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+357,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (3, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+358,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+359,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UUUDD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+360,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (0, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+361,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+362,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DUDDD where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+363,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (1, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+364,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+365,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves RDUDL where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+366,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (1, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+367,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+368,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves URLUR where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+369,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (0, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+370,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+371,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves DDUUL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+372,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (3, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+373,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+374,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves RLLUD where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+375,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (2, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+376,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+377,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves UDDUL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+378,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (0, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+379,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+380,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves UUDUU where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+381,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (2, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+382,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+383,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves ULRUR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+384,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (2, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+385,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+386,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves DUDUU where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+387,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (0, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+388,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+389,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DRDDD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+390,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (2, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+391,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+392,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves RDLRL where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+393,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (0, 0). What is the shortest path length?",7,7,1,0.0,pre_replay
+394,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+395,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves DUDUL where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+396,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (0, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+397,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+398,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves LDULR where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+399,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (0, 0). What is the shortest path length?",7,7,1,0.0,pre_replay
+400,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+401,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves LRDDU where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+402,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+403,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+404,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves RDDLR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+405,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (1, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+406,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+407,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DRLRU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+408,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (2, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+409,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+410,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves RLRDU where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+411,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (4, 4). What is the shortest path length?",2,2,1,0.0,pre_replay
+412,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+413,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves ULLDD where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+414,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (1, 4). What is the shortest path length?",3,3,1,0.0,pre_replay
+415,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+416,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves DRRUL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+417,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (3, 0). What is the shortest path length?",1,1,1,0.0,pre_replay
+418,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+419,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves DDULU where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+420,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (0, 0). What is the shortest path length?",8,8,1,0.0,pre_replay
+421,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+422,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves UDRRR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+423,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (1, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+424,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+425,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DRULD where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+426,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (2, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+427,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+428,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves UDUDU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+429,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (3, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+430,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+431,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves UUDUD where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+432,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (0, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+433,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+434,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves DURDD where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+435,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (2, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+436,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+437,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves URUUU where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+438,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (0, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+439,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+440,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves ULLDU where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+441,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (0, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+442,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+443,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves LLLUR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+444,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (2, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+445,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+446,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves URDLR where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+447,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (1, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+448,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+449,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves URLDD where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+450,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (4, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+451,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+452,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RRDDU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+453,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (3, 4). What is the shortest path length?",4,4,1,0.0,pre_replay
+454,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+455,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves RLDRU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+456,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (2, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+457,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+458,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves RDLDD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+459,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (3, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+460,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+461,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UDLDR where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+462,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (3, 0). What is the shortest path length?",6,6,1,0.0,pre_replay
+463,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+464,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves LRRRL where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+465,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (2, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+466,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+467,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves RLURL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+468,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+469,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+470,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves RRULL where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+471,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (0, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+472,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+473,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves URDUU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+474,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (0, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+475,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+476,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves RRDUD where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+477,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (0, 3). What is the shortest path length?",6,6,1,0.0,pre_replay
+478,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+479,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves LUURL where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+480,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+481,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+482,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves DUDUD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+483,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (0, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+484,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+485,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves LLUDL where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+486,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (2, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+487,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+488,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves UDULD where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+489,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (3, 3). What is the shortest path length?",6,6,1,0.0,pre_replay
+490,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+491,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves DRDUR where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+492,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (1, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+493,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+494,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves DDDLR where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+495,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (2, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+496,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+497,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves ULUUR where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+498,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (1, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+499,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+500,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DURDU where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+501,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (1, 4). What is the shortest path length?",7,7,1,0.0,pre_replay
+502,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+503,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RDDDU where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+504,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (0, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+505,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+506,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves DRLRL where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+507,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+508,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+509,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves RDRLL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+510,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (2, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+511,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+512,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves URDDR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+513,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+514,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+515,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves DDDDU where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+516,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (4, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+517,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+518,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves RURUD where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+519,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (3, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+520,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+521,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RLRDD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+522,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+523,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+524,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LRDRL where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+525,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (4, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+526,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+527,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves ULLRR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+528,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (0, 0). What is the shortest path length?",7,7,1,0.0,pre_replay
+529,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+530,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves RDDLR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+531,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (1, 4). What is the shortest path length?",3,3,1,0.0,pre_replay
+532,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+533,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RDLRD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+534,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (2, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+535,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+536,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LRDDU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+537,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (2, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+538,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+539,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves RLRLR where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+540,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (3, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+541,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+542,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves RRRDU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+543,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (1, 4). What is the shortest path length?",2,2,1,0.0,pre_replay
+544,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+545,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves URDDU where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+546,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (3, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+547,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+548,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves URLDD where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+549,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+550,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+551,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves RLRRD where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+552,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (1, 4). What is the shortest path length?",1,1,1,0.0,pre_replay
+553,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+554,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RRDLR where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+555,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+556,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+557,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves DLLDR where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+558,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (1, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+559,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+560,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LULRL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+561,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (0, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+562,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+563,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves LLUUR where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+564,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (1, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+565,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+566,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves ULLDU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+567,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (1, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+568,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+569,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DDLRD where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+570,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+571,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+572,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves DDLLU where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+573,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (4, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+574,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+575,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves LDUDU where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+576,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (3, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+577,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+578,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves LRLUL where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+579,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (2, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+580,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+581,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves RLUUD where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+582,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+583,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+584,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LLLRU where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+585,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (1, 4). What is the shortest path length?",2,2,1,0.0,pre_replay
+586,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+587,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DUDRR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+588,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+589,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+590,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves DULLD where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+591,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (3, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+592,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+593,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves LDDUD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+594,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (1, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+595,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+596,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves URLDL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+597,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (0, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+598,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+599,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RLRRL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+600,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (2, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+601,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+602,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves ULRLR where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+603,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (0, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+604,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+605,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves DRUUD where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+606,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (0, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+607,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+608,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LRUDL where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+609,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (0, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+610,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+611,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LRDRU where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+612,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (4, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+613,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+614,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LURDU where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+615,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+616,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+617,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LRDUD where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+618,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (1, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+619,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+620,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves UDLRL where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+621,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (4, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+622,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+623,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves RRULL where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+624,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (0, 2). What is the shortest path length?",6,6,1,0.0,pre_replay
+625,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+626,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves UURLR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+627,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (0, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+628,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+629,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves DUDDU where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+630,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (0, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+631,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+632,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves RRULR where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+633,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+634,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+635,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves UULLD where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+636,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (3, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+637,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+638,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves RUDRR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+639,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (1, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+640,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+641,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LDRDL where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+642,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (0, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+643,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+644,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves LURRD where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+645,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (4, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+646,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+647,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves UDRDR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+648,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (1, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+649,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+650,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves DULLU where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+651,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (2, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+652,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+653,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LULUU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+654,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (2, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+655,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+656,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves URULD where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+657,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (3, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+658,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+659,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves LRUDU where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+660,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (0, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+661,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+662,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves LRRDL where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+663,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (2, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+664,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+665,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves DUDUU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+666,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (3, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+667,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+668,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves RDDLU where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+669,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (4, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+670,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+671,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves ULRLD where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+672,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (4, 4). What is the shortest path length?",2,2,1,0.0,pre_replay
+673,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+674,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves LLRLR where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+675,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (2, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+676,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+677,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DDURU where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+678,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+679,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+680,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves ULDDD where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+681,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (1, 4). What is the shortest path length?",4,4,1,0.0,pre_replay
+682,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+683,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RLRDD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+684,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (2, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+685,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+686,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves RDDLD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+687,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (3, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+688,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+689,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves UDRRU where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+690,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+691,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+692,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves DULDU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+693,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (3, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+694,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+695,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves ULRUD where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+696,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (0, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+697,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+698,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves UDUUU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+699,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (4, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+700,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+701,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LRRDU where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+702,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (1, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+703,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+704,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves URUUD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+705,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (3, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+706,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+707,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves URLRL where do you end?","(0, 0)","(0, 0)",1,0.0,pre_replay
+708,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (2, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+709,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+710,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves UDUDD where do you end?","(0, 3)","(0, 3)",1,0.0,pre_replay
+711,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (0, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+712,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+713,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves DRRDU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+714,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (0, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+715,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+716,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves ULLLD where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+717,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (2, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+718,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+719,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves LLDDD where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+720,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (3, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+721,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+722,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves RDUUR where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+723,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (0, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+724,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+725,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves RLRLU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+726,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (1, 3). What is the shortest path length?",6,6,1,0.0,pre_replay
+727,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+728,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LUDLD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+729,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (2, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+730,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+731,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves URLDL where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+732,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (3, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+733,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+734,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves UDRDU where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+735,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (2, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+736,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+737,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves RDURU where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+738,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (2, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+739,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+740,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves RLDUU where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+741,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (2, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+742,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+743,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves URULR where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+744,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (1, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+745,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+746,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves RDLDR where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+747,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (0, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+748,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+749,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RLDLD where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+750,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (4, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+751,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+752,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves RLRRL where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+753,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (4, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+754,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+755,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves LDDUD where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+756,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (0, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+757,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+758,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves RLUDU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+759,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (4, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+760,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+761,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves DDLRU where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+762,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (1, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+763,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+764,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves DLRRL where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+765,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (1, 4). What is the shortest path length?",4,4,1,0.0,pre_replay
+766,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+767,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves URUUD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+768,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (0, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+769,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+770,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves DLLRR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+771,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (0, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+772,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+773,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves DRUDR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+774,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+775,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+776,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LRDLU where do you end?","(0, 0)","(0, 0)",1,0.0,pre_replay
+777,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (1, 4). What is the shortest path length?",5,5,1,0.0,pre_replay
+778,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+779,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves RLRLR where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+780,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (2, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+781,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+782,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves URUUR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+783,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (1, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+784,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+785,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves LLDUL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+786,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (4, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+787,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+788,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves LRURL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+789,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (4, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+790,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+791,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves UDDUU where do you end?","(4, 0)","(4, 0)",1,0.0,pre_replay
+792,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (3, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+793,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+794,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves UDDDR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+795,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (2, 0). What is the shortest path length?",2,2,1,0.0,pre_replay
+796,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+797,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves URLLR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+798,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (4, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+799,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+800,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves RLDDL where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+801,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (3, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+802,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+803,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves DUUUD where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+804,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+805,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+806,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves DUDLD where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+807,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (2, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+808,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+809,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LUDUL where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+810,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (2, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+811,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+812,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RDLLD where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+813,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (3, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+814,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+815,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LDDRD where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+816,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (1, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+817,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+818,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LRRLL where do you end?","(0, 0)","(0, 0)",1,0.0,pre_replay
+819,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (3, 3). What is the shortest path length?",5,5,1,0.0,pre_replay
+820,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+821,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves RUDUD where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+822,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0) goal (3, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+823,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+824,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2). After moves UUDRD where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+825,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (3, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+826,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+827,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves UDLLU where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+828,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+829,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+830,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves ULRLR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+831,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1) goal (4, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+832,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+833,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves UDULL where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+834,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (4, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+835,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+836,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LRUDL where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+837,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (2, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+838,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+839,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves RURDU where do you end?","(4, 0)","(4, 0)",1,0.0,pre_replay
+840,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4) goal (3, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+841,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+842,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves DUDLU where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+843,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0) goal (0, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+844,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+845,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DRLUR where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+846,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (1, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+847,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+848,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DURLD where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+849,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (2, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+850,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+851,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RDDDL where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+852,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (1, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+853,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+854,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves DUDUR where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+855,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (3, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+856,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+857,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves UDUUR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+858,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (3, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+859,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+860,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves DDLRL where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+861,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (1, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+862,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+863,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves LRUDL where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+864,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (4, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+865,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+866,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves DDUUD where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+867,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (4, 1). What is the shortest path length?",4,4,1,0.0,pre_replay
+868,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+869,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LULDD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+870,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (2, 3). What is the shortest path length?",2,2,1,0.0,pre_replay
+871,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+872,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves LUUDU where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+873,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (0, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+874,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+875,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DRULD where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+876,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (0, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+877,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+878,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3). After moves RDURU where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+879,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (2, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+880,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+881,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves URULR where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+882,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 2) goal (4, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+883,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+884,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DRLLD where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+885,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (2, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+886,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+887,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3). After moves RDULR where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+888,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (3, 4). What is the shortest path length?",1,1,1,0.0,pre_replay
+889,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+890,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 0). After moves RDLLR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+891,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (0, 2). What is the shortest path length?",2,2,1,0.0,pre_replay
+892,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+893,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves RDRUD where do you end?","(2, 1)","(2, 1)",1,0.0,pre_replay
+894,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (2, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+895,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+896,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LDLUR where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+897,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (1, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+898,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+899,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0). After moves LDDDR where do you end?","(2, 3)","(2, 3)",1,0.0,pre_replay
+900,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (4, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+901,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+902,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves DRLUR where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+903,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (1, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+904,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+905,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LDURR where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+906,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (2, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+907,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+908,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1). After moves RUDUL where do you end?","(3, 0)","(3, 0)",1,0.0,pre_replay
+909,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (0, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+910,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+911,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3). After moves LRLRD where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+912,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2) goal (2, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+913,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+914,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LUDUR where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+915,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (1, 2). What is the shortest path length?",1,1,1,0.0,pre_replay
+916,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+917,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves LRULR where do you end?","(4, 0)","(4, 0)",1,0.0,pre_replay
+918,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (2, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+919,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+920,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves URLLL where do you end?","(0, 0)","(0, 0)",1,0.0,pre_replay
+921,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 3) goal (4, 1). What is the shortest path length?",3,3,1,0.0,pre_replay
+922,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+923,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves LDRRR where do you end?","(3, 1)","(3, 1)",1,0.0,pre_replay
+924,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (0, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+925,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+926,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves LURDD where do you end?","(4, 2)","(4, 2)",1,0.0,pre_replay
+927,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (1, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+928,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+929,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LRUDL where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+930,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (3, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+931,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+932,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves RUULR where do you end?","(2, 0)","(2, 0)",1,0.0,pre_replay
+933,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (4, 2). What is the shortest path length?",4,4,1,0.0,pre_replay
+934,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+935,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves UUDDU where do you end?","(4, 3)","(4, 3)",1,0.0,pre_replay
+936,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0) goal (0, 0). What is the shortest path length?",4,4,1,0.0,pre_replay
+937,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+938,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 4). After moves UDUUD where do you end?","(1, 3)","(1, 3)",1,0.0,pre_replay
+939,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (3, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+940,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+941,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2). After moves UDDUU where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+942,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (0, 0). What is the shortest path length?",5,5,1,0.0,pre_replay
+943,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+944,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves ULLDU where do you end?","(0, 0)","(0, 0)",1,0.0,pre_replay
+945,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4) goal (0, 0). What is the shortest path length?",7,7,1,0.0,pre_replay
+946,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+947,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves RRDUU where do you end?","(4, 0)","(4, 0)",1,0.0,pre_replay
+948,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2) goal (0, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+949,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+950,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves DULLD where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+951,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (2, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+952,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+953,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 2). After moves RLLDU where do you end?","(0, 2)","(0, 2)",1,0.0,pre_replay
+954,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (2, 1). What is the shortest path length?",5,5,1,0.0,pre_replay
+955,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+956,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 0). After moves LLRRD where do you end?","(4, 1)","(4, 1)",1,0.0,pre_replay
+957,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (0, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+958,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+959,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0). After moves DRLRL where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+960,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4) goal (1, 2). What is the shortest path length?",5,5,1,0.0,pre_replay
+961,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+962,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 0). After moves RLRLD where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+963,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 1) goal (1, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
+964,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+965,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 1). After moves URDLR where do you end?","(1, 1)","(1, 1)",1,0.0,pre_replay
+966,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (1, 4). What is the shortest path length?",4,4,1,0.0,pre_replay
+967,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+968,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves DULUL where do you end?","(0, 0)","(0, 0)",1,0.0,pre_replay
+969,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3) goal (2, 3). What is the shortest path length?",1,1,1,0.0,pre_replay
+970,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+971,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves LRDUD where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+972,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (2, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+973,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+974,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 3). After moves DUULR where do you end?","(1, 2)","(1, 2)",1,0.0,pre_replay
+975,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1) goal (0, 1). What is the shortest path length?",1,1,1,0.0,pre_replay
+976,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+977,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (3, 4). After moves ULRLU where do you end?","(2, 2)","(2, 2)",1,0.0,pre_replay
+978,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 2) goal (3, 1). What is the shortest path length?",2,2,1,0.0,pre_replay
+979,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+980,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves DRLLD where do you end?","(1, 4)","(1, 4)",1,0.0,pre_replay
+981,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1) goal (0, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+982,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+983,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3). After moves LRLRD where do you end?","(4, 4)","(4, 4)",1,0.0,pre_replay
+984,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 3) goal (1, 4). What is the shortest path length?",4,4,1,0.0,pre_replay
+985,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+986,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1). After moves DDLRL where do you end?","(3, 3)","(3, 3)",1,0.0,pre_replay
+987,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 0) goal (3, 3). What is the shortest path length?",4,4,1,0.0,pre_replay
+988,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 2) to (1, 4)?",DLLLD,DLLLD,1,0.0,pre_replay
+989,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 1). After moves RRLRU where do you end?","(4, 0)","(4, 0)",1,0.0,pre_replay
+990,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 3) goal (0, 2). What is the shortest path length?",3,3,1,0.0,pre_replay
+991,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+992,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 1). After moves DLRUU where do you end?","(1, 0)","(1, 0)",1,0.0,pre_replay
+993,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (1, 0) goal (3, 4). What is the shortest path length?",6,6,1,0.0,pre_replay
+994,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (1, 2) to (4, 3)?",RDRR,RDRR,1,0.0,pre_replay
+995,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 4). After moves LUDUD where do you end?","(3, 4)","(3, 4)",1,0.0,pre_replay
+996,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (4, 1) goal (3, 3). What is the shortest path length?",3,3,1,0.0,pre_replay
+997,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. What move sequence leads from (4, 0) to (3, 1)?",LD,LD,1,0.0,pre_replay
+998,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (2, 2). After moves LURLL where do you end?","(0, 1)","(0, 1)",1,0.0,pre_replay
+999,"Grid 5x5 with obstacles [(0, 4), (2, 4), (3, 2)]. Start (0, 3) goal (0, 0). What is the shortest path length?",3,3,1,0.0,pre_replay
