@@ -20,6 +20,19 @@ def test_parse_args_dry_run() -> None:
     assert cfg.dry_run is True
 
 
+def test_train_config_defaults() -> None:
+    """Default config uses research-backed LoRA parameters."""
+
+    cfg = TrainConfig()
+    assert cfg.gradient_accumulation_steps == 16
+    assert cfg.max_steps == 500
+    assert cfg.lora_r == 8
+    assert cfg.lora_alpha == 16
+    assert cfg.lora_dropout == 0.05
+    assert cfg.episodic.lora_r == 8
+    assert cfg.spatial.lora_r == 8
+
+
 def test_train_sets_seeds(monkeypatch) -> None:
     """Setting the seed propagates to RNG libraries."""
 

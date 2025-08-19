@@ -65,8 +65,8 @@ class TrainConfig:
 
     # Training hyper‑parameters
     per_device_train_batch_size: int = 1
-    gradient_accumulation_steps: int = 1
-    max_steps: int = 1
+    gradient_accumulation_steps: int = 16
+    max_steps: int = 500
     learning_rate: float = 2e-4
 
     # LoRA specific parameters
@@ -79,13 +79,25 @@ class TrainConfig:
 
     # Episodic adapter configuration
     episodic: AdapterConfig = field(
-        default_factory=lambda: AdapterConfig(hidden_size=16, num_heads=1)
+        default_factory=lambda: AdapterConfig(
+            hidden_size=16,
+            num_heads=1,
+            lora_r=8,
+            lora_alpha=16,
+            lora_dropout=0.05,
+        )
     )
 
     # Relational and spatial memory knobs
     relational: bool = False
     spatial: SpatialAdapterConfig = field(
-        default_factory=lambda: SpatialAdapterConfig(hidden_size=16, num_heads=1)
+        default_factory=lambda: SpatialAdapterConfig(
+            hidden_size=16,
+            num_heads=1,
+            lora_r=8,
+            lora_alpha=16,
+            lora_dropout=0.05,
+        )
     )
 
     # Replay toggle
