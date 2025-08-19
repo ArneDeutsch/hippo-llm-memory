@@ -25,6 +25,26 @@
 
 - After merging PRs, run LoRA training with `scripts/train_lora.py` and enable the **EpisodicAdapter** via config.
 
+## Training & evaluation commands
+
+```bash
+# fine-tune with episodic memory
+python scripts/train_lora.py run_name=hei_nw \
+  episodic.enabled=true relational=false spatial.enabled=false
+
+# sweep episodic evaluation across sizes and seeds
+python scripts/eval_bench.py +run_matrix=true preset=memory/hei_nw
+
+# disable replay for an ablation run
+python scripts/eval_bench.py preset=memory/hei_nw \
+  +ablate=replay.enabled=false
+
+# combined model with all memories
+python scripts/train_lora.py run_name=all \
+  episodic.enabled=true relational=true spatial.enabled=true
+python scripts/eval_bench.py +run_matrix=true preset=memory/all
+```
+
 ## Notes
 
 - Store now supports update/delete, exposes keys for recall and includes a tiny MLP completion stub.

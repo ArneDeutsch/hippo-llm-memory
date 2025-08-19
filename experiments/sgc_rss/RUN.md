@@ -22,3 +22,23 @@
 ## Local training
 
 - Enable **RelationalAdapter** in configs and fine‑tune with interleaved replay batches.
+
+## Training & evaluation commands
+
+```bash
+# fine-tune with relational memory
+python scripts/train_lora.py run_name=sgc_rss \
+  relational=true episodic.enabled=false spatial.enabled=false
+
+# sweep semantic evaluation across sizes and seeds
+python scripts/eval_bench.py +run_matrix=true preset=memory/sgc_rss
+
+# ablate schema fast-track routing
+python scripts/eval_bench.py preset=memory/sgc_rss \
+  +ablate=relational.schema_fasttrack=false
+
+# combined model with all memories
+python scripts/train_lora.py run_name=all \
+  episodic.enabled=true relational=true spatial.enabled=true
+python scripts/eval_bench.py +run_matrix=true preset=memory/all
+```
