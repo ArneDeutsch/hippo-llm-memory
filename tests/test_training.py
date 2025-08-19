@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 from scripts.train_lora import (
     TrainConfig,
+    _init_sft_trainer,
     _load_model_and_tokenizer,
     parse_args,
     train,
@@ -446,3 +447,67 @@ def test_train_respects_hopfield_flag(monkeypatch) -> None:
     assert store is not None
     assert store.config["hopfield"] is False
     assert store.complete_called is False
+
+
+def test_init_sft_trainer_accepts_tokenizer(monkeypatch) -> None:
+    """Tokenizer is forwarded when SFTTrainer expects it."""
+
+    captured: dict[str, object] = {}
+
+    class DummyTrainer:
+        def __init__(
+            self,
+            *,
+            model=None,
+            train_dataset=None,
+            args=None,
+            tokenizer=None,
+            peft_config=None,
+        ) -> None:
+            captured.update(
+                {
+                    "model": model,
+                    "train_dataset": train_dataset,
+                    "args": args,
+                    "tokenizer": tokenizer,
+                    "peft_config": peft_config,
+                }
+            )
+
+    monkeypatch.setattr("scripts.train_lora.SFTTrainer", DummyTrainer)
+
+    _init_sft_trainer("m", "d", "a", "tok", "p")
+
+    assert captured["tokenizer"] == "tok"
+
+
+def test_init_sft_trainer_accepts_processing_class(monkeypatch) -> None:
+    """Tokenizer is passed via ``processing_class`` when required."""
+
+    captured: dict[str, object] = {}
+
+    class DummyTrainer:
+        def __init__(
+            self,
+            *,
+            model=None,
+            train_dataset=None,
+            args=None,
+            processing_class=None,
+            peft_config=None,
+        ) -> None:
+            captured.update(
+                {
+                    "model": model,
+                    "train_dataset": train_dataset,
+                    "args": args,
+                    "processing_class": processing_class,
+                    "peft_config": peft_config,
+                }
+            )
+
+    monkeypatch.setattr("scripts.train_lora.SFTTrainer", DummyTrainer)
+
+    _init_sft_trainer("m", "d", "a", "tok", "p")
+
+    assert captured["processing_class"] == "tok"
