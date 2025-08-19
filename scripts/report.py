@@ -49,6 +49,11 @@ def _find_latest_date(root: Path) -> str:
 def collect_metrics(base: Path) -> Dict[Tuple[str, str], Iterable[MetricDict]]:
     """Collect metric dictionaries grouped by ``(suite, preset)``.
 
+    Each ``metrics.json`` is expected to contain a ``{"metrics": {...}}`` object
+    where the suite metrics live under ``record["metrics"][suite]`` and optional
+    compute metrics are provided under ``record["metrics"]["compute"]``. Compute
+    metrics are merged with the suite metrics.
+
     Parameters
     ----------
     base:
@@ -63,14 +68,17 @@ def collect_metrics(base: Path) -> Dict[Tuple[str, str], Iterable[MetricDict]]:
         preset = run_dir.parent.parent.name
         try:
             with metrics_path.open() as fh:
-                metrics = json.load(fh)
+                record = json.load(fh)
         except json.JSONDecodeError as exc:  # pragma: no cover - file is corrupt
             log.warning("failed to parse %s: %s", metrics_path, exc)
             continue
+        metrics = record.get("metrics", {})
         if suite not in metrics:
             log.warning("suite %s missing in %s", suite, metrics_path)
             continue
-        data[(suite, preset)].append(metrics[suite])
+        suite_metrics = metrics[suite]
+        compute_metrics = metrics.get("compute", {})
+        data[(suite, preset)].append({**suite_metrics, **compute_metrics})
     return data
 
 
