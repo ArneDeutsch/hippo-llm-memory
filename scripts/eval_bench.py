@@ -10,6 +10,10 @@ Example usage from the command line::
 
     python scripts/eval_bench.py suite=episodic preset=baselines/core n=5 seed=0
 
+For a complete sweep across suites, dataset sizes and seeds use::
+
+    python scripts/eval_bench.py +run_matrix=true preset=memory/hei_nw
+
 The resulting ``metrics.json``/``metrics.csv``/``meta.json`` files are written
 to ``runs/<date>/<preset>/<suite>/`` by default or to the directory supplied via
 ``outdir=...``.
@@ -279,6 +283,35 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     write_outputs(outdir, rows, metrics, flat_ablate, cfg)
 
 
+def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
+    """Run evaluation over a grid of suites, dataset sizes and seeds.
+
+    Parameters
+    ----------
+    cfg:
+        Hydra configuration containing ``suites``, ``n_values`` and ``seeds``
+        lists in addition to the usual evaluation options.
+    root_outdir:
+        Directory under which per-run results will be written.  Subdirectories
+        of the form ``<suite>/n<samples>_seed<seed>`` are created for each
+        combination.
+    """
+
+    suites = cfg.get("suites", ["episodic", "semantic", "spatial"])
+    n_values = cfg.get("n_values", [50, 200, 1000])
+    seeds = cfg.get("seeds", [1337, 2025, 4242])
+    base_cfg = OmegaConf.to_container(cfg, resolve=True)
+    for suite in suites:
+        for n in n_values:
+            for seed in seeds:
+                run_cfg = OmegaConf.create(base_cfg)
+                run_cfg.suite = suite
+                run_cfg.n = int(n)
+                run_cfg.seed = int(seed)
+                outdir = root_outdir / suite / f"n{n}_seed{seed}"
+                evaluate(run_cfg, outdir)
+
+
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
 def main(cfg: DictConfig) -> None:
     """CLI entry point for the evaluation harness."""
@@ -288,17 +321,20 @@ def main(cfg: DictConfig) -> None:
     cfg.n = cfg.get("n", 5)
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
+    date = datetime.now(timezone.utc).strftime("%Y%m%d")
     outdir: Optional[str] = cfg.get("outdir")
-    if outdir is not None:
-        outdir_path = Path(to_absolute_path(outdir))
+    if cfg.get("run_matrix"):
+        if outdir is not None:
+            root_outdir = Path(to_absolute_path(outdir))
+        else:
+            root_outdir = Path("runs") / date / str(cfg.preset).replace("/", "_")
+        evaluate_matrix(cfg, root_outdir)
     else:
-        outdir_path = (
-            Path("runs")
-            / datetime.now(timezone.utc).strftime("%Y%m%d")
-            / str(cfg.preset).replace("/", "_")
-            / cfg.suite
-        )
-    evaluate(cfg, outdir_path)
+        if outdir is not None:
+            outdir_path = Path(to_absolute_path(outdir))
+        else:
+            outdir_path = Path("runs") / date / str(cfg.preset).replace("/", "_") / cfg.suite
+        evaluate(cfg, outdir_path)
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
