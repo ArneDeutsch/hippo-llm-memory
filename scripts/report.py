@@ -1,10 +1,11 @@
 """Aggregate evaluation metrics into Markdown tables and plots.
 
-This script scans baseline evaluation runs under
-``runs/<date>/baselines/`` and summarises the metrics for each
-suite/preset pair.  A short Markdown report is written to
-``reports/<date>/baseline_summary.md``.  If ``matplotlib`` is available a
-set of bar plots is produced alongside the report.
+This script scans evaluation runs under ``runs/<date>/`` and summarises
+the metrics for each suite/preset pair.  For every suite a Markdown
+report is written to ``reports/<date>/<suite>/summary.md`` and, if
+``matplotlib`` is available, accompanying bar plots are produced.  The
+reports include compute and memory columns when present in the metrics
+files.
 
 Example usage from the command line::
 
@@ -57,15 +58,16 @@ def collect_metrics(base: Path) -> Dict[Tuple[str, str], Iterable[MetricDict]]:
     Parameters
     ----------
     base:
-        Path pointing to ``runs/<date>/baselines``.
+        Path pointing to ``runs/<date>``.
     """
 
     data: Dict[Tuple[str, str], list[MetricDict]] = defaultdict(list)
-    pattern = "*/*/*/metrics.json"
-    for metrics_path in base.glob(pattern):
-        run_dir = metrics_path.parent
-        suite = run_dir.parent.name
-        preset = run_dir.parent.parent.name
+    for metrics_path in base.rglob("metrics.json"):
+        parts = metrics_path.relative_to(base).parts
+        if len(parts) < 3:
+            continue
+        suite = parts[-3]
+        preset = "/".join(parts[:-3]) or "unknown"
         try:
             with metrics_path.open() as fh:
                 record = json.load(fh)
@@ -94,31 +96,26 @@ def summarise(data: Dict[Tuple[str, str], Iterable[MetricDict]]) -> Summary:
     return summary
 
 
-def render_markdown(summary: Summary) -> str:
-    """Return a Markdown representation of ``summary``."""
+def _render_markdown_suite(suite: str, presets: Dict[str, MetricDict]) -> str:
+    """Return a Markdown table for a single suite."""
 
-    lines: list[str] = ["# Baseline Summary", ""]
-    for suite in sorted(summary):
-        presets = summary[suite]
-        if not presets:
-            continue
-        lines.append(f"## {suite}")
-        metric_keys = sorted(next(iter(presets.values())).keys())
-        header = "| Preset | " + " | ".join(metric_keys) + " |"
-        sep = "|---" * (len(metric_keys) + 1) + "|"
-        lines.extend([header, sep])
-        for preset in sorted(presets):
-            metrics = presets[preset]
-            row = (
-                "| " + preset + " | " + " | ".join(f"{metrics[m]:.3f}" for m in metric_keys) + " |"
-            )
-            lines.append(row)
-        lines.append("")
+    lines: list[str] = [f"# {suite} Summary", ""]
+    if not presets:
+        return "\n".join(lines)
+    metric_keys = sorted(next(iter(presets.values())).keys())
+    header = "| Preset | " + " | ".join(metric_keys) + " |"
+    sep = "|---" * (len(metric_keys) + 1) + "|"
+    lines.extend([header, sep])
+    for preset in sorted(presets):
+        metrics = presets[preset]
+        row = "| " + preset + " | " + " | ".join(f"{metrics[m]:.3f}" for m in metric_keys) + " |"
+        lines.append(row)
+    lines.append("")
     return "\n".join(lines)
 
 
-def _render_plots(summary: Summary, out_dir: Path) -> None:
-    """Render simple bar plots if ``matplotlib`` is available."""
+def _render_plots_suite(suite: str, presets: Dict[str, MetricDict], out_dir: Path) -> None:
+    """Render simple bar plots for one suite if ``matplotlib`` is available."""
 
     try:  # pragma: no cover - optional dependency
         import matplotlib.pyplot as plt
@@ -126,30 +123,36 @@ def _render_plots(summary: Summary, out_dir: Path) -> None:
         log.warning("matplotlib unavailable: %s", exc)
         return
 
+    metric_keys = sorted(next(iter(presets.values())).keys())
+    for metric in metric_keys:
+        labels = list(presets.keys())
+        values = [presets[p][metric] for p in labels]
+        plt.figure()
+        plt.bar(labels, values)
+        plt.ylabel(metric)
+        plt.title(f"{suite} {metric}")
+        plt.tight_layout()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_dir / f"{metric}.png")
+        plt.close()
+
+
+def write_reports(summary: Summary, out_dir: Path, plots: bool) -> Dict[str, Path]:
+    """Write per-suite reports and optional plots to ``out_dir``.
+
+    Returns a mapping from suite name to the written Markdown path.
+    """
+
+    paths: Dict[str, Path] = {}
     for suite, presets in summary.items():
-        metric_keys = sorted(next(iter(presets.values())).keys())
-        for metric in metric_keys:
-            labels = list(presets.keys())
-            values = [presets[p][metric] for p in labels]
-            plt.figure()
-            plt.bar(labels, values)
-            plt.ylabel(metric)
-            plt.title(f"{suite} {metric}")
-            plt.tight_layout()
-            out_dir.mkdir(parents=True, exist_ok=True)
-            plt.savefig(out_dir / f"{suite}_{metric}.png")
-            plt.close()
-
-
-def write_report(summary: Summary, out_dir: Path, plots: bool) -> Path:
-    """Write ``baseline_summary.md`` and optional plots to ``out_dir``."""
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    md_path = out_dir / "baseline_summary.md"
-    md_path.write_text(render_markdown(summary))
-    if plots:
-        _render_plots(summary, out_dir)
-    return md_path
+        suite_dir = out_dir / suite
+        suite_dir.mkdir(parents=True, exist_ok=True)
+        md_path = suite_dir / "summary.md"
+        md_path.write_text(_render_markdown_suite(suite, presets))
+        paths[suite] = md_path
+        if plots:
+            _render_plots_suite(suite, presets, suite_dir)
+    return paths
 
 
 def main() -> None:  # pragma: no cover - thin CLI wrapper
@@ -164,11 +167,12 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
 
     runs_root = Path(args.runs_dir)
     date = args.date or _find_latest_date(runs_root)
-    runs_path = runs_root / date / "baselines"
+    runs_path = runs_root / date
     summary = summarise(collect_metrics(runs_path))
     out_dir = Path(args.out_dir) / date
-    md_path = write_report(summary, out_dir, args.plots)
-    log.info("wrote %s", md_path)
+    paths = write_reports(summary, out_dir, args.plots)
+    for suite, md_path in paths.items():
+        log.info("wrote %s for %s", md_path, suite)
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry
