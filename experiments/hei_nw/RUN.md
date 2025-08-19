@@ -29,14 +29,14 @@
 
 | parameter | value |
 |-----------|-------|
-| learning_rate | 2e-4 |
-| gradient_accumulation_steps | 16 |
+| learning_rate | 5e-5 |
+| gradient_accumulation_steps | 4 |
 | max_steps | 500 |
-| lora_r | 8 |
+| lora_r | 16 |
 | lora_alpha | 16 |
-| lora_dropout | 0.05 |
+| lora_dropout | 0.1 |
 
-These values mirror common small-model recipes: the Alpaca-LoRA script uses `lora_r=8`, `lora_alpha=16`, and `lora_dropout=0.05`, while QLoRA defaults to a `2e-4` learning rate.
+These values follow the recommendations in `research/lora-fine-tuning-overview.md` (rank 16 with α =r, dropout 0.1 and a 5e‑5 learning rate) for small 3–4B models.
 
 ## Training & evaluation commands
 

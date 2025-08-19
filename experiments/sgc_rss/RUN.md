@@ -29,14 +29,14 @@ Use the same baseline hyperparameters as HEI‑NW:
 
 | parameter | value |
 |-----------|-------|
-| learning_rate | 2e-4 |
-| gradient_accumulation_steps | 16 |
+| learning_rate | 5e-5 |
+| gradient_accumulation_steps | 4 |
 | max_steps | 500 |
-| lora_r | 8 |
+| lora_r | 16 |
 | lora_alpha | 16 |
-| lora_dropout | 0.05 |
+| lora_dropout | 0.1 |
 
-These settings follow the Alpaca‑LoRA recipe (rank 8, alpha 16, dropout 0.05) and QLoRA’s default 2e‑4 learning rate.
+These settings follow the guidance from `research/lora-fine-tuning-overview.md` for 3–4B models (rank 16, α =r, dropout 0.1 and a conservative 5e‑5 learning rate).
 
 ## Training & evaluation commands
 

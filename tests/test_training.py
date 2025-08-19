@@ -24,13 +24,13 @@ def test_train_config_defaults() -> None:
     """Default config uses research-backed LoRA parameters."""
 
     cfg = TrainConfig()
-    assert cfg.gradient_accumulation_steps == 16
+    assert cfg.gradient_accumulation_steps == 4
     assert cfg.max_steps == 500
-    assert cfg.lora_r == 8
+    assert cfg.lora_r == 16
     assert cfg.lora_alpha == 16
-    assert cfg.lora_dropout == 0.05
-    assert cfg.episodic.lora_r == 8
-    assert cfg.spatial.lora_r == 8
+    assert cfg.lora_dropout == 0.1
+    assert cfg.episodic.lora_r == 16
+    assert cfg.spatial.lora_r == 16
 
 
 def test_train_sets_seeds(monkeypatch) -> None:
