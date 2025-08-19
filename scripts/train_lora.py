@@ -65,14 +65,14 @@ class TrainConfig:
 
     # Training hyper‑parameters
     per_device_train_batch_size: int = 1
-    gradient_accumulation_steps: int = 16
+    gradient_accumulation_steps: int = 4
     max_steps: int = 500
-    learning_rate: float = 2e-4
+    learning_rate: float = 5e-5
 
     # LoRA specific parameters
-    lora_r: int = 8
+    lora_r: int = 16
     lora_alpha: int = 16
-    lora_dropout: float = 0.05
+    lora_dropout: float = 0.1
 
     # Utility flags
     dry_run: bool = False
@@ -82,9 +82,9 @@ class TrainConfig:
         default_factory=lambda: AdapterConfig(
             hidden_size=16,
             num_heads=1,
-            lora_r=8,
+            lora_r=16,
             lora_alpha=16,
-            lora_dropout=0.05,
+            lora_dropout=0.1,
         )
     )
 
@@ -94,9 +94,9 @@ class TrainConfig:
         default_factory=lambda: SpatialAdapterConfig(
             hidden_size=16,
             num_heads=1,
-            lora_r=8,
+            lora_r=16,
             lora_alpha=16,
-            lora_dropout=0.05,
+            lora_dropout=0.1,
         )
     )
 

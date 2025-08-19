@@ -37,14 +37,14 @@
 
 | parameter | value |
 |-----------|-------|
-| learning_rate | 2e-4 |
-| gradient_accumulation_steps | 16 |
+| learning_rate | 5e-5 |
+| gradient_accumulation_steps | 4 |
 | max_steps | 500 |
-| lora_r | 8 |
+| lora_r | 16 |
 | lora_alpha | 16 |
-| lora_dropout | 0.05 |
+| lora_dropout | 0.1 |
 
-Derived from the Alpaca‑LoRA setup (rank 8, alpha 16, dropout 0.05) with the QLoRA learning rate of 2e‑4; gradient accumulation emulates a larger batch on a 12 GB GPU.
+Derived from recommendations in `research/lora-fine-tuning-overview.md` (rank 16 with α =r, dropout 0.1 and a modest 5e‑5 learning rate); gradient accumulation of 4 keeps the effective batch small while fitting a 12 GB GPU.
 
 ## Training & evaluation commands
 
