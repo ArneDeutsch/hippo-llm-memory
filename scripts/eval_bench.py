@@ -15,7 +15,10 @@ For a complete sweep across suites, dataset sizes and seeds use::
     python scripts/eval_bench.py +run_matrix=true preset=memory/hei_nw
 
 The resulting ``metrics.json``/``metrics.csv``/``meta.json`` files are written
-to ``runs/<date>/<preset>/<suite>/`` by default or to the directory supplied via
+to ``runs/<date>/<preset>/<suite>/`` for baseline presets such as
+``baselines/core``.  For memory presets (``memory/hei_nw`` etc.) the files are
+stored under ``runs/<date>/<preset_name>/<suite>/`` where ``preset_name`` is the
+final path component.  A custom root directory can be supplied via
 ``outdir=...``.
 """
 
@@ -323,17 +326,26 @@ def main(cfg: DictConfig) -> None:
         cfg.n = min(cfg.n, 5)
     date = datetime.now(timezone.utc).strftime("%Y%m%d")
     outdir: Optional[str] = cfg.get("outdir")
+    preset_path = Path(str(cfg.preset))
     if cfg.get("run_matrix"):
         if outdir is not None:
             root_outdir = Path(to_absolute_path(outdir))
         else:
-            root_outdir = Path("runs") / date / str(cfg.preset).replace("/", "_")
+            if preset_path.parts and preset_path.parts[0] == "baselines":
+                root_outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name
+            else:
+                root_outdir = Path("runs") / date / preset_path.name
         evaluate_matrix(cfg, root_outdir)
     else:
         if outdir is not None:
             outdir_path = Path(to_absolute_path(outdir))
         else:
-            outdir_path = Path("runs") / date / str(cfg.preset).replace("/", "_") / cfg.suite
+            if preset_path.parts and preset_path.parts[0] == "baselines":
+                outdir_path = (
+                    Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
+                )
+            else:
+                outdir_path = Path("runs") / date / preset_path.name / cfg.suite
         evaluate(cfg, outdir_path)
 
 
