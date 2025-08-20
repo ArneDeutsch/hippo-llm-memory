@@ -67,7 +67,7 @@ class TrainConfig:
         default_factory=lambda: os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2")
     )
     dataset_name: str = "imdb"
-    data_format: str = "hf"  # {"hf","jsonl"}
+    data_format: str = "jsonl"  # {"hf","jsonl"}
     train_files: List[str] = field(default_factory=list)
     val_files: List[str] = field(default_factory=list)
     output_dir: str = "outputs"
@@ -244,6 +244,12 @@ def train(cfg: TrainConfig) -> None:
     torch.manual_seed(cfg.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(cfg.seed)
+    logging.info("Data format: %s", cfg.data_format)
+    logging.info("Train files: %s", cfg.train_files)
+    logging.info("Validation files: %s", cfg.val_files)
+    logging.info("Fusion insert block index: %d", cfg.fusion_insert_block_index)
+    logging.info("Replay enabled: %s", cfg.replay.enabled)
+    logging.info("Replay ratio: %.2f", cfg.replay.ratio)
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
 
@@ -425,13 +431,18 @@ def train(cfg: TrainConfig) -> None:
         if cfg.data_format == "jsonl":
             from scripts.jsonl_dataset import load_jsonl_files, split_train_val
 
-            train_ds = load_jsonl_files(cfg.train_files)
-            if cfg.val_files:
-                val_ds = load_jsonl_files(cfg.val_files)
+            if cfg.train_files:
+                train_ds = load_jsonl_files(cfg.train_files)
+                if cfg.val_files:
+                    val_ds = load_jsonl_files(cfg.val_files)
+                else:
+                    train_ds, val_ds = split_train_val(cfg.train_files[0], None)
+                logging.info("Train dataset size: %d", len(train_ds))
+                logging.info("Validation dataset size: %d", len(val_ds))
+            elif not cfg.dry_run:
+                raise ValueError("train_files must be provided when data_format='jsonl'")
             else:
-                train_ds, val_ds = split_train_val(cfg.train_files[0], None)
-            logging.info("Train dataset size: %d", len(train_ds))
-            logging.info("Validation dataset size: %d", len(val_ds))
+                logging.info("No train_files provided; skipping dataset load")
         elif not cfg.dry_run:
             train_ds = load_dataset(cfg.dataset_name, split="train")
             logging.info("Train dataset size: %d", len(train_ds))
