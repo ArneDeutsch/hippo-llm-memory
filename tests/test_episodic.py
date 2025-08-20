@@ -15,6 +15,7 @@ from hypothesis import strategies as st
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
+from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
 from hippo_mem.relational.kg import KnowledgeGraph
 
@@ -63,6 +64,24 @@ def test_hopfield_completion_restores_sparse_cue() -> None:
 
     cos = float(np.dot(completed, full) / (np.linalg.norm(completed) * np.linalg.norm(full)))
     assert cos >= 0.9
+
+
+def test_noisy_cue_completed_and_recalled() -> None:
+    """A noisy cue is completed and improves recall cosine similarity."""
+
+    store = EpisodicStore(dim=4, config={"hopfield": True})
+    full = np.array([1.0, 1.0, 0.0, 0.0], dtype="float32")
+    store.write(full, TraceValue(provenance="full"))
+    noisy = np.array([0.8, 0.2, 0.0, 0.0], dtype="float32")
+
+    base = store.recall(noisy, k=1)[0]
+    hidden = torch.from_numpy(noisy).view(1, 1, -1)
+    spec = SimpleNamespace(k=1)
+    episodic_retrieve_and_pack(hidden, spec, store, torch.nn.Identity())
+    completed = store.complete(noisy, k=1)
+    recalled = store.recall(completed, k=1)[0]
+    assert recalled.value.provenance == "full"
+    assert recalled.score > base.score
 
 
 def test_gating_threshold_and_pin_weight() -> None:

@@ -1,4 +1,7 @@
-"""Utility for episodic memory retrieval and packing."""
+"""Utility for episodic memory retrieval and packing.
+
+Supports optional Hopfield completion of cues before FAISS lookup.
+"""
 
 from __future__ import annotations
 
@@ -74,6 +77,12 @@ def episodic_retrieve_and_pack(
     mask = torch.zeros(bsz, k, dtype=torch.bool, device=device)
     for i in range(bsz):
         cue = batch_hidden[i, -1].detach().cpu().numpy()
+        k_wta = getattr(store, "k_wta", 0)
+        if k_wta > 0:
+            cue = store.to_dense(store.sparse_encode(cue, k_wta))
+        hopfield_on = getattr(store, "config", {}).get("hopfield", True)
+        if k > 0 and hopfield_on and hasattr(store, "complete"):
+            cue = store.complete(cue, k=k)
         traces = store.recall(cue, k) if k > 0 else []
         hits = len(traces)
         vecs = _extract_vectors(store, traces, store.dim)
