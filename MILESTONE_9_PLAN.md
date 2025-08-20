@@ -3,11 +3,13 @@
 **Objective**: train models with each memory module, evaluate them, perform ablations and compare against baselines.
 
 **Gate**: experiments are logged under `runs/YYYYMMDD/`; metrics show improvements over baselines; ablation results highlight contribution of each component; aggregated report summarises findings.
+Gate additionally requires: `scripts/eval_model.py` present and used; HEI-NW smoke run (n=50) artifacts exist; trainable-count logs captured.
 
 ## Tasks
 
 | ID | Headline | Description | Owner |
 |----|----------|-------------|-------|
+| C0 | Adapter wiring & LoRA checks | Ensure adapters are inserted after block N; set `target_modules` per architecture; log trainable param count and assert >0; switch trainer to JSONL suites; verify replay mixing. | Codex |
 | C1 | Audit datasets and configs | Verify that episodic, semantic and spatial datasets (sizes 50, 200, 1000; seeds 1337, 2025, 4242) exist with checksums. Ensure Hydra presets for memory modules (`configs/eval/memory/*.yaml`) and baseline references are present. | Codex |
 | C2 | Automate memory evaluation run matrix | Add a script or extend `scripts/eval_bench.py` to iterate over suites, dataset sizes and seeds, saving metrics under `runs/<date>/<module>/<suite>/`. Provide CLI so a single command runs the full matrix for a given preset. | Codex |
 | C3 | Prepare training/eval commands | Document example commands in `experiments/*/RUN.md` for training with `scripts/train_lora.py` and evaluating with `scripts/eval_bench.py`. Commands must cover HEI-NW, SGC-RSS, SMPD, combined `memory/all`, and support `+ablate=` flags. | Codex |
@@ -18,4 +20,6 @@
 | C8 | Combined model run | Train and evaluate with all memory modules enabled (`preset=memory/all`) on all suites, logging metrics under `runs/<date>/all/`. | Human |
 | C9 | Ablation sweeps | For each module, run the automated script with key flags toggled (e.g., `episodic.use_sparsity=false`, `replay.enabled=false`, `relational.schema_fasttrack=false`, `spatial.macros=false`). Store results under `runs/<date>/ablations/`. | Human |
 | C10 | Aggregate and verify results | Execute the updated `scripts/report.py` to generate summaries comparing baselines, memory variants and ablations. Confirm that improvements over baselines meet success criteria and that all outputs are present for gate review. | Human |
+| C11 | Implement real eval harness | Add `scripts/eval_model.py` to load trained model + memory modules and run suites per `configs/eval/memory/*.yaml`; write metrics/meta under `runs/<date>/...` as in EVAL_PLAN.md. | Codex |
+| C12 | Smoke real evaluation (n=50) | Run `eval_model.py` for HEI-NW on n=50 with seed 1337 and 1 replay cycle; verify non-trivial metrics and artifacts exist; attach a short summary under `reports/<date>/episodic/summary.md`. | Human |
 
