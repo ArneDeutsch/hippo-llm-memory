@@ -10,6 +10,9 @@ train_files: []
 val_files: []
 
 fusion_insert_block_index: -4
+use_episodic: false
+use_relational: false
+use_spatial: false
 
 replay:
   enabled: false

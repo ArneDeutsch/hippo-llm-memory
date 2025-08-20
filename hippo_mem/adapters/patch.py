@@ -60,13 +60,33 @@ class AdapterFusion(nn.Module):
         self.relational = relational
         self.spatial = spatial
 
-    def forward(self, hidden_states: torch.Tensor, **kwargs: Any) -> torch.Tensor:
+    def forward(
+        self,
+        hidden_states: torch.Tensor,
+        memory_tokens: "MemoryTokens" | None = None,
+        **kwargs: Any,
+    ) -> torch.Tensor:
+        """Apply enabled adapters to ``hidden_states``.
+
+        Adapters are only invoked when ``memory_tokens`` are supplied. This
+        preserves baseline model behaviour when memory is absent.
+        """
+
+        if memory_tokens is None:
+            return hidden_states
+
         if self.episodic and self.cfg.use_episodic:
-            hidden_states = hidden_states + self.episodic(hidden_states, **kwargs)
+            hidden_states = hidden_states + self.episodic(
+                hidden_states, memory=memory_tokens, **kwargs
+            )
         if self.relational and self.cfg.use_relational:
-            hidden_states = hidden_states + self.relational(hidden_states, **kwargs)
+            hidden_states = hidden_states + self.relational(
+                hidden_states, memory=memory_tokens, **kwargs
+            )
         if self.spatial and self.cfg.use_spatial:
-            hidden_states = hidden_states + self.spatial(hidden_states, **kwargs)
+            hidden_states = hidden_states + self.spatial(
+                hidden_states, memory=memory_tokens, **kwargs
+            )
         return hidden_states
 
 
@@ -120,20 +140,34 @@ def attach_adapters(
         )
     block = blocks[idx]
     fusion = AdapterFusion(cfg, episodic, relational, spatial)
-    orig_forward = block.forward
+    orig_block_forward = block.forward
 
     def wrapped_forward(*args: Any, **kwargs: Any):
-        hidden = orig_forward(*args, **kwargs)
+        memory_tokens = kwargs.pop("memory_tokens", None)
+        if memory_tokens is None:
+            memory_tokens = getattr(model, "_hippo_memory_tokens", None)
+        hidden = orig_block_forward(*args, **kwargs)
         if isinstance(hidden, tuple):
             hidden_states, *rest = hidden
-            hidden_states = fusion(hidden_states, **kwargs)
+            hidden_states = fusion(hidden_states, memory_tokens=memory_tokens, **kwargs)
             return (hidden_states, *rest)
-        hidden_states = fusion(hidden, **kwargs)
+        hidden_states = fusion(hidden, memory_tokens=memory_tokens, **kwargs)
         return hidden_states
 
     block.forward = wrapped_forward  # type: ignore[assignment]
     block._hippo_remove_adapter = lambda: setattr(  # type: ignore[attr-defined]
-        block, "forward", orig_forward
+        block, "forward", orig_block_forward
+    )
+
+    orig_model_forward = model.forward
+
+    def model_forward(*args: Any, memory_tokens: "MemoryTokens" | None = None, **kwargs: Any):
+        model._hippo_memory_tokens = memory_tokens  # type: ignore[attr-defined]
+        return orig_model_forward(*args, **kwargs)
+
+    model.forward = model_forward  # type: ignore[assignment]
+    model._hippo_remove_adapter = lambda: setattr(  # type: ignore[attr-defined]
+        model, "forward", orig_model_forward
     )
 
     return {"target_block": idx, "num_blocks": num_blocks}
