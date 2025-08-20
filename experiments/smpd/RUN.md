@@ -65,3 +65,24 @@ python scripts/train_lora.py run_name=all \
   episodic.enabled=true relational=true spatial.enabled=true
 python scripts/eval_bench.py +run_matrix=true preset=memory/all
 ```
+
+## Run plan (SMPD)
+
+**Training (short)**
+
+python scripts/train_lora.py
+model_name=Qwen/Qwen2-1.5B-Instruct
+data.format=jsonl
+data.train=data/spatial_200_1337.jsonl
+data.val=data/spatial_50_2025.jsonl
+lora_r=16 lora_alpha=32
+target_modules='["q_proj","k_proj","v_proj","o_proj"]'
+max_steps=300 learning_rate=5e-5 gradient_accumulation_steps=8
+
+**Evaluation**
+
+python scripts/eval_model.py suite=spatial preset=memory/smpd n=50 seed=1337
+
+**Acceptance criteria:** metrics include path success and suboptimality; artifacts under `runs/YYYYMMDD/smpd/spatial/`.
+
+
