@@ -49,8 +49,9 @@ import math
 import time
 from dataclasses import dataclass
 
-import faiss  # type: ignore
 import numpy as np
+
+from hippo_mem._faiss import faiss
 
 
 @dataclass

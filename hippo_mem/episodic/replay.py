@@ -19,6 +19,7 @@ from typing import List, Optional, Protocol, Tuple
 
 import numpy as np
 
+from hippo_mem._faiss import faiss
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
 
@@ -159,7 +160,6 @@ class ReplayQueue:
             return 1.0
         q = np.asarray(key, dtype="float32").reshape(1, -1)
         k = np.asarray(keys, dtype="float32")
-        import faiss  # type: ignore
 
         faiss.normalize_L2(q)
         faiss.normalize_L2(k)
