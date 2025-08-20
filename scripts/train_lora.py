@@ -65,6 +65,9 @@ class TrainConfig:
         default_factory=lambda: os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2")
     )
     dataset_name: str = "imdb"
+    data_format: str = "hf"  # {"hf","jsonl"}
+    train_files: List[str] = field(default_factory=list)
+    val_files: List[str] = field(default_factory=list)
     output_dir: str = "outputs"
 
     # Run metadata
@@ -196,7 +199,14 @@ def _load_model_and_tokenizer(cfg: TrainConfig):
     return model, tokenizer
 
 
-def _init_sft_trainer(model, dataset, training_args, tokenizer, peft_config):
+def _init_sft_trainer(
+    model,
+    dataset,
+    training_args,
+    tokenizer,
+    peft_config,
+    eval_dataset=None,
+):
     """Instantiate :class:`~trl.SFTTrainer` handling API changes.
 
     Recent versions of TRL renamed the ``tokenizer`` argument to
@@ -211,6 +221,8 @@ def _init_sft_trainer(model, dataset, training_args, tokenizer, peft_config):
         "args": training_args,
         "peft_config": peft_config,
     }
+    if eval_dataset is not None:
+        kwargs["eval_dataset"] = eval_dataset
     sig = inspect.signature(SFTTrainer.__init__)
     if "tokenizer" in sig.parameters:
         kwargs["tokenizer"] = tokenizer
@@ -339,6 +351,22 @@ def train(cfg: TrainConfig) -> None:
                 target_modules=modules,
             )
 
+        train_ds = None
+        val_ds = None
+        if cfg.data_format == "jsonl":
+            from scripts.jsonl_dataset import load_jsonl_files, split_train_val
+
+            train_ds = load_jsonl_files(cfg.train_files)
+            if cfg.val_files:
+                val_ds = load_jsonl_files(cfg.val_files)
+            else:
+                train_ds, val_ds = split_train_val(cfg.train_files[0], None)
+            logging.info("Train dataset size: %d", len(train_ds))
+            logging.info("Validation dataset size: %d", len(val_ds))
+        elif not cfg.dry_run:
+            train_ds = load_dataset(cfg.dataset_name, split="train")
+            logging.info("Train dataset size: %d", len(train_ds))
+
         if cfg.dry_run:
             if peft_config is not None:
                 model = get_peft_model(model, peft_config)
@@ -346,14 +374,12 @@ def train(cfg: TrainConfig) -> None:
                 logging.info("Trainable parameters: %d", count)
                 if count <= 0:
                     raise RuntimeError(
-                        "No trainable parameters found. Set `target_modules` to attach LoRA."
+                        "No trainable parameters found. Set `target_modules` to attach LoRA.",
                     )
             for _ in range(3):
                 log_memory_status(store, kg, spatial_map, scheduler, worker)
                 time.sleep(0.1)
             return
-
-        dataset = load_dataset(cfg.dataset_name, split="train")
 
         training_args = SFTConfig(
             output_dir=cfg.output_dir,
@@ -364,14 +390,16 @@ def train(cfg: TrainConfig) -> None:
             logging_steps=1,
             bf16=True,
             gradient_checkpointing=True,
+            dataset_text_field="text",
         )
 
         trainer = _init_sft_trainer(
             model,
-            dataset,
+            train_ds,
             training_args,
             tokenizer,
             peft_config,
+            eval_dataset=val_ds,
         )
         count = count_trainable_parameters(trainer.model)
         logging.info("Trainable parameters: %d", count)
