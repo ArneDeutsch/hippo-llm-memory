@@ -48,8 +48,9 @@ import time
 from dataclasses import asdict, dataclass
 from typing import Any, List, Optional, Union
 
-import faiss  # type: ignore
 import numpy as np
+
+from hippo_mem._faiss import faiss
 
 from .db import TraceDB
 from .gating import DGKey, densify, k_wta

@@ -17,10 +17,7 @@ from typing import List, Sequence
 
 import numpy as np
 
-try:  # pragma: no cover - import side effects only
-    import faiss  # type: ignore
-except Exception:  # pragma: no cover - fallback path
-    faiss = None
+from hippo_mem._faiss import faiss
 
 
 class FaissIndex:

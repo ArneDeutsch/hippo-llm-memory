@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import List
 
-import faiss  # type: ignore
 import numpy as np
+
+from hippo_mem._faiss import faiss
 
 logger = logging.getLogger(__name__)
 

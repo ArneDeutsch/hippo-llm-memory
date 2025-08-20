@@ -22,6 +22,7 @@ def _create_adapter(tmp_path: Path) -> Path:
         lora_alpha=4,
         target_modules=["c_attn"],
         lora_dropout=0.0,
+        fan_in_fan_out=True,
     )
     model = get_peft_model(base, config)
     out_dir = tmp_path / "adapter"
