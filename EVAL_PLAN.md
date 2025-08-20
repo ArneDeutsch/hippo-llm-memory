@@ -246,4 +246,37 @@ reports/
     spatial/summary.md
 ```
 
+# 15) Harness implementation requirements
+
+- **Real harness:** `scripts/eval_model.py` (new) must:
+  - Load base model + active LoRA adapters, wire Episodic/Relational/Spatial adapters into forward.
+  - Load suite JSONLs from `data/` according to `configs/eval/*/*.yaml`.
+  - Run retrieval/replay when memory presets are selected (`configs/eval/memory/*.yaml`), otherwise skip for baselines.
+  - Emit `metrics.json`, `metrics.csv`, and `meta.json` to `runs/<date>/<preset>/<suite>/` (same schema as §7.1).
+  - Support pre-replay vs post-replay evaluation (1–3 cycles).
+
+- **CI stub (keep):** `scripts/eval_bench.py` continues to operate for plumbing with `dry_run=true`.
+
+- **Data splits & formatting:** Use the provided JSONL suites in `data/` with deterministic seeds and sizes {50, 200, 1000}. Ensure clear train/val/test separation.
+
+# 16) Command matrix (examples)
+
+**Baselines (plumbing):**
+
+```bash
+python scripts/eval_bench.py suite=episodic preset=baselines/core n=5 seed=1337 dry_run=true
+```
+
+**Real evaluation (HEI-NW, n=50):**
+
+```bash
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=50 seed=1337 replay.cycles=1
+```
+
+**Report aggregation:**
+
+```bash
+python scripts/report.py --date YYYYMMDD
+```
+
 ---
