@@ -5,6 +5,16 @@ seed: 0
 run_name: default
 notes: ""
 
+data_format: "jsonl"
+train_files: []
+val_files: []
+
+fusion_insert_block_index: -4
+
+replay:
+  enabled: false
+  ratio: 0.30
+
 learning_rate: 0.001
 
 # Efficiency toggles.
