@@ -343,3 +343,24 @@ def test_stop_background_tasks_idempotent() -> None:
     time.sleep(0.02)
     store.stop_background_tasks()
     store.stop_background_tasks()
+
+
+def test_sparse_query_retrieves_correct_trace() -> None:
+    """Sparse querying focuses on top-k indices and ignores distractors."""
+
+    target = np.array([1.0, 1.0, 0.0, 0.0], dtype="float32")
+    distractor = np.array([1.0, 0.0, 0.9, 0.0], dtype="float32")
+    query = np.array([1.0, 0.901, 0.9, 0.0], dtype="float32")
+
+    dense = EpisodicStore(dim=4)
+    dense.write(target, TraceValue(provenance="target"))
+    dense.write(distractor, TraceValue(provenance="distractor"))
+    dense_res = dense.recall(query, k=1)
+    assert dense_res and dense_res[0].value.provenance == "distractor"
+
+    sparse = EpisodicStore(dim=4, k_wta=2)
+    sparse.write(target, TraceValue(provenance="target"))
+    sparse.write(distractor, TraceValue(provenance="distractor"))
+    cue = sparse.to_dense(sparse.sparse_encode(query, sparse.k_wta))
+    sparse_res = sparse.recall(cue, k=1)
+    assert sparse_res and sparse_res[0].value.provenance == "target"
