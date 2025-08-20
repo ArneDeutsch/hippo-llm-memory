@@ -38,25 +38,29 @@
 
 These values follow the recommendations in `research/lora-fine-tuning-overview.md` (rank 16 with α =r, dropout 0.1 and a 5e‑5 learning rate) for small 3–4B models.
 
-## Training & evaluation commands
+## Run plan (HEI-NW)
 
-```bash
-# fine-tune with episodic memory
-python scripts/train_lora.py run_name=hei_nw \
-  episodic.enabled=true relational=false spatial.enabled=false
+**Training (short)**
 
-# sweep episodic evaluation across sizes and seeds
-python scripts/eval_bench.py +run_matrix=true preset=memory/hei_nw
+python scripts/train_lora.py
+model_name=Qwen/Qwen2-1.5B-Instruct
+data.format=jsonl
+data.train=data/episodic_200_1337.jsonl
+data.val=data/episodic_50_2025.jsonl
+lora_r=16 lora_alpha=32
+target_modules='["q_proj","k_proj","v_proj","o_proj"]'
+max_steps=300 learning_rate=5e-5 gradient_accumulation_steps=8
+replay.enabled=true
 
-# disable replay for an ablation run
-python scripts/eval_bench.py preset=memory/hei_nw \
-  +ablate=replay.enabled=false
+**Evaluation (real harness)**
 
-# combined model with all memories
-python scripts/train_lora.py run_name=all \
-  episodic.enabled=true relational=true spatial.enabled=true
-python scripts/eval_bench.py +run_matrix=true preset=memory/all
-```
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=50 seed=1337 replay.cycles=1
+python scripts/report.py --date YYYYMMDD
+
+## Acceptance criteria
+- Logs show **non-zero** trainable params and adapter modules wired at block N.
+- `runs/YYYYMMDD/hei_nw/episodic/metrics.json` exists with EM/F1 fields.
+- `reports/YYYYMMDD/episodic/summary.md` includes HEI-NW rows.
 
 ## Notes
 
