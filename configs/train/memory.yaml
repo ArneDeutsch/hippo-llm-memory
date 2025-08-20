@@ -3,3 +3,17 @@ defaults:
 
 episodic:
   enabled: true
+
+memory:
+  episodic:
+    enabled: true
+    k: 2
+  relational:
+    enabled: false
+    k: 0
+    hops: 1
+  spatial:
+    enabled: false
+    radius: 1
+    max_nodes: 0
+    max_edges: 0
