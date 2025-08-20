@@ -44,13 +44,11 @@ These values follow the recommendations in `research/lora-fine-tuning-overview.m
 
 python scripts/train_lora.py
 model_name=Qwen/Qwen2-1.5B-Instruct
-data.format=jsonl
-data.train=data/episodic_200_1337.jsonl
-data.val=data/episodic_50_2025.jsonl
+data_format=jsonl train_files='["data/episodic_200_1337.jsonl"]' val_files='["data/episodic_50_2025.jsonl"]'
 lora_r=16 lora_alpha=32
 target_modules='["q_proj","k_proj","v_proj","o_proj"]'
 max_steps=300 learning_rate=5e-5 gradient_accumulation_steps=8
-replay.enabled=true
+fusion_insert_block_index=-4 replay.enabled=true
 
 **Evaluation (real harness)**
 
@@ -58,7 +56,7 @@ python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=50 seed=1337 
 python scripts/report.py --date YYYYMMDD
 
 ## Acceptance criteria
-- Logs show **non-zero** trainable params and adapter modules wired at block N.
+- Logs contain "Adapter fusion attached at block" and trainable params > 0.
 - `runs/YYYYMMDD/hei_nw/episodic/metrics.json` exists with EM/F1 fields.
 - `reports/YYYYMMDD/episodic/summary.md` includes HEI-NW rows.
 
