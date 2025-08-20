@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import List
 
@@ -12,6 +13,8 @@ from torch import nn
 from hippo_mem.common import MemoryTokens, TraceSpec
 
 from .store import EpisodicStore
+
+logger = logging.getLogger(__name__)
 
 
 def _extract_vectors(store: EpisodicStore, traces: List, dim: int) -> np.ndarray:
@@ -86,4 +89,9 @@ def episodic_retrieve_and_pack(
     latency_ms = (time.perf_counter() - start) * 1000
     hit_rate = mask.sum().item() / (bsz * k) if k > 0 else 0.0
     meta = {"k": k, "latency_ms": latency_ms, "hit_rate": hit_rate}
+    logger.info(
+        "episodic_retrieval_k=%d episodic_latency_ms=%.2f",
+        k,
+        latency_ms,
+    )
     return MemoryTokens(tokens=tokens, mask=mask, meta=meta)

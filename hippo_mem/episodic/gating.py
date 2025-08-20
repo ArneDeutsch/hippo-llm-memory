@@ -45,6 +45,7 @@ idempotent decisions.
 
 from __future__ import annotations
 
+import logging
 import math
 import time
 from dataclasses import dataclass
@@ -52,6 +53,8 @@ from dataclasses import dataclass
 import numpy as np
 
 from hippo_mem._faiss import faiss
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -500,4 +503,5 @@ def gate_batch(
             accepts += 1
 
     rate = accepts / len(decisions) if decisions else 0.0
+    logger.info("write_accept_rate=%.2f", rate)
     return decisions, rate
