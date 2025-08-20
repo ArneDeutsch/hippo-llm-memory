@@ -12,6 +12,11 @@ dry_run: false
 # Report macro averaged scores in addition to micro scores.
 macro_scoring: true
 
+# Replay evaluation options. ``cycles`` controls how many post-training
+# measurements are taken after running a dummy replay loop.
+replay:
+  cycles: 0
+
 # Hydra stays in-place so our manual ``outdir`` handling works.
 hydra:
   run:
