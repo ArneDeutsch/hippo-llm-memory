@@ -2,8 +2,10 @@
 
 Summary
 -------
-Provides a small module that fuses LLM hidden states with plan or macro
-embeddings using optional LoRA projections and group query attention.
+Provides a small module that fuses LLM hidden states with plan or local
+subgraph embeddings.  Inputs are supplied as **memory tokens** together
+with an additive attention mask so padded entries can be ignored.  The
+adapter uses optional LoRA projections and grouped query attention.
 Complexity
 ----------
 ``O(B * T * H)`` where ``B`` is batch, ``T`` tokens, ``H`` heads.
