@@ -12,6 +12,7 @@ import torch
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from hippo_mem.common import TraceSpec
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
@@ -82,6 +83,30 @@ def test_noisy_cue_completed_and_recalled() -> None:
     recalled = store.recall(completed, k=1)[0]
     assert recalled.value.provenance == "full"
     assert recalled.score > base.score
+
+
+def test_retrieve_and_pack_uses_completion() -> None:
+    """Completed cues replace raw recalls when enabled."""
+
+    store = EpisodicStore(dim=4, config={"hopfield": True})
+    full = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+    other = np.array([0.0, 1.0, 0.0, 0.0], dtype="float32")
+    store.write(full, TraceValue(provenance="full"))
+    store.write(other, TraceValue(provenance="other"))
+    noisy = np.array([0.9, 0.1, 0.0, 0.0], dtype="float32")
+    hidden = torch.from_numpy(noisy).view(1, 1, -1)
+
+    spec = TraceSpec(source="episodic", k=2, params={"use_completion": True})
+    mem = episodic_retrieve_and_pack(hidden, spec, store, torch.nn.Identity())
+    completed = store.complete(noisy, k=2)
+    assert np.allclose(mem.tokens[0, 0].numpy(), completed, atol=1e-6)
+
+    spec2 = TraceSpec(source="episodic", k=2, params={"use_completion": False})
+    mem2 = episodic_retrieve_and_pack(hidden, spec2, store, torch.nn.Identity())
+    raw = store.recall(noisy, k=2)[0]
+    raw_vec = store.to_dense(raw.key)
+    assert np.allclose(mem2.tokens[0, 0].numpy(), raw_vec, atol=1e-6)
+    assert not np.allclose(mem2.tokens[0, 0].numpy(), completed, atol=1e-6)
 
 
 def test_gating_threshold_and_pin_weight() -> None:
