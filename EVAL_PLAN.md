@@ -280,3 +280,18 @@ python scripts/report.py --date YYYYMMDD
 ```
 
 ---
+# 17) Memory-trace ablations & metrics
+
+**Ablations:**
+- `traces=off` (adapters wired but given empty memory),
+- `traces=episodic|semantic|spatial` (alone),
+- `traces=all`.
+
+**Metrics additions:**
+- Retrieval: hit@K, avg K used, trace token count M.
+- Gating: write rate %, avg S, replay contribution % (if used).
+- Overhead: +ms/step from retrieval.
+
+**Command examples:**
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=200 seed=1337 traces=off
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=200 seed=1337 traces=episodic
