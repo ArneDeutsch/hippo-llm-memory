@@ -42,6 +42,7 @@ from trl import SFTConfig, SFTTrainer
 from hippo_mem.adapters.episodic_adapter import EpisodicMemoryAdapter
 from hippo_mem.adapters.lora import count_trainable_parameters, default_target_modules
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
+from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
@@ -49,7 +50,6 @@ from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import AsyncStoreWriter, EpisodicStore, TraceValue
-from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
@@ -282,7 +282,7 @@ def _gather_memory_tokens(
     kg: KnowledgeGraph | None,
     spatial_map: PlaceGraph | None,
     epi_adapter: EpisodicMemoryAdapter | None,
-    rel_adapter: RelationalAdapter | None,
+    rel_adapter: RelationalMemoryAdapter | None,
     spat_adapter: SpatialAdapter | None,
 ) -> MemoryTokens | None:
     """Retrieve and concatenate memory tokens from enabled sources."""
@@ -416,9 +416,9 @@ def train(cfg: TrainConfig) -> None:
         if not hasattr(epi_adapter, "proj"):
             epi_adapter.proj = nn.Linear(retrieval_dim, hidden)
 
-    rel_adapter: RelationalAdapter | None = None
+    rel_adapter: RelationalMemoryAdapter | None = None
     if cfg.relational:
-        rel_adapter = RelationalAdapter()
+        rel_adapter = RelationalMemoryAdapter()
 
     if cfg.spatial.enabled:
         spat_cfg = SpatialAdapterConfig(
@@ -455,12 +455,8 @@ def train(cfg: TrainConfig) -> None:
             )
             return self.adapter(hidden_states, plans)
 
-    class _RelationalProxy(nn.Module):
-        def forward(self, hidden_states: torch.Tensor, **_kwargs: Any) -> torch.Tensor:
-            return torch.zeros_like(hidden_states)
-
     epi_proxy = epi_adapter
-    rel_proxy = _RelationalProxy() if cfg.relational else None
+    rel_proxy = rel_adapter
     spat_proxy = _SpatialProxy(spat_adapter) if spat_adapter else None
 
     try:
@@ -625,6 +621,28 @@ def train(cfg: TrainConfig) -> None:
             peft_config,
             eval_dataset=val_ds,
         )
+        orig_compute_loss = trainer.compute_loss
+
+        def compute_loss_with_memory(self, model, inputs, return_outputs=False):
+            input_ids = inputs.get("input_ids")
+            mem = None
+            embed_fn = getattr(model, "get_input_embeddings", None)
+            if callable(embed_fn) and input_ids is not None:
+                hidden_emb = embed_fn()(input_ids)
+                mem = _gather_memory_tokens(
+                    hidden_emb,
+                    cfg,
+                    store,
+                    kg,
+                    spatial_map,
+                    epi_adapter,
+                    rel_adapter,
+                    spat_adapter,
+                )
+            model._hippo_memory_tokens = mem  # type: ignore[attr-defined]
+            return orig_compute_loss(model, inputs, return_outputs=return_outputs)
+
+        trainer.compute_loss = compute_loss_with_memory.__get__(trainer, type(trainer))
         count = count_trainable_parameters(trainer.model)
         logging.info("Trainable parameters: %d", count)
         if count <= 0:

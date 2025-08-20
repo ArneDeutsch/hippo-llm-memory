@@ -19,14 +19,15 @@ import threading
 import time
 from typing import Any, Callable, Optional, TypeVar
 
-import numpy as np
 import torch
 
+from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
+from hippo_mem.common import TraceSpec
 from hippo_mem.episodic.adapter import EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
-from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
+from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.map import PlaceGraph
 
@@ -50,7 +51,7 @@ class ConsolidationWorker(threading.Thread):
         model: object,
         *,
         episodic_adapter: Optional[EpisodicAdapter] = None,
-        relational_adapter: Optional[RelationalAdapter] = None,
+        relational_adapter: Optional[RelationalMemoryAdapter] = None,
         spatial_adapter: Optional[SpatialAdapter] = None,
         episodic_store: Optional[EpisodicStore] = None,
         kg_store: Optional[KnowledgeGraph] = None,
@@ -71,7 +72,7 @@ class ConsolidationWorker(threading.Thread):
             Base model kept frozen during consolidation.
         episodic_adapter : EpisodicAdapter, optional
             Adapter updated from episodic batches.
-        relational_adapter : RelationalAdapter, optional
+        relational_adapter : RelationalMemoryAdapter, optional
             Adapter updated from semantic batches.
         spatial_adapter : SpatialAdapter, optional
             Adapter updated from fresh batches.
@@ -125,7 +126,7 @@ class ConsolidationWorker(threading.Thread):
         scheduler: ReplayScheduler,
         model: object,
         episodic_adapter: Optional[EpisodicAdapter],
-        relational_adapter: Optional[RelationalAdapter],
+        relational_adapter: Optional[RelationalMemoryAdapter],
         spatial_adapter: Optional[SpatialAdapter],
         lr: float,
     ) -> None:
@@ -139,6 +140,7 @@ class ConsolidationWorker(threading.Thread):
 
         self._freeze_model(model)
         self._freeze_adapter(self.epi_adapter)
+        self._freeze_adapter(self.rel_adapter)
         self._freeze_adapter(self.spat_adapter)
 
         params: list[torch.nn.Parameter] = []
@@ -151,6 +153,15 @@ class ConsolidationWorker(threading.Thread):
                 self.epi_adapter = None
             else:
                 params.extend(epi_params)
+        if self.rel_adapter is not None:
+            rel_params = [p for p in self.rel_adapter.parameters() if p.requires_grad]
+            if not rel_params:
+                self.log.warning(
+                    "relational_adapter has no trainable parameters; skipping optimisation",
+                )
+                self.rel_adapter = None
+            else:
+                params.extend(rel_params)
         if self.spat_adapter is not None:
             spat_params = [p for p in self.spat_adapter.parameters() if p.requires_grad]
             if not spat_params:
@@ -255,12 +266,24 @@ class ConsolidationWorker(threading.Thread):
         self.log.debug("episodic adapter step")
 
     def _step_semantic(self) -> None:
-        if self.rel_adapter is None:
+        if self.rel_adapter is None or self.kg_store is None:
             return
-        q = np.zeros(1, dtype=float)
-        k = np.zeros((1, 1), dtype=float)
-        self.rel_adapter(q, k)
-        self.log.debug("relational adapter step")
+        proj = getattr(self.rel_adapter, "proj", None)
+        dim = getattr(proj, "out_features", getattr(self.kg_store, "dim", 1))
+        if proj is None:
+            base_dim = getattr(self.kg_store, "dim", dim)
+            proj = torch.nn.Linear(base_dim, dim)
+            self.rel_adapter.proj = proj  # type: ignore[attr-defined]
+        hidden = torch.randn(1, 1, dim)
+        spec = TraceSpec(source="relational", k=1, params={"hops": 1})
+        mem = relational_retrieve_and_pack(hidden, spec, self.kg_store, proj)
+        out = self.rel_adapter(hidden, memory=mem)
+        loss = out.sum()
+        loss = loss + sum(
+            p.sum() for name, p in self.rel_adapter.named_parameters() if "lora_" in name
+        )
+        self._optim_step(loss)
+        self.log.debug("relational adapter step loss=%.4f", float(loss.detach()))
 
     def _step_fresh(self) -> None:
         if self.spat_adapter is None:
