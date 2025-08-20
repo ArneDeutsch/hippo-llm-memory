@@ -2,16 +2,35 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, List, Protocol
+from typing import TYPE_CHECKING, Any, Dict, List, Protocol
 
 import torch
 from torch import nn
 
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from hippo_mem.common import MemoryTokens, TraceSpec
 
-class Adapter(Protocol):
-    """Protocol for memory adapters."""
 
-    def __call__(self, hidden_states: torch.Tensor, **kwargs: Any) -> torch.Tensor: ...
+if TYPE_CHECKING:
+
+    class Adapter(Protocol):
+        """Protocol for memory adapters."""
+
+        def __call__(
+            self,
+            hidden_states: torch.Tensor,
+            *,
+            memory: MemoryTokens | None = None,
+            spec: TraceSpec | None = None,
+            **kwargs: Any,
+        ) -> torch.Tensor: ...
+
+else:  # pragma: no cover - runtime shape agnostic
+
+    class Adapter(Protocol):
+        """Protocol for memory adapters."""
+
+        def __call__(self, hidden_states: torch.Tensor, **kwargs: Any) -> torch.Tensor: ...
 
 
 @dataclass
