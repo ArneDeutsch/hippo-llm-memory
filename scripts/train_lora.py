@@ -116,7 +116,8 @@ class TrainConfig:
     # Replay toggle
     @dataclass
     class Replay:
-        enabled: bool = True
+        enabled: bool = False
+        ratio: float = 0.3
 
     replay: Replay = field(default_factory=Replay)
 
@@ -367,6 +368,17 @@ def train(cfg: TrainConfig) -> None:
             train_ds = load_dataset(cfg.dataset_name, split="train")
             logging.info("Train dataset size: %d", len(train_ds))
 
+        if cfg.replay.enabled and train_ds is not None:
+            from scripts.replay_dataset import ReplayIterableDataset
+
+            def replay_reader():
+                while True:
+                    kind, trace_id = scheduler.next_batch(1)[0]
+                    yield {"prompt": f"replay {kind}", "answer": trace_id or ""}
+
+            train_ds = ReplayIterableDataset(train_ds, replay_reader, cfg.replay.ratio)
+            logging.info("Replay mixing active (ratio=%.2f)", cfg.replay.ratio)
+
         if cfg.dry_run:
             if peft_config is not None:
                 model = get_peft_model(model, peft_config)
@@ -408,7 +420,10 @@ def train(cfg: TrainConfig) -> None:
                 "No trainable parameters found. Set `target_modules` to attach LoRA."
             )
 
-        trainer.train()
+        try:
+            trainer.train()
+        except KeyboardInterrupt:
+            logging.info("Training interrupted by user")
     finally:
         if worker is not None:
             worker.stop()
