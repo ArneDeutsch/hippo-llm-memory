@@ -80,12 +80,17 @@ def episodic_retrieve_and_pack(
         k_wta = getattr(store, "k_wta", 0)
         if k_wta > 0:
             cue = store.to_dense(store.sparse_encode(cue, k_wta))
-        hopfield_on = getattr(store, "config", {}).get("hopfield", True)
-        if k > 0 and hopfield_on and hasattr(store, "complete"):
-            cue = store.complete(cue, k=k)
         traces = store.recall(cue, k) if k > 0 else []
         hits = len(traces)
         vecs = _extract_vectors(store, traces, store.dim)
+        use_completion = getattr(spec, "params", {}).get("use_completion", True)
+        if k > 0 and use_completion and hasattr(store, "complete"):
+            cue = store.complete(cue, k=k)
+            if hits > 0:
+                vecs[0] = cue
+            else:
+                vecs = cue.reshape(1, -1)
+                hits = 1
         if hits < k:
             pad = np.zeros((k - hits, vecs.shape[1] if hits else store.dim), dtype="float32")
             vecs = np.vstack([vecs, pad]) if hits else pad
