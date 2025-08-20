@@ -52,3 +52,16 @@ def test_empty_memory_ok() -> None:
     out = adapter(hidden, memory=mem)
     assert out.shape == hidden.shape
     assert torch.count_nonzero(out) == 0
+
+
+def test_nonzero_memory_changes_output() -> None:
+    """Adapter returns non-zero residual when memory tokens are active."""
+
+    cfg = EpisodicMemoryConfig(hidden_size=8, num_heads=2)
+    adapter = EpisodicMemoryAdapter(cfg)
+    hidden = torch.zeros(1, 1, cfg.hidden_size)
+    tokens = torch.ones(1, 1, cfg.hidden_size)
+    mask = torch.ones(1, 1, dtype=torch.bool)
+    mem = MemoryTokens(tokens=tokens, mask=mask)
+    out = adapter(hidden, memory=mem)
+    assert torch.count_nonzero(out) > 0
