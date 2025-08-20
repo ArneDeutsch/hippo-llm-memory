@@ -381,6 +381,21 @@ class KnowledgeGraph:
         self._log["hits"] += sub.number_of_nodes()
         return sub
 
+    @property
+    def dim(self) -> int:
+        """Return dimensionality of stored node embeddings.
+
+        Returns
+        -------
+        int
+            Embedding dimension or ``0`` when no embeddings are present.
+        """
+
+        if self.node_embeddings:
+            first = next(iter(self.node_embeddings.values()))
+            return int(first.shape[0])
+        return 0
+
     # ------------------------------------------------------------------
     # Maintenance helpers
     def _log_event(self, op: str, info: dict[str, Any]) -> None:
