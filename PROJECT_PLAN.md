@@ -95,13 +95,17 @@
 
 **Work packages**
 
-1. [ ] **Adapter hookup**: insert Episodic/Relational/Spatial adapters after configurable block N; enable/disable via Hydra flags.
-2. [ ] **LoRA attachment checks**: set architecture-specific `target_modules`; log trainable param count; assert >0.
-3. [ ] **JSONL data loader**: replace IMDB default with loaders for `data/episodic_*`, `data/semantic_*`, `data/spatial_*`; add train/val split selection in config.
-4. [ ] **Replay mixing**: integrate `ReplayScheduler` batches by ratio; ensure clean thread lifecycle.
-5. [ ] **Tests**: add tests ensuring non-zero trainables and that adapter hooks run at least once per batch.
+1. [x] **Adapter hookup**: insert Episodic/Relational/Spatial adapters after configurable block N; enable/disable via Hydra flags.
+   - Evidence: hippo_mem/adapters/patch.py, tests/test_adapter_wiring.py
+2. [x] **LoRA attachment checks**: set architecture-specific `target_modules`; log trainable param count; assert >0.
+   - Evidence: hippo_mem/adapters/lora.py, tests/test_lora_targets.py
+3. [x] **JSONL data loader**: replace IMDB default with loaders for `data/episodic_*`, `data/semantic_*`, `data/spatial_*`; add train/val split selection in config.
+   - Evidence: scripts/jsonl_dataset.py, tests/test_data_loader.py
+4. [x] **Replay mixing**: integrate `ReplayScheduler` batches by ratio; ensure clean thread lifecycle.
+   - Evidence: scripts/replay_dataset.py, tests/test_replay_dataset.py, tests/test_replay_scheduler.py
+5. [x] **Tests**: add tests ensuring non-zero trainables and that adapter hooks run at least once per batch.
 
-- [ ] **Gate**: dry-run green; unit tests for wiring & trainables pass; a short (≤200 steps) local run logs adapter activation, non-zero trainables, and JSONL consumption.
+- [x] **Gate**: PASS (2025-08-20) via `scripts/smoke_7b.sh`.
 
 # Milestone 8a – Runtime retrieval & write-gate plumbing
 
