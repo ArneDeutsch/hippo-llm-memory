@@ -194,7 +194,7 @@ class EpisodicStore:
 
         # Configuration and logging
         self.config = config or {}
-        self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
+        self._log = {"writes": 0, "recalls": 0, "hits": 0, "requests": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
         self._stop_event: Optional[threading.Event] = None
         self._history: List[dict[str, Any]] = []
@@ -445,7 +445,13 @@ class EpisodicStore:
             )
         self._log["recalls"] += 1
         self._log["hits"] += len(traces)
+        self._log["requests"] += k
         return traces
+
+    def to_dense(self, key: DGKey) -> np.ndarray:
+        """Convert a sparse ``DGKey`` into a dense vector."""
+
+        return self._to_dense(key)
 
     def delete(self, idx: int) -> None:
         """Delete a trace by ``idx``.
@@ -683,7 +689,10 @@ class EpisodicStore:
         start_background_tasks
         """
 
-        return dict(self._log)
+        log = dict(self._log)
+        req = log.get("requests", 0)
+        log["hit_rate"] = log["hits"] / req if req else 0.0
+        return log
 
     def start_background_tasks(self, interval: float = 60.0) -> None:
         """Start a thread that periodically decays and prunes memories.

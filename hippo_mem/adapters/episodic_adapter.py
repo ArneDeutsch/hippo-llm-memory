@@ -19,9 +19,11 @@ class EpisodicMemoryConfig(AdapterConfig):
 class EpisodicMemoryAdapter(nn.Module):
     """Expose :class:`EpisodicAdapter` under the fusion protocol."""
 
-    def __init__(self, cfg: AdapterConfig) -> None:
+    def __init__(self, cfg: AdapterConfig, retrieval_dim: int | None = None) -> None:
         super().__init__()
         self.inner = EpisodicAdapter(cfg)
+        dim = retrieval_dim or cfg.hidden_size
+        self.proj = nn.Linear(dim, cfg.hidden_size)
 
     def forward(self, hidden_states: Tensor, *, memory: MemoryTokens | None = None) -> Tensor:
         """Return the residual produced from ``memory``."""
