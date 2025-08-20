@@ -46,8 +46,9 @@ from hippo_mem.common import TraceSpec
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
 from hippo_mem.episodic.adapter import AdapterConfig
+from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.replay import ReplayScheduler
-from hippo_mem.episodic.store import EpisodicStore
+from hippo_mem.episodic.store import AsyncStoreWriter, EpisodicStore, TraceValue
 from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
@@ -108,6 +109,8 @@ class TrainConfig:
             lora_dropout=0.1,
         )
     )
+
+    write_threshold: float = 0.5
 
     # Relational and spatial memory knobs
     relational: bool = False
@@ -267,6 +270,10 @@ def train(cfg: TrainConfig) -> None:
         },
     }
     store = EpisodicStore(hidden, config=store_cfg)
+    writer = AsyncStoreWriter(store)
+    gate = WriteGate(tau=cfg.write_threshold)
+    gate_attempts = 0
+    gate_accepts = 0
     epi_interval = 0.1 if cfg.dry_run else cfg.episodic_mem.maintenance_interval
     store.start_background_tasks(epi_interval)
 
@@ -474,6 +481,15 @@ def train(cfg: TrainConfig) -> None:
                 )
                 dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
                 _ = model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
+            probs = np.array([1.0])
+            queries = np.zeros((1, hidden), dtype=np.float32)
+            keys = np.zeros((0, hidden), dtype=np.float32)
+            decisions, _ = gate_batch(gate, probs, queries, keys)
+            gate_attempts += len(decisions)
+            gate_accepts += sum(d.allow for d in decisions)
+            for dec, q in zip(decisions, queries):
+                if dec.allow:
+                    writer.enqueue(q, TraceValue(provenance="dry_run"))
             for _ in range(3):
                 log_memory_status(store, kg, spatial_map, scheduler, worker)
                 time.sleep(0.1)
@@ -514,6 +530,15 @@ def train(cfg: TrainConfig) -> None:
         if worker is not None:
             worker.stop()
             worker.join(timeout=1)
+        if "writer" in locals() and writer is not None:
+            writer.stop()
+            rate = gate_accepts / gate_attempts if gate_attempts else 0.0
+            logging.info(
+                "write_accept_rate=%.2f writes_enqueued=%d writes_committed=%d",
+                rate,
+                writer.stats["writes_enqueued"],
+                writer.stats["writes_committed"],
+            )
 
 
 @hydra.main(config_name="train_lora_config", version_base=None)

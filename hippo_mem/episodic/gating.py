@@ -428,3 +428,76 @@ class WriteGate:
         sc = self.score(prob, query, keys, reward, pin)
         # why: compare to threshold to decide on write
         return GateDecision(sc > self.tau, sc, provenance, timestamp)
+
+
+def gate_batch(
+    gate: WriteGate,
+    probs: np.ndarray,
+    queries: np.ndarray,
+    keys: np.ndarray,
+    rewards: np.ndarray | None = None,
+    pins: np.ndarray | None = None,
+    provenance: str = "",
+) -> tuple[list[GateDecision], float]:
+    """Apply :class:`WriteGate` over a batch of items.
+
+    Summary
+    -------
+    Compute decisions for each element and return the acceptance rate.
+
+    Parameters
+    ----------
+    gate : WriteGate
+        Gate used for scoring.
+    probs : numpy.ndarray
+        Model probabilities with shape ``(b,)``.
+    queries : numpy.ndarray
+        Query vectors of shape ``(b, d)``.
+    keys : numpy.ndarray
+        Existing key matrix ``(n, d)``.
+    rewards : numpy.ndarray, optional
+        Reward values ``(b,)``.
+    pins : numpy.ndarray, optional
+        Boolean overrides ``(b,)``.
+    provenance : str, optional
+        Source identifier for logging.
+
+    Returns
+    -------
+    list of GateDecision
+        Decision per batch element.
+    float
+        Fraction of accepted items.
+
+    Examples
+    --------
+    >>> gate = WriteGate(tau=0.5)
+    >>> decisions, rate = gate_batch(
+    ...     gate,
+    ...     np.array([0.1, 0.9]),
+    ...     np.zeros((2, 1), dtype=np.float32),
+    ...     np.zeros((0, 1), dtype=np.float32),
+    ... )
+    >>> (decisions[0].allow, decisions[1].allow, round(rate, 2))
+    (True, False, 0.5)
+    """
+
+    probs = np.asarray(probs, dtype=float).reshape(-1)
+    queries = np.asarray(queries, dtype="float32").reshape(len(probs), -1)
+    if rewards is not None:
+        rewards = np.asarray(rewards, dtype=float).reshape(-1)
+    if pins is not None:
+        pins = np.asarray(pins, dtype=bool).reshape(-1)
+
+    decisions: list[GateDecision] = []
+    accepts = 0
+    for i, p in enumerate(probs):
+        r = float(rewards[i]) if rewards is not None else 0.0
+        pin = bool(pins[i]) if pins is not None else False
+        dec = gate(p, queries[i], keys, r, pin, provenance)
+        decisions.append(dec)
+        if dec.allow:
+            accepts += 1
+
+    rate = accepts / len(decisions) if decisions else 0.0
+    return decisions, rate
