@@ -72,17 +72,20 @@ python scripts/eval_bench.py +run_matrix=true preset=memory/all
 
 python scripts/train_lora.py
 model_name=Qwen/Qwen2-1.5B-Instruct
-data.format=jsonl
-data.train=data/spatial_200_1337.jsonl
-data.val=data/spatial_50_2025.jsonl
+data_format=jsonl train_files='["data/spatial_200_1337.jsonl"]' val_files='["data/spatial_50_2025.jsonl"]'
 lora_r=16 lora_alpha=32
 target_modules='["q_proj","k_proj","v_proj","o_proj"]'
 max_steps=300 learning_rate=5e-5 gradient_accumulation_steps=8
+fusion_insert_block_index=-4
 
 **Evaluation**
 
 python scripts/eval_model.py suite=spatial preset=memory/smpd n=50 seed=1337
 
-**Acceptance criteria:** metrics include path success and suboptimality; artifacts under `runs/YYYYMMDD/smpd/spatial/`.
+## Acceptance criteria
+
+- Logs contain "Adapter fusion attached at block" and trainable params > 0.
+- Metrics include path success and suboptimality.
+- Artifacts under `runs/YYYYMMDD/smpd/spatial/`.
 
 

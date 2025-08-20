@@ -64,17 +64,19 @@ python scripts/eval_bench.py +run_matrix=true preset=memory/all
 
 python scripts/train_lora.py
 model_name=Qwen/Qwen2-1.5B-Instruct
-data.format=jsonl
-data.train=data/semantic_200_1337.jsonl
-data.val=data/semantic_50_2025.jsonl
+data_format=jsonl train_files='["data/semantic_200_1337.jsonl"]' val_files='["data/semantic_50_2025.jsonl"]'
 lora_r=16 lora_alpha=32
 target_modules='["q_proj","k_proj","v_proj","o_proj"]'
 max_steps=300 learning_rate=5e-5 gradient_accumulation_steps=8
+fusion_insert_block_index=-4
 
 **Evaluation**
 
 python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=50 seed=1337
 
-**Acceptance criteria:** metrics show multi-hop accuracy, contradiction rate;
-artifacts under `runs/YYYYMMDD/sgc_rss/semantic/`.
+## Acceptance criteria
+
+- Logs contain "Adapter fusion attached at block" and trainable params > 0.
+- Metrics show multi-hop accuracy and contradiction rate.
+- Artifacts under `runs/YYYYMMDD/sgc_rss/semantic/`.
 
