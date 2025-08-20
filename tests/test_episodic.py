@@ -1,6 +1,7 @@
 """Tests for the episodic memory store."""
 
 import logging
+import time
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -287,3 +288,14 @@ def test_kwta_produces_sparse_indices() -> None:
     assert trace.key.indices.size == 2
     top2 = np.argsort(-np.abs(vec))[:2]
     assert set(trace.key.indices.tolist()) == set(top2.tolist())
+
+
+def test_stop_background_tasks_idempotent() -> None:
+    """Background maintenance thread can be stopped multiple times."""
+
+    store = EpisodicStore(dim=2, config={"decay_rate": 0.1})
+    store.start_background_tasks(interval=0.01)
+    store.write(np.ones(2, dtype="float32"), TraceValue(provenance="x"))
+    time.sleep(0.02)
+    store.stop_background_tasks()
+    store.stop_background_tasks()

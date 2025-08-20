@@ -80,6 +80,7 @@ class KnowledgeGraph:
         self._gnn_updates = bool(self.config.get("gnn_updates", True))
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
         self._bg_thread: Optional[threading.Thread] = None
+        self._stop_event: Optional[threading.Event] = None
         self._history: list[dict[str, Any]] = []
         self._max_undo = int(self.config.get("max_undo", 5))
         self._maintenance_log: list[dict[str, Any]] = []
@@ -548,9 +549,10 @@ class KnowledgeGraph:
         if self._bg_thread is not None:
             return
 
+        stop_event = threading.Event()
+
         def loop() -> None:
-            while True:
-                time.sleep(interval)
+            while not stop_event.wait(interval):
                 cfg = self.config.get("prune", {})
                 self.prune(
                     float(cfg.get("min_conf", 0.0)),
@@ -560,7 +562,25 @@ class KnowledgeGraph:
 
         t = threading.Thread(target=loop, daemon=True)
         t.start()
+        self._stop_event = stop_event
         self._bg_thread = t
+
+    def stop_background_tasks(self) -> None:
+        """Stop background maintenance thread if running.
+
+        Summary
+        -------
+        Idempotently signals the maintenance loop to exit and waits
+        briefly for the thread to terminate.
+        """
+
+        if self._bg_thread is None:
+            return
+        if self._stop_event is not None:
+            self._stop_event.set()
+        self._bg_thread.join(timeout=1.0)
+        self._bg_thread = None
+        self._stop_event = None
 
     def rollback(self, n: int = 1) -> None:
         """Rollback the last ``n`` prune operations.

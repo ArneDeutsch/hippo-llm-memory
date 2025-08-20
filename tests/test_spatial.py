@@ -1,4 +1,5 @@
 import copy
+import time
 
 import networkx as nx
 import torch
@@ -241,3 +242,15 @@ def test_planner_optimality_property(data: tuple[PlaceGraph, str, str]) -> None:
             c += G[a][b]["weight"]
         min_cost = min(min_cost, c)
     assert abs(cost - min_cost) < 1e-6
+
+
+def test_stop_background_tasks_idempotent() -> None:
+    """Background maintenance thread can be stopped multiple times."""
+
+    g = PlaceGraph(config={"decay_rate": 0.1})
+    g.start_background_tasks(interval=0.01)
+    g.observe("a")
+    g.observe("b")
+    time.sleep(0.02)
+    g.stop_background_tasks()
+    g.stop_background_tasks()

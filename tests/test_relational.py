@@ -286,3 +286,14 @@ def test_schema_fast_track_threshold_property(threshold: float, offset: float) -
     tup = ("a", "rel", "b", "ctx", None, conf, 0)
     result = si.fast_track(tup, kg)
     assert result == (conf >= threshold)
+
+
+def test_stop_background_tasks_idempotent() -> None:
+    """Background maintenance thread can be stopped multiple times."""
+
+    kg = KnowledgeGraph(config={"prune": {"max_age": 1}})
+    kg.start_background_tasks(interval=0.01)
+    kg.upsert("A", "r", "B", "ctx")
+    time.sleep(0.02)
+    kg.stop_background_tasks()
+    kg.stop_background_tasks()
