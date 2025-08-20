@@ -1,9 +1,13 @@
 """Smoke tests for the LoRA/QLoRA training script."""
 
+import logging
 import subprocess
 import sys
 from types import SimpleNamespace
 
+import torch
+
+from hippo_mem.common import MemoryTokens
 from scripts.train_lora import (
     TrainConfig,
     _init_sft_trainer,
@@ -552,3 +556,119 @@ def test_init_sft_trainer_accepts_processing_class(monkeypatch) -> None:
     _init_sft_trainer("m", "d", "a", "tok", "p")
 
     assert captured["processing_class"] == "tok"
+
+
+def test_train_skips_retrieval_when_disabled(monkeypatch) -> None:
+    """No retrieval occurs when all memory systems are disabled."""
+
+    captured: dict[str, object] = {}
+
+    def fake_loader(_cfg: TrainConfig):
+        class DummyModel:
+            config = SimpleNamespace(use_cache=False, hidden_size=8)
+
+            def gradient_checkpointing_enable(self) -> None:
+                pass
+
+            def __call__(self, input_ids, labels=None, memory_tokens=None):
+                captured["memory"] = memory_tokens
+                return SimpleNamespace()
+
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return DummyModel(), tokenizer
+
+    def raise_call(*_a, **_k):  # pragma: no cover - should not run
+        raise AssertionError("retrieval should be disabled")
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr(
+        "scripts.train_lora.EpisodicStore",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.KnowledgeGraph",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.PlaceGraph",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr("scripts.train_lora.episodic_retrieve_and_pack", raise_call)
+    monkeypatch.setattr("scripts.train_lora.relational_retrieve_and_pack", raise_call)
+    monkeypatch.setattr("scripts.train_lora.spatial_retrieve_and_pack", raise_call)
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+
+    cfg = parse_args(["dry_run=true", "replay.enabled=false"])
+    train(cfg)
+    assert captured.get("memory") is None
+
+
+def test_train_logs_episodic_retrieval(monkeypatch, caplog) -> None:
+    """Enabling episodic retrieval logs stats and passes memory to the model."""
+
+    caplog.set_level(logging.INFO)
+    captured: dict[str, object] = {}
+
+    def fake_loader(_cfg: TrainConfig):
+        class DummyModel:
+            config = SimpleNamespace(use_cache=False, hidden_size=8)
+
+            def gradient_checkpointing_enable(self) -> None:
+                pass
+
+            def __call__(self, input_ids, labels=None, memory_tokens=None):
+                captured["memory"] = memory_tokens
+                return SimpleNamespace()
+
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return DummyModel(), tokenizer
+
+    def fake_retrieve(hidden, spec, _store, _proj):
+        tokens = torch.zeros(hidden.size(0), spec.k, hidden.size(-1))
+        mask = torch.ones(hidden.size(0), spec.k, dtype=torch.bool)
+        meta = {"latency_ms": 1.0, "hit_rate": 1.0}
+        return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr(
+        "scripts.train_lora.EpisodicStore",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.KnowledgeGraph",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.PlaceGraph",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr("scripts.train_lora.episodic_retrieve_and_pack", fake_retrieve)
+    monkeypatch.setattr(
+        "scripts.train_lora.relational_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.spatial_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+
+    cfg = parse_args(
+        [
+            "dry_run=true",
+            "episodic.enabled=true",
+            "memory.episodic.enabled=true",
+            "memory.episodic.k=2",
+            "replay.enabled=false",
+        ]
+    )
+    train(cfg)
+
+    assert "episodic_retrieval_k=2" in caplog.text
+    mem = captured.get("memory")
+    assert isinstance(mem, MemoryTokens)
+    assert mem.tokens.shape[1] == 2

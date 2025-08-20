@@ -42,7 +42,7 @@ from trl import SFTConfig, SFTTrainer
 from hippo_mem.adapters.episodic_adapter import EpisodicMemoryAdapter
 from hippo_mem.adapters.lora import count_trainable_parameters, default_target_modules
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
-from hippo_mem.common import TraceSpec
+from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
 from hippo_mem.episodic.adapter import AdapterConfig
@@ -51,15 +51,45 @@ from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import AsyncStoreWriter, EpisodicStore, TraceValue
 from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
+from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.map import PlaceGraph
+from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from scripts.utils import log_memory_status
 
 # Backwards compatibility for tests expecting ``EpisodicAdapter`` symbol
 EpisodicAdapter = EpisodicMemoryAdapter
 
 logging.basicConfig(level=logging.INFO)
+
+
+@dataclass
+class EpisodicSpec:
+    enabled: bool = False
+    k: int = 0
+
+
+@dataclass
+class RelationalSpec:
+    enabled: bool = False
+    k: int = 0
+    hops: int = 1
+
+
+@dataclass
+class SpatialSpec:
+    enabled: bool = False
+    radius: int = 1
+    max_nodes: int = 0
+    max_edges: int = 0
+
+
+@dataclass
+class Memory:
+    episodic: EpisodicSpec = field(default_factory=EpisodicSpec)
+    relational: RelationalSpec = field(default_factory=RelationalSpec)
+    spatial: SpatialSpec = field(default_factory=SpatialSpec)
 
 
 @dataclass
@@ -123,6 +153,8 @@ class TrainConfig:
             lora_dropout=0.1,
         )
     )
+
+    memory: Memory = field(default_factory=Memory)
 
     # Replay toggle
     @dataclass
@@ -241,6 +273,82 @@ def _init_sft_trainer(
     elif "processing_class" in sig.parameters:
         kwargs["processing_class"] = tokenizer
     return SFTTrainer(**kwargs)
+
+
+def _gather_memory_tokens(
+    hidden: torch.Tensor,
+    cfg: TrainConfig,
+    store: EpisodicStore | None,
+    kg: KnowledgeGraph | None,
+    spatial_map: PlaceGraph | None,
+    epi_adapter: EpisodicMemoryAdapter | None,
+    rel_adapter: RelationalAdapter | None,
+    spat_adapter: SpatialAdapter | None,
+) -> MemoryTokens | None:
+    """Retrieve and concatenate memory tokens from enabled sources."""
+
+    mems: list[MemoryTokens] = []
+    dim = hidden.size(-1)
+
+    if cfg.memory.episodic.enabled and store is not None and epi_adapter is not None:
+        spec = TraceSpec(source="episodic", k=cfg.memory.episodic.k)
+        mem = episodic_retrieve_and_pack(hidden, spec, store, epi_adapter.proj)
+        logging.info(
+            "episodic_retrieval_k=%d latency_ms=%.2f hit_rate=%.2f",
+            spec.k or 0,
+            mem.meta.get("latency_ms", 0.0),
+            mem.meta.get("hit_rate", 0.0),
+        )
+        mems.append(mem)
+
+    if cfg.memory.relational.enabled and kg is not None and rel_adapter is not None:
+        proj = getattr(rel_adapter, "proj", None)
+        if proj is None:
+            base_dim = getattr(kg, "dim", dim)
+            proj = nn.Linear(base_dim, dim)
+            rel_adapter.proj = proj  # type: ignore[attr-defined]
+        spec = TraceSpec(
+            source="relational",
+            k=cfg.memory.relational.k,
+            params={"hops": cfg.memory.relational.hops},
+        )
+        mem = relational_retrieve_and_pack(hidden, spec, kg, proj)
+        logging.info(
+            "relational_retrieval_k=%d latency_ms=%.2f hit_rate=%.2f",
+            spec.k or 0,
+            mem.meta.get("latency_ms", 0.0),
+            mem.meta.get("hit_rate", 0.0),
+        )
+        mems.append(mem)
+
+    if cfg.memory.spatial.enabled and spatial_map is not None and spat_adapter is not None:
+        proj = getattr(spat_adapter, "proj", None)
+        if proj is None:
+            proj = nn.Linear(4, dim)
+            spat_adapter.proj = proj  # type: ignore[attr-defined]
+        spec = TraceSpec(
+            source="spatial",
+            params={
+                "radius": cfg.memory.spatial.radius,
+                "max_nodes": cfg.memory.spatial.max_nodes,
+                "max_edges": cfg.memory.spatial.max_edges,
+            },
+        )
+        mem = spatial_retrieve_and_pack("origin", spec, spatial_map, proj)
+        logging.info(
+            "spatial_retrieval_radius=%d latency_ms=%.2f num_nodes=%d",
+            cfg.memory.spatial.radius,
+            mem.meta.get("latency_ms", 0.0),
+            mem.meta.get("num_nodes", 0),
+        )
+        mems.append(mem)
+
+    if not mems:
+        return None
+    tokens = torch.cat([m.tokens for m in mems], dim=1)
+    mask = torch.cat([m.mask for m in mems], dim=1)
+    meta = {"sources": [m.meta for m in mems]}
+    return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
 
 def train(cfg: TrainConfig) -> None:
@@ -464,21 +572,23 @@ def train(cfg: TrainConfig) -> None:
                     raise RuntimeError(
                         "No trainable parameters found. Set `target_modules` to attach LoRA.",
                     )
-            if epi_adapter is not None and hasattr(store, "recall"):
-                device = torch.device("cpu")
-                try:
-                    device = next(model.parameters()).device  # type: ignore[call-arg]
-                except Exception:  # pragma: no cover - defensive
-                    pass
-                dummy_hidden = torch.zeros(1, 1, hidden, device=device)
-                spec = TraceSpec(source="episodic", k=2)
-                mem = episodic_retrieve_and_pack(dummy_hidden, spec, store, epi_adapter.proj)
-                logging.info(
-                    "episodic_retrieval_k=%d latency_ms=%.2f hit_rate=%.2f",
-                    spec.k,
-                    mem.meta["latency_ms"],
-                    mem.meta["hit_rate"],
-                )
+            device = torch.device("cpu")
+            try:
+                device = next(model.parameters()).device  # type: ignore[call-arg]
+            except Exception:  # pragma: no cover - defensive
+                pass
+            dummy_hidden = torch.zeros(1, 1, hidden, device=device)
+            mem = _gather_memory_tokens(
+                dummy_hidden,
+                cfg,
+                store,
+                kg,
+                spatial_map,
+                epi_adapter,
+                rel_adapter,
+                spat_adapter,
+            )
+            if mem is not None:
                 dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
                 _ = model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
             probs = np.array([1.0])
