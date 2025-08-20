@@ -79,7 +79,8 @@ def episodic_retrieve_and_pack(
         cue = batch_hidden[i, -1].detach().cpu().numpy()
         k_wta = getattr(store, "k_wta", 0)
         if k_wta > 0:
-            cue = store.to_dense(store.sparse_encode(cue, k_wta))
+            cue_sparse = store.sparse_encode(cue, k_wta)
+            cue = store.to_dense(cue_sparse)
         traces = store.recall(cue, k) if k > 0 else []
         hits = len(traces)
         vecs = _extract_vectors(store, traces, store.dim)
