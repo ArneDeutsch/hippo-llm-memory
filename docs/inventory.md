@@ -51,3 +51,9 @@
 | `relational.schema_fasttrack` | SGC-RSS | True | bypass schema-based KG routing | Hydra `+ablate=relational.schema_fasttrack=false` |
 | `spatial.macros` | SMPD | True | ignore MacroLib suggestions | Hydra `+ablate=spatial.macros=false` |
 | `spatial.path_integration` | SMPD | True | disable path integration in PlaceGraph | Hydra `+ablate=spatial.path_integration=false` |
+
+## Planning & review artifacts
+- `review/review-2025-08-19.md` — audit of implementation & testing.
+- `review/action-plan-2025-08-19.md` — concrete follow-ups from the review.
+- `MILESTONE_9_PLAN.md` — expanded with C0/C11/C12 tasks.
+- `EVAL_PLAN.md` — now includes harness requirements & command matrix.
