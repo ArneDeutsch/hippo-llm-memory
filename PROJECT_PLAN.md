@@ -120,8 +120,13 @@
 6. **Config & toggles:** Hydra flags to enable/disable each memory, set K, max tokens, and gating threshold τ.
 7. **Telemetry:** log retrieval hit-rates, avg M, % writes, and latency per step.
 
-**Gate:** 
+**Gate:**
 - Small run (≤200 steps) shows non-zero retrieval rate; adapters receive `memory_tokens`; ≥1% writes recorded; end-to-end throughput stable (latency overhead reported).
+- `scripts/smoke_8a.sh` passes; unit tests for retrieval,
+  shapes, and gating pass; logs present.
+
+**Evidence:** `scripts/smoke_8a.sh`, `tests/test_retrieval.py`,
+`tests/test_shapes.py`, `tests/test_episodic_writes.py`, `runs/*/8a/`
 
 # Milestone 8 – Baseline datasets & evaluation runs
 

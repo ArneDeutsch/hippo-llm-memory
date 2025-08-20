@@ -111,6 +111,8 @@ python scripts/eval_bench.py suite=episodic +ablate=episodic.use_gate=false
   - `runs/<date>/<exp>/<suite>/metrics.csv`
   - `runs/<date>/<exp>/<suite>/meta.json` (config hash, seeds, git SHA, model ID, preset, ablation flags, replay cycles).
 - Supports `dry_run=true` for CI smoke tests (e.g., 5 tasks).
+- Milestone 8a adds hooks logging retrieval hit rates, memory token shapes,
+  and gate decisions; exercised via `scripts/smoke_8a.sh`.
 
 ## 7.1 File schemas
 

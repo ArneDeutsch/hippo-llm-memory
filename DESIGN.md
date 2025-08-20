@@ -93,7 +93,7 @@ This document specifies a production-ready design for hippocampus-inspired memor
 * Planner: A\*/Dijkstra (text worlds) or learned planner (ablation).
 * Successful trajectories → **behavior cloning** into `MacroLib`; suggest at inference (top-k).
 
-# 6) Adapters (LoRA/QLoRA)
+# 6) Adapters & Memory I/O
 
 * **Targets:** `q_proj`, `k_proj`, `v_proj`, `o_proj`, optionally FFN `{up, down}` in adapter blocks only.
 * **Defaults:** r=16, α=32, dropout=0.05, NF4 4-bit, grad checkpointing.
@@ -103,6 +103,10 @@ This document specifies a production-ready design for hippocampus-inspired memor
   * **RelationalAdapter**: parallel cross-attention over KG encodings; gated merge.
   * **SpatialAdapter**: lightweight cross-attention to plan/macro embeddings or via tool-API.
 * **Efficiency:** enable **FlashAttention** kernels and **MQA/GQA** in adapter attention.
+* **MemoryTokens & flow:** retrieval hooks gather top‑K features from each store,
+  project to `d_model` and pack to `memory_tokens` `[B, M, d_model]` (+ mask).
+  Adapters no‑op when the tensor is empty.
+* **Write‑gate:** after forward, compute salience `S` and persist new traces only when `S > τ`.
 
 # 7) Configuration (Hydra)
 
