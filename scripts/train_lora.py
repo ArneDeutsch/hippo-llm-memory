@@ -39,13 +39,13 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
-from hippo_mem.adapters.lora import (
-    count_trainable_parameters,
-    default_target_modules,
-)
+from hippo_mem.adapters.episodic_adapter import EpisodicMemoryAdapter
+from hippo_mem.adapters.lora import count_trainable_parameters, default_target_modules
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
+from hippo_mem.common import TraceSpec
 from hippo_mem.consolidation.worker import ConsolidationWorker
-from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
+from hippo_mem.episodic import episodic_retrieve_and_pack
+from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.adapter import RelationalAdapter
@@ -54,6 +54,9 @@ from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.map import PlaceGraph
 from scripts.utils import log_memory_status
+
+# Backwards compatibility for tests expecting ``EpisodicAdapter`` symbol
+EpisodicAdapter = EpisodicMemoryAdapter
 
 logging.basicConfig(level=logging.INFO)
 
@@ -255,7 +258,19 @@ def train(cfg: TrainConfig) -> None:
 
     hidden = getattr(model.config, "hidden_size", cfg.episodic.hidden_size)
 
-    epi_adapter: EpisodicAdapter | None = None
+    store_cfg = {
+        "hopfield": cfg.episodic.hopfield,
+        "decay_rate": cfg.episodic_mem.decay_rate,
+        "prune": {
+            "min_salience": cfg.episodic_mem.prune_min_salience,
+            "max_age": cfg.episodic_mem.prune_max_age,
+        },
+    }
+    store = EpisodicStore(hidden, config=store_cfg)
+    epi_interval = 0.1 if cfg.dry_run else cfg.episodic_mem.maintenance_interval
+    store.start_background_tasks(epi_interval)
+
+    epi_adapter: EpisodicMemoryAdapter | None = None
     spat_adapter: SpatialAdapter | None = None
 
     # Determine KV head counts based on efficiency flag
@@ -279,8 +294,12 @@ def train(cfg: TrainConfig) -> None:
             lora_dropout=cfg.episodic.lora_dropout,
             enabled=True,
             flash_attention=cfg.efficiency.flash_attention,
+            hopfield=cfg.episodic.hopfield,
         )
+        retrieval_dim = getattr(store, "dim", hidden)
         epi_adapter = EpisodicAdapter(epi_cfg)
+        if not hasattr(epi_adapter, "proj"):
+            epi_adapter.proj = nn.Linear(retrieval_dim, hidden)
 
     rel_adapter: RelationalAdapter | None = None
     if cfg.relational:
@@ -305,22 +324,6 @@ def train(cfg: TrainConfig) -> None:
         use_spatial=cfg.spatial.enabled,
     )
 
-    class _EpisodicProxy(nn.Module):
-        def __init__(self, adapter: EpisodicAdapter) -> None:
-            super().__init__()
-            self.adapter = adapter
-
-        def forward(self, hidden_states: torch.Tensor, **_kwargs: Any) -> torch.Tensor:
-            bsz, _, dim = hidden_states.shape
-            traces = torch.zeros(
-                bsz,
-                1,
-                dim,
-                device=hidden_states.device,
-                dtype=hidden_states.dtype,
-            )
-            return self.adapter(hidden_states, traces)
-
     class _SpatialProxy(nn.Module):
         def __init__(self, adapter: SpatialAdapter) -> None:
             super().__init__()
@@ -341,7 +344,7 @@ def train(cfg: TrainConfig) -> None:
         def forward(self, hidden_states: torch.Tensor, **_kwargs: Any) -> torch.Tensor:
             return torch.zeros_like(hidden_states)
 
-    epi_proxy = _EpisodicProxy(epi_adapter) if epi_adapter else None
+    epi_proxy = epi_adapter
     rel_proxy = _RelationalProxy() if cfg.relational else None
     spat_proxy = _SpatialProxy(spat_adapter) if spat_adapter else None
 
@@ -360,19 +363,6 @@ def train(cfg: TrainConfig) -> None:
         )
     except Exception as exc:  # pragma: no cover - defensive
         logging.warning("Adapter fusion attach failed: %s", exc)
-
-    # Simulate interleaved replay batches using a scheduler
-    store_cfg = {
-        "hopfield": cfg.episodic.hopfield,
-        "decay_rate": cfg.episodic_mem.decay_rate,
-        "prune": {
-            "min_salience": cfg.episodic_mem.prune_min_salience,
-            "max_age": cfg.episodic_mem.prune_max_age,
-        },
-    }
-    store = EpisodicStore(hidden, config=store_cfg)
-    epi_interval = 0.1 if cfg.dry_run else cfg.episodic_mem.maintenance_interval
-    store.start_background_tasks(epi_interval)
 
     kg_cfg = {
         "prune": {
@@ -467,6 +457,23 @@ def train(cfg: TrainConfig) -> None:
                     raise RuntimeError(
                         "No trainable parameters found. Set `target_modules` to attach LoRA.",
                     )
+            if epi_adapter is not None and hasattr(store, "recall"):
+                device = torch.device("cpu")
+                try:
+                    device = next(model.parameters()).device  # type: ignore[call-arg]
+                except Exception:  # pragma: no cover - defensive
+                    pass
+                dummy_hidden = torch.zeros(1, 1, hidden, device=device)
+                spec = TraceSpec(source="episodic", k=2)
+                mem = episodic_retrieve_and_pack(dummy_hidden, spec, store, epi_adapter.proj)
+                logging.info(
+                    "episodic_retrieval_k=%d latency_ms=%.2f hit_rate=%.2f",
+                    spec.k,
+                    mem.meta["latency_ms"],
+                    mem.meta["hit_rate"],
+                )
+                dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
+                _ = model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
             for _ in range(3):
                 log_memory_status(store, kg, spatial_map, scheduler, worker)
                 time.sleep(0.1)
