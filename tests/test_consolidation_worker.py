@@ -5,9 +5,11 @@ import threading
 import time
 from types import SimpleNamespace
 
+import networkx as nx
 import numpy as np
 import torch
 
+from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
@@ -192,6 +194,45 @@ def test_step_adapters_dispatches() -> None:
 
     worker.step_adapters([("episodic", None), ("semantic", None), ("fresh", None)])
     assert calls == ["e", "s", "f"]
+
+
+def test_step_semantic_uses_kg_features(caplog) -> None:
+    """Semantic step uses KG embeddings and reports loss."""
+
+    hidden = 2
+
+    class DummyKG:
+        def __init__(self) -> None:
+            self.node_embeddings = {"n": np.ones(hidden, dtype=np.float32)}
+
+        def retrieve(self, _q, k=1, radius=1):  # pragma: no cover - simple
+            g = nx.MultiDiGraph()
+            g.add_node("n")
+            return g
+
+        dim = hidden
+
+    store = EpisodicStore(hidden)
+    kg = DummyKG()
+    scheduler = ReplayScheduler(
+        store, kg, batch_mix=_BatchMix(episodic=0.0, semantic=1.0, fresh=0.0)
+    )
+    model = torch.nn.Linear(hidden, hidden)
+    adapter = RelationalMemoryAdapter()
+    worker = ConsolidationWorker(
+        scheduler,
+        model,
+        relational_adapter=adapter,
+        kg_store=kg,
+        batch_size=1,
+    )
+    worker.rel_adapter = adapter
+    losses: list[float] = []
+    worker._optim_step = lambda loss: losses.append(float(loss))  # type: ignore[assignment]
+    caplog.set_level(logging.DEBUG)
+    worker._step_semantic()
+    assert losses and losses[0] != 0
+    assert "relational adapter step" in caplog.text
 
 
 def test_handle_errors_logs_and_stops(caplog) -> None:

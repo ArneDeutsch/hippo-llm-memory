@@ -5,8 +5,10 @@ import subprocess
 import sys
 from types import SimpleNamespace
 
+import networkx as nx
 import torch
 
+from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
 from hippo_mem.common import MemoryTokens
 from scripts.train_lora import (
     TrainConfig,
@@ -174,7 +176,7 @@ def test_adapter_ablation_flags(monkeypatch) -> None:
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
     monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", fake_epi)
-    monkeypatch.setattr("scripts.train_lora.RelationalAdapter", fake_rel)
+    monkeypatch.setattr("scripts.train_lora.RelationalMemoryAdapter", fake_rel)
     monkeypatch.setattr("scripts.train_lora.SpatialAdapter", fake_spat)
     monkeypatch.setattr(
         "scripts.train_lora.attach_adapters",
@@ -271,7 +273,7 @@ def test_replay_flag_controls_scheduler(monkeypatch) -> None:
     monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
     monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
     monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", lambda cfg: SimpleNamespace())
-    monkeypatch.setattr("scripts.train_lora.RelationalAdapter", lambda: SimpleNamespace())
+    monkeypatch.setattr("scripts.train_lora.RelationalMemoryAdapter", lambda: SimpleNamespace())
     monkeypatch.setattr("scripts.train_lora.SpatialAdapter", lambda cfg: SimpleNamespace())
     monkeypatch.setattr("scripts.train_lora.ReplayScheduler", fake_scheduler)
     monkeypatch.setattr("scripts.train_lora.ConsolidationWorker", fake_worker)
@@ -672,3 +674,82 @@ def test_train_logs_episodic_retrieval(monkeypatch, caplog) -> None:
     mem = captured.get("memory")
     assert isinstance(mem, MemoryTokens)
     assert mem.tokens.shape[1] == 2
+
+
+def test_train_relational_retrieval(monkeypatch) -> None:
+    """Relational retrieval supplies non-zero tokens to the model."""
+
+    captured: dict[str, object] = {}
+
+    def fake_loader(_cfg: TrainConfig):
+        class DummyModel:
+            config = SimpleNamespace(use_cache=False, hidden_size=4)
+
+            def gradient_checkpointing_enable(self) -> None:  # pragma: no cover - stub
+                pass
+
+            def __call__(self, input_ids, labels=None, memory_tokens=None):
+                captured["memory"] = memory_tokens
+                return SimpleNamespace()
+
+            def get_input_embeddings(self):  # pragma: no cover - simple embed
+                return lambda ids: torch.zeros(ids.shape[0], ids.shape[1], 4)
+
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return DummyModel(), tokenizer
+
+    def fake_retrieve(hidden, spec, kg, proj):
+        tokens = torch.ones(hidden.size(0), spec.k, hidden.size(-1))
+        mask = torch.ones(hidden.size(0), spec.k, dtype=torch.bool)
+        meta = {"latency_ms": 1.0, "hit_rate": 1.0}
+        return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr(
+        "scripts.train_lora.EpisodicStore",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.KnowledgeGraph",
+        lambda *a, **k: SimpleNamespace(
+            start_background_tasks=lambda *_: None,
+            dim=4,
+            retrieve=lambda *a, **k: nx.MultiDiGraph(),
+        ),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.PlaceGraph",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr("scripts.train_lora.relational_retrieve_and_pack", fake_retrieve)
+    monkeypatch.setattr(
+        "scripts.train_lora.episodic_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.spatial_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+
+    cfg = parse_args(
+        [
+            "dry_run=true",
+            "relational=true",
+            "memory.relational.enabled=true",
+            "memory.relational.k=1",
+            "replay.enabled=false",
+        ]
+    )
+    train(cfg)
+    mem = captured.get("memory")
+    assert isinstance(mem, MemoryTokens)
+    assert mem.tokens.abs().sum() > 0
+    adapter = RelationalMemoryAdapter()
+    hidden = torch.zeros(1, 1, mem.tokens.size(-1))
+    out = adapter(hidden, memory=mem)
+    assert out.abs().sum() > 0
