@@ -53,6 +53,10 @@ def test_train_sets_seeds(monkeypatch) -> None:
         return model, tokenizer
 
     monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
+    )
 
     cfg = TrainConfig(dry_run=True, seed=123)
     train(cfg)
@@ -76,6 +80,10 @@ def test_train_dry_run_skips_dataset(monkeypatch) -> None:
 
     monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr("scripts.train_lora.load_dataset", _raise)
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
+    )
 
     cfg = TrainConfig(dry_run=True)
     train(cfg)
@@ -153,9 +161,21 @@ def test_adapter_ablation_flags(monkeypatch) -> None:
     monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
     monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
     monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
+    )
     monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", fake_epi)
     monkeypatch.setattr("scripts.train_lora.RelationalAdapter", fake_rel)
     monkeypatch.setattr("scripts.train_lora.SpatialAdapter", fake_spat)
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
+    )
 
     cfg = parse_args(
         [
@@ -251,6 +271,10 @@ def test_replay_flag_controls_scheduler(monkeypatch) -> None:
     monkeypatch.setattr("scripts.train_lora.SpatialAdapter", lambda cfg: SimpleNamespace())
     monkeypatch.setattr("scripts.train_lora.ReplayScheduler", fake_scheduler)
     monkeypatch.setattr("scripts.train_lora.ConsolidationWorker", fake_worker)
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
+    )
 
     cfg = parse_args(["dry_run=true", "episodic.enabled=true", "replay.enabled=false"])
     train(cfg)
@@ -348,6 +372,10 @@ def test_train_respects_mqa_gqa_flag(monkeypatch) -> None:
 
     monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", capture_epi)
     monkeypatch.setattr("scripts.train_lora.SpatialAdapter", capture_spat)
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
+    )
 
     cfg = parse_args(
         [

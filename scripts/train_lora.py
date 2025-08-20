@@ -23,7 +23,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 # Ensure repo root is on the path when executed as a script
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -35,6 +35,7 @@ from datasets import load_dataset
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 from peft import LoraConfig, get_peft_model
+from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
@@ -42,6 +43,7 @@ from hippo_mem.adapters.lora import (
     count_trainable_parameters,
     default_target_modules,
 )
+from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
@@ -89,6 +91,9 @@ class TrainConfig:
 
     # Utility flags
     dry_run: bool = False
+
+    # Adapter fusion
+    fusion_insert_block_index: int = -4
 
     # Episodic adapter configuration
     episodic: AdapterConfig = field(
@@ -286,6 +291,69 @@ def train(cfg: TrainConfig) -> None:
             enabled=True,
         )
         spat_adapter = SpatialAdapter(spat_cfg)
+
+    fusion_cfg = MemoryFusionConfig(
+        insert_block_index=cfg.fusion_insert_block_index,
+        use_episodic=True,
+        use_relational=cfg.relational,
+        use_spatial=cfg.spatial.enabled,
+    )
+
+    class _EpisodicProxy(nn.Module):
+        def __init__(self, adapter: EpisodicAdapter) -> None:
+            super().__init__()
+            self.adapter = adapter
+
+        def forward(self, hidden_states: torch.Tensor, **_kwargs: Any) -> torch.Tensor:
+            bsz, _, dim = hidden_states.shape
+            traces = torch.zeros(
+                bsz,
+                1,
+                dim,
+                device=hidden_states.device,
+                dtype=hidden_states.dtype,
+            )
+            return self.adapter(hidden_states, traces)
+
+    class _SpatialProxy(nn.Module):
+        def __init__(self, adapter: SpatialAdapter) -> None:
+            super().__init__()
+            self.adapter = adapter
+
+        def forward(self, hidden_states: torch.Tensor, **_kwargs: Any) -> torch.Tensor:
+            bsz, _, dim = hidden_states.shape
+            plans = torch.zeros(
+                bsz,
+                1,
+                dim,
+                device=hidden_states.device,
+                dtype=hidden_states.dtype,
+            )
+            return self.adapter(hidden_states, plans)
+
+    class _RelationalProxy(nn.Module):
+        def forward(self, hidden_states: torch.Tensor, **_kwargs: Any) -> torch.Tensor:
+            return torch.zeros_like(hidden_states)
+
+    epi_proxy = _EpisodicProxy(epi_adapter) if epi_adapter else None
+    rel_proxy = _RelationalProxy() if cfg.relational else None
+    spat_proxy = _SpatialProxy(spat_adapter) if spat_adapter else None
+
+    try:
+        info = attach_adapters(
+            model,
+            fusion_cfg,
+            episodic=epi_proxy,
+            relational=rel_proxy,
+            spatial=spat_proxy,
+        )
+        logging.info(
+            "Adapter fusion attached at block %s/%s",
+            info.get("target_block"),
+            info.get("num_blocks"),
+        )
+    except Exception as exc:  # pragma: no cover - defensive
+        logging.warning("Adapter fusion attach failed: %s", exc)
 
     # Simulate interleaved replay batches using a scheduler
     store_cfg = {
