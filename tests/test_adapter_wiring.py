@@ -18,6 +18,35 @@ def _setup_model(monkeypatch: pytest.MonkeyPatch) -> AutoModelForCausalLM:
     return model
 
 
+def test_disabled_memory_matches_snapshot(monkeypatch: pytest.MonkeyPatch) -> None:
+    model = _setup_model(monkeypatch)
+    input_ids = torch.tensor([[0]])
+    with torch.no_grad():
+        logits = model(input_ids).logits[0, 0, :10]
+
+    expected = torch.tensor(
+        [
+            0.01286869,
+            0.01087749,
+            -0.03159444,
+            0.00434459,
+            0.00492962,
+            -0.00780645,
+            -0.03147811,
+            0.04449766,
+            0.04845034,
+            0.01217225,
+        ]
+    )
+    torch.testing.assert_close(logits, expected, rtol=0, atol=1e-5)
+
+    cfg = MemoryFusionConfig(enabled=False)
+    attach_adapters(model, cfg)
+    with torch.no_grad():
+        disabled = model(input_ids).logits[0, 0, :10]
+    torch.testing.assert_close(disabled, expected, rtol=0, atol=1e-5)
+
+
 def test_no_memory_tokens_preserves_baseline(monkeypatch: pytest.MonkeyPatch) -> None:
     model = _setup_model(monkeypatch)
     input_ids = torch.tensor([[0]])
