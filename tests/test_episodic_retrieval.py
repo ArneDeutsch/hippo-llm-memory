@@ -24,6 +24,9 @@ class DummyStore:
     def to_dense(self, key):  # pragma: no cover - simple stub
         return key
 
+    def complete(self, query, k=1):  # pragma: no cover - simple stub
+        return np.asarray(query, dtype=np.float32)
+
 
 def test_retrieve_and_pack_shapes():
     batch_hidden = torch.zeros(2, 3, 4)

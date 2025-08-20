@@ -80,6 +80,12 @@ def episodic_retrieve_and_pack(
         if hits < k:
             pad = np.zeros((k - hits, vecs.shape[1] if hits else store.dim), dtype="float32")
             vecs = np.vstack([vecs, pad]) if hits else pad
+        if spec.params.get("use_completion", True) and k > 0:
+            cue = store.complete(cue, k)
+            if vecs.size:
+                vecs[0] = cue
+            else:  # pre: k > 0 ensures at least one row
+                vecs = cue[None, :]
         mask[i, :hits] = True
         vec_t = torch.from_numpy(vecs).to(device=device, dtype=dtype)
         vec_t = proj(vec_t)

@@ -11,10 +11,13 @@ import pytest
 import torch
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from torch import nn
 
+from hippo_mem.common import TraceSpec
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
+from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
 from hippo_mem.relational.kg import KnowledgeGraph
 
@@ -63,6 +66,30 @@ def test_hopfield_completion_restores_sparse_cue() -> None:
 
     cos = float(np.dot(completed, full) / (np.linalg.norm(completed) * np.linalg.norm(full)))
     assert cos >= 0.9
+
+
+def test_retrieve_and_pack_uses_completion() -> None:
+    """Retrieval replaces the first token with Hopfield completion when enabled."""
+
+    store = EpisodicStore(dim=4)
+    full = np.array([1.0, 1.0, 0.0, 0.0], dtype="float32")
+    noise = np.array([0.0, 0.0, 1.0, 1.0], dtype="float32")
+    store.write(full, TraceValue(provenance="full"))
+    store.write(noise, TraceValue(provenance="noise"))
+
+    cue = np.array([0.9, 0.1, 0.0, 0.0], dtype="float32")
+    batch_hidden = torch.from_numpy(cue).view(1, 1, -1)
+    proj = nn.Identity()
+
+    spec = TraceSpec(source="episodic", k=2)
+    expected = store.complete(cue, k=2)
+    mem = episodic_retrieve_and_pack(batch_hidden, spec, store, proj)
+    assert np.allclose(mem.tokens[0, 0].cpu().numpy(), expected, atol=1e-6)
+
+    spec_nc = TraceSpec(source="episodic", k=2, params={"use_completion": False})
+    mem_nc = episodic_retrieve_and_pack(batch_hidden, spec_nc, store, proj)
+    raw = store.to_dense(store.recall(cue, 2)[0].key)
+    assert np.allclose(mem_nc.tokens[0, 0].cpu().numpy(), raw, atol=1e-6)
 
 
 def test_gating_threshold_and_pin_weight() -> None:
