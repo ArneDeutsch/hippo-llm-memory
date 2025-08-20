@@ -89,6 +89,20 @@
 
 - [x] **Gate**: scripts/train_lora.py executes end-to-end with memory modules and ablations; logs show replay scheduling; CI tests confirm ablation toggles are respected.
 
+# Milestone 7b – End-to-end wiring & dataset integration
+
+**Objective**: attach memory adapters into the Transformer forward path, switch trainer to JSONL suites, verify LoRA attachment, and mix replay.
+
+**Work packages**
+
+1. **Adapter hookup**: insert Episodic/Relational/Spatial adapters after configurable block N; enable/disable via Hydra flags.
+2. **LoRA attachment checks**: set architecture-specific `target_modules`; log trainable param count; assert >0.
+3. **JSONL data loader**: replace IMDB default with loaders for `data/episodic_*`, `data/semantic_*`, `data/spatial_*`; add train/val split selection in config.
+4. **Replay mixing**: integrate `ReplayScheduler` batches by ratio; ensure clean thread lifecycle.
+5. **Tests**: add tests ensuring non-zero trainables and that adapter hooks run at least once per batch.
+
+- **Gate**: dry-run green; unit tests for wiring & trainables pass; a short (≤200 steps) local run logs adapter activation, non-zero trainables, and JSONL consumption.
+
 # Milestone 8 – Baseline datasets & evaluation runs
 
 **Objective**: generate baseline datasets, run baseline evaluations and establish reference metrics.
@@ -113,7 +127,7 @@
 4. [ ] **Combined model**: train with all modules enabled ( memory/all preset); evaluate on the three suites; analyze trade-offs.
 5. [ ] **Ablation study**: run controlled experiments toggling key components (sparsity, Hopfield completion, gating, replay, schema fast‑track, path-integration, macros) using Hydra flags ; report how each contributes to performance. 6. Result aggregation: update scripts/report.py to include memory-augmented metrics and ablation results; produce tables and plots comparing baselines, memory variants and ablations.
 
-- [ ] **Gate**: experiments are logged under runs/YYYYMMDD/ ; metrics show improvements over baselines; ablation results highlight contribution of each component; aggregated report summarises findings.
+- [ ] **Gate**: experiments are logged under runs/YYYYMMDD/; metrics and reports are generated; scripts/eval_model.py exists and is used; adapter wiring verified by tests and trainable-count logs; ablation report demonstrates contribution of each component; aggregated report summarises findings.
 
 # Milestone 10 – Research paper & public release
 
