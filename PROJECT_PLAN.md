@@ -95,13 +95,13 @@
 
 **Work packages**
 
-1. **Adapter hookup**: insert Episodic/Relational/Spatial adapters after configurable block N; enable/disable via Hydra flags.
-2. **LoRA attachment checks**: set architecture-specific `target_modules`; log trainable param count; assert >0.
-3. **JSONL data loader**: replace IMDB default with loaders for `data/episodic_*`, `data/semantic_*`, `data/spatial_*`; add train/val split selection in config.
-4. **Replay mixing**: integrate `ReplayScheduler` batches by ratio; ensure clean thread lifecycle.
-5. **Tests**: add tests ensuring non-zero trainables and that adapter hooks run at least once per batch.
+1. [ ] **Adapter hookup**: insert Episodic/Relational/Spatial adapters after configurable block N; enable/disable via Hydra flags.
+2. [ ] **LoRA attachment checks**: set architecture-specific `target_modules`; log trainable param count; assert >0.
+3. [ ] **JSONL data loader**: replace IMDB default with loaders for `data/episodic_*`, `data/semantic_*`, `data/spatial_*`; add train/val split selection in config.
+4. [ ] **Replay mixing**: integrate `ReplayScheduler` batches by ratio; ensure clean thread lifecycle.
+5. [ ] **Tests**: add tests ensuring non-zero trainables and that adapter hooks run at least once per batch.
 
-- **Gate**: dry-run green; unit tests for wiring & trainables pass; a short (≤200 steps) local run logs adapter activation, non-zero trainables, and JSONL consumption.
+- [ ] **Gate**: dry-run green; unit tests for wiring & trainables pass; a short (≤200 steps) local run logs adapter activation, non-zero trainables, and JSONL consumption.
 
 # Milestone 8 – Baseline datasets & evaluation runs
 
@@ -109,11 +109,11 @@
 
 **Work packages**
 
-1. [x] **Dataset generation**: use scripts/build_datasets.py to produce episodic, semantic and spatial JSONL datasets at small (50), medium (200) and large (1 000) sizes with several seeds ; store them under data/ with checksums.
-2. [x] **Baseline runs**: execute scripts/eval_bench.py for the baselines core, rag and longctx presets defined in the evaluation plan; run each suite for all dataset sizes and seeds; store results under runs/YYYYMMDD/baselines/ with metrics and meta files.
-3. [x] **Result aggregation**: develop scripts/report.py to aggregate baseline metrics into tables and plots; compare baselines across suites (episodic, semantic, spatial); output a report in reports/ .
+1. [ ] **Dataset generation**: use scripts/build_datasets.py to produce episodic, semantic and spatial JSONL datasets at small (50), medium (200) and large (1 000) sizes with several seeds ; store them under data/ with checksums.
+2. [ ] **Baseline runs**: execute scripts/eval_bench.py for the baselines core, rag and longctx presets defined in the evaluation plan; run each suite for all dataset sizes and seeds; store results under runs/YYYYMMDD/baselines/ with metrics and meta files.
+3. [ ] **Result aggregation**: develop scripts/report.py to aggregate baseline metrics into tables and plots; compare baselines across suites (episodic, semantic, spatial); output a report in reports/ .
 
-- [x] **Gate**: baseline datasets exist with checksums; baseline metrics files are generated and aggregated; report summarises baseline performance.
+- [ ] **Gate**: baseline datasets exist with checksums; baseline metrics files are generated and aggregated; report summarises baseline performance.
 
 # Milestone 9 – Memory‑augmented training, evaluation & ablations
 
