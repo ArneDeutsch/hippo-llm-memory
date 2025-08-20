@@ -19,9 +19,14 @@ import inspect
 import logging
 import os
 import random
+import sys
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Optional
+
+# Ensure repo root is on the path when executed as a script
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import hydra
 import numpy as np
@@ -29,10 +34,14 @@ import torch
 from datasets import load_dataset
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
-from peft import LoraConfig
+from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
+from hippo_mem.adapters.lora import (
+    count_trainable_parameters,
+    default_target_modules,
+)
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
@@ -73,6 +82,7 @@ class TrainConfig:
     lora_r: int = 16
     lora_alpha: int = 16
     lora_dropout: float = 0.1
+    target_modules: List[str] = field(default_factory=list)
 
     # Utility flags
     dry_run: bool = False
@@ -316,22 +326,34 @@ def train(cfg: TrainConfig) -> None:
         worker.start()
 
     try:
-        # Short circuit for the unit tests / smoke runs
+        peft_config = None
+        if isinstance(model, torch.nn.Module):
+            modules = cfg.target_modules or default_target_modules(model)
+            logging.info("Target modules: %s", modules)
+            peft_config = LoraConfig(
+                r=cfg.lora_r,
+                lora_alpha=cfg.lora_alpha,
+                lora_dropout=cfg.lora_dropout,
+                bias="none",
+                task_type="CAUSAL_LM",
+                target_modules=modules,
+            )
+
         if cfg.dry_run:
+            if peft_config is not None:
+                model = get_peft_model(model, peft_config)
+                count = count_trainable_parameters(model)
+                logging.info("Trainable parameters: %d", count)
+                if count <= 0:
+                    raise RuntimeError(
+                        "No trainable parameters found. Set `target_modules` to attach LoRA."
+                    )
             for _ in range(3):
                 log_memory_status(store, kg, spatial_map, scheduler, worker)
                 time.sleep(0.1)
             return
 
         dataset = load_dataset(cfg.dataset_name, split="train")
-
-        peft_config = LoraConfig(
-            r=cfg.lora_r,
-            lora_alpha=cfg.lora_alpha,
-            lora_dropout=cfg.lora_dropout,
-            bias="none",
-            task_type="CAUSAL_LM",
-        )
 
         training_args = SFTConfig(
             output_dir=cfg.output_dir,
@@ -351,6 +373,12 @@ def train(cfg: TrainConfig) -> None:
             tokenizer,
             peft_config,
         )
+        count = count_trainable_parameters(trainer.model)
+        logging.info("Trainable parameters: %d", count)
+        if count <= 0:
+            raise RuntimeError(
+                "No trainable parameters found. Set `target_modules` to attach LoRA."
+            )
 
         trainer.train()
     finally:
