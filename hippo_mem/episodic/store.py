@@ -251,7 +251,7 @@ class EpisodicStore:
 
         Summary
         -------
-        Convenience wrapper around :func:`k_wta`.
+        Convenience wrapper around :func:`k_wta` for both writes and cues.
 
         Parameters
         ----------
