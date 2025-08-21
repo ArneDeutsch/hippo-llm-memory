@@ -31,6 +31,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import hydra
 import numpy as np
 import torch
+import torch.nn.functional as F
 from datasets import load_dataset
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
@@ -670,6 +671,7 @@ def _train(
     if context.adapters_attached:
 
         def _block_retrieval_cb(hs: torch.Tensor) -> MemoryTokens | None:
+            setattr(model, "_hippo_last_hidden", hs.detach())
             return _gather_memory_tokens(hs, cfg, sources)
 
         setattr(model, "_hippo_retrieval_cb", _block_retrieval_cb)  # type: ignore[attr-defined]
@@ -778,7 +780,31 @@ def _train(
                     inputs["memory_tokens"] = mem
             else:
                 setattr(model, "_hippo_memory_tokens", None)
-            return orig_compute_loss(model, inputs, return_outputs=return_outputs)
+            loss, outputs = orig_compute_loss(model, inputs, return_outputs=True)
+            gate, store, writer = context.gate, context.store, context.writer
+            hidden = getattr(model, "_hippo_last_hidden", None)
+            labels = inputs.get("labels")
+            if gate and store and writer is not None and hidden is not None and labels is not None:
+                with torch.no_grad():
+                    last_logits = outputs.logits[:, -1, :]
+                    last_labels = labels[:, -1]
+                    log_probs = F.log_softmax(last_logits, dim=-1)
+                    probs = (
+                        torch.exp(log_probs[torch.arange(last_labels.size(0)), last_labels])
+                        .cpu()
+                        .numpy()
+                    )
+                    queries = hidden[:, -1, :].detach().cpu().numpy()
+                    keys = store.keys()
+                decisions, _ = gate_batch(gate, probs, queries, keys)
+                context.gate_attempts += len(decisions)
+                context.gate_accepts += sum(d.allow for d in decisions)
+                for dec, q in zip(decisions, queries):
+                    if dec.allow:
+                        writer.enqueue(q, TraceValue(provenance="train"))
+            if return_outputs:
+                return loss, outputs
+            return loss
 
         trainer.compute_loss = compute_loss_with_memory.__get__(trainer, type(trainer))
         count = count_trainable_parameters(trainer.model)
