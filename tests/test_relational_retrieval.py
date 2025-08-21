@@ -11,11 +11,13 @@ from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 
 
 class DummyKG:
-    def __init__(self):
+    """Minimal KG returning deterministic subgraphs."""
+
+    def __init__(self) -> None:
         self.node_embeddings = {
-            "A": np.ones(3, dtype=np.float32),
-            "B": np.ones(3, dtype=np.float32) * 2,
-            "C": np.ones(3, dtype=np.float32) * 3,
+            "A": np.array([1.0, 0.0, 0.0], dtype=np.float32),
+            "B": np.array([0.0, 2.0, 0.0], dtype=np.float32),
+            "C": np.array([0.0, 0.0, 3.0], dtype=np.float32),
         }
         self.calls = 0
 
@@ -23,8 +25,7 @@ class DummyKG:
         self.calls += 1
         g = nx.MultiDiGraph()
         if self.calls == 1:
-            g.add_node("A")
-            g.add_node("B")
+            g.add_edge("A", "B")  # A has B as neighbor
         else:
             g.add_node("C")
         return g
@@ -34,16 +35,26 @@ class DummyKG:
         return 3
 
 
-def test_relational_retrieve_and_pack_shapes():
-    batch_hidden = torch.zeros(2, 3, 4)
+def test_relational_retrieve_and_pack_tokens_and_meta():
+    batch_hidden = torch.zeros(2, 1, 3)
     spec = TraceSpec(source="relational", k=2, params={"hops": 1})
     kg = DummyKG()
-    proj = nn.Linear(3, 4)
+    proj = nn.Identity()
     mem = relational_retrieve_and_pack(batch_hidden, spec, kg, proj)
-    assert mem.tokens.shape == (2, 2, 4)
-    assert mem.mask.dtype == torch.bool
+
+    expected = torch.tensor(
+        [
+            [[0.5, 1.0, 0.0], [0.0, 2.0, 0.0]],
+            [[0.0, 0.0, 3.0], [0.0, 0.0, 0.0]],
+        ],
+        dtype=batch_hidden.dtype,
+    )
+    assert torch.allclose(mem.tokens, expected)
+    assert mem.tokens.shape == (2, 2, 3)
     assert mem.mask.tolist() == [[True, True], [True, False]]
     assert mem.meta["source"] == "relational"
+    assert mem.meta["k"] == 2
+    assert mem.meta["hops"] == 1
 
 
 def test_adapter_consumes_relational_tokens() -> None:
