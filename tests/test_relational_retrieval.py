@@ -4,7 +4,8 @@ import torch
 from torch import nn
 
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
-from hippo_mem.common import TraceSpec
+from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 
@@ -45,15 +46,44 @@ def test_relational_retrieve_and_pack_shapes():
     assert mem.meta["source"] == "relational"
 
 
-def test_adapter_consumes_relational_tokens():
-    batch_hidden = torch.zeros(2, 3, 4)
-    spec = TraceSpec(source="relational", k=2)
-    kg = DummyKG()
-    proj = nn.Linear(3, 4)
-    mem = relational_retrieve_and_pack(batch_hidden, spec, kg, proj)
+def test_memory_adapter_matches_direct_adapter():
+    kg = KnowledgeGraph()
+    kg.node_embeddings["A"] = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    kg.node_embeddings["B"] = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+
+    hidden = torch.tensor(
+        [
+            [[1.0, 0.0, 0.0], [0.5, 0.5, 0.0]],
+            [[0.0, 1.0, 0.0], [0.0, 0.5, 0.5]],
+        ]
+    )
+    tokens = torch.from_numpy(
+        np.stack([kg.node_embeddings["A"], kg.node_embeddings["B"]])
+    ).unsqueeze(1)
+    mask = torch.tensor([[True], [True]])
+    mem = MemoryTokens(tokens=tokens, mask=mask, meta={"source": "relational"})
+
     adapter = RelationalMemoryAdapter()
-    out = adapter(batch_hidden, memory=mem)
-    assert out.abs().sum() > 0
+    out = adapter(hidden, memory=mem)
+
+    direct = RelationalAdapter()
+    for b in range(hidden.size(0)):
+        for t in range(hidden.size(1)):
+            feats = tokens[b, mask[b]].numpy()
+            fused = direct(hidden[b, t].numpy(), feats)
+            fused_t = torch.from_numpy(fused).to(hidden)
+            assert torch.allclose(hidden[b, t] + out[b, t], fused_t)
+    assert out.shape == hidden.shape
+
+
+def test_memory_adapter_zero_without_tokens():
+    hidden = torch.randn(1, 2, 3)
+    tokens = torch.ones(1, 1, 3)
+    mask = torch.zeros(1, 1, dtype=torch.bool)
+    mem = MemoryTokens(tokens=tokens, mask=mask, meta={"source": "relational"})
+    adapter = RelationalMemoryAdapter()
+    out = adapter(hidden, memory=mem)
+    assert torch.equal(out, torch.zeros_like(hidden))
 
 
 def test_relational_hops_two_edges():
