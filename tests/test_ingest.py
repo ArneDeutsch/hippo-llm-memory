@@ -57,7 +57,7 @@ def test_fast_track_ingestion(monkeypatch, tmp_path):
 
     monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
-    monkeypatch.setattr("scripts.train_lora.AsyncStoreWriter", DummyWriter)
+    monkeypatch.setattr("scripts.train_lora.AsyncWriter", DummyWriter)
     monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", lambda config=None: kg)
     monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
     monkeypatch.setattr(

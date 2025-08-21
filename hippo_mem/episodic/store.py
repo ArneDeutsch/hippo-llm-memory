@@ -43,7 +43,6 @@ from __future__ import annotations
 
 import json
 import logging
-import queue
 import threading
 import time
 from dataclasses import asdict, dataclass
@@ -54,8 +53,10 @@ import numpy as np
 from hippo_mem._faiss import faiss
 
 from .db import TraceDB
+from .event_logger import EventLogger
 from .gating import DGKey, densify, k_wta
 from .index import VectorIndex
+from .maintenance import Decayer, Pruner
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,9 @@ class EpisodicStore:
         *,
         k_wta: int = 0,
         config: Optional[dict] = None,
+        pruner: Optional[Pruner] = None,
+        decayer: Optional[Decayer] = None,
+        log_file: Optional[str] = None,
     ) -> None:
         """Create a store with given key dimensionality.
 
@@ -195,13 +199,18 @@ class EpisodicStore:
 
         # Configuration and logging
         self.config = config or {}
-        self._log = {"writes": 0, "recalls": 0, "hits": 0, "requests": 0, "maintenance": 0}
+        prune_cfg = self.config.get("prune", {})
+        self.pruner = pruner or Pruner(
+            float(prune_cfg.get("min_salience", 0.1)),
+            prune_cfg.get("max_age"),
+        )
+        self.decayer = decayer or Decayer(float(self.config.get("decay_rate", 0.0)))
+        self.logger = EventLogger(log_file or self.config.get("maintenance_log"))
+        self._maintenance_log = self.logger.events
         self._bg_thread: Optional[threading.Thread] = None
         self._stop_event: Optional[threading.Event] = None
         self._history: List[dict[str, Any]] = []
         self._max_undo = int(self.config.get("max_undo", 5))
-        self._maintenance_log: List[dict[str, Any]] = []
-        self._log_file = self.config.get("maintenance_log")
 
     # ------------------------------------------------------------------
     def keys(self) -> np.ndarray:
@@ -232,13 +241,6 @@ class EpisodicStore:
 
     # ------------------------------------------------------------------
     # Maintenance helpers
-    def _log_event(self, op: str, info: dict[str, Any]) -> None:
-        event = {"ts": time.time(), "op": op, **info}
-        self._maintenance_log.append(event)
-        if self._log_file:
-            with open(self._log_file, "a", encoding="utf-8") as fh:
-                fh.write(json.dumps(event) + "\n")
-
     def _push_history(self, op: str, rows: list[Any]) -> None:
         self._history.append({"op": op, "rows": rows})
         if len(self._history) > self._max_undo:
@@ -371,7 +373,7 @@ class EpisodicStore:
         salience = float(len(value.salience_tags) if value.salience_tags else 1.0)
         idx = self.db.insert(key_arr[0], json.dumps(asdict(value)), ts, salience)
         self.index.add(key_arr, idx)
-        self._log["writes"] += 1
+        self.logger.inc("writes")
         return idx
 
     def recall(self, query: np.ndarray, k: int) -> List[Trace]:
@@ -444,9 +446,9 @@ class EpisodicStore:
                     salience=salience,
                 )
             )
-        self._log["recalls"] += 1
-        self._log["hits"] += len(traces)
-        self._log["requests"] += k
+        self.logger.inc("recalls")
+        self.logger.inc("hits", len(traces))
+        self.logger.inc("requests", k)
         return traces
 
     def to_dense(self, key: DGKey) -> np.ndarray:
@@ -593,80 +595,25 @@ class EpisodicStore:
 
     # ------------------------------------------------------------------
     # Forgetting
-    def decay(self, rate: float) -> None:
-        """Apply exponential decay to salience values.
+    def decay(self, rate: Optional[float] = None) -> None:
+        """Apply exponential decay to salience values."""
 
-        Summary
-        -------
-        Multiplies each salience by ``1 - rate``.
-
-        Parameters
-        ----------
-        rate : float
-            Decay rate ``0 ≤ rate ≤ 1``.
-        Side Effects
-        ------------
-        Persists updated salience and logs operation.
-
-        Complexity
-        ----------
-        ``O(n)`` over stored traces.
-
-        Examples
-        --------
-        >>> store = EpisodicStore(2)
-        >>> store.decay(0.1)
-
-        See Also
-        --------
-        prune
-        """
-
-        factor = max(0.0, 1.0 - rate)
-        rows = self.db.decay(factor)
-        if rows:
-            self._push_history("decay", rows)
-        self._log_event("decay", {"rate": rate})
-
-    def prune(self, min_salience: float = 0.1, max_age: Optional[float] = None) -> None:
-        """Remove traces whose salience or age fall below thresholds.
-
-        Summary
-        -------
-        Deletes stale or insignificant memories.
-
-        Parameters
-        ----------
-        min_salience : float, optional
-            Minimum allowed salience.
-        max_age : float, optional
-            Maximum age in seconds.
-        Side Effects
-        ------------
-        Writes deletions to persistent storage and logs operation.
-
-        Complexity
-        ----------
-        ``O(n)`` to scan candidates.
-
-        Examples
-        --------
-        >>> store = EpisodicStore(2)
-        >>> store.prune()
-
-        See Also
-        --------
-        decay
-        """
-
-        cutoff = time.time() - max_age if max_age is not None else None
-        rows = self.db.fetch_prune_candidates(min_salience, cutoff)
-        if not rows:
+        if self.decayer is None:
             return
-        self._push_history("prune", rows)
-        for row in rows:
-            self.delete(int(row[0]))
-        self._log_event("prune", {"min_salience": min_salience, "max_age": max_age})
+        if rate is not None:
+            self.decayer.rate = rate
+        self.decayer.decay(self)
+
+    def prune(self, min_salience: Optional[float] = None, max_age: Optional[float] = None) -> None:
+        """Remove traces whose salience or age fall below thresholds."""
+
+        if self.pruner is None:
+            return
+        if min_salience is not None:
+            self.pruner.min_salience = min_salience
+        if max_age is not None:
+            self.pruner.max_age = max_age
+        self.pruner.prune(self)
 
     # ------------------------------------------------------------------
     # Logging and maintenance
@@ -690,10 +637,7 @@ class EpisodicStore:
         start_background_tasks
         """
 
-        log = dict(self._log)
-        req = log.get("requests", 0)
-        log["hit_rate"] = log["hits"] / req if req else 0.0
-        return log
+        return self.logger.status()
 
     def start_background_tasks(self, interval: float = 60.0) -> None:
         """Start a thread that periodically decays and prunes memories.
@@ -727,15 +671,9 @@ class EpisodicStore:
         def loop() -> None:
             # why: maintain store health without blocking caller
             while not stop_event.wait(interval):
-                rate = float(self.config.get("decay_rate", 0.0))
-                if rate > 0:
-                    self.decay(rate)
-                prune_cfg = self.config.get("prune", {})
-                self.prune(
-                    float(prune_cfg.get("min_salience", 0.1)),
-                    prune_cfg.get("max_age"),
-                )
-                self._log["maintenance"] += 1
+                self.decay()
+                self.prune()
+                self.logger.inc("maintenance")
 
         t = threading.Thread(target=loop, daemon=True)
         t.start()
@@ -803,59 +741,7 @@ class EpisodicStore:
                     key_vec = np.frombuffer(key_blob, dtype="float32").reshape(1, -1)
                     faiss.normalize_L2(key_vec)
                     self.index.add(key_vec, int(idx))
-            self._log_event("rollback", {"op": op})
+            self.logger.log("rollback", {"op": op})
 
 
-class AsyncStoreWriter:
-    """Background worker that commits writes asynchronously.
-
-    Summary
-    -------
-    Uses a thread and queue to decouple writes from callers.
-
-    Parameters
-    ----------
-    store : EpisodicStore
-        Target store receiving committed writes.
-    maxsize : int, optional
-        Queue capacity.
-
-    Examples
-    --------
-    >>> store = EpisodicStore(2)
-    >>> writer = AsyncStoreWriter(store)
-    >>> writer.stop()
-    """
-
-    def __init__(self, store: EpisodicStore, maxsize: int = 64) -> None:
-        self.store = store
-        self.queue: queue.Queue[tuple[Union[np.ndarray, DGKey], TraceValue]] = queue.Queue(maxsize)
-        self.stats = {"writes_enqueued": 0, "writes_committed": 0}
-        self._stop = threading.Event()
-        self._thread = threading.Thread(target=self._worker, daemon=True)
-        self._thread.start()
-
-    def enqueue(self, key: Union[np.ndarray, DGKey], value: TraceValue | str) -> None:
-        if isinstance(value, str):
-            value = TraceValue(provenance=value)
-        self.stats["writes_enqueued"] += 1
-        self.queue.put((key, value))
-
-    def _worker(self) -> None:
-        while not self._stop.is_set() or not self.queue.empty():
-            try:
-                key, value = self.queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-            try:
-                self.store.write(key, value)
-                self.stats["writes_committed"] += 1
-            finally:
-                self.queue.task_done()
-
-    def stop(self) -> None:
-        self._stop.set()
-        self._thread.join(timeout=1)
-
-
-__all__ = ["TraceValue", "Trace", "EpisodicStore", "AsyncStoreWriter"]
+__all__ = ["TraceValue", "Trace", "EpisodicStore"]

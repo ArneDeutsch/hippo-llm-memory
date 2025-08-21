@@ -1,7 +1,8 @@
 import numpy as np
 
+from hippo_mem.episodic.async_writer import AsyncWriter
 from hippo_mem.episodic.gating import WriteGate, gate_batch
-from hippo_mem.episodic.store import AsyncStoreWriter, TraceValue
+from hippo_mem.episodic.store import TraceValue
 
 
 class DummyStore:
@@ -25,7 +26,7 @@ def test_gate_batch_deterministic():
 
 def test_async_writer_enqueues():
     store = DummyStore()
-    writer = AsyncStoreWriter(store, maxsize=2)
+    writer = AsyncWriter(store, maxsize=2)
     gate = WriteGate(tau=0.5)
     key = np.zeros(1, dtype=np.float32)
     dec = gate(0.1, key, np.zeros((0, 1), dtype=np.float32))

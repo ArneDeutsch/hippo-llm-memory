@@ -47,9 +47,10 @@ from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
 from hippo_mem.episodic.adapter import AdapterConfig
+from hippo_mem.episodic.async_writer import AsyncWriter
 from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.replay import ReplayScheduler
-from hippo_mem.episodic.store import AsyncStoreWriter, EpisodicStore, TraceValue
+from hippo_mem.episodic.store import EpisodicStore, TraceValue
 from hippo_mem.relational.extract import extract_tuples
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
@@ -445,7 +446,7 @@ def train(cfg: TrainConfig) -> None:
         },
     }
     store = EpisodicStore(hidden, config=store_cfg)
-    writer = AsyncStoreWriter(store)
+    writer = AsyncWriter(store)
     gate = WriteGate(tau=cfg.write_threshold)
     gate_attempts = 0
     gate_accepts = 0
