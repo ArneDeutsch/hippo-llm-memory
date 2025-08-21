@@ -401,6 +401,45 @@ def _gather_memory_tokens(
     return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
 
+@dataclass
+class TrainerContext:
+    """Holds model state and memory components for training."""
+
+    model: nn.Module
+    store: EpisodicStore | None = None
+    writer: AsyncStoreWriter | None = None
+    gate: WriteGate | None = None
+    kg: KnowledgeGraph | None = None
+    spatial_map: PlaceGraph | None = None
+    scheduler: ReplayScheduler | None = None
+    worker: ConsolidationWorker | None = None
+    episodic_adapter: EpisodicMemoryAdapter | None = None
+    relational_adapter: RelationalMemoryAdapter | None = None
+    spatial_adapter: SpatialAdapter | None = None
+    sources: list[MemorySource] = field(default_factory=list)
+    hidden_size: int = 0
+    gate_attempts: int = 0
+    gate_accepts: int = 0
+
+    def start(self) -> None:
+        if self.worker is not None:
+            self.worker.start()
+
+    def stop(self) -> None:
+        if self.worker is not None:
+            self.worker.stop()
+            self.worker.join(timeout=1)
+        if self.writer is not None:
+            self.writer.stop()
+            rate = self.gate_accepts / self.gate_attempts if self.gate_attempts else 0.0
+            logging.info(
+                "write_accept_rate=%.2f writes_enqueued=%d writes_committed=%d",
+                rate,
+                self.writer.stats["writes_enqueued"],
+                self.writer.stats["writes_committed"],
+            )
+
+
 def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) -> None:
     """Extract tuples from training ``records`` and insert into ``kg``.
 
@@ -418,23 +457,38 @@ def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) 
             kg.ingest(tup)
 
 
-def train(cfg: TrainConfig) -> None:
-    """Execute the training or dry‑run."""
-    random.seed(cfg.seed)
-    np.random.seed(cfg.seed)
-    torch.manual_seed(cfg.seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(cfg.seed)
-    logging.info("Data format: %s", cfg.data_format)
-    logging.info("Train files: %s", cfg.train_files)
-    logging.info("Validation files: %s", cfg.val_files)
-    logging.info("Fusion insert block index: %d", cfg.fusion_insert_block_index)
-    logging.info("Replay enabled: %s", cfg.replay.enabled)
-    logging.info("Replay ratio: %.2f", cfg.replay.ratio)
+def prepare_datasets(cfg: TrainConfig):
+    """Load training and validation datasets based on ``cfg``."""
 
-    model, tokenizer = _load_model_and_tokenizer(cfg)
+    train_ds = None
+    val_ds = None
+    if cfg.data_format == "jsonl":
+        from scripts.jsonl_dataset import load_jsonl_files, split_train_val
 
+        if cfg.train_files:
+            train_ds = load_jsonl_files(cfg.train_files)
+            if cfg.val_files:
+                val_ds = load_jsonl_files(cfg.val_files)
+            else:
+                train_ds, val_ds = split_train_val(cfg.train_files[0], None)
+            logging.info("Train dataset size: %d", len(train_ds))
+            logging.info("Validation dataset size: %d", len(val_ds))
+        elif not cfg.dry_run:
+            raise ValueError("train_files must be provided when data_format='jsonl'")
+        else:
+            logging.info("No train_files provided; skipping dataset load")
+    elif not cfg.dry_run:
+        train_ds = load_dataset(cfg.dataset_name, split="train")
+        logging.info("Train dataset size: %d", len(train_ds))
+    return train_ds, val_ds
+
+
+def init_memory(context: TrainerContext, cfg: TrainConfig) -> None:
+    """Configure stores, adapters and replay workers."""
+
+    model = context.model
     hidden = getattr(model.config, "hidden_size", cfg.episodic.hidden_size)
+    context.hidden_size = hidden
 
     store_cfg = {
         "hopfield": cfg.episodic.hopfield,
@@ -444,18 +498,12 @@ def train(cfg: TrainConfig) -> None:
             "max_age": cfg.episodic_mem.prune_max_age,
         },
     }
-    store = EpisodicStore(hidden, config=store_cfg)
-    writer = AsyncStoreWriter(store)
-    gate = WriteGate(tau=cfg.write_threshold)
-    gate_attempts = 0
-    gate_accepts = 0
+    context.store = EpisodicStore(hidden, config=store_cfg)
+    context.writer = AsyncStoreWriter(context.store)
+    context.gate = WriteGate(tau=cfg.write_threshold)
     epi_interval = 0.1 if cfg.dry_run else cfg.episodic_mem.maintenance_interval
-    store.start_background_tasks(epi_interval)
+    context.store.start_background_tasks(epi_interval)
 
-    epi_adapter: EpisodicMemoryAdapter | None = None
-    spat_adapter: SpatialAdapter | None = None
-
-    # Determine KV head counts based on efficiency flag
     if cfg.efficiency.mqa_gqa == "mqa":
         epi_kv_heads = 1
         spat_kv_heads = 1
@@ -478,15 +526,13 @@ def train(cfg: TrainConfig) -> None:
             flash_attention=cfg.efficiency.flash_attention,
             hopfield=cfg.episodic.hopfield,
         )
-        retrieval_dim = getattr(store, "dim", hidden)
-        epi_adapter = EpisodicAdapter(epi_cfg)
-        if not hasattr(epi_adapter, "proj"):
-            epi_adapter.proj = nn.Linear(retrieval_dim, hidden)
+        retrieval_dim = getattr(context.store, "dim", hidden)
+        context.episodic_adapter = EpisodicAdapter(epi_cfg)
+        if not hasattr(context.episodic_adapter, "proj"):
+            context.episodic_adapter.proj = nn.Linear(retrieval_dim, hidden)
 
-    rel_adapter: RelationalMemoryAdapter | None = None
     if cfg.relational:
-        rel_adapter = RelationalMemoryAdapter()
-
+        context.relational_adapter = RelationalMemoryAdapter()
     if cfg.spatial.enabled:
         spat_cfg = SpatialAdapterConfig(
             hidden_size=hidden,
@@ -497,7 +543,7 @@ def train(cfg: TrainConfig) -> None:
             lora_dropout=cfg.spatial.lora_dropout,
             enabled=True,
         )
-        spat_adapter = SpatialAdapter(spat_cfg)
+        context.spatial_adapter = SpatialAdapter(spat_cfg)
 
     fusion_cfg = MemoryFusionConfig(
         insert_block_index=cfg.fusion_insert_block_index,
@@ -513,9 +559,7 @@ def train(cfg: TrainConfig) -> None:
             super().__init__()
             self.adapter = adapter
 
-        def forward(
-            self, hidden_states: torch.Tensor, **kwargs: Any
-        ) -> torch.Tensor:  # pragma: no cover - simple passthrough
+        def forward(self, hidden_states: torch.Tensor, **kwargs: Any) -> torch.Tensor:
             return self.adapter(hidden_states, **kwargs)
 
     class _SpatialProxy(nn.Module):
@@ -534,11 +578,9 @@ def train(cfg: TrainConfig) -> None:
             )
             return self.adapter(hidden_states, plans)
 
-    epi_proxy = epi_adapter
-    # `_RelationalProxy` is a placeholder that simply forwards to the adapter;
-    # it will gain proper KG interaction once that path is implemented.
-    rel_proxy = _RelationalProxy(rel_adapter) if rel_adapter else None
-    spat_proxy = _SpatialProxy(spat_adapter) if spat_adapter else None
+    epi_proxy = context.episodic_adapter
+    rel_proxy = _RelationalProxy(context.relational_adapter) if context.relational_adapter else None
+    spat_proxy = _SpatialProxy(context.spatial_adapter) if context.spatial_adapter else None
 
     try:
         info = attach_adapters(
@@ -562,44 +604,65 @@ def train(cfg: TrainConfig) -> None:
             "max_age": cfg.relational_mem.prune_max_age,
         }
     }
-    kg = KnowledgeGraph(config=kg_cfg)
+    context.kg = KnowledgeGraph(config=kg_cfg)
     kg_interval = 0.1 if cfg.dry_run else cfg.relational_mem.maintenance_interval
-    kg.start_background_tasks(kg_interval)
+    context.kg.start_background_tasks(kg_interval)
 
     spat_map_cfg = {
         "decay_rate": cfg.spatial_mem.decay_rate,
         "prune": {"max_age": cfg.spatial_mem.prune_max_age},
     }
-    spatial_map = PlaceGraph(path_integration=cfg.spatial.enabled, config=spat_map_cfg)
+    context.spatial_map = PlaceGraph(path_integration=cfg.spatial.enabled, config=spat_map_cfg)
     spat_interval = 0.1 if cfg.dry_run else cfg.spatial_mem.maintenance_interval
-    spatial_map.start_background_tasks(spat_interval)
+    context.spatial_map.start_background_tasks(spat_interval)
 
-    sources: list[MemorySource] = [
-        EpisodicSource(store, epi_adapter, cfg.memory.episodic),
-        RelationalSource(kg, rel_adapter, cfg.memory.relational),
-        SpatialSource(spatial_map, spat_adapter, cfg.memory.spatial),
+    context.sources = [
+        EpisodicSource(context.store, context.episodic_adapter, cfg.memory.episodic),
+        RelationalSource(context.kg, context.relational_adapter, cfg.memory.relational),
+        SpatialSource(context.spatial_map, context.spatial_adapter, cfg.memory.spatial),
     ]
 
-    scheduler = None
-    worker = None
     if cfg.replay.enabled:
-        scheduler = ReplayScheduler(store, kg, batch_mix=cfg.batch_mix)
-
-        total = 10
-        for i in range(total):
-            # Add some dummy traces to the scheduler so episodic items can be sampled
-            scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
-
-        # Launch background consolidation worker
-        worker = ConsolidationWorker(
-            scheduler,
+        context.scheduler = ReplayScheduler(context.store, context.kg, batch_mix=cfg.batch_mix)
+        for i in range(10):
+            context.scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
+        context.worker = ConsolidationWorker(
+            context.scheduler,
             model,
-            episodic_adapter=epi_adapter,
-            relational_adapter=rel_adapter,
-            spatial_adapter=spat_adapter,
+            episodic_adapter=context.episodic_adapter,
+            relational_adapter=context.relational_adapter,
+            spatial_adapter=context.spatial_adapter,
         )
-        worker.start()
+    else:
+        context.scheduler = None
+        context.worker = None
 
+
+def _train(
+    cfg: TrainConfig,
+    context: TrainerContext,
+    tokenizer,
+    train_ds,
+    val_ds,
+) -> None:
+    """Execute the training or dry‑run."""
+    random.seed(cfg.seed)
+    np.random.seed(cfg.seed)
+    torch.manual_seed(cfg.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(cfg.seed)
+    logging.info("Data format: %s", cfg.data_format)
+    logging.info("Train files: %s", cfg.train_files)
+    logging.info("Validation files: %s", cfg.val_files)
+    logging.info("Fusion insert block index: %d", cfg.fusion_insert_block_index)
+    logging.info("Replay enabled: %s", cfg.replay.enabled)
+    logging.info("Replay ratio: %.2f", cfg.replay.ratio)
+
+    model = context.model
+    hidden = context.hidden_size
+    sources = context.sources
+
+    context.start()
     try:
         peft_config = None
         if isinstance(model, torch.nn.Module):
@@ -614,36 +677,15 @@ def train(cfg: TrainConfig) -> None:
                 target_modules=modules,
             )
 
-        train_ds = None
-        val_ds = None
-        if cfg.data_format == "jsonl":
-            from scripts.jsonl_dataset import load_jsonl_files, split_train_val
-
-            if cfg.train_files:
-                train_ds = load_jsonl_files(cfg.train_files)
-                if cfg.val_files:
-                    val_ds = load_jsonl_files(cfg.val_files)
-                else:
-                    train_ds, val_ds = split_train_val(cfg.train_files[0], None)
-                logging.info("Train dataset size: %d", len(train_ds))
-                logging.info("Validation dataset size: %d", len(val_ds))
-            elif not cfg.dry_run:
-                raise ValueError("train_files must be provided when data_format='jsonl'")
-            else:
-                logging.info("No train_files provided; skipping dataset load")
-        elif not cfg.dry_run:
-            train_ds = load_dataset(cfg.dataset_name, split="train")
-            logging.info("Train dataset size: %d", len(train_ds))
-
         if cfg.schema_fasttrack_ingest and train_ds is not None:
-            ingest_training_text(train_ds, kg)
+            ingest_training_text(train_ds, context.kg)
 
-        if cfg.replay.enabled and train_ds is not None:
+        if cfg.replay.enabled and train_ds is not None and context.scheduler is not None:
             from scripts.replay_dataset import ReplayIterableDataset
 
             def replay_reader():
                 while True:
-                    kind, trace_id = scheduler.next_batch(1)[0]
+                    kind, trace_id = context.scheduler.next_batch(1)[0]
                     yield {"prompt": f"replay {kind}", "answer": trace_id or ""}
 
             train_ds = ReplayIterableDataset(train_ds, replay_reader, cfg.replay.ratio)
@@ -671,14 +713,20 @@ def train(cfg: TrainConfig) -> None:
             probs = np.array([1.0])
             queries = np.zeros((1, hidden), dtype=np.float32)
             keys = np.zeros((0, hidden), dtype=np.float32)
-            decisions, _ = gate_batch(gate, probs, queries, keys)
-            gate_attempts += len(decisions)
-            gate_accepts += sum(d.allow for d in decisions)
+            decisions, _ = gate_batch(context.gate, probs, queries, keys)
+            context.gate_attempts += len(decisions)
+            context.gate_accepts += sum(d.allow for d in decisions)
             for dec, q in zip(decisions, queries):
-                if dec.allow:
-                    writer.enqueue(q, TraceValue(provenance="dry_run"))
+                if dec.allow and context.writer is not None:
+                    context.writer.enqueue(q, TraceValue(provenance="dry_run"))
             for _ in range(3):
-                log_memory_status(store, kg, spatial_map, scheduler, worker)
+                log_memory_status(
+                    context.store,
+                    context.kg,
+                    context.spatial_map,
+                    context.scheduler,
+                    context.worker,
+                )
                 time.sleep(0.1)
             return
 
@@ -722,29 +770,27 @@ def train(cfg: TrainConfig) -> None:
                 "No trainable parameters found. Set `target_modules` to attach LoRA."
             )
 
-        try:
-            trainer.train()
-        except KeyboardInterrupt:
-            logging.info("Training interrupted by user")
+        trainer.train()
+
+    except KeyboardInterrupt:
+        logging.info("Training interrupted by user")
     finally:
-        if worker is not None:
-            worker.stop()
-            worker.join(timeout=1)
-        if "writer" in locals() and writer is not None:
-            writer.stop()
-            rate = gate_accepts / gate_attempts if gate_attempts else 0.0
-            logging.info(
-                "write_accept_rate=%.2f writes_enqueued=%d writes_committed=%d",
-                rate,
-                writer.stats["writes_enqueued"],
-                writer.stats["writes_committed"],
-            )
+        context.stop()
+
+
+def train(cfg: TrainConfig) -> None:
+    """Wrapper that prepares context and datasets then runs training."""
+
+    model, tokenizer = _load_model_and_tokenizer(cfg)
+    context = TrainerContext(model=model)
+    init_memory(context, cfg)
+    train_ds, val_ds = prepare_datasets(cfg)
+    _train(cfg, context, tokenizer, train_ds, val_ds)
 
 
 @hydra.main(config_name="train_lora_config", version_base=None)
 def main(cfg: TrainConfig) -> None:  # pragma: no cover - thin wrapper
     """Hydra entry point."""
-
     train(cfg)
 
 
