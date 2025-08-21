@@ -720,3 +720,78 @@ def test_train_relational_retrieval(monkeypatch) -> None:
     hidden = torch.zeros(1, 1, mem.tokens.size(-1))
     out = adapter(hidden, memory=mem)
     assert out.abs().sum() > 0
+
+
+def test_write_gate_runs_during_training(monkeypatch) -> None:
+    """Gating decisions enqueue writes during normal training."""
+
+    writer_holder: dict[str, object] = {}
+
+    class DummyWriter:
+        def __init__(self, _store, maxsize: int = 64) -> None:  # pragma: no cover - init
+            self.stats = {"writes_enqueued": 0, "writes_committed": 0}
+            writer_holder["writer"] = self
+
+        def enqueue(self, key, value) -> None:  # pragma: no cover - simple counter
+            self.stats["writes_enqueued"] += 1
+
+        def stop(self) -> None:  # pragma: no cover - no cleanup needed
+            pass
+
+    class DummyModel(torch.nn.Module):
+        def __init__(self) -> None:  # pragma: no cover - simple model
+            super().__init__()
+            self.config = SimpleNamespace(use_cache=False, hidden_size=4)
+
+        def gradient_checkpointing_enable(self) -> None:  # pragma: no cover - stub
+            pass
+
+        def set_attn_implementation(self, *args, **kwargs) -> None:  # pragma: no cover
+            pass
+
+        def forward(self, input_ids, labels=None, memory_tokens=None):
+            self._hippo_last_hidden = torch.zeros(input_ids.size(0), input_ids.size(1), 4)
+            logits = torch.zeros(input_ids.size(0), input_ids.size(1), 5)
+            logits[:, -1, 0] = -1.0
+            logits[:, -1, 1] = 1.0
+            return SimpleNamespace(logits=logits)
+
+        def get_input_embeddings(self):  # pragma: no cover - simple embed
+            return lambda ids: torch.zeros(ids.size(0), ids.size(1), 4)
+
+    class FakeTrainer:
+        def __init__(self, model, train_ds, args, tokenizer, peft_config, eval_dataset=None):
+            self.model = model
+            self.compute_loss = lambda model, inputs, return_outputs=False: (
+                torch.tensor(0.0),
+                model(input_ids=inputs["input_ids"], labels=inputs["labels"]),
+            )
+
+        def train(self) -> None:
+            inputs = {
+                "input_ids": torch.ones(1, 2, dtype=torch.long),
+                "labels": torch.ones(1, 2, dtype=torch.long),
+            }
+            self.compute_loss(self.model, inputs, return_outputs=True)
+
+    tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+
+    monkeypatch.setattr("scripts.train_lora.AsyncStoreWriter", DummyWriter)
+    monkeypatch.setattr(
+        "scripts.train_lora._load_model_and_tokenizer", lambda cfg: (DummyModel(), tokenizer)
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters", lambda *a, **k: {"target_block": 0, "num_blocks": 1}
+    )
+    monkeypatch.setattr("scripts.train_lora._init_sft_trainer", FakeTrainer)
+    monkeypatch.setattr(
+        "scripts.train_lora.prepare_datasets", lambda cfg: ([{"text": "hi"}], [{"text": "hi"}])
+    )
+    monkeypatch.setattr("scripts.train_lora.count_trainable_parameters", lambda _m: 1)
+    monkeypatch.setattr("scripts.train_lora.SFTConfig", lambda **kw: SimpleNamespace(**kw))
+
+    cfg = parse_args(["max_steps=1", "write_threshold=0.0"])
+    train(cfg)
+    writer = writer_holder.get("writer")
+    assert writer is not None
+    assert writer.stats["writes_enqueued"] > 0
