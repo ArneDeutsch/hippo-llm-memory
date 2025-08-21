@@ -89,10 +89,18 @@ class SpatialSpec:
 
 
 @dataclass
+class RuntimeSpec:
+    """Runtime toggles controlling side effects."""
+
+    enable_writes: bool = True
+
+
+@dataclass
 class Memory:
     episodic: EpisodicSpec = field(default_factory=EpisodicSpec)
     relational: RelationalSpec = field(default_factory=RelationalSpec)
     spatial: SpatialSpec = field(default_factory=SpatialSpec)
+    runtime: RuntimeSpec = field(default_factory=RuntimeSpec)
 
 
 @dataclass
@@ -443,6 +451,13 @@ class TrainerContext:
                 self.writer.stats["writes_enqueued"],
                 self.writer.stats["writes_committed"],
             )
+        if self.kg is not None:
+            if hasattr(self.kg, "stop_background_tasks"):
+                self.kg.stop_background_tasks()
+            if hasattr(self.kg, "conn"):
+                self.kg.conn.close()
+        if self.spatial_map is not None and hasattr(self.spatial_map, "stop_background_tasks"):
+            self.spatial_map.stop_background_tasks()
 
 
 def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) -> None:
@@ -790,15 +805,16 @@ def _train(
             dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
             if callable(model):
                 _ = model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
-            probs = np.array([1.0])
-            queries = np.zeros((1, hidden), dtype=np.float32)
-            keys = np.zeros((0, hidden), dtype=np.float32)
-            decisions, _ = gate_batch(context.gate, probs, queries, keys)
-            context.gate_attempts += len(decisions)
-            context.gate_accepts += sum(d.allow for d in decisions)
-            for dec, q in zip(decisions, queries):
-                if dec.allow and context.writer is not None:
-                    context.writer.enqueue(q, TraceValue(provenance="dry_run"))
+            if cfg.memory.runtime.enable_writes:
+                probs = np.array([1.0])
+                queries = np.zeros((1, hidden), dtype=np.float32)
+                keys = np.zeros((0, hidden), dtype=np.float32)
+                decisions, _ = gate_batch(context.gate, probs, queries, keys)
+                context.gate_attempts += len(decisions)
+                context.gate_accepts += sum(d.allow for d in decisions)
+                for dec, q in zip(decisions, queries):
+                    if dec.allow and context.writer is not None:
+                        context.writer.enqueue(q, TraceValue(provenance="dry_run"))
             for _ in range(3):
                 log_memory_status(
                     context.store,
@@ -852,7 +868,14 @@ def _train(
             gate, store, writer = context.gate, context.store, context.writer
             hidden = getattr(model, "_hippo_last_hidden", None)
             labels = inputs.get("labels")
-            if gate and store and writer is not None and hidden is not None and labels is not None:
+            if (
+                cfg.memory.runtime.enable_writes
+                and gate
+                and store
+                and writer is not None
+                and hidden is not None
+                and labels is not None
+            ):
                 with torch.no_grad():
                     last_logits = outputs.logits[:, -1, :]
                     last_labels = labels[:, -1]

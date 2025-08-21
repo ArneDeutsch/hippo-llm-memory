@@ -722,8 +722,8 @@ def test_train_relational_retrieval(monkeypatch) -> None:
     assert out.abs().sum() > 0
 
 
-def test_write_gate_runs_during_training(monkeypatch) -> None:
-    """Gating decisions enqueue writes during normal training."""
+def _run_training(monkeypatch, overrides: list[str]) -> dict[str, object]:
+    """Run training with overrides and return captured writer."""
 
     writer_holder: dict[str, object] = {}
 
@@ -790,8 +790,24 @@ def test_write_gate_runs_during_training(monkeypatch) -> None:
     monkeypatch.setattr("scripts.train_lora.count_trainable_parameters", lambda _m: 1)
     monkeypatch.setattr("scripts.train_lora.SFTConfig", lambda **kw: SimpleNamespace(**kw))
 
-    cfg = parse_args(["max_steps=1", "write_threshold=0.0"])
+    cfg = parse_args(["max_steps=1", "write_threshold=0.0", *overrides])
     train(cfg)
+    return writer_holder
+
+
+def test_write_gate_runs_during_training(monkeypatch) -> None:
+    """Gating decisions enqueue writes during normal training."""
+
+    writer_holder = _run_training(monkeypatch, [])
     writer = writer_holder.get("writer")
     assert writer is not None
     assert writer.stats["writes_enqueued"] > 0
+
+
+def test_disable_writes_flag(monkeypatch) -> None:
+    """Disabling writes skips enqueueing despite gate scores."""
+
+    writer_holder = _run_training(monkeypatch, ["memory.runtime.enable_writes=false"])
+    writer = writer_holder.get("writer")
+    assert writer is not None
+    assert writer.stats["writes_enqueued"] == 0
