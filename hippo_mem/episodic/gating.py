@@ -52,7 +52,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from hippo_mem._faiss import faiss
+from .utils import cosine_dissimilarity
 
 logger = logging.getLogger(__name__)
 
@@ -238,16 +238,7 @@ def novelty(query: np.ndarray, keys: np.ndarray) -> float:
     surprise
     """
 
-    if keys.size == 0:
-        return 1.0
-
-    q = np.asarray(query, dtype="float32").reshape(1, -1)
-    k = np.asarray(keys, dtype="float32")
-    faiss.normalize_L2(q)
-    faiss.normalize_L2(k)
-    # why: cosine similarity via dot product after L2 normalisation
-    sims = k @ q[0]
-    return 1.0 - float(np.max(sims))
+    return cosine_dissimilarity(query, keys, "max")
 
 
 @dataclass
