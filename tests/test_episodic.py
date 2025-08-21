@@ -14,7 +14,7 @@ from hypothesis import strategies as st
 
 from hippo_mem.common import TraceSpec
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
-from hippo_mem.episodic.gating import WriteGate
+from hippo_mem.episodic.gating import WriteGate, novelty, surprise
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
@@ -137,12 +137,13 @@ def test_low_prob_surprise_crosses_threshold() -> None:
 
     high_prob = 0.9
     decision_high = gate(high_prob, query, keys)
-    assert not decision_high.allow and decision_high.score == pytest.approx(-np.log(high_prob))
+    expected_high = surprise(high_prob)
+    assert not decision_high.allow and decision_high.score == pytest.approx(expected_high)
 
     low_prob = 0.1
     decision_low = gate(low_prob, query, keys)
-    expected = -np.log(low_prob)
-    assert decision_low.allow and decision_low.score == pytest.approx(expected)
+    expected_low = surprise(low_prob)
+    assert decision_low.allow and decision_low.score == pytest.approx(expected_low)
 
 
 def test_novel_query_crosses_threshold() -> None:
@@ -153,11 +154,13 @@ def test_novel_query_crosses_threshold() -> None:
 
     seen_keys = np.array([query])
     decision_seen = gate(1.0, query, seen_keys)
-    assert not decision_seen.allow and decision_seen.score == pytest.approx(0.0)
+    expected_seen = novelty(query, seen_keys)
+    assert not decision_seen.allow and decision_seen.score == pytest.approx(expected_seen)
 
     novel_keys = np.zeros((0, 4), dtype="float32")
     decision_novel = gate(1.0, query, novel_keys)
-    assert decision_novel.allow and decision_novel.score == pytest.approx(1.0)
+    expected_novel = novelty(query, novel_keys)
+    assert decision_novel.allow and decision_novel.score == pytest.approx(expected_novel)
 
 
 def test_reward_flag_crosses_threshold() -> None:
@@ -168,10 +171,12 @@ def test_reward_flag_crosses_threshold() -> None:
     keys = np.zeros((0, 4), dtype="float32")
 
     decision_no_reward = gate(1.0, query, keys, reward=0.0)
-    assert not decision_no_reward.allow and decision_no_reward.score == pytest.approx(0.0)
+    expected_none = gate.gamma * 0.0
+    assert not decision_no_reward.allow and decision_no_reward.score == pytest.approx(expected_none)
 
     decision_reward = gate(1.0, query, keys, reward=1.0)
-    assert decision_reward.allow and decision_reward.score == pytest.approx(1.0)
+    expected_reward = gate.gamma * 1.0
+    assert decision_reward.allow and decision_reward.score == pytest.approx(expected_reward)
 
 
 def test_delete_removes_trace() -> None:
