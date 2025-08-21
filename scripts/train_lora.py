@@ -23,7 +23,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Iterable, List, Optional
 
 # Ensure repo root is on the path when executed as a script
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -126,7 +126,7 @@ class TrainConfig:
 
     # Utility flags
     dry_run: bool = False
-    fast_track_ingest: bool = False
+    schema_fasttrack_ingest: bool = False
 
     # Adapter fusion
     fusion_insert_block_index: int = -4
@@ -353,6 +353,23 @@ def _gather_memory_tokens(
     return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
 
+def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) -> None:
+    """Extract tuples from training ``records`` and insert into ``kg``.
+
+    Parameters
+    ----------
+    records : Iterable[dict[str, Any]]
+        Sequence of training examples containing a ``"text"`` field.
+    kg : KnowledgeGraph
+        Graph that receives ingested tuples.
+    """
+
+    for rec in records:
+        text = rec.get("text") or ""
+        for tup in extract_tuples(text):
+            kg.ingest(tup)
+
+
 def train(cfg: TrainConfig) -> None:
     """Execute the training or dry‑run."""
     random.seed(cfg.seed)
@@ -550,11 +567,8 @@ def train(cfg: TrainConfig) -> None:
             train_ds = load_dataset(cfg.dataset_name, split="train")
             logging.info("Train dataset size: %d", len(train_ds))
 
-        if cfg.fast_track_ingest and train_ds is not None:
-            for rec in train_ds:
-                text = rec.get("text") or ""
-                for tup in extract_tuples(text):
-                    kg.ingest(tup)
+        if cfg.schema_fasttrack_ingest and train_ds is not None:
+            ingest_training_text(train_ds, kg)
 
         if cfg.replay.enabled and train_ds is not None:
             from scripts.replay_dataset import ReplayIterableDataset
