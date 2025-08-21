@@ -37,7 +37,7 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 from peft import LoraConfig, get_peft_model
 from torch import nn
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainerCallback
 from trl import SFTConfig, SFTTrainer
 
 from hippo_mem.adapters.episodic_adapter import EpisodicMemoryAdapter
@@ -382,10 +382,11 @@ class SpatialSource:
         )
         mem = spatial_retrieve_and_pack("origin", spec, self.map, proj)
         logging.info(
-            "spatial_retrieval_radius=%d latency_ms=%.2f num_nodes=%d",
+            "spatial_retrieval_radius=%d latency_ms=%.2f num_nodes=%d num_edges=%d",
             self.spec.radius,
             mem.meta.get("latency_ms", 0.0),
             mem.meta.get("num_nodes", 0),
+            mem.meta.get("num_edges", 0),
         )
         return mem
 
@@ -459,6 +460,69 @@ def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) 
         text = rec.get("text") or ""
         for tup in extract_tuples(text):
             kg.ingest(tup)
+
+
+def ingest_spatial_traces(records: Iterable[dict[str, Any]], graph: PlaceGraph) -> None:
+    """Insert trajectories from ``records`` into ``graph``.
+
+    Parameters
+    ----------
+    records : Iterable[dict[str, Any]]
+        Training examples optionally containing a ``"trajectory"`` field.
+    graph : PlaceGraph
+        Spatial map receiving the observed coordinates.
+    """
+
+    count = 0
+    steps = 0
+    for rec in records:
+        traj = rec.get("trajectory")
+        if not traj:
+            continue
+        count += 1
+        steps += len(traj)
+        for coord in traj:
+            if isinstance(coord, (list, tuple)) and len(coord) == 2:
+                ctx = f"{coord[0]},{coord[1]}"
+            else:  # pragma: no cover - defensive
+                ctx = str(coord)
+            graph.observe(ctx)
+    if count:
+        logging.info(
+            "spatial_ingest_traces=%d avg_len=%.2f",
+            count,
+            steps / count if count else 0.0,
+        )
+
+
+class _IngestCallback(TrainerCallback):
+    """Hydra/Transformers callback inserting KG tuples and spatial traces."""
+
+    def __init__(
+        self,
+        cfg: TrainConfig,
+        records: Iterable[dict[str, Any]] | None,
+        kg: KnowledgeGraph,
+        graph: PlaceGraph,
+    ) -> None:
+        self.cfg = cfg
+        self.records = list(records) if records is not None else []
+        self.kg = kg
+        self.graph = graph
+
+    def on_epoch_begin(self, *args, **kwargs):  # pragma: no cover - Trainer API
+        if self.cfg.schema_fasttrack_ingest and self.records:
+            ingest_training_text(self.records, self.kg)
+            logging.info(
+                "kg_ingest_nodes=%d edges=%d",
+                self.kg.graph.number_of_nodes(),
+                self.kg.graph.number_of_edges(),
+            )
+        if self.records:
+            ingest_spatial_traces(self.records, self.graph)
+            nodes = len(self.graph.graph)
+            edges = sum(len(v) for v in self.graph.graph.values())
+            logging.info("spatial_ingest_nodes=%d edges=%d", nodes, edges)
 
 
 def prepare_datasets(cfg: TrainConfig):
@@ -691,8 +755,10 @@ def _train(
                 target_modules=modules,
             )
 
-        if cfg.schema_fasttrack_ingest and train_ds is not None:
-            ingest_training_text(train_ds, context.kg)
+        if cfg.dry_run and train_ds is not None:
+            if cfg.schema_fasttrack_ingest:
+                ingest_training_text(train_ds, context.kg)
+            ingest_spatial_traces(train_ds, context.spatial_map)
 
         if cfg.replay.enabled and train_ds is not None and context.scheduler is not None:
             from scripts.replay_dataset import ReplayIterableDataset
@@ -764,6 +830,8 @@ def _train(
             peft_config,
             eval_dataset=val_ds,
         )
+        if not cfg.dry_run and hasattr(trainer, "add_callback"):
+            trainer.add_callback(_IngestCallback(cfg, train_ds, context.kg, context.spatial_map))
         orig_compute_loss = trainer.compute_loss
 
         def compute_loss_with_memory(self, model, inputs, return_outputs=False):
