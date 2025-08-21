@@ -31,6 +31,31 @@ def test_replay_scheduler_batch_mix_counts() -> None:
     assert "b" in epi_ids
 
 
+def test_replay_scheduler_large_batch_mix_ratios() -> None:
+    """Large batch approximates configured mix ratios."""
+
+    mix = SimpleNamespace(episodic=0.5, semantic=0.3, fresh=0.2)
+    sched = _make_scheduler(mix)
+    sched.kg.upsert(
+        "H",
+        "rel",
+        "T",
+        "ctx",
+        head_embedding=[1.0, 0.0],
+        tail_embedding=[0.0, 1.0],
+    )
+    key = np.array([1.0, 0.0], dtype="float32")
+    for i in range(600):
+        sched.add_trace(f"t{i}", key, score=1.0)
+    batch = sched.next_batch(1000)
+    kinds = [k for k, _ in batch]
+    total = len(kinds)
+    counts = {t: kinds.count(t) for t in ["episodic", "semantic", "fresh"]}
+    assert abs(counts["episodic"] / total - 0.5) < 0.05
+    assert abs(counts["semantic"] / total - 0.3) < 0.05
+    assert abs(counts["fresh"] / total - 0.2) < 0.05
+
+
 def test_replay_scheduler_queue_ranking() -> None:
     """Episodic items are returned according to queue priority."""
 
