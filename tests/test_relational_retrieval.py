@@ -46,7 +46,9 @@ def test_relational_retrieve_and_pack_shapes():
     assert mem.meta["source"] == "relational"
 
 
-def test_memory_adapter_matches_direct_adapter():
+def test_adapter_consumes_relational_tokens() -> None:
+    """Memory adapter matches direct fusion for a known batch."""
+
     kg = KnowledgeGraph()
     kg.node_embeddings["A"] = np.array([1.0, 0.0, 0.0], dtype=np.float32)
     kg.node_embeddings["B"] = np.array([0.0, 1.0, 0.0], dtype=np.float32)
@@ -64,26 +66,29 @@ def test_memory_adapter_matches_direct_adapter():
     mem = MemoryTokens(tokens=tokens, mask=mask, meta={"source": "relational"})
 
     adapter = RelationalMemoryAdapter()
-    out = adapter(hidden, memory=mem)
+    residual = adapter(hidden, memory=mem)
 
     direct = RelationalAdapter()
+    expected = torch.empty_like(hidden)
     for b in range(hidden.size(0)):
+        feats = tokens[b, mask[b]].numpy()
         for t in range(hidden.size(1)):
-            feats = tokens[b, mask[b]].numpy()
-            fused = direct(hidden[b, t].numpy(), feats)
-            fused_t = torch.from_numpy(fused).to(hidden)
-            assert torch.allclose(hidden[b, t] + out[b, t], fused_t)
-    assert out.shape == hidden.shape
+            expected[b, t] = torch.from_numpy(direct(hidden[b, t].numpy(), feats))
+
+    assert torch.allclose(hidden + residual, expected)
+    assert residual.shape == hidden.shape
 
 
-def test_memory_adapter_zero_without_tokens():
+def test_adapter_zero_without_tokens() -> None:
+    """Empty masks produce a zero residual."""
+
     hidden = torch.randn(1, 2, 3)
     tokens = torch.ones(1, 1, 3)
     mask = torch.zeros(1, 1, dtype=torch.bool)
     mem = MemoryTokens(tokens=tokens, mask=mask, meta={"source": "relational"})
     adapter = RelationalMemoryAdapter()
-    out = adapter(hidden, memory=mem)
-    assert torch.equal(out, torch.zeros_like(hidden))
+    residual = adapter(hidden, memory=mem)
+    assert torch.equal(residual, torch.zeros_like(hidden))
 
 
 def test_relational_hops_two_edges():
