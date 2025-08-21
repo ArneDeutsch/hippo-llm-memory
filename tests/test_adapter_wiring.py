@@ -91,3 +91,42 @@ def test_adapter_invoked_with_memory_tokens(monkeypatch: pytest.MonkeyPatch) -> 
     out = model(input_ids, memory_tokens=mem).logits
     assert calls["n"] == 1
     assert not torch.allclose(out, baseline)
+
+
+def test_missing_blocks_attribute_errors() -> None:
+    class Dummy(torch.nn.Module):
+        def forward(self, x: torch.Tensor) -> torch.Tensor:  # pragma: no cover - trivial
+            return x
+
+    cfg = MemoryFusionConfig()
+    with pytest.raises(AttributeError):
+        attach_adapters(Dummy(), cfg)
+
+
+def test_empty_block_list_errors() -> None:
+    class Dummy(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.layers: list[torch.nn.Module] = []
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:  # pragma: no cover - trivial
+            return x
+
+    cfg = MemoryFusionConfig()
+    with pytest.raises(ValueError):
+        attach_adapters(Dummy(), cfg)
+
+
+def test_remove_hooks_restore_forward(monkeypatch: pytest.MonkeyPatch) -> None:
+    model = _setup_model(monkeypatch)
+    block = model.transformer.h[0]
+    block_forward = block.forward
+    model_forward = model.forward
+    cfg = MemoryFusionConfig(enabled=True, insert_block_index=0)
+    attach_adapters(model, cfg)
+    assert block.forward is not block_forward
+    assert model.forward is not model_forward
+    block._hippo_remove_adapter()  # type: ignore[attr-defined]
+    model._hippo_remove_adapter()  # type: ignore[attr-defined]
+    assert block.forward.__func__ is block_forward.__func__
+    assert model.forward.__func__ is model_forward.__func__
