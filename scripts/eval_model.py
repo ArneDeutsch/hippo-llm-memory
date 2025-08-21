@@ -44,14 +44,22 @@ class Task:
 
 
 def _dataset_path(suite: str, n: int, seed: int) -> Path:
-    """Return path to a JSONL dataset for ``suite`` covering ``n`` items."""
+    """Return path to a JSONL dataset for ``suite`` covering ``n`` items.
 
-    # Available canonical sizes.  Pick the smallest that covers ``n``.
+    The function falls back to the smallest canonical size that covers ``n``. If
+    the exact file does not exist it searches for variants matching
+    ``"{suite}_*_{size}_{seed}.jsonl"`` and returns the first match.
+    """
+
     sizes = [50, 200, 1000]
-    for size in sizes:
-        if n <= size:
-            return Path("data") / f"{suite}_{size}_{seed}.jsonl"
-    return Path("data") / f"{suite}_{sizes[-1]}_{seed}.jsonl"
+    size = next((s for s in sizes if n <= s), sizes[-1])
+    base = Path("data") / f"{suite}_{size}_{seed}.jsonl"
+    if base.exists():
+        return base
+    candidates = sorted(Path("data").glob(f"{suite}_*_{size}_{seed}.jsonl"))
+    if candidates:
+        return candidates[0]
+    raise FileNotFoundError("Dataset not found; run scripts/build_datasets.py or check suite name")
 
 
 def _load_tasks(path: Path, n: int) -> List[Task]:
