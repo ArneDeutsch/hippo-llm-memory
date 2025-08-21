@@ -730,10 +730,12 @@ def _run_training(monkeypatch, overrides: list[str]) -> dict[str, object]:
     class DummyWriter:
         def __init__(self, _store, maxsize: int = 64) -> None:  # pragma: no cover - init
             self.stats = {"writes_enqueued": 0, "writes_committed": 0}
+            self.queue = SimpleNamespace(qsize=lambda: 0)
             writer_holder["writer"] = self
 
         def enqueue(self, key, value) -> None:  # pragma: no cover - simple counter
             self.stats["writes_enqueued"] += 1
+            self.queue = SimpleNamespace(qsize=lambda: self.stats["writes_enqueued"])
 
         def stop(self) -> None:  # pragma: no cover - no cleanup needed
             pass
@@ -811,3 +813,11 @@ def test_disable_writes_flag(monkeypatch) -> None:
     writer = writer_holder.get("writer")
     assert writer is not None
     assert writer.stats["writes_enqueued"] == 0
+
+
+def test_gate_logging(monkeypatch, caplog) -> None:
+    """Gate stats are logged at the configured interval."""
+
+    caplog.set_level(logging.INFO)
+    _run_training(monkeypatch, ["memory.runtime.log_interval=1"])
+    assert any("gate_accepts" in r.message for r in caplog.records)

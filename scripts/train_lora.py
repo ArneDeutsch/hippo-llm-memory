@@ -93,6 +93,7 @@ class RuntimeSpec:
     """Runtime toggles controlling side effects."""
 
     enable_writes: bool = True
+    log_interval: int = 100
 
 
 @dataclass
@@ -432,6 +433,10 @@ class TrainerContext:
     hidden_size: int = 0
     gate_attempts: int = 0
     gate_accepts: int = 0
+    step: int = 0
+    log_interval: int = 100
+    store_size: int = 0
+    writer_queue_depth: int = 0
     adapters_attached: bool = False
 
     def start(self) -> None:
@@ -458,6 +463,17 @@ class TrainerContext:
                 self.kg.conn.close()
         if self.spatial_map is not None and hasattr(self.spatial_map, "stop_background_tasks"):
             self.spatial_map.stop_background_tasks()
+
+    def runtime_stats(self) -> dict[str, int]:
+        """Return latest runtime counters for external monitoring."""
+
+        return {
+            "step": self.step,
+            "gate_accepts": self.gate_accepts,
+            "gate_attempts": self.gate_attempts,
+            "store_size": self.store_size,
+            "writer_queue_depth": self.writer_queue_depth,
+        }
 
 
 def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) -> None:
@@ -885,6 +901,7 @@ def _train(
                 setattr(model, "_hippo_memory_tokens", None)
             loss, outputs = orig_compute_loss(model, inputs, return_outputs=True)
             gate, store, writer = context.gate, context.store, context.writer
+            context.step += 1
             hidden = getattr(model, "_hippo_last_hidden", None)
             labels = inputs.get("labels")
             if (
@@ -912,6 +929,17 @@ def _train(
                 for dec, q in zip(decisions, queries):
                     if dec.allow:
                         writer.enqueue(q, TraceValue(provenance="train"))
+                context.store_size = keys.shape[0]
+                context.writer_queue_depth = writer.queue.qsize()
+                if context.step % context.log_interval == 0:
+                    logging.info(
+                        "step=%d gate_accepts=%d gate_attempts=%d store_size=%d queue_depth=%d",
+                        context.step,
+                        context.gate_accepts,
+                        context.gate_attempts,
+                        context.store_size,
+                        context.writer_queue_depth,
+                    )
             if return_outputs:
                 return loss, outputs
             return loss
@@ -936,7 +964,7 @@ def train(cfg: TrainConfig) -> None:
     """Wrapper that prepares context and datasets then runs training."""
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
-    context = TrainerContext(model=model)
+    context = TrainerContext(model=model, log_interval=cfg.memory.runtime.log_interval)
     init_memory(context, cfg)
     train_ds, val_ds = prepare_datasets(cfg)
     _train(cfg, context, tokenizer, train_ds, val_ds)
