@@ -124,7 +124,9 @@ def _evaluate(
             if "relational" in modules:
                 kg = modules["relational"]["kg"]
                 adapter = modules["relational"]["adapter"]
-                proj = getattr(adapter, "proj", nn.Linear(4, 8))
+                hidden_dim = hidden.size(-1)
+                in_dim = getattr(kg, "dim", 0) or hidden_dim
+                proj = getattr(adapter, "proj", nn.Linear(in_dim, hidden_dim))
                 adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="relational", k=1)
                 mems.append(relational_retrieve_and_pack(hidden, spec, kg, proj))

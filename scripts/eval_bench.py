@@ -58,7 +58,7 @@ from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
-from hippo_mem.spatial.map import PlaceGraph
+from hippo_mem.spatial.place_graph import PlaceGraph
 
 
 def _git_sha() -> str:
