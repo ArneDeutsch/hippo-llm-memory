@@ -69,7 +69,7 @@ This document specifies a production-ready design for hippocampus-inspired memor
 
 ## 5.2 Recall (content-addressable, CA3 completion)
 
-1. Query from current residual stream.
+1. Query from current residual stream (hidden state at the insertion block).
 2. Sparse key via **k-WTA projection**.
 3. FAISS-PQ KNN → candidate traces.
 4. **Modern-Hopfield** completion to densify/“fill in” the episodic pattern.
@@ -106,7 +106,11 @@ This document specifies a production-ready design for hippocampus-inspired memor
 * **MemoryTokens & flow:** retrieval hooks gather top‑K features from each store,
   project to `d_model` and pack to `memory_tokens` `[B, M, d_model]` (+ mask).
   Adapters no‑op when the tensor is empty.
-* **Write‑gate:** after forward, compute salience `S` and persist new traces only when `S > τ`.
+* `_hippo_retrieval_cb(hidden)` attaches to the target block, issues store queries,
+  and returns `MemoryTokens` plus latency stats.
+* **Write path:** `surprise` from model logits and `novelty` from pre-retrieval
+  cosine drive the gate; accepted items are enqueued to an async writer thread.
+  After forward, persist when `S > τ`.
 
 # 7) Configuration (Hydra)
 
