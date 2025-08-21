@@ -50,6 +50,7 @@ from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import AsyncStoreWriter, EpisodicStore, TraceValue
+from hippo_mem.relational.extract import extract_tuples
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
@@ -125,6 +126,7 @@ class TrainConfig:
 
     # Utility flags
     dry_run: bool = False
+    fast_track_ingest: bool = False
 
     # Adapter fusion
     fusion_insert_block_index: int = -4
@@ -547,6 +549,12 @@ def train(cfg: TrainConfig) -> None:
         elif not cfg.dry_run:
             train_ds = load_dataset(cfg.dataset_name, split="train")
             logging.info("Train dataset size: %d", len(train_ds))
+
+        if cfg.fast_track_ingest and train_ds is not None:
+            for rec in train_ds:
+                text = rec.get("text") or ""
+                for tup in extract_tuples(text):
+                    kg.ingest(tup)
 
         if cfg.replay.enabled and train_ds is not None:
             from scripts.replay_dataset import ReplayIterableDataset
