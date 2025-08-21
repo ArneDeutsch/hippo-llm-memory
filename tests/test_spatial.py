@@ -1,4 +1,5 @@
 import copy
+import math
 import time
 
 import networkx as nx
@@ -66,30 +67,40 @@ def test_macro_replay_improves_success() -> None:
 
 
 def test_spatial_adapter_integration() -> None:
-    """SpatialAdapter fuses hidden states with plan embeddings."""
+    """SpatialAdapter matches manual attention and mask behaviour."""
 
-    g = PlaceGraph()
-    for ctx in ["s", "m", "g"]:
-        g.observe(ctx)
-    path = g.plan("s", "g")
-
-    lib = MacroLib()
-    lib.store("route", path)
-    macro = lib.suggest("s", "g", k=1)[0]
-
-    emb = [g.encoder.encode(c).coord for c in macro.trajectory]
-    plan = (
-        torch.tensor([[x, y, 0.0, 0.0] for x, y in emb], dtype=torch.float32)
-        .unsqueeze(0)
-        .requires_grad_()
+    hidden = torch.tensor([[[1.0, 0.0, 0.0, 0.0]]], requires_grad=True)
+    plan = torch.tensor(
+        [[[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]]],
+        requires_grad=True,
     )
-    hidden = torch.randn(1, 1, 4, requires_grad=True)
 
     adapter = SpatialAdapter(AdapterConfig(hidden_size=4, num_heads=2))
+    eye = torch.eye(4)
+    with torch.no_grad():
+        adapter.q_proj.weight.copy_(eye)
+        adapter.k_proj.weight.copy_(eye)
+        adapter.v_proj.weight.copy_(eye)
+        adapter.o_proj.weight.copy_(eye)
+
     out = adapter(hidden, plan)
-    assert out.shape == hidden.shape
+
+    head_dim = adapter.head_dim
+    q = hidden.view(1, 1, adapter.num_heads, head_dim).transpose(1, 2)
+    k = plan.view(1, plan.shape[1], adapter.num_heads, head_dim).transpose(1, 2)
+    v = k.clone()
+    scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(head_dim)
+    attn = torch.softmax(scores, dim=-1)
+    context = torch.matmul(attn, v)
+    context = context.transpose(1, 2).reshape(1, 1, adapter.hidden_size)
+    expected = hidden + context
+    assert torch.allclose(out, expected)
+
     out.sum().backward()
     assert hidden.grad is not None and plan.grad is not None
+
+    empty_out = adapter(hidden, plan[:, :0], attn_mask=torch.zeros(1, 1, 0))
+    assert torch.allclose(empty_out, hidden)
 
 
 def test_expand_kv_noop_when_heads_match() -> None:
