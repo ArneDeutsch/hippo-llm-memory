@@ -128,6 +128,52 @@ def test_gating_threshold_and_pin_weight() -> None:
     assert decision2.allow and decision2.score == pytest.approx(1.0)
 
 
+def test_low_prob_surprise_crosses_threshold() -> None:
+    """Low probability alone can exceed the threshold."""
+
+    gate = WriteGate(tau=1.0, alpha=1.0, beta=0.0, gamma=0.0, delta=0.0)
+    query = np.zeros(4, dtype="float32")
+    keys = np.zeros((0, 4), dtype="float32")
+
+    high_prob = 0.9
+    decision_high = gate(high_prob, query, keys)
+    assert not decision_high.allow and decision_high.score == pytest.approx(-np.log(high_prob))
+
+    low_prob = 0.1
+    decision_low = gate(low_prob, query, keys)
+    expected = -np.log(low_prob)
+    assert decision_low.allow and decision_low.score == pytest.approx(expected)
+
+
+def test_novel_query_crosses_threshold() -> None:
+    """Novelty alone can exceed the threshold."""
+
+    gate = WriteGate(tau=0.5, alpha=0.0, beta=1.0, gamma=0.0, delta=0.0)
+    query = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+
+    seen_keys = np.array([query])
+    decision_seen = gate(1.0, query, seen_keys)
+    assert not decision_seen.allow and decision_seen.score == pytest.approx(0.0)
+
+    novel_keys = np.zeros((0, 4), dtype="float32")
+    decision_novel = gate(1.0, query, novel_keys)
+    assert decision_novel.allow and decision_novel.score == pytest.approx(1.0)
+
+
+def test_reward_flag_crosses_threshold() -> None:
+    """Reward alone can exceed the threshold."""
+
+    gate = WriteGate(tau=0.5, alpha=0.0, beta=0.0, gamma=1.0, delta=0.0)
+    query = np.zeros(4, dtype="float32")
+    keys = np.zeros((0, 4), dtype="float32")
+
+    decision_no_reward = gate(1.0, query, keys, reward=0.0)
+    assert not decision_no_reward.allow and decision_no_reward.score == pytest.approx(0.0)
+
+    decision_reward = gate(1.0, query, keys, reward=1.0)
+    assert decision_reward.allow and decision_reward.score == pytest.approx(1.0)
+
+
 def test_delete_removes_trace() -> None:
     """Deleting a trace removes it from recall."""
 
