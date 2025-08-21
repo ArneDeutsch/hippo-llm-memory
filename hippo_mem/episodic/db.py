@@ -7,8 +7,10 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from hippo_mem.common.sqlite import SQLiteExecMixin
 
-class TraceDB:
+
+class TraceDB(SQLiteExecMixin):
     """Lightweight wrapper around the SQLite trace table.
 
     The class exposes a tiny subset of operations used by :class:`EpisodicStore`
@@ -21,11 +23,9 @@ class TraceDB:
 
     # ------------------------------------------------------------------
     def _setup(self) -> None:
-        cur = self.conn.cursor()
-        cur.execute(
+        self._exec(
             "CREATE TABLE IF NOT EXISTS traces (id INTEGER PRIMARY KEY, value TEXT, key BLOB, ts REAL, salience REAL)"
         )
-        self.conn.commit()
 
     # ------------------------------------------------------------------
     def insert(self, key: np.ndarray, value_json: str, ts: float, salience: float) -> int:
@@ -48,19 +48,13 @@ class TraceDB:
         return value, key, float(ts), float(salience)
 
     def delete(self, idx: int) -> None:
-        cur = self.conn.cursor()
-        cur.execute("DELETE FROM traces WHERE id=?", (idx,))
-        self.conn.commit()
+        self._exec("DELETE FROM traces WHERE id=?", (idx,))
 
     def update_value(self, idx: int, value_json: str) -> None:
-        cur = self.conn.cursor()
-        cur.execute("UPDATE traces SET value=? WHERE id=?", (value_json, idx))
-        self.conn.commit()
+        self._exec("UPDATE traces SET value=? WHERE id=?", (value_json, idx))
 
     def update_key(self, idx: int, key: np.ndarray) -> None:
-        cur = self.conn.cursor()
-        cur.execute("UPDATE traces SET key=? WHERE id=?", (key.tobytes(), idx))
-        self.conn.commit()
+        self._exec("UPDATE traces SET key=? WHERE id=?", (key.tobytes(), idx))
 
     def keys(self, dim: int) -> np.ndarray:
         cur = self.conn.cursor()
