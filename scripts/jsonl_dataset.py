@@ -23,13 +23,14 @@ def load_jsonl_files(paths: List[str]) -> Dataset:
                 obj = json.loads(line)
                 prompt = obj.get("prompt", "")
                 answer = obj.get("answer", "")
-                records.append(
-                    {
-                        "prompt": prompt,
-                        "answer": answer,
-                        "text": f"{prompt}\nAnswer: {answer}",
-                    }
-                )
+                rec = {
+                    "prompt": prompt,
+                    "answer": answer,
+                    "text": f"{prompt}\nAnswer: {answer}",
+                }
+                if "trajectory" in obj:
+                    rec["trajectory"] = obj["trajectory"]
+                records.append(rec)
     return Dataset.from_list(records)
 
 
