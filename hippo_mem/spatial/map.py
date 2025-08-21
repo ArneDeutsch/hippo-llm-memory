@@ -638,6 +638,7 @@ class PlaceGraph:
         self._stop_event = stop_event
         self._bg_thread = t
 
+    # TODO: appears unused; consider referencing or removing.
     def stop_background_tasks(self) -> None:
         """Stop background maintenance thread if running.
 
@@ -655,6 +656,7 @@ class PlaceGraph:
         self._bg_thread = None
         self._stop_event = None
 
+    # TODO: appears unused; consider referencing or removing.
     def rollback(self, n: int = 1) -> None:
         """Rollback the last ``n`` maintenance operations.
 

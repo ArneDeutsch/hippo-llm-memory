@@ -64,6 +64,7 @@ class RelationalAdapter:
         return weights @ g
 
     # why: expose pooling for external callers such as retrieval utilities
+    # TODO: appears unused; consider referencing or removing.
     def pool(self, query: np.ndarray, feats: np.ndarray) -> np.ndarray:
         """Public wrapper around :meth:`_attend`.
 

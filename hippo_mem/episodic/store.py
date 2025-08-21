@@ -91,8 +91,11 @@ class TraceValue:
     Trace
     """
 
+    # TODO: tokens_span appears unused; consider referencing or removing.
     tokens_span: Optional[tuple[int, int]] = None
+    # TODO: entity_slots appears unused; consider referencing or removing.
     entity_slots: Optional[dict] = None
+    # TODO: state_sketch appears unused; consider referencing or removing.
     state_sketch: Optional[list] = None
     salience_tags: Optional[List[str]] = None
     provenance: Optional[str] = None
@@ -130,7 +133,7 @@ class Trace:
     EpisodicStore.recall
     """
 
-    id: int
+    id: int  # TODO: appears unused; consider referencing or removing.
     value: TraceValue
     key: DGKey
     score: float
@@ -733,6 +736,7 @@ class EpisodicStore:
         self._stop_event = stop_event
         self._bg_thread = t
 
+    # TODO: appears unused; consider referencing or removing.
     def stop_background_tasks(self) -> None:
         """Stop background maintenance thread if running.
 
@@ -750,6 +754,7 @@ class EpisodicStore:
         self._bg_thread = None
         self._stop_event = None
 
+    # TODO: appears unused; consider referencing or removing.
     def rollback(self, n: int = 1) -> None:
         """Rollback the last ``n`` maintenance operations.
 

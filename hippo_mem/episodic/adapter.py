@@ -325,7 +325,7 @@ class EpisodicAdapter(nn.Module):
 
         if self.num_kv_heads == self.num_heads:
             return x
-        b, kvh, t, d = x.shape
+        b, kvh, t, d = x.shape  # TODO: kvh appears unused; consider referencing or removing.
         if self.num_kv_heads == 1:  # multi-query attention
             return x.expand(b, self.num_heads, t, d)
         # grouped-query attention

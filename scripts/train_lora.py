@@ -110,8 +110,8 @@ class TrainConfig:
 
     # Run metadata
     seed: int = 0
-    run_name: str = "default"
-    notes: str = ""
+    run_name: str = "default"  # TODO: appears unused; consider referencing or removing.
+    notes: str = ""  # TODO: appears unused; consider referencing or removing.
 
     # Training hyper‑parameters
     per_device_train_batch_size: int = 1
@@ -172,7 +172,7 @@ class TrainConfig:
     class BatchMix:
         episodic: float = 0.5
         semantic: float = 0.3
-        fresh: float = 0.2
+        fresh: float = 0.2  # TODO: appears unused; consider referencing or removing.
 
     batch_mix: BatchMix = field(default_factory=BatchMix)
 
@@ -237,6 +237,7 @@ def _load_model_and_tokenizer(cfg: TrainConfig):
 
     model = AutoModelForCausalLM.from_pretrained(cfg.model_name, **quant_kwargs)
     model.config.use_cache = False  # Needed for gradient checkpointing
+    # TODO: appears unused; consider referencing or removing.
     model.gradient_checkpointing_enable()
     if cfg.efficiency.flash_attention:
         try:

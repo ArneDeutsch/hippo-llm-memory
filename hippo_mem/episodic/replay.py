@@ -403,7 +403,7 @@ class BatchMixLike(Protocol):
 
     episodic: float
     semantic: float
-    fresh: float
+    fresh: float  # TODO: appears unused; consider referencing or removing.
 
 
 class ReplayScheduler:

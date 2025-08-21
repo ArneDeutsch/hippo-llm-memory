@@ -47,6 +47,7 @@ TARGET_MODULE_STRATEGIES: Dict[str, TargetModuleStrategy] = {
 def register_target_module_strategy(model_type: str, strategy: TargetModuleStrategy) -> None:
     """Register ``strategy`` for ``model_type``."""
 
+    # TODO: appears unused; consider referencing or removing.
     TARGET_MODULE_STRATEGIES[model_type] = strategy
 
 

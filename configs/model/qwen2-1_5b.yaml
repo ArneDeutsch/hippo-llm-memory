@@ -1,2 +1,3 @@
 # Configuration for Qwen2 1.5B model.
+# TODO: appears unreferenced; consider referencing or removing.
 name: qwen2-1.5b

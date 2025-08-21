@@ -82,7 +82,7 @@ class SchemaIndex:
         self.threshold = threshold
         self.episodic_buffer: List[TupleType] = []
 
-    def add_schema(
+    def add_schema(  # TODO: appears unused; consider referencing or removing.
         self,
         name: str,
         relation: str,
