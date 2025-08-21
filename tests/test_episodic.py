@@ -288,6 +288,22 @@ def test_replay_queue_avoids_consecutive_gradients() -> None:
         assert {x, y} != {"a", "c"}
 
 
+def test_replay_queue_score_recency_priority() -> None:
+    """Combined weights select highest-priority item."""
+
+    key = np.array([1.0, 0.0], dtype="float32")
+
+    q = ReplayQueue(lambda1=0.6, lambda2=0.4, lambda3=0.0)
+    q.add("old_high", key, score=1.0)
+    q.add("new_low", key, score=0.5)
+    assert q.sample(1)[0] == "old_high"
+
+    q2 = ReplayQueue(lambda1=0.2, lambda2=0.8, lambda3=0.0)
+    q2.add("old_high", key, score=1.0)
+    q2.add("new_low", key, score=0.5)
+    assert q2.sample(1)[0] == "new_low"
+
+
 def test_store_decay_prune_and_rollback() -> None:
     """Decay and prune events can be rolled back."""
 
