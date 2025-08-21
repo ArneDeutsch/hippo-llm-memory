@@ -458,6 +458,18 @@ def train(cfg: TrainConfig) -> None:
         use_spatial=cfg.spatial.enabled,
     )
 
+    class _RelationalProxy(nn.Module):
+        """Temporary stand-in until full KG reader is integrated."""
+
+        def __init__(self, adapter: RelationalMemoryAdapter) -> None:
+            super().__init__()
+            self.adapter = adapter
+
+        def forward(
+            self, hidden_states: torch.Tensor, **kwargs: Any
+        ) -> torch.Tensor:  # pragma: no cover - simple passthrough
+            return self.adapter(hidden_states, **kwargs)
+
     class _SpatialProxy(nn.Module):
         def __init__(self, adapter: SpatialAdapter) -> None:
             super().__init__()
@@ -475,7 +487,9 @@ def train(cfg: TrainConfig) -> None:
             return self.adapter(hidden_states, plans)
 
     epi_proxy = epi_adapter
-    rel_proxy = rel_adapter
+    # `_RelationalProxy` is a placeholder that simply forwards to the adapter;
+    # it will gain proper KG interaction once that path is implemented.
+    rel_proxy = _RelationalProxy(rel_adapter) if rel_adapter else None
     spat_proxy = _SpatialProxy(spat_adapter) if spat_adapter else None
 
     try:

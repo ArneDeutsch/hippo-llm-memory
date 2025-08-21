@@ -266,6 +266,14 @@ class ConsolidationWorker(threading.Thread):
         self.log.debug("episodic adapter step")
 
     def _step_semantic(self) -> None:
+        """
+        Execute a placeholder update for the relational adapter.
+
+        The current implementation fabricates a random hidden state, retrieves a
+        single hop of KG tokens, and steps the adapter purely to exercise the
+        optimisation path. Real semantic consolidation will replace this with
+        meaningful graph-based batches once KG integration is complete.
+        """
         if self.rel_adapter is None or self.kg_store is None:
             return
         proj = getattr(self.rel_adapter, "proj", None)

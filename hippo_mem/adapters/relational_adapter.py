@@ -13,10 +13,37 @@ class RelationalMemoryAdapter(nn.Module):
     """Thin wrapper over :class:`~hippo_mem.relational.adapter.RelationalAdapter`."""
 
     def __init__(self) -> None:
+        """Initialise the inner relational adapter."""
         super().__init__()
         self.inner = RelationalAdapter()
 
     def forward(self, hidden_states: Tensor, *, memory: MemoryTokens | None = None) -> Tensor:
+        """
+        Fuse KG tokens into ``hidden_states`` via gated cross-attention.
+
+        Parameters
+        ----------
+        hidden_states:
+            Base model activations at the adapter layer.
+        memory:
+            Packed knowledge-graph token features and their boolean mask.
+
+        Returns
+        -------
+        Tensor
+            Residual to add to ``hidden_states``. When no KG tokens are
+            retrieved, a zero tensor is returned so the adapter becomes a
+            no-op.
+
+        Notes
+        -----
+        The wrapper iterates over the batch/sequence and calls
+        :class:`RelationalAdapter` to **cross-attend** each query vector to the
+        retrieved KG tokens. If ``memory.mask`` indicates that no tokens are
+        present, the operation is **gated off** and a zero residual is emitted.
+        This Python implementation is CPU bound and meant purely as a
+        placeholder until a fused, batched attention kernel is integrated.
+        """
         if memory is None or not torch.any(memory.mask):
             return torch.zeros_like(hidden_states)
 
