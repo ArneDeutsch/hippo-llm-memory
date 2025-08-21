@@ -56,7 +56,7 @@ from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
-from hippo_mem.spatial.map import PlaceGraph
+from hippo_mem.spatial.place_graph import PlaceGraph
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from scripts.utils import log_memory_status
 
@@ -381,10 +381,11 @@ class SpatialSource:
         )
         mem = spatial_retrieve_and_pack("origin", spec, self.map, proj)
         logging.info(
-            "spatial_retrieval_radius=%d latency_ms=%.2f num_nodes=%d",
+            "spatial_retrieval_radius=%d latency_ms=%.2f num_nodes=%d num_edges=%d",
             self.spec.radius,
             mem.meta.get("latency_ms", 0.0),
             mem.meta.get("num_nodes", 0),
+            mem.meta.get("num_edges", 0),
         )
         return mem
 
@@ -458,6 +459,24 @@ def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) 
         text = rec.get("text") or ""
         for tup in extract_tuples(text):
             kg.ingest(tup)
+
+
+def ingest_spatial_traces(records: Iterable[dict[str, Any]], graph: PlaceGraph) -> None:
+    """Insert ``trajectory`` observations from ``records`` into ``graph``.
+
+    Parameters
+    ----------
+    records : Iterable[dict[str, Any]]
+        Sequence of training examples containing optional ``"trajectory"``
+        fields as ``[[x, y], ...]`` coordinates.
+    graph : PlaceGraph
+        Map that receives the observations.
+    """
+
+    for rec in records:
+        traj = rec.get("trajectory") or []
+        for x, y in traj:
+            graph.observe(f"{x},{y}")
 
 
 def prepare_datasets(cfg: TrainConfig):
@@ -689,8 +708,25 @@ def _train(
                 target_modules=modules,
             )
 
-        if cfg.schema_fasttrack_ingest and train_ds is not None:
+        if cfg.schema_fasttrack_ingest and train_ds is not None and context.kg is not None:
+            before = context.kg.graph.number_of_edges()
             ingest_training_text(train_ds, context.kg)
+            after = context.kg.graph.number_of_edges()
+            logging.info("kg_edges_before=%d kg_edges_after=%d", before, after)
+
+        if train_ds is not None and context.spatial_map is not None:
+            nodes_before = len(context.spatial_map.graph)
+            edges_before = sum(len(v) for v in context.spatial_map.graph.values())
+            ingest_spatial_traces(train_ds, context.spatial_map)
+            nodes_after = len(context.spatial_map.graph)
+            edges_after = sum(len(v) for v in context.spatial_map.graph.values())
+            logging.info(
+                "spatial_nodes_before=%d spatial_nodes_after=%d edges_before=%d edges_after=%d",
+                nodes_before,
+                nodes_after,
+                edges_before,
+                edges_after,
+            )
 
         if cfg.replay.enabled and train_ds is not None and context.scheduler is not None:
             from scripts.replay_dataset import ReplayIterableDataset

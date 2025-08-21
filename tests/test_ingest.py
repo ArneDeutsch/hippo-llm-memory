@@ -44,13 +44,16 @@ def test_fast_track_ingestion(monkeypatch, tmp_path):
 
     class DummyMap:
         def __init__(self, path_integration=False, config=None) -> None:
-            pass
+            self.graph: dict[int, dict[int, int]] = {}
 
         def start_background_tasks(self, _interval) -> None:
             pass
 
         def log_status(self) -> str:
             return "map"
+
+        def observe(self, _ctx: str) -> None:
+            pass
 
     def empty_mem(*_a, **_k):
         return MemoryTokens(tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool))

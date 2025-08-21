@@ -720,3 +720,141 @@ def test_train_relational_retrieval(monkeypatch) -> None:
     hidden = torch.zeros(1, 1, mem.tokens.size(-1))
     out = adapter(hidden, memory=mem)
     assert out.abs().sum() > 0
+
+
+def test_schema_fasttrack_ingests_training_text(monkeypatch) -> None:
+    """Tuples from training text are inserted into the knowledge graph."""
+
+    class DummyKG:
+        def __init__(self, config=None) -> None:
+            self.graph = nx.MultiDiGraph()
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def ingest(self, tup) -> None:
+            src, rel, dst = tup[:3]
+            self.graph.add_edge(src, dst, relation=rel)
+
+    kg = DummyKG()
+
+    class DummyMap:
+        def __init__(self, *a, **k) -> None:
+            self.graph: dict[int, dict[int, int]] = {}
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def observe(self, _ctx: str) -> None:
+            pass
+
+    def fake_loader(_cfg: TrainConfig):
+        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=4))
+        model.gradient_checkpointing_enable = lambda: None
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return model, tokenizer
+
+    train_ds = [{"text": "A loves B"}]
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr(
+        "scripts.train_lora.EpisodicStore",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", lambda *a, **k: kg)
+    monkeypatch.setattr("scripts.train_lora.PlaceGraph", lambda *a, **k: DummyMap())
+    monkeypatch.setattr("scripts.train_lora.extract_tuples", lambda _t: [("A", "rel", "B")])
+    monkeypatch.setattr("scripts.train_lora.prepare_datasets", lambda _c: (train_ds, train_ds))
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters", lambda *a, **k: {"target_block": 0, "num_blocks": 1}
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.episodic_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.relational_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.spatial_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+
+    cfg = parse_args(["dry_run=true", "schema_fasttrack_ingest=true"])
+    train(cfg)
+
+    assert kg.graph.number_of_edges() > 0
+
+
+def test_spatial_trace_ingestion(monkeypatch) -> None:
+    """Trajectory coordinates grow the place graph during training."""
+
+    class DummyMap:
+        def __init__(self, *a, **k) -> None:
+            self.obs: list[str] = []
+            self.graph: dict[int, dict[int, int]] = {}
+
+        def start_background_tasks(self, _interval) -> None:
+            pass
+
+        def observe(self, ctx: str) -> None:
+            self.obs.append(ctx)
+            node = len(self.graph)
+            self.graph.setdefault(node, {})
+
+    place = DummyMap()
+
+    def fake_loader(_cfg: TrainConfig):
+        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=4))
+        model.gradient_checkpointing_enable = lambda: None
+        tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
+        return model, tokenizer
+
+    train_ds = [{"trajectory": [[0, 0], [1, 0]]}]
+
+    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr(
+        "scripts.train_lora.EpisodicStore",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.KnowledgeGraph",
+        lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
+    )
+    monkeypatch.setattr("scripts.train_lora.PlaceGraph", lambda *a, **k: place)
+    monkeypatch.setattr("scripts.train_lora.prepare_datasets", lambda _c: (train_ds, train_ds))
+    monkeypatch.setattr(
+        "scripts.train_lora.attach_adapters", lambda *a, **k: {"target_block": 0, "num_blocks": 1}
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.episodic_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.relational_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.spatial_retrieve_and_pack",
+        lambda *a, **k: MemoryTokens(
+            tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
+        ),
+    )
+    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+
+    cfg = parse_args(["dry_run=true"])
+    train(cfg)
+
+    assert len(place.obs) >= 2
