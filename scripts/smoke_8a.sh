@@ -4,7 +4,16 @@ IFS=$'\n\t'
 
 LOG=$(mktemp)
 
-python scripts/train_lora.py dry_run=true episodic.enabled=true > "$LOG" 2>&1
+python scripts/train_lora.py \
+  dry_run=true \
+  episodic.enabled=true \
+  episodic.hidden_size=2 \
+  episodic.lora_r=2 \
+  episodic.lora_alpha=2 \
+  memory.episodic.enabled=true \
+  memory.episodic.k=2 \
+  fusion_insert_block_index=-1 \
+  > "$LOG" 2>&1
 
 if ! grep -q "episodic_retrieval_k" "$LOG"; then
   echo "Missing episodic_retrieval_k" >&2

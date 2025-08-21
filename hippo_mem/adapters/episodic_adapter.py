@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import torch
 from torch import Tensor, nn
@@ -25,7 +26,9 @@ class EpisodicMemoryAdapter(nn.Module):
         dim = retrieval_dim or cfg.hidden_size
         self.proj = nn.Linear(dim, cfg.hidden_size)
 
-    def forward(self, hidden_states: Tensor, *, memory: MemoryTokens | None = None) -> Tensor:
+    def forward(
+        self, hidden_states: Tensor, *, memory: MemoryTokens | None = None, **_: Any
+    ) -> Tensor:
         """Return the residual produced from ``memory``."""
 
         if memory is None or not torch.any(memory.mask):

@@ -105,7 +105,9 @@ def find_transformer_blocks(model: nn.Module) -> List[nn.Module]:
             obj = getattr(obj, attr)
         else:
             blocks = obj
-            if isinstance(blocks, Sequence) and all(isinstance(b, nn.Module) for b in blocks):
+            if isinstance(blocks, (Sequence, nn.ModuleList)) and all(
+                isinstance(b, nn.Module) for b in blocks
+            ):
                 if len(blocks) == 0:
                     raise ValueError(f"Model attribute '{path}' is empty; expected blocks.")
                 return list(blocks)

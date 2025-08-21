@@ -33,3 +33,9 @@ jobs:
 
       - name: Tests
         run: make test
+
+      - name: Smoke 7b
+        run: bash scripts/smoke_7b.sh
+
+      - name: Smoke 8a
+        run: bash scripts/smoke_8a.sh
