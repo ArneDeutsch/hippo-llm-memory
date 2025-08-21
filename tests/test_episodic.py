@@ -85,28 +85,40 @@ def test_noisy_cue_completed_and_recalled() -> None:
     assert recalled.score > base.score
 
 
-def test_retrieve_and_pack_uses_completion() -> None:
-    """Completed cues replace raw recalls when enabled."""
+def test_hopfield_completion_improves_similarity() -> None:
+    """Hopfield densification yields tokens closer to stored keys."""
 
-    store = EpisodicStore(dim=4, config={"hopfield": True})
     full = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
-    other = np.array([0.0, 1.0, 0.0, 0.0], dtype="float32")
-    store.write(full, TraceValue(provenance="full"))
-    store.write(other, TraceValue(provenance="other"))
-    noisy = np.array([0.9, 0.1, 0.0, 0.0], dtype="float32")
+    noisy = np.array([0.5, 0.5, 0.0, 0.0], dtype="float32")
+
+    class DummyStore:
+        dim = 4
+
+        def recall(self, query, k):
+            return [type("T", (), {"key": query})()]
+
+        def to_dense(self, key):
+            return key
+
+        def complete(self, query, k=1):
+            return full
+
+    store = DummyStore()
     hidden = torch.from_numpy(noisy).view(1, 1, -1)
 
-    spec = TraceSpec(source="episodic", k=2, params={"use_completion": True})
+    spec = TraceSpec(source="episodic", k=1, params={"hopfield": True})
     mem = episodic_retrieve_and_pack(hidden, spec, store, torch.nn.Identity())
-    completed = store.complete(noisy, k=2)
-    assert np.allclose(mem.tokens[0, 0].numpy(), completed, atol=1e-6)
 
-    spec2 = TraceSpec(source="episodic", k=2, params={"use_completion": False})
+    spec2 = TraceSpec(source="episodic", k=1, params={"hopfield": False})
     mem2 = episodic_retrieve_and_pack(hidden, spec2, store, torch.nn.Identity())
-    raw = store.recall(noisy, k=2)[0]
-    raw_vec = store.to_dense(raw.key)
-    assert np.allclose(mem2.tokens[0, 0].numpy(), raw_vec, atol=1e-6)
-    assert not np.allclose(mem2.tokens[0, 0].numpy(), completed, atol=1e-6)
+
+    def _cos(a: np.ndarray, b: np.ndarray) -> float:
+        return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+    cos_completed = _cos(mem.tokens[0, 0].numpy(), full)
+    cos_raw = _cos(mem2.tokens[0, 0].numpy(), full)
+    assert cos_completed > cos_raw
+    assert not np.allclose(mem.tokens[0, 0].numpy(), mem2.tokens[0, 0].numpy())
 
 
 def test_gating_threshold_and_pin_weight() -> None:

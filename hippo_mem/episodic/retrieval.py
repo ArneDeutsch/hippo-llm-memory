@@ -84,8 +84,8 @@ def episodic_retrieve_and_pack(
         traces = store.recall(cue, k) if k > 0 else []
         hits = len(traces)
         vecs = _extract_vectors(store, traces, store.dim)
-        use_completion = getattr(spec, "params", {}).get("use_completion", True)
-        if k > 0 and use_completion and hasattr(store, "complete"):
+        use_hopfield = getattr(spec, "params", {}).get("hopfield", True)
+        if k > 0 and use_hopfield and hasattr(store, "complete"):
             cue = store.complete(cue, k=k)
             if hits > 0:
                 vecs[0] = cue
