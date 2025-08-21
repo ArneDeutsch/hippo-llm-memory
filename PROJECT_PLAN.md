@@ -112,21 +112,16 @@
 **Objective:** Feed *real memory traces* from the episodic/relational/spatial stores into adapters during forward; apply write-gating and persist new episodes; standardize adapter I/O.
 
 **Work packages**
-1. **TraceSpec:** define a unified schema and shapes for traces passed to adapters (tokens or pooled vectors + optional metadata).
-2. **Retrieval hooks:** given batch text, compute query encodings and retrieve top-K: (a) episodic store, (b) semantic KG neighborhoods/paths, (c) spatial local map/plan. Bound K and length.
-3. **Projection & packing:** project retrieved features to `d_model`; pack to `memory_tokens` `[B, M, d_model]` (+ optional masks).
-4. **Adapter API:** update adapters to accept `memory_tokens` (+ masks) via the patcher; no-op if empty.
-5. **Write-gate & store update:** compute gate S; when passing threshold, persist new episode/tuple/place; respect async worker lifecycles.
-6. **Config & toggles:** Hydra flags to enable/disable each memory, set K, max tokens, and gating threshold τ.
-7. **Telemetry:** log retrieval hit-rates, avg M, % writes, and latency per step.
+1. [x] **TraceSpec:** define a unified schema and shapes for traces passed to adapters (tokens or pooled vectors + optional metadata).
+2. [x] **Retrieval hooks:** given batch text, compute query encodings and retrieve top-K: (a) episodic store, (b) semantic KG neighborhoods/paths, (c) spatial local map/plan. Bound K and length.
+3. [x] **Projection & packing:** project retrieved features to `d_model`; pack to `memory_tokens` `[B, M, d_model]` (+ optional masks).
+4. [x] **Adapter API:** update adapters to accept `memory_tokens` (+ masks) via the patcher; no-op if empty.
+5. [x] **Write-gate & store update:** compute gate S; when passing threshold, persist new episode/tuple/place; respect async worker lifecycles.
+6. [x] **Config & toggles:** Hydra flags to enable/disable each memory, set K, max tokens, and gating threshold τ.
+7. [x] **Telemetry:** log retrieval hit-rates, avg M, % writes, and latency per step.
 
-**Gate:**
-- Small run (≤200 steps) shows non-zero retrieval rate; adapters receive `memory_tokens`; ≥1% writes recorded; end-to-end throughput stable (latency overhead reported).
-- `scripts/smoke_8a.sh` passes; unit tests for retrieval,
-  shapes, and gating pass; logs present.
 
-**Evidence:** `scripts/smoke_8a.sh`, `tests/test_retrieval.py`,
-`tests/test_shapes.py`, `tests/test_episodic_writes.py`, `runs/*/8a/`
+- [x] **Gate:**: Small run (≤200 steps) shows non-zero retrieval rate; adapters receive `memory_tokens`; ≥1% writes recorded; end-to-end throughput stable (latency overhead reported).
 
 # Milestone 8 – Baseline datasets & evaluation runs
 
