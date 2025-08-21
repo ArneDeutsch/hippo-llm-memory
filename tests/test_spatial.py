@@ -6,6 +6,8 @@ import torch
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from hippo_mem.adapters.spatial_adapter import SpatialMemoryAdapter
+from hippo_mem.common import MemoryTokens
 from hippo_mem.spatial.adapter import AdapterConfig, SpatialAdapter
 from hippo_mem.spatial.macros import MacroLib
 from hippo_mem.spatial.map import PlaceGraph
@@ -88,6 +90,32 @@ def test_spatial_adapter_integration() -> None:
     assert out.shape == hidden.shape
     out.sum().backward()
     assert hidden.grad is not None and plan.grad is not None
+
+
+def test_spatial_memory_adapter_masks_and_grads() -> None:
+    """SpatialMemoryAdapter respects masks and backpropagates gradients."""
+
+    cfg = AdapterConfig(hidden_size=4, num_heads=2)
+    adapter = SpatialMemoryAdapter(cfg)
+
+    hidden0 = torch.randn(1, 1, 4, requires_grad=True)
+    tokens0 = torch.randn(1, 1, 4, requires_grad=True)
+    mem0 = MemoryTokens(tokens=tokens0, mask=torch.zeros(1, 1, dtype=torch.bool))
+    out0 = adapter(hidden0, memory=mem0)
+    assert torch.allclose(out0, torch.zeros_like(hidden0))
+
+    hidden = torch.randn(1, 1, 4, requires_grad=True)
+    tokens = torch.randn(1, 1, 4, requires_grad=True)
+    mem = MemoryTokens(tokens=tokens, mask=torch.ones(1, 1, dtype=torch.bool))
+
+    out = adapter(hidden, memory=mem)
+    with torch.no_grad():
+        baseline = adapter.inner(hidden.detach().clone(), tokens.detach().clone())
+    assert torch.allclose(hidden + out, baseline)
+
+    out.sum().backward()
+    assert hidden.grad is not None
+    assert tokens.grad is not None
 
 
 def test_placegraph_maintenance_and_rollback() -> None:
