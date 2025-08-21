@@ -23,7 +23,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable, List, Optional, Protocol
 
 # Ensure repo root is on the path when executed as a script
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -277,74 +277,122 @@ def _init_sft_trainer(
     return SFTTrainer(**kwargs)
 
 
-def _gather_memory_tokens(
-    hidden: torch.Tensor,
-    cfg: TrainConfig,
-    store: EpisodicStore | None,
-    kg: KnowledgeGraph | None,
-    spatial_map: PlaceGraph | None,
-    epi_adapter: EpisodicMemoryAdapter | None,
-    rel_adapter: RelationalMemoryAdapter | None,
-    spat_adapter: SpatialAdapter | None,
-) -> MemoryTokens | None:
-    """Retrieve and concatenate memory tokens from enabled sources."""
+class MemorySource(Protocol):
+    """Interface for lazily providing memory tokens."""
 
-    mems: list[MemoryTokens] = []
-    dim = hidden.size(-1)
+    def enabled(self, cfg: TrainConfig) -> bool:  # pragma: no cover - simple protocol
+        ...
 
-    if cfg.memory.episodic.enabled and store is not None and epi_adapter is not None:
-        spec = TraceSpec(source="episodic", k=cfg.memory.episodic.k)
-        mem = episodic_retrieve_and_pack(hidden, spec, store, epi_adapter.proj)
+    def fetch(self, hidden: torch.Tensor) -> MemoryTokens:  # pragma: no cover - simple protocol
+        ...
+
+
+class EpisodicSource:
+    def __init__(
+        self,
+        store: EpisodicStore | None,
+        adapter: EpisodicMemoryAdapter | None,
+        spec: EpisodicSpec,
+    ) -> None:
+        self.store = store
+        self.adapter = adapter
+        self.spec = spec
+
+    def enabled(self, cfg: TrainConfig) -> bool:
+        return self.spec.enabled and self.store is not None and self.adapter is not None
+
+    def fetch(self, hidden: torch.Tensor) -> MemoryTokens:
+        spec = TraceSpec(source="episodic", k=self.spec.k)
+        mem = episodic_retrieve_and_pack(hidden, spec, self.store, self.adapter.proj)
         logging.info(
             "episodic_retrieval_k=%d latency_ms=%.2f hit_rate=%.2f",
             spec.k or 0,
             mem.meta.get("latency_ms", 0.0),
             mem.meta.get("hit_rate", 0.0),
         )
-        mems.append(mem)
+        return mem
 
-    if cfg.memory.relational.enabled and kg is not None and rel_adapter is not None:
-        proj = getattr(rel_adapter, "proj", None)
+
+class RelationalSource:
+    def __init__(
+        self,
+        kg: KnowledgeGraph | None,
+        adapter: RelationalMemoryAdapter | None,
+        spec: RelationalSpec,
+    ) -> None:
+        self.kg = kg
+        self.adapter = adapter
+        self.spec = spec
+
+    def enabled(self, cfg: TrainConfig) -> bool:
+        return self.spec.enabled and self.kg is not None and self.adapter is not None
+
+    def fetch(self, hidden: torch.Tensor) -> MemoryTokens:
+        dim = hidden.size(-1)
+        proj = getattr(self.adapter, "proj", None)
         if proj is None:
-            base_dim = getattr(kg, "dim", dim)
+            base_dim = getattr(self.kg, "dim", dim)
             proj = nn.Linear(base_dim, dim)
-            rel_adapter.proj = proj  # type: ignore[attr-defined]
+            self.adapter.proj = proj  # type: ignore[attr-defined]
         spec = TraceSpec(
             source="relational",
-            k=cfg.memory.relational.k,
-            params={"hops": cfg.memory.relational.hops},
+            k=self.spec.k,
+            params={"hops": self.spec.hops},
         )
-        mem = relational_retrieve_and_pack(hidden, spec, kg, proj)
+        mem = relational_retrieve_and_pack(hidden, spec, self.kg, proj)
         logging.info(
             "relational_retrieval_k=%d latency_ms=%.2f hit_rate=%.2f",
             spec.k or 0,
             mem.meta.get("latency_ms", 0.0),
             mem.meta.get("hit_rate", 0.0),
         )
-        mems.append(mem)
+        return mem
 
-    if cfg.memory.spatial.enabled and spatial_map is not None and spat_adapter is not None:
-        proj = getattr(spat_adapter, "proj", None)
+
+class SpatialSource:
+    def __init__(
+        self,
+        spatial_map: PlaceGraph | None,
+        adapter: SpatialAdapter | None,
+        spec: SpatialSpec,
+    ) -> None:
+        self.map = spatial_map
+        self.adapter = adapter
+        self.spec = spec
+
+    def enabled(self, cfg: TrainConfig) -> bool:
+        return self.spec.enabled and self.map is not None and self.adapter is not None
+
+    def fetch(self, hidden: torch.Tensor) -> MemoryTokens:
+        dim = hidden.size(-1)
+        proj = getattr(self.adapter, "proj", None)
         if proj is None:
             proj = nn.Linear(4, dim)
-            spat_adapter.proj = proj  # type: ignore[attr-defined]
+            self.adapter.proj = proj  # type: ignore[attr-defined]
         spec = TraceSpec(
             source="spatial",
             params={
-                "radius": cfg.memory.spatial.radius,
-                "max_nodes": cfg.memory.spatial.max_nodes,
-                "max_edges": cfg.memory.spatial.max_edges,
+                "radius": self.spec.radius,
+                "max_nodes": self.spec.max_nodes,
+                "max_edges": self.spec.max_edges,
             },
         )
-        mem = spatial_retrieve_and_pack("origin", spec, spatial_map, proj)
+        mem = spatial_retrieve_and_pack("origin", spec, self.map, proj)
         logging.info(
             "spatial_retrieval_radius=%d latency_ms=%.2f num_nodes=%d",
-            cfg.memory.spatial.radius,
+            self.spec.radius,
             mem.meta.get("latency_ms", 0.0),
             mem.meta.get("num_nodes", 0),
         )
-        mems.append(mem)
+        return mem
 
+
+def _gather_memory_tokens(
+    hidden: torch.Tensor, cfg: TrainConfig, sources: Iterable[MemorySource]
+) -> MemoryTokens | None:
+    """Retrieve and concatenate memory tokens from enabled sources."""
+
+    mems = [src.fetch(hidden) for src in sources if src.enabled(cfg)]
     if not mems:
         return None
     tokens = torch.cat([m.tokens for m in mems], dim=1)
@@ -526,6 +574,12 @@ def train(cfg: TrainConfig) -> None:
     spat_interval = 0.1 if cfg.dry_run else cfg.spatial_mem.maintenance_interval
     spatial_map.start_background_tasks(spat_interval)
 
+    sources: list[MemorySource] = [
+        EpisodicSource(store, epi_adapter, cfg.memory.episodic),
+        RelationalSource(kg, rel_adapter, cfg.memory.relational),
+        SpatialSource(spatial_map, spat_adapter, cfg.memory.spatial),
+    ]
+
     scheduler = None
     worker = None
     if cfg.replay.enabled:
@@ -610,16 +664,7 @@ def train(cfg: TrainConfig) -> None:
             except Exception:  # pragma: no cover - defensive
                 pass
             dummy_hidden = torch.zeros(1, 1, hidden, device=device)
-            mem = _gather_memory_tokens(
-                dummy_hidden,
-                cfg,
-                store,
-                kg,
-                spatial_map,
-                epi_adapter,
-                rel_adapter,
-                spat_adapter,
-            )
+            mem = _gather_memory_tokens(dummy_hidden, cfg, sources)
             if mem is not None:
                 dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
                 _ = model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
@@ -665,16 +710,7 @@ def train(cfg: TrainConfig) -> None:
             embed_fn = getattr(model, "get_input_embeddings", None)
             if callable(embed_fn) and input_ids is not None:
                 hidden_emb = embed_fn()(input_ids)
-                mem = _gather_memory_tokens(
-                    hidden_emb,
-                    cfg,
-                    store,
-                    kg,
-                    spatial_map,
-                    epi_adapter,
-                    rel_adapter,
-                    spat_adapter,
-                )
+                mem = _gather_memory_tokens(hidden_emb, cfg, sources)
             model._hippo_memory_tokens = mem  # type: ignore[attr-defined]
             return orig_compute_loss(model, inputs, return_outputs=return_outputs)
 
