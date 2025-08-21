@@ -1,0 +1,1 @@
+{"git_sha": "2c4c5a59daac358da5ddd30590c9aace4785b5af", "model": "mock", "config_hash": "8008dfd98dfa74d511c7891f10beca6abcb2a213b5fe99908f7768149b975e98", "ablate": {}, "seed": 1337, "preset": "memory/smpd", "replay_cycles": 0}

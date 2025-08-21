@@ -1,0 +1,1 @@
+{"suite": "semantic", "n": 200, "seed": 2025, "preset": "memory/sgc_rss", "metrics": {"semantic": {"pre_em": 1.0, "pre_f1": 1.0}}}
