@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import random
 from types import SimpleNamespace
 
 import numpy as np
@@ -44,6 +45,9 @@ class _DatasetWorker(ConsolidationWorker):
 
 def test_replay_improves_em() -> None:
     """Replay cycle should increase EM when enabled."""
+    random.seed(4)
+    np.random.seed(4)
+    torch.manual_seed(4)
     dim = 2
     store = EpisodicStore(dim)
     kg = KnowledgeGraph()
