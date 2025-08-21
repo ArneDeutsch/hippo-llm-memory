@@ -20,6 +20,10 @@ def spatial_retrieve_and_pack(
 ) -> MemoryTokens:
     """Gather a local subgraph and project to ``d_model`` memory tokens.
 
+    Nodes use features ``[x, y, last_seen, 1.0]`` and edges
+    ``[cost, success, last_seen, 0.0]`` before projection.  The sequence
+    packs all nodes first, then edges.
+
     Parameters
     ----------
     center:
