@@ -1,7 +1,8 @@
 import numpy as np
 
+from hippo_mem.episodic.async_writer import AsyncStoreWriter
 from hippo_mem.episodic.gating import WriteGate, gate_batch
-from hippo_mem.episodic.store import AsyncStoreWriter, TraceValue
+from hippo_mem.episodic.store import TraceValue
 
 
 class DummyStore:
