@@ -66,9 +66,9 @@ class Macro:
     name: str
     trajectory: List[str]
     signature: str
-    steps: int
+    steps: int  # TODO: appears unused; consider referencing or removing.
     success_stats: Tuple[int, int]
-    last_update: int
+    last_update: int  # TODO: appears unused; consider referencing or removing.
 
 
 class MacroLib:
@@ -132,6 +132,7 @@ class MacroLib:
             last_update=self._time,
         )
 
+    # TODO: appears unused; consider referencing or removing.
     def update_stats(self, macro_name: str, success: bool) -> None:
         """Update macro performance.
 
@@ -173,8 +174,9 @@ class MacroLib:
             succ += 1
         macro.success_stats = (succ, total)
         self._time += 1
-        macro.last_update = self._time
+        macro.last_update = self._time  # TODO: appears unused; consider referencing or removing.
 
+    # TODO: appears unused; consider referencing or removing.
     def suggest(self, start: str, goal: str, k: int = 1) -> List[Macro]:
         """Return candidate macros.
 

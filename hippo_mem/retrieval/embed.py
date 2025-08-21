@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import List
 
 
+# TODO: appears unused; consider referencing or removing.
 def embed_text(text: str, dim: int = 16) -> List[float]:
     """Return a deterministic placeholder embedding.
 

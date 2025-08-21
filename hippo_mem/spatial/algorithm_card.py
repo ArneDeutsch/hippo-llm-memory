@@ -47,4 +47,6 @@ Tool Endpoints
     ``{"start": str, "goal": str}`` → ``{"path": list[str], "cost": float}``.
 """
 
+# TODO: module appears unused; consider referencing or removing.
+
 __all__: list[str] = []

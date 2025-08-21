@@ -155,6 +155,7 @@ def attach_adapters(
         return hidden_states
 
     block.forward = wrapped_forward  # type: ignore[assignment]
+    # TODO: appears unused; consider referencing or removing.
     block._hippo_remove_adapter = lambda: setattr(  # type: ignore[attr-defined]
         block, "forward", orig_block_forward
     )
@@ -166,6 +167,7 @@ def attach_adapters(
         return orig_model_forward(*args, **kwargs)
 
     model.forward = model_forward  # type: ignore[assignment]
+    # TODO: appears unused; consider referencing or removing.
     model._hippo_remove_adapter = lambda: setattr(  # type: ignore[attr-defined]
         model, "forward", orig_model_forward
     )
