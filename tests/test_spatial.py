@@ -92,6 +92,55 @@ def test_spatial_adapter_integration() -> None:
     assert hidden.grad is not None and plan.grad is not None
 
 
+def test_expand_kv_noop_when_heads_match() -> None:
+    """_expand_kv returns input unchanged when kv and query heads match."""
+
+    cfg = AdapterConfig(hidden_size=8, num_heads=2, num_kv_heads=2)
+    adapter = SpatialAdapter(cfg)
+    x = torch.tensor([[[[1.0, 2.0]], [[3.0, 4.0]]]])
+    expanded = adapter._expand_kv(x)
+    assert expanded.shape == x.shape
+    assert torch.equal(expanded, x)
+
+
+def test_expand_kv_multi_query_attention() -> None:
+    """_expand_kv duplicates K/V heads when ``num_kv_heads=1``."""
+
+    cfg = AdapterConfig(hidden_size=8, num_heads=4, num_kv_heads=1)
+    adapter = SpatialAdapter(cfg)
+    x = torch.tensor([[[[1.0, 2.0], [3.0, 4.0]]]])  # (b=1, kvh=1, t=2, d=2)
+    expanded = adapter._expand_kv(x)
+    assert expanded.shape == (1, 4, 2, 2)
+    for h in range(adapter.num_heads):
+        assert torch.equal(expanded[0, h], x[0, 0])
+
+
+def test_expand_kv_grouped_query() -> None:
+    """Grouped-query attention duplicates each KV head."""
+
+    cfg = AdapterConfig(hidden_size=8, num_heads=4, num_kv_heads=2)
+    adapter = SpatialAdapter(cfg)
+    x = torch.tensor([[[[1.0, 2.0]], [[3.0, 4.0]]]])
+    expanded = adapter._expand_kv(x)
+    assert expanded.shape == (1, 4, 1, 2)
+    assert torch.equal(expanded[0, 0], x[0, 0])
+    assert torch.equal(expanded[0, 1], x[0, 0])
+    assert torch.equal(expanded[0, 2], x[0, 1])
+    assert torch.equal(expanded[0, 3], x[0, 1])
+
+
+def test_spatial_memory_adapter_zero_mask_returns_zero() -> None:
+    """SpatialMemoryAdapter returns zeros when mask has no true values."""
+
+    cfg = AdapterConfig(hidden_size=4, num_heads=2)
+    adapter = SpatialMemoryAdapter(cfg)
+    hidden = torch.randn(1, 1, 4)
+    tokens = torch.randn(1, 1, 4)
+    memory = MemoryTokens(tokens=tokens, mask=torch.zeros(1, 1, dtype=torch.bool))
+    out = adapter(hidden, memory=memory)
+    assert torch.allclose(out, torch.zeros_like(hidden))
+
+
 def test_spatial_memory_adapter_masks_and_grads() -> None:
     """SpatialMemoryAdapter respects masks and backpropagates gradients."""
 
