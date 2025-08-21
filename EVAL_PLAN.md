@@ -71,7 +71,7 @@ For each **suite**:
 
 ## 5.2 Compute & memory
 
-- Tokens processed, wall‑clock runtime per 100 queries (CPU timing acceptable for comparison), estimated KV‑cache MB, retrieval calls.
+- Tokens processed, wall‑clock runtime per 100 queries (CPU timing acceptable for comparison), estimated KV‑cache MB, retrieval calls, hit@K, avg K used, trace token count M, write rate %, avg S, +ms/step from retrieval.
 
 ## 5.3 Algorithm‑specific checks
 
@@ -93,6 +93,7 @@ Exposed in Hydra and consumed by the harness. Useful flags:
 - `episodic.use_completion=false`
 - `episodic.use_gate=false`
 - `replay.enabled=false`
+- `memory.runtime.enable_writes=false`
 - `relational.schema_fasttrack=false`
 - `spatial.macros=false`
 
@@ -269,10 +270,12 @@ reports/
 python scripts/eval_bench.py suite=episodic preset=baselines/core n=5 seed=1337 dry_run=true
 ```
 
-**Real evaluation (HEI-NW, n=50):**
+**Real-model smoke runs (n=50 per suite):**
 
 ```bash
 python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=50 seed=1337 replay.cycles=1
+python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=50 seed=1337 replay.cycles=1
+python scripts/eval_model.py suite=spatial  preset=memory/smpd    n=50 seed=1337 replay.cycles=1
 ```
 
 **Report aggregation:**
