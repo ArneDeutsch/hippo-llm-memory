@@ -163,6 +163,24 @@ def test_novel_query_crosses_threshold() -> None:
     assert decision_novel.allow and decision_novel.score == pytest.approx(expected_novel)
 
 
+def test_writegate_scores_lower_for_duplicate_query() -> None:
+    """Duplicate queries receive lower scores than orthogonal ones."""
+
+    gate = WriteGate(alpha=0.0, beta=1.0, gamma=0.0, delta=0.0)
+    key = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+    keys = np.array([key])
+
+    identical = key
+    orth = np.array([0.0, 1.0, 0.0, 0.0], dtype="float32")
+
+    score_identical = gate.score(1.0, identical, keys)
+    score_orth = gate.score(1.0, orth, keys)
+
+    assert score_identical == pytest.approx(0.0)
+    assert score_orth == pytest.approx(1.0)
+    assert score_identical < score_orth
+
+
 def test_reward_flag_crosses_threshold() -> None:
     """Reward alone can exceed the threshold."""
 
