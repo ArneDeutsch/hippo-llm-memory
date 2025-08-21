@@ -140,22 +140,42 @@ def test_gating_threshold_and_pin_weight() -> None:
     assert decision2.allow and decision2.score == pytest.approx(1.0)
 
 
-def test_low_prob_surprise_crosses_threshold() -> None:
-    """Low probability alone can exceed the threshold."""
+@pytest.mark.parametrize(
+    "gate_kwargs,call_kwargs",
+    [
+        (
+            {"tau": 1.0, "alpha": 1.0, "beta": 0.0, "gamma": 0.0, "delta": 0.0},
+            {"prob": 0.1},
+        ),
+        (
+            {"tau": 0.5, "alpha": 0.0, "beta": 0.0, "gamma": 1.0, "delta": 0.0},
+            {"prob": 1.0, "reward": 1.0},
+        ),
+    ],
+)
+def test_signal_crosses_threshold(
+    gate_kwargs: dict[str, float], call_kwargs: dict[str, float]
+) -> None:
+    """Probability or reward signals alone can exceed the threshold."""
 
-    gate = WriteGate(tau=1.0, alpha=1.0, beta=0.0, gamma=0.0, delta=0.0)
+    gate = WriteGate(**gate_kwargs)
     query = np.zeros(4, dtype="float32")
     keys = np.zeros((0, 4), dtype="float32")
 
-    high_prob = 0.9
-    decision_high = gate(high_prob, query, keys)
-    expected_high = surprise(high_prob)
-    assert not decision_high.allow and decision_high.score == pytest.approx(expected_high)
+    if "reward" in call_kwargs:
+        baseline = gate(prob=call_kwargs["prob"], query=query, keys=keys, reward=0.0)
+        expected_base = gate.gamma * 0.0
+    else:
+        baseline = gate(prob=0.9, query=query, keys=keys)
+        expected_base = gate.alpha * surprise(0.9)
+    assert not baseline.allow and baseline.score == pytest.approx(expected_base)
 
-    low_prob = 0.1
-    decision_low = gate(low_prob, query, keys)
-    expected_low = surprise(low_prob)
-    assert decision_low.allow and decision_low.score == pytest.approx(expected_low)
+    decision = gate(query=query, keys=keys, **call_kwargs)
+    if "reward" in call_kwargs:
+        expected = gate.gamma * call_kwargs["reward"]
+    else:
+        expected = gate.alpha * surprise(call_kwargs["prob"])
+    assert decision.allow and decision.score == pytest.approx(expected)
 
 
 def test_novel_query_crosses_threshold() -> None:
@@ -191,22 +211,6 @@ def test_writegate_scores_lower_for_duplicate_query() -> None:
     assert score_identical == pytest.approx(0.0)
     assert score_orth == pytest.approx(1.0)
     assert score_identical < score_orth
-
-
-def test_reward_flag_crosses_threshold() -> None:
-    """Reward alone can exceed the threshold."""
-
-    gate = WriteGate(tau=0.5, alpha=0.0, beta=0.0, gamma=1.0, delta=0.0)
-    query = np.zeros(4, dtype="float32")
-    keys = np.zeros((0, 4), dtype="float32")
-
-    decision_no_reward = gate(1.0, query, keys, reward=0.0)
-    expected_none = gate.gamma * 0.0
-    assert not decision_no_reward.allow and decision_no_reward.score == pytest.approx(expected_none)
-
-    decision_reward = gate(1.0, query, keys, reward=1.0)
-    expected_reward = gate.gamma * 1.0
-    assert decision_reward.allow and decision_reward.score == pytest.approx(expected_reward)
 
 
 def test_delete_removes_trace() -> None:
