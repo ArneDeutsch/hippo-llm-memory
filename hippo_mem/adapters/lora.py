@@ -9,11 +9,79 @@ and unit tests.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, Protocol, Union
 
 import torch
 from peft import PeftModel
 from transformers import PreTrainedModel
+
+
+class TargetModuleStrategy(Protocol):
+    """Callable returning target module names for ``model``."""
+
+    def __call__(self, model: PreTrainedModel) -> List[str]: ...
+
+
+def _targets_gpt2(model: PreTrainedModel) -> List[str]:
+    """Targets for GPT-2 style architectures."""
+
+    modules = ["c_attn", "c_proj"]
+    if any("c_fc" in name for name, _ in model.named_modules()):
+        modules.append("c_fc")
+    return modules
+
+
+def _targets_llama(_: PreTrainedModel) -> List[str]:
+    """Targets for LLaMA/Mistral style architectures."""
+
+    return ["q_proj", "k_proj", "v_proj", "o_proj"]
+
+
+TARGET_MODULE_STRATEGIES: Dict[str, TargetModuleStrategy] = {
+    "gpt2": _targets_gpt2,
+    "llama": _targets_llama,
+    "mistral": _targets_llama,
+}
+
+
+def register_target_module_strategy(model_type: str, strategy: TargetModuleStrategy) -> None:
+    """Register ``strategy`` for ``model_type``."""
+
+    TARGET_MODULE_STRATEGIES[model_type] = strategy
+
+
+def inspect_first_block(model: PreTrainedModel) -> List[str]:
+    """Scan the first transformer block for projection layer names."""
+
+    block = None
+    for attr in ("model", "transformer", "base_model"):
+        sub = getattr(model, attr, None)
+        if sub is None:
+            continue
+        if hasattr(sub, "layers") and len(sub.layers) > 0:
+            block = sub.layers[0]
+            break
+        if hasattr(sub, "h") and len(sub.h) > 0:
+            block = sub.h[0]
+            break
+        if (
+            hasattr(sub, "decoder")
+            and hasattr(sub.decoder, "layers")
+            and len(sub.decoder.layers) > 0
+        ):
+            block = sub.decoder.layers[0]
+            break
+    if block is None and hasattr(model, "layers") and len(model.layers) > 0:
+        block = model.layers[0]
+    if block is None:
+        return []
+
+    names = set()
+    for name, _ in block.named_modules():
+        for target in ("q_proj", "k_proj", "v_proj", "o_proj", "qkv", "c_attn", "c_proj"):
+            if name.endswith(target):
+                names.add(target)
+    return sorted(names)
 
 
 def load_adapter(
@@ -46,52 +114,15 @@ def export_adapter(model: PeftModel, output_dir: Union[str, Path]) -> None:
 def default_target_modules(model: PreTrainedModel) -> List[str]:
     """Infer sensible LoRA target modules for ``model``.
 
-    The heuristic covers common open causal models and falls back to scanning
-    the first transformer block for projection layers when the architecture is
-    unknown.
+    Known architectures dispatch via ``TARGET_MODULE_STRATEGIES``; unknown
+    types fall back to :func:`inspect_first_block`.
     """
 
     model_type = getattr(getattr(model, "config", None), "model_type", "")
-    if model_type == "gpt2":
-        modules = ["c_attn", "c_proj"]
-        # Include MLP projection if present
-        if any("c_fc" in name for name, _ in model.named_modules()):
-            modules.append("c_fc")
-        return modules
-
-    if model_type in {"llama", "mistral"}:
-        return ["q_proj", "k_proj", "v_proj", "o_proj"]
-
-    # Fallback: inspect the first block for qkv/ouput projections
-    block = None
-    for attr in ("model", "transformer", "base_model"):
-        sub = getattr(model, attr, None)
-        if sub is None:
-            continue
-        if hasattr(sub, "layers") and len(sub.layers) > 0:
-            block = sub.layers[0]
-            break
-        if hasattr(sub, "h") and len(sub.h) > 0:
-            block = sub.h[0]
-            break
-        if (
-            hasattr(sub, "decoder")
-            and hasattr(sub.decoder, "layers")
-            and len(sub.decoder.layers) > 0
-        ):
-            block = sub.decoder.layers[0]
-            break
-    if block is None and hasattr(model, "layers") and len(model.layers) > 0:
-        block = model.layers[0]
-    if block is None:
-        return []
-
-    names = set()
-    for name, _ in block.named_modules():
-        for target in ("q_proj", "k_proj", "v_proj", "o_proj", "qkv", "c_attn", "c_proj"):
-            if name.endswith(target):
-                names.add(target)
-    return sorted(names)
+    strategy = TARGET_MODULE_STRATEGIES.get(model_type)
+    if strategy is not None:
+        return strategy(model)
+    return inspect_first_block(model)
 
 
 def count_trainable_parameters(model: torch.nn.Module) -> int:
