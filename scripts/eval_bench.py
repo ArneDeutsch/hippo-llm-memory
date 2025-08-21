@@ -42,9 +42,14 @@ from omegaconf import DictConfig, OmegaConf
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+import time
+from types import SimpleNamespace
+
 import torch
 
+from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
+from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
@@ -162,20 +167,31 @@ def generate_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
     return generator(n, seed)
 
 
-def run_suite(
-    cfg: DictConfig,
-) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
-    """Execute the evaluation logic and return rows and metrics."""
+def _eval_tasks(
+    tasks: List[Dict[str, object]],
+    modules: Dict[str, Dict[str, object]],
+    *,
+    flag: str,
+    start_idx: int,
+) -> tuple[List[Dict[str, object]], float, int]:
+    """Evaluate ``tasks`` returning rows, EM and token count.
 
-    tasks = generate_tasks(cfg.suite, cfg.n, cfg.seed)
-    flat_ablate = _flatten_ablate(cfg.get("ablate"))
-    modules = _init_modules(cfg.get("memory"), flat_ablate)
+    Parameters
+    ----------
+    tasks:
+        List of task dictionaries.
+    modules:
+        Active memory modules for smoke coverage.
+    flag:
+        Value for the ``flags`` column in ``metrics.csv``.
+    start_idx:
+        Starting index for row numbering.
+    """
 
     rows: List[Dict[str, object]] = []
     correct = 0
     total_tokens = 0
-    for idx, item in enumerate(tasks):
-        # Exercise retrieval APIs for smoke coverage only.
+    for off, item in enumerate(tasks):
         epi_feats = None
         if "episodic" in modules:
             store = modules["episodic"]["store"]
@@ -200,32 +216,100 @@ def run_suite(
 
         prompt = str(item["prompt"])
         answer = str(item["answer"])
-        pred = str(item.get("pred", answer))  # echo model
+        pred = str(item.get("pred", answer))
 
         is_correct = int(pred.strip().lower() == answer.strip().lower())
         correct += is_correct
         total_tokens += len(prompt.split()) + len(answer.split())
         rows.append(
             {
-                "idx": idx,
+                "idx": start_idx + off,
                 "prompt": prompt,
                 "answer": answer,
                 "pred": pred,
                 "correct": is_correct,
                 "latency_ms": 0.0,
-                "flags": "pre_replay",
+                "flags": flag,
             }
         )
 
-    em = correct / cfg.n if cfg.n else 0.0
-    mem_usage: Dict[str, object] = {}
-    if "episodic" in modules:
-        mem_usage["episodic"] = modules["episodic"]["store"]._log
-    if "relational" in modules:
-        mem_usage["relational"] = modules["relational"]["kg"]._log
-    if "spatial" in modules:
-        mem_usage["spatial"] = modules["spatial"]["map"]._log
+    em = correct / len(tasks) if tasks else 0.0
+    return rows, em, total_tokens
 
+
+class _BatchMix(SimpleNamespace):
+    episodic: float = 1.0
+    semantic: float = 0.0
+    fresh: float = 0.0
+
+
+def _run_replay_once(modules: Dict[str, Dict[str, object]]) -> None:
+    """Run a single dummy replay cycle using scheduler and worker."""
+
+    store = modules.get("episodic", {}).get("store", EpisodicStore(1))
+    kg = modules.get("relational", {}).get("kg", KnowledgeGraph())
+    scheduler = ReplayScheduler(store, kg, batch_mix=_BatchMix())
+    try:
+        scheduler.add_trace("t", np.zeros(store.dim, dtype=np.float32), score=1.0)
+    except Exception:
+        pass
+    model = torch.nn.Linear(store.dim, store.dim)
+    worker = ConsolidationWorker(
+        scheduler,
+        model,
+        episodic_adapter=modules.get("episodic", {}).get("adapter"),
+        relational_adapter=modules.get("relational", {}).get("adapter"),
+        spatial_adapter=modules.get("spatial", {}).get("adapter"),
+        batch_size=1,
+    )
+    worker.start()
+    time.sleep(0.05)
+    worker.stop()
+    worker.join(timeout=1)
+
+
+def _memory_usage(modules: Dict[str, Dict[str, object]]) -> Dict[str, object]:
+    """Return memory usage logs from modules."""
+
+    mem: Dict[str, object] = {}
+    if "episodic" in modules:
+        mem["episodic"] = modules["episodic"]["store"]._log
+    if "relational" in modules:
+        mem["relational"] = modules["relational"]["kg"]._log
+    if "spatial" in modules:
+        mem["spatial"] = modules["spatial"]["map"]._log
+    return mem
+
+
+def run_suite(
+    cfg: DictConfig,
+) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
+    """Execute the evaluation logic and return rows and metrics."""
+
+    tasks = generate_tasks(cfg.suite, cfg.n, cfg.seed)
+    flat_ablate = _flatten_ablate(cfg.get("ablate"))
+    modules = _init_modules(cfg.get("memory"), flat_ablate)
+
+    rows, em, total_tokens = _eval_tasks(tasks, modules, flag="pre_replay", start_idx=0)
+
+    post_cycles = int(cfg.get("post_replay_cycles", 0))
+    post_metrics: Dict[str, Dict[str, object]] = {}
+    if post_cycles > 0:
+        start = len(tasks)
+        for cycle in range(1, post_cycles + 1):
+            _run_replay_once(modules)
+            cycle_rows, cycle_em, cycle_tokens = _eval_tasks(
+                tasks, modules, flag=f"post_replay_{cycle}", start_idx=start
+            )
+            rows.extend(cycle_rows)
+            post_metrics[str(cycle)] = {
+                cfg.suite: {"em": cycle_em},
+                "compute": {"tokens": cycle_tokens},
+            }
+            total_tokens += cycle_tokens
+            start += len(tasks)
+
+    mem_usage = _memory_usage(modules)
     metrics = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -234,6 +318,8 @@ def run_suite(
         "metrics": {cfg.suite: {"em": em}, "compute": {"tokens": total_tokens}},
         "memory": mem_usage,
     }
+    if post_metrics:
+        metrics["post_replay"] = post_metrics
     return rows, metrics, flat_ablate
 
 
