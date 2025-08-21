@@ -151,16 +151,26 @@ def _write_outputs(
 
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # Metrics JSON
+    # Metrics JSON - follow schema used by report.py
+    suite_metrics: Dict[str, float] = {
+        "pre_em": pre_metrics.get("em", 0.0),
+        "pre_f1": pre_metrics.get("f1", 0.0),
+    }
+    if post_metrics is not None:
+        suite_metrics.update(
+            {
+                "post_em": post_metrics.get("em", 0.0),
+                "post_f1": post_metrics.get("f1", 0.0),
+                "delta_em": post_metrics.get("em", 0.0) - pre_metrics.get("em", 0.0),
+            }
+        )
     metrics: Dict[str, object] = {
         "suite": cfg.suite,
         "n": cfg.n,
         "seed": cfg.seed,
-        "metrics": {"pre": pre_metrics},
+        "preset": cfg.preset,
+        "metrics": {cfg.suite: suite_metrics},
     }
-    if post_metrics is not None:
-        metrics["metrics"]["post"] = post_metrics
-        metrics["metrics"]["delta_em"] = post_metrics.get("em", 0.0) - pre_metrics.get("em", 0.0)
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f)
 
