@@ -39,11 +39,13 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 import networkx as nx
 import numpy as np
 
+from hippo_mem.common.sqlite import SQLiteExecMixin
+
 from .schema import SchemaIndex
 from .tuples import TupleType
 
 
-class KnowledgeGraph:
+class KnowledgeGraph(SQLiteExecMixin):
     """Persistent semantic graph with provenance tracking.
 
     Summary
@@ -89,9 +91,8 @@ class KnowledgeGraph:
     # ------------------------------------------------------------------
     # Database utilities
     def _init_db(self) -> None:
-        cur = self.conn.cursor()
-        cur.execute("CREATE TABLE IF NOT EXISTS nodes (name TEXT PRIMARY KEY, embedding TEXT)")
-        cur.execute(
+        self._exec("CREATE TABLE IF NOT EXISTS nodes (name TEXT PRIMARY KEY, embedding TEXT)")
+        self._exec(
             """
             CREATE TABLE IF NOT EXISTS edges (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,7 +107,6 @@ class KnowledgeGraph:
             )
             """
         )
-        self.conn.commit()
 
     def _load(self) -> None:
         cur = self.conn.cursor()
