@@ -14,11 +14,23 @@ from hypothesis import strategies as st
 
 from hippo_mem.common import TraceSpec
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
-from hippo_mem.episodic.gating import WriteGate, novelty, surprise
+from hippo_mem.episodic.gating import WriteGate, surprise
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
+from hippo_mem.episodic.utils import cosine_dissimilarity
 from hippo_mem.relational.kg import KnowledgeGraph
+
+
+def test_cosine_dissimilarity_reductions() -> None:
+    """Utility computes max and mean cosine dissimilarity."""
+
+    vec = np.array([1.0, 0.0], dtype="float32")
+    mat = np.array([[1.0, 0.0], [0.0, 1.0]], dtype="float32")
+    max_val = cosine_dissimilarity(vec, mat, "max")
+    mean_val = cosine_dissimilarity(vec, mat, "mean")
+    assert max_val == pytest.approx(0.0)
+    assert mean_val == pytest.approx(0.5)
 
 
 def test_one_shot_write_recall() -> None:
@@ -166,12 +178,12 @@ def test_novel_query_crosses_threshold() -> None:
 
     seen_keys = np.array([query])
     decision_seen = gate(1.0, query, seen_keys)
-    expected_seen = novelty(query, seen_keys)
+    expected_seen = cosine_dissimilarity(query, seen_keys, "max")
     assert not decision_seen.allow and decision_seen.score == pytest.approx(expected_seen)
 
     novel_keys = np.zeros((0, 4), dtype="float32")
     decision_novel = gate(1.0, query, novel_keys)
-    expected_novel = novelty(query, novel_keys)
+    expected_novel = cosine_dissimilarity(query, novel_keys, "max")
     assert decision_novel.allow and decision_novel.score == pytest.approx(expected_novel)
 
 
