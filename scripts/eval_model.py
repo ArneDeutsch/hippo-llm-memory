@@ -32,14 +32,13 @@ from omegaconf import DictConfig, OmegaConf, open_dict
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from eval_bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
+
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-from eval_bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 
 
 @dataclass
@@ -118,8 +117,10 @@ def _evaluate(
             if "episodic" in modules:
                 store = modules["episodic"]["store"]
                 adapter = modules["episodic"]["adapter"]
+                proj = getattr(adapter, "proj", nn.Linear(store.dim, 8))
+                adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="episodic", k=1)
-                mems.append(episodic_retrieve_and_pack(hidden, spec, store, adapter.proj))
+                mems.append(episodic_retrieve_and_pack(hidden, spec, store, proj))
             if "relational" in modules:
                 kg = modules["relational"]["kg"]
                 adapter = modules["relational"]["adapter"]
