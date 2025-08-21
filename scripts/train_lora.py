@@ -56,7 +56,7 @@ from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.map import PlaceGraph
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
-from scripts.utils import log_memory_status
+from scripts.utils import ingest_text, log_memory_status
 
 # Backwards compatibility for tests expecting ``EpisodicAdapter`` symbol
 EpisodicAdapter = EpisodicMemoryAdapter
@@ -75,6 +75,7 @@ class RelationalSpec:
     enabled: bool = False
     k: int = 0
     hops: int = 1
+    schema_fasttrack: bool = True
 
 
 @dataclass
@@ -547,6 +548,17 @@ def train(cfg: TrainConfig) -> None:
         elif not cfg.dry_run:
             train_ds = load_dataset(cfg.dataset_name, split="train")
             logging.info("Train dataset size: %d", len(train_ds))
+
+        if cfg.memory.relational.enabled and kg is not None and train_ds is not None:
+            ingested = 0
+            for item in train_ds:
+                text = item.get("text") or item.get("prompt") or ""
+                ingested += ingest_text(
+                    text,
+                    kg,
+                    fasttrack=cfg.memory.relational.schema_fasttrack,
+                )
+            logging.info("kg_ingested_tuples=%d", ingested)
 
         if cfg.replay.enabled and train_ds is not None:
             from scripts.replay_dataset import ReplayIterableDataset

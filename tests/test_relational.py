@@ -15,6 +15,7 @@ from hippo_mem.relational.tuples import (
     split_sentences,
     strip_time,
 )
+from scripts.utils import ingest_text
 
 
 def test_tuple_precision() -> None:
@@ -32,6 +33,18 @@ def test_tuple_precision() -> None:
     correct = preds & gold
     precision = len(correct) / len(preds)
     assert precision >= 0.9
+
+
+def test_ingest_text_populates_graph() -> None:
+    """Ingesting text adds nodes and edges to the knowledge graph."""
+
+    kg = KnowledgeGraph(config={"schema_threshold": 0.6})
+    kg.schema_index.add_schema("likes", "likes")
+    text = "Alice likes Bob."
+    inserted = ingest_text(text, kg)
+
+    assert inserted == 1
+    assert kg.graph.has_edge("Alice", "Bob")
 
 
 def test_sentence_helpers() -> None:
