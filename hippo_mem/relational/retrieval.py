@@ -55,6 +55,9 @@ def relational_retrieve_and_pack(
 
     limit = int(spec.k or spec.params.get("limit", 0) or 0)
     hops = int(spec.params.get("hops", 1))
+    seeds = int(spec.params.get("seeds", 1))
+    if limit > 0:
+        seeds = min(seeds, limit)
     bsz = batch_hidden.size(0)
     device = batch_hidden.device
     dtype = batch_hidden.dtype
@@ -68,7 +71,7 @@ def relational_retrieve_and_pack(
 
     for i in range(bsz):
         query = batch_hidden[i, -1].detach().cpu().numpy()
-        sub = kg.retrieve(query, k=limit, radius=hops) if limit > 0 else nx.MultiDiGraph()
+        sub = kg.retrieve(query, k=seeds, radius=hops) if limit > 0 else nx.MultiDiGraph()
         nodes = list(sub.nodes())[:limit]
         hits = len(nodes)
         hit_total += hits
@@ -88,6 +91,7 @@ def relational_retrieve_and_pack(
         "source": "relational",
         "k": limit,
         "hops": hops,
+        "seeds": seeds,
         "latency_ms": latency_ms,
         "hit_rate": hit_rate,
     }
