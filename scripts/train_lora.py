@@ -524,20 +524,39 @@ class _IngestCallback(TrainerCallback):
         self.records = list(records) if records is not None else []
         self.kg = kg
         self.graph = graph
+        self._kg_nodes = kg.graph.number_of_nodes()
+        self._kg_edges = kg.graph.number_of_edges()
+        self._pg_nodes = len(graph.graph)
+        self._pg_edges = sum(len(v) for v in graph.graph.values())
 
-    def on_epoch_begin(self, *args, **kwargs):  # pragma: no cover - Trainer API
+    def on_epoch_end(self, args, state, control, **kwargs):  # pragma: no cover - Trainer API
+        epoch = int(state.epoch or 0)
         if self.cfg.schema_fasttrack_ingest and self.records:
             ingest_training_text(self.records, self.kg)
+            nodes = self.kg.graph.number_of_nodes()
+            edges = self.kg.graph.number_of_edges()
             logging.info(
-                "kg_ingest_nodes=%d edges=%d",
-                self.kg.graph.number_of_nodes(),
-                self.kg.graph.number_of_edges(),
+                "kg_ingest_epoch=%d nodes=%d(+%d) edges=%d(+%d)",
+                epoch,
+                nodes,
+                nodes - self._kg_nodes,
+                edges,
+                edges - self._kg_edges,
             )
-        if self.records:
+            self._kg_nodes, self._kg_edges = nodes, edges
+        if self.cfg.spatial.enabled and self.records:
             ingest_spatial_traces(self.records, self.graph)
             nodes = len(self.graph.graph)
             edges = sum(len(v) for v in self.graph.graph.values())
-            logging.info("spatial_ingest_nodes=%d edges=%d", nodes, edges)
+            logging.info(
+                "spatial_ingest_epoch=%d nodes=%d(+%d) edges=%d(+%d)",
+                epoch,
+                nodes,
+                nodes - self._pg_nodes,
+                edges,
+                edges - self._pg_edges,
+            )
+            self._pg_nodes, self._pg_edges = nodes, edges
 
 
 def prepare_datasets(cfg: TrainConfig):
@@ -770,11 +789,6 @@ def _train(
                 target_modules=modules,
             )
 
-        if cfg.dry_run and train_ds is not None:
-            if cfg.schema_fasttrack_ingest:
-                ingest_training_text(train_ds, context.kg)
-            ingest_spatial_traces(train_ds, context.spatial_map)
-
         if cfg.replay.enabled and train_ds is not None and context.scheduler is not None:
             from scripts.replay_dataset import ReplayIterableDataset
 
@@ -824,6 +838,11 @@ def _train(
                     context.worker,
                 )
                 time.sleep(0.1)
+            if train_ds is not None:
+                if cfg.schema_fasttrack_ingest:
+                    ingest_training_text(train_ds, context.kg)
+                if cfg.spatial.enabled:
+                    ingest_spatial_traces(train_ds, context.spatial_map)
             return
 
         training_args = SFTConfig(
@@ -846,7 +865,7 @@ def _train(
             peft_config,
             eval_dataset=val_ds,
         )
-        if not cfg.dry_run and hasattr(trainer, "add_callback"):
+        if hasattr(trainer, "add_callback"):
             trainer.add_callback(_IngestCallback(cfg, train_ds, context.kg, context.spatial_map))
         orig_compute_loss = trainer.compute_loss
 

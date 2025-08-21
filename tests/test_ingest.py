@@ -5,6 +5,7 @@ import torch
 
 from hippo_mem.common import MemoryTokens
 from hippo_mem.relational.kg import KnowledgeGraph
+from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.map import PlaceGraph
 from scripts.train_lora import TrainConfig, train
 
@@ -74,6 +75,7 @@ def test_fast_track_ingestion(monkeypatch, tmp_path):
         schema_fasttrack_ingest=True,
         train_files=[str(data_file)],
         val_files=[str(data_file)],
+        spatial=SpatialAdapterConfig(hidden_size=16, num_heads=1, enabled=True),
     )
     train(cfg)
 
@@ -142,6 +144,7 @@ def test_spatial_trace_ingestion(monkeypatch, tmp_path):
         schema_fasttrack_ingest=True,
         train_files=[str(data_file)],
         val_files=[str(data_file)],
+        spatial=SpatialAdapterConfig(hidden_size=16, num_heads=1, enabled=True),
     )
     train(cfg)
 
