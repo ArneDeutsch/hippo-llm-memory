@@ -23,9 +23,9 @@ container for tests and linting.
 ```
 hippo-llm-memory/
 ├─ README.md
-├─ AGENTS.md
-├─ CONTRIBUTING.md
-├─ CODING_STANDARDS.md
+├─ AGENTS.md              # workflow instructions for coding agents
+├─ CONTRIBUTING.md        # contribution process
+├─ CODING_STANDARDS.md    # style guide
 ├─ DESIGN.md              # architecture and algorithms
 ├─ EVAL_PLAN.md           # evaluation protocol
 ├─ PROJECT_PLAN.md        # milestones and work packages
