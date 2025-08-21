@@ -868,7 +868,7 @@ def _train(
             max_steps=cfg.max_steps,
             learning_rate=cfg.learning_rate,
             logging_steps=1,
-            bf16=True,
+            bf16=torch.cuda.is_available(),
             gradient_checkpointing=True,
             dataset_text_field="text",
         )

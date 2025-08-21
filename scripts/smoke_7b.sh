@@ -5,11 +5,11 @@ IFS=$'\n\t'
 LOG=$(mktemp)
 
 python scripts/train_lora.py \
+  dry_run=true \
   data_format=jsonl \
   train_files='["data/episodic_50_2025.jsonl"]' \
-  fusion_insert_block_index=-4 \
+  fusion_insert_block_index=-1 \
   replay.enabled=true \
-  max_steps=50 \
   > "$LOG" 2>&1
 
 if ! grep -q "Adapter fusion attached" "$LOG"; then
