@@ -12,8 +12,10 @@ dry_run: false
 # Report macro averaged scores in addition to micro scores.
 macro_scoring: true
 
-# Replay evaluation options. ``cycles`` controls how many post-training
-# measurements are taken after running a dummy replay loop.
+# Number of replay cycles to run between evaluations in ``eval_bench``.
+post_replay_cycles: 0
+
+# Replay evaluation options for ``eval_model`` (kept for backwards compat).
 replay:
   cycles: 0
 
