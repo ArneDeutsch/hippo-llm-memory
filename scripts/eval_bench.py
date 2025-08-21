@@ -47,14 +47,17 @@ from types import SimpleNamespace
 
 import torch
 
+from hippo_mem.adapters import (
+    EpisodicMemoryAdapter,
+    RelationalMemoryAdapter,
+    SpatialMemoryAdapter,
+)
 from hippo_mem.consolidation.worker import ConsolidationWorker
-from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
+from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
-from hippo_mem.relational.adapter import RelationalAdapter
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
-from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.map import PlaceGraph
 
 
@@ -96,12 +99,12 @@ def _init_modules(
         store = EpisodicStore(dim=8, config={"hopfield": hopfield, "pq": pq})
         store.write(np.ones(8, dtype="float32"), "dummy")
         adapter_cfg = AdapterConfig(hidden_size=8, num_heads=1, enabled=True)
-        modules["episodic"] = {"store": store, "adapter": EpisodicAdapter(adapter_cfg)}
+        modules["episodic"] = {"store": store, "adapter": EpisodicMemoryAdapter(adapter_cfg)}
 
     def _add_relational() -> None:
         kg = KnowledgeGraph()
         kg.upsert("a", "rel", "b", "a rel b")
-        modules["relational"] = {"kg": kg, "adapter": RelationalAdapter()}
+        modules["relational"] = {"kg": kg, "adapter": RelationalMemoryAdapter()}
 
     def _add_spatial() -> None:
         g = PlaceGraph()
@@ -109,7 +112,7 @@ def _init_modules(
         g.observe("b")
         g.connect("a", "b")
         spat_cfg = SpatialAdapterConfig(hidden_size=8, num_heads=1, enabled=True)
-        modules["spatial"] = {"map": g, "adapter": SpatialAdapter(spat_cfg)}
+        modules["spatial"] = {"map": g, "adapter": SpatialMemoryAdapter(spat_cfg)}
 
     if isinstance(memory, str):
         memory = [memory]
