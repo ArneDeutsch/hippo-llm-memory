@@ -422,6 +422,7 @@ class TrainerContext:
     hidden_size: int = 0
     gate_attempts: int = 0
     gate_accepts: int = 0
+    adapters_attached: bool = False
 
     def start(self) -> None:
         if self.worker is not None:
@@ -592,12 +593,14 @@ def init_memory(context: TrainerContext, cfg: TrainConfig) -> None:
             relational=rel_proxy,
             spatial=spat_proxy,
         )
+        context.adapters_attached = True
         logging.info(
             "Adapter fusion attached at block %s/%s",
             info.get("target_block"),
             info.get("num_blocks"),
         )
     except Exception as exc:  # pragma: no cover - defensive
+        context.adapters_attached = False
         logging.warning("Adapter fusion attach failed: %s", exc)
 
     kg_cfg = {
@@ -664,6 +667,13 @@ def _train(
     hidden = context.hidden_size
     sources = context.sources
 
+    if context.adapters_attached:
+
+        def _block_retrieval_cb(hs: torch.Tensor) -> MemoryTokens | None:
+            return _gather_memory_tokens(hs, cfg, sources)
+
+        setattr(model, "_hippo_retrieval_cb", _block_retrieval_cb)  # type: ignore[attr-defined]
+
     context.start()
     try:
         peft_config = None
@@ -709,8 +719,8 @@ def _train(
                 pass
             dummy_hidden = torch.zeros(1, 1, hidden, device=device)
             mem = _gather_memory_tokens(dummy_hidden, cfg, sources)
-            if mem is not None:
-                dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
+            dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
+            if callable(model):
                 _ = model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
             probs = np.array([1.0])
             queries = np.zeros((1, hidden), dtype=np.float32)
@@ -755,13 +765,19 @@ def _train(
         orig_compute_loss = trainer.compute_loss
 
         def compute_loss_with_memory(self, model, inputs, return_outputs=False):
-            input_ids = inputs.get("input_ids")
-            mem = None
-            embed_fn = getattr(model, "get_input_embeddings", None)
-            if callable(embed_fn) and input_ids is not None:
-                hidden_emb = embed_fn()(input_ids)
-                mem = _gather_memory_tokens(hidden_emb, cfg, sources)
-            model._hippo_memory_tokens = mem  # type: ignore[attr-defined]
+            mem_cb = getattr(model, "_hippo_retrieval_cb", None)
+            inputs = dict(inputs)
+            if not callable(mem_cb):
+                input_ids = inputs.get("input_ids")
+                mem = None
+                embed_fn = getattr(model, "get_input_embeddings", None)
+                if callable(embed_fn) and input_ids is not None:
+                    hidden_emb = embed_fn()(input_ids)
+                    mem = _gather_memory_tokens(hidden_emb, cfg, sources)
+                if mem is not None:
+                    inputs["memory_tokens"] = mem
+            else:
+                setattr(model, "_hippo_memory_tokens", None)
             return orig_compute_loss(model, inputs, return_outputs=return_outputs)
 
         trainer.compute_loss = compute_loss_with_memory.__get__(trainer, type(trainer))

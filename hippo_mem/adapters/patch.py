@@ -144,14 +144,24 @@ def attach_adapters(
 
     def wrapped_forward(*args: Any, **kwargs: Any):
         memory_tokens = kwargs.pop("memory_tokens", None)
-        if memory_tokens is None:
-            memory_tokens = getattr(model, "_hippo_memory_tokens", None)
         hidden = orig_block_forward(*args, **kwargs)
-        if isinstance(hidden, tuple):
+        returned_tuple = isinstance(hidden, tuple)
+        if returned_tuple:
             hidden_states, *rest = hidden
-            hidden_states = fusion(hidden_states, memory_tokens=memory_tokens, **kwargs)
+        else:
+            hidden_states = hidden
+            rest = []
+
+        if memory_tokens is None:
+            cb = getattr(model, "_hippo_retrieval_cb", None)
+            if callable(cb):
+                memory_tokens = cb(hidden_states)
+            if memory_tokens is None:
+                memory_tokens = getattr(model, "_hippo_memory_tokens", None)
+
+        hidden_states = fusion(hidden_states, memory_tokens=memory_tokens, **kwargs)
+        if returned_tuple:
             return (hidden_states, *rest)
-        hidden_states = fusion(hidden, memory_tokens=memory_tokens, **kwargs)
         return hidden_states
 
     block.forward = wrapped_forward  # type: ignore[assignment]

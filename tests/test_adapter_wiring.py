@@ -93,6 +93,43 @@ def test_adapter_invoked_with_memory_tokens(monkeypatch: pytest.MonkeyPatch) -> 
     assert not torch.allclose(out, baseline)
 
 
+def test_retrieval_callback_receives_block_hidden(monkeypatch: pytest.MonkeyPatch) -> None:
+    model = _setup_model(monkeypatch)
+    input_ids = torch.tensor([[0]])
+
+    captured: dict[str, torch.Tensor] = {}
+
+    def hook(_module, _inp, output):
+        captured["baseline"] = output[0] if isinstance(output, tuple) else output
+
+    handle = model.transformer.h[0].register_forward_hook(hook)
+    _ = model(input_ids)
+    handle.remove()
+
+    cfg = MemoryFusionConfig(enabled=True, insert_block_index=0)
+
+    class Dummy(torch.nn.Module):
+        def forward(self, hidden_states, *, memory=None, **kwargs):  # type: ignore[override]
+            return torch.zeros_like(hidden_states)
+
+    attach_adapters(model, cfg, episodic=Dummy())
+
+    seen: dict[str, torch.Tensor] = {}
+
+    def cb(hs: torch.Tensor):
+        seen["hidden"] = hs
+        d = hs.size(-1)
+        tokens = hs.new_zeros(hs.size(0), 1, d)
+        mask = torch.ones(hs.size(0), 1, dtype=torch.bool, device=hs.device)
+        return MemoryTokens(tokens=tokens, mask=mask)
+
+    model._hippo_retrieval_cb = cb  # type: ignore[attr-defined]
+    _ = model(input_ids)
+
+    assert "hidden" in seen
+    torch.testing.assert_close(seen["hidden"], captured["baseline"])
+
+
 def test_missing_blocks_attribute_errors() -> None:
     class Dummy(torch.nn.Module):
         def forward(self, x: torch.Tensor) -> torch.Tensor:  # pragma: no cover - trivial
