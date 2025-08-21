@@ -29,6 +29,13 @@ import numpy as np
 import torch
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf, open_dict
+from torch import nn
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
+from hippo_mem.relational.retrieval import relational_retrieve_and_pack
+from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -92,24 +99,54 @@ def _f1(pred: str, truth: str) -> float:
 
 
 def _evaluate(
-    tasks: Iterable[Task], modules: Dict[str, Dict[str, object]]
+    tasks: Iterable[Task],
+    modules: Dict[str, Dict[str, object]],
+    tokenizer,
+    model,
+    max_new_tokens: int,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float]]:
-    """Run the mock model over ``tasks`` and return rows and aggregate metrics."""
+    """Generate predictions and compute metrics for ``tasks``."""
 
     rows: List[Dict[str, object]] = []
     correct = 0
     f1_total = 0.0
     for idx, item in enumerate(tasks):
-        # Exercise memory modules for plumbing coverage only.
-        if "episodic" in modules:
-            store = modules["episodic"]["store"]
-            store.recall(np.zeros(8, dtype="float32"), 1)
+        # Optional memory retrieval and adapter calls for plumbing coverage.
+        if modules:
             hidden = torch.zeros(1, 1, 8)
-            mem = torch.zeros(1, 1, 8)
-            modules["episodic"]["adapter"](hidden, mem)
-        # Mock model simply echoes the reference answer.
-        pred = item.answer
-        is_correct = int(pred == item.answer)
+            mems: List[MemoryTokens] = []
+            if "episodic" in modules:
+                store = modules["episodic"]["store"]
+                adapter = modules["episodic"]["adapter"]
+                spec = TraceSpec(source="episodic", k=1)
+                mems.append(episodic_retrieve_and_pack(hidden, spec, store, adapter.proj))
+            if "relational" in modules:
+                kg = modules["relational"]["kg"]
+                adapter = modules["relational"]["adapter"]
+                proj = getattr(adapter, "proj", nn.Linear(4, 8))
+                adapter.proj = proj  # type: ignore[attr-defined]
+                spec = TraceSpec(source="relational", k=1)
+                mems.append(relational_retrieve_and_pack(hidden, spec, kg, proj))
+            if "spatial" in modules:
+                graph = modules["spatial"]["map"]
+                adapter = modules["spatial"]["adapter"]
+                proj = getattr(adapter, "proj", nn.Linear(4, 8))
+                adapter.proj = proj  # type: ignore[attr-defined]
+                spec = TraceSpec(source="spatial")
+                mems.append(spatial_retrieve_and_pack("origin", spec, graph, proj))
+            if mems:
+                tokens = torch.cat([m.tokens for m in mems], dim=1)
+                mask = torch.cat([m.mask for m in mems], dim=1)
+                mem = MemoryTokens(tokens=tokens, mask=mask)
+                for mod in modules.values():
+                    adapter = mod.get("adapter")
+                    if adapter is not None:
+                        adapter(hidden, memory=mem)
+
+        enc = tokenizer(item.prompt, return_tensors="pt").to(model.device)
+        out = model.generate(**enc, max_new_tokens=max_new_tokens)
+        pred = tokenizer.decode(out[0], skip_special_tokens=True)
+        is_correct = int(pred.strip() == item.answer)
         correct += is_correct
         f1_total += _f1(pred, item.answer)
         rows.append(
@@ -226,6 +263,8 @@ def main(cfg: DictConfig) -> None:
     cfg = _load_preset(cfg)
     cfg.n = cfg.get("n", 5)
     cfg.seed = cfg.get("seed", 0)
+    cfg.model = cfg.get("model", "models/tiny-gpt2")
+    cfg.max_new_tokens = cfg.get("max_new_tokens", 32)
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
 
@@ -234,12 +273,22 @@ def main(cfg: DictConfig) -> None:
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
-    pre_rows, pre_metrics = _evaluate(tasks, modules)
+    model_path = to_absolute_path(str(cfg.model))
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    model = AutoModelForCausalLM.from_pretrained(model_path)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
+    pre_rows, pre_metrics = _evaluate(tasks, modules, tokenizer, model, int(cfg.max_new_tokens))
     post_rows = post_metrics = None
 
     for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
         _run_replay(modules, tasks)
-        post_rows, post_metrics = _evaluate(tasks, modules)
+        post_rows, post_metrics = _evaluate(
+            tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
+        )
 
     outdir_cfg = cfg.get("outdir")
     if outdir_cfg is not None:
