@@ -6,6 +6,7 @@ import sys
 from types import SimpleNamespace
 
 import networkx as nx
+import pytest
 import torch
 
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
@@ -496,68 +497,34 @@ def test_train_respects_hopfield_flag(monkeypatch) -> None:
     assert store.complete_called is False
 
 
-def test_init_sft_trainer_accepts_tokenizer(monkeypatch) -> None:
-    """Tokenizer is forwarded when SFTTrainer expects it."""
+@pytest.mark.parametrize("field", ["tokenizer", "processing_class"])
+def test_init_sft_trainer_forwards_tokenizer(monkeypatch, field) -> None:
+    """Tokenizer or processing class is forwarded to ``SFTTrainer``."""
 
     captured: dict[str, object] = {}
 
-    class DummyTrainer:
-        def __init__(
-            self,
-            *,
-            model=None,
-            train_dataset=None,
-            args=None,
-            tokenizer=None,
-            peft_config=None,
-        ) -> None:
-            captured.update(
-                {
-                    "model": model,
-                    "train_dataset": train_dataset,
-                    "args": args,
-                    "tokenizer": tokenizer,
-                    "peft_config": peft_config,
-                }
-            )
+    namespace: dict[str, object] = {"captured": captured}
+    exec(
+        f"""
+class DummyTrainer:
+    def __init__(self, *, model=None, train_dataset=None, args=None, {field}=None, peft_config=None):
+        captured.update({{
+            'model': model,
+            'train_dataset': train_dataset,
+            'args': args,
+            '{field}': {field},
+            'peft_config': peft_config,
+        }})
+""",
+        namespace,
+    )
 
+    DummyTrainer = namespace["DummyTrainer"]
     monkeypatch.setattr("scripts.train_lora.SFTTrainer", DummyTrainer)
 
     _init_sft_trainer("m", "d", "a", "tok", "p")
 
-    assert captured["tokenizer"] == "tok"
-
-
-def test_init_sft_trainer_accepts_processing_class(monkeypatch) -> None:
-    """Tokenizer is passed via ``processing_class`` when required."""
-
-    captured: dict[str, object] = {}
-
-    class DummyTrainer:
-        def __init__(
-            self,
-            *,
-            model=None,
-            train_dataset=None,
-            args=None,
-            processing_class=None,
-            peft_config=None,
-        ) -> None:
-            captured.update(
-                {
-                    "model": model,
-                    "train_dataset": train_dataset,
-                    "args": args,
-                    "processing_class": processing_class,
-                    "peft_config": peft_config,
-                }
-            )
-
-    monkeypatch.setattr("scripts.train_lora.SFTTrainer", DummyTrainer)
-
-    _init_sft_trainer("m", "d", "a", "tok", "p")
-
-    assert captured["processing_class"] == "tok"
+    assert captured[field] == "tok"
 
 
 def test_train_skips_retrieval_when_disabled(monkeypatch) -> None:
