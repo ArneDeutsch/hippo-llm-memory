@@ -17,3 +17,5 @@ memory:
     radius: 1
     max_nodes: 0
     max_edges: 0
+  runtime:
+    enable_writes: true

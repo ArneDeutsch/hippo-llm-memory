@@ -46,3 +46,4 @@
 - `hippo_mem.adapters.lora.merge_adapter()`
 - `hippo_mem.adapters.lora.export_adapter()`
 - `hippo_mem.consolidation.worker.ConsolidationWorker`
+- `_hippo_retrieval_cb(hidden: Tensor) -> MemoryTokens`
