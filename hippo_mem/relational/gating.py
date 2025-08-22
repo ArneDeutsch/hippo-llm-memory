@@ -14,6 +14,8 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Dict, Tuple
 
+from hippo_mem.common import ProvenanceLogger
+
 from .tuples import TupleType
 
 if TYPE_CHECKING:  # pragma: no cover - import cycle hints
@@ -31,6 +33,7 @@ class RelationalGate:
     w_rec: float = 0.2
     max_degree: int = 64
     recency_window: float = 60.0
+    logger: ProvenanceLogger | None = None
     _last_seen: Dict[str, float] = field(default_factory=dict)
 
     def decide(self, tup: TupleType, kg: "KnowledgeGraph") -> Tuple[str, str]:
@@ -68,10 +71,20 @@ class RelationalGate:
         self._last_seen[tail] = now
 
         if novelty == 0.0:
-            return "aggregate", "duplicate_edge"
-        if score >= self.threshold:
-            return "insert", f"score={score:.2f}>=thr"
-        return "route_to_episodic", f"score={score:.2f}<thr"
+            action, reason = "aggregate", "duplicate_edge"
+        elif score >= self.threshold:
+            action, reason = "insert", f"score={score:.2f}>=thr"
+        else:
+            action, reason = "route_to_episodic", f"score={score:.2f}<thr"
+        if self.logger is not None:
+            payload = {
+                "tuple": [head, rel, tail],
+                "deg_pen": deg_pen,
+                "conf": conf,
+                "score": score,
+            }
+            self.logger.log(mem="relational", action=action, reason=reason, payload=payload)
+        return action, reason
 
 
 __all__ = ["RelationalGate"]
