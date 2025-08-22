@@ -126,17 +126,60 @@
   - evidence: `store_size` increasing
   - evidence: snippet showing adapter block index and retrieval latency
 
-# Milestone 8 – Baseline datasets & evaluation runs
+# Milestone 8 – Baseline datasets & evaluation runs (UPDATED)
 
-**Objective**: generate baseline datasets, run baseline evaluations and establish reference metrics.
+**Objective.** Build deterministic baseline datasets and execute *baseline* evaluation runs (no learned memory) across all suites to establish reproducible reference metrics. Capture seeds, sizes, configs, environment and git SHA so later memory results are comparable.
 
-**Work packages**
+**Scope.** Suites = `episodic`, `semantic` (relational), `spatial`. Presets = `baselines/core`, `baselines/rag`, `baselines/longctx`. Sizes = `50`, `200`, `1000` items. Seeds = `1337`, `2025`, `4242`.
 
-1. [ ] **Dataset generation**: use scripts/build_datasets.py to produce episodic, semantic and spatial JSONL datasets at small (50), medium (200) and large (1 000) sizes with several seeds ; store them under data/ with checksums.
-2. [ ] **Baseline runs**: execute scripts/eval_bench.py for the baselines core, rag and longctx presets defined in the evaluation plan; run each suite for all dataset sizes and seeds; store results under runs/YYYYMMDD/baselines/ with metrics and meta files.
-3. [ ] **Result aggregation**: develop scripts/report.py to aggregate baseline metrics into tables and plots; compare baselines across suites (episodic, semantic, spatial); output a report in reports/ .
+## Work packages
 
-- [ ] **Gate**: baseline datasets exist with checksums; baseline metrics files are generated and aggregated; report summarises baseline performance.
+1. **Dataset generation & registry**
+   - Use `scripts/build_datasets.py` to generate JSONL datasets for each suite × size × seed.
+   - Write files to `data/<suite>/<size>_<seed>.jsonl`.
+   - Compute and store SHA256 checksums in `data/<suite>/checksums.json`.
+   - Emit a lightweight `data/<suite>/dataset_card.json` with fields: `suite`, `sizes`, `seeds`, `generator_version`, `sha256`, `created_utc`, and the exact CLI used.
+
+2. **Run‑matrix driver**
+   - Add a small driver (CLI or Make target) to iterate over *all* presets × suites × sizes × seeds and invoke `scripts/eval_bench.py` with the correct Hydra overrides.
+   - Layout: `runs/YYYYMMDD/<preset>/<suite>/<size>_<seed>/` containing `metrics.json`, `metrics.csv`, and `meta.json` (with `git_sha`, `config_hash`, `ablate`, `seed`, `python`, `platform`).
+   - Provide `Makefile` targets:
+     - `make eval-baselines DATE=20250822` – full matrix.
+     - `make eval-baselines-smoke` – minimal (one suite × one size × one seed) for CI.
+
+3. **Environment capture & determinism**
+   - Extend `scripts/eval_bench.py` to record: Python version, `pip freeze` hash, OS, CPU model, and (if available) CUDA/driver versions into `meta.json`.
+   - Assert deterministic generation via checksum validation before each run; fail fast if mismatched.
+
+4. **Aggregation & reports**
+   - Extend `scripts/report.py` to:
+     - Aggregate metrics per suite across presets, sizes, and seeds (mean ± std) and write Markdown to `reports/YYYYMMDD/<suite>/summary.md`.
+     - Include optional plots when matplotlib is present (saved as PNG).
+     - Tolerate missing retrieval/gate fields for baselines while still producing tables.
+
+5. **CI & smoke wiring**
+   - Add `smoke_8.sh` that generates size=50 datasets for all suites, runs the `baselines/core` preset for seed=1337, and runs `scripts/report.py --date YYYYMMDD`.
+   - Add/extend `tests/test_report.py` to assert:
+       - discovery of latest date dir,
+       - presence and schema of aggregated tables,
+       - report files exist for each suite.
+
+6. **Documentation**
+   - Update `EVAL_PLAN.md` section “Baselines” to pin the **exact** presets, run‑matrix (suites, sizes, seeds), directory layout, and required artifacts.
+   - Note in `DESIGN.md` that memory adapters are not involved in Milestone 8; any retrieval/gating logs MUST be no‑ops for baselines.
+
+## Definition of Done (Gate)
+
+- **Datasets:** For each suite × size × seed, a JSONL exists with a recorded SHA256 in `checksums.json`; `dataset_card.json` present.
+- **Runs:** For every preset × suite × size × seed, `metrics.json`, `metrics.csv`, and `meta.json` are present under `runs/YYYYMMDD/...` with non‑empty contents. `meta.json` must include `git_sha` and `config_hash`.
+- **Aggregation:** `reports/YYYYMMDD/<suite>/summary.md` exists for all suites and contains per‑preset tables (means across seeds) for each size.
+- **Reproducibility:** Re‑running the matrix on the same commit and machine yields identical checksums and *identical metrics* for the mock baselines.
+- **CI:** `smoke_8.sh` completes locally in < 3 minutes on CPU and passes the associated tests.
+
+## Notes
+
+- **Compute:** Baselines use `model: mock` and run on CPU; no GPU is required for Milestone 8.
+- **Forward‑compatibility:** File layout and metadata mirror what Milestone 9 (memory) will produce so reports can compare across milestones seamlessly.
 
 # Milestone 9 – Memory‑augmented training, evaluation & ablations
 
