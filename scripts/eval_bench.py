@@ -27,6 +27,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import platform
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -76,6 +77,44 @@ def _config_hash(cfg: DictConfig) -> str:
 
     yaml_dump = OmegaConf.to_yaml(cfg, resolve=True)
     return hashlib.sha256(yaml_dump.encode("utf-8")).hexdigest()
+
+
+def _pip_hash() -> str:
+    """Return a SHA256 of ``pip freeze`` output."""
+
+    try:
+        out = subprocess.check_output(["pip", "freeze"], text=True)
+    except Exception:  # pragma: no cover - pip unavailable
+        return "unknown"
+    return hashlib.sha256(out.encode("utf-8")).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    """Compute SHA256 for ``path``."""
+
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _load_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
+    """Load tasks from disk if available, otherwise generate."""
+
+    data_path = Path("data") / suite / f"{n}_{seed}.jsonl"
+    if data_path.exists():
+        checksum_path = data_path.parent / "checksums.json"
+        if not checksum_path.exists():
+            raise FileNotFoundError(f"Missing {checksum_path}")
+        with checksum_path.open("r", encoding="utf-8") as f:
+            checksums = json.load(f)
+        digest = _sha256_file(data_path)
+        if checksums.get(data_path.name) != digest:
+            raise RuntimeError(f"Checksum mismatch for {data_path}")
+        with data_path.open("r", encoding="utf-8") as f:
+            return [json.loads(line) for line in f]
+    return generate_tasks(suite, n, seed)
 
 
 def _init_modules(
@@ -289,7 +328,7 @@ def run_suite(
 ) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
     """Execute the evaluation logic and return rows and metrics."""
 
-    tasks = generate_tasks(cfg.suite, cfg.n, cfg.seed)
+    tasks = _load_tasks(cfg.suite, cfg.n, cfg.seed)
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
@@ -377,7 +416,15 @@ def write_outputs(
         "ablate": flat_ablate,
         "seed": cfg.seed,
         "gating_enabled": gating_enabled,
+        "python": sys.version,
+        "platform": platform.platform(),
+        "pip_hash": _pip_hash(),
     }
+    if torch.cuda.is_available():
+        meta["cuda"] = {
+            "version": torch.version.cuda,
+            "driver": torch._C._cuda_getDriverVersion(),
+        }
     config_meta: Dict[str, Dict[str, object]] = {}
     if rel_gate is not None:
         config_meta.setdefault("relational", {})["gate"] = rel_gate
@@ -461,7 +508,7 @@ def main(cfg: DictConfig) -> None:
     cfg.n = cfg.get("n", 5)
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
-    date = datetime.now(timezone.utc).strftime("%Y%m%d")
+    date = cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d")
     outdir: Optional[str] = cfg.get("outdir")
     preset_path = Path(str(cfg.preset))
     if cfg.get("run_matrix"):
