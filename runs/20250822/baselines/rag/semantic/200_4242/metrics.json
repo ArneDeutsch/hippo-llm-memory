@@ -1,0 +1,1 @@
+{"suite": "semantic", "n": 200, "seed": 4242, "preset": "baselines/rag", "metrics": {"semantic": {"em": 1.0}, "compute": {"tokens": 3800}}, "memory": {}}

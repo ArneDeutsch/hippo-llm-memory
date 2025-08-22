@@ -1,0 +1,1001 @@
+idx,prompt,answer,pred,correct,latency_ms,flags,gating_enabled
+0,Carol saw at the Park on Thursday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+1,Bob helped at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+2,Carol found at the Mall on Wednesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+3,Dave saw at the Library on Wednesday. When was Dave at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+4,Alice met at the Cafe on Thursday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+5,Bob met at the Park on Tuesday. When was Bob at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+6,Carol met at the Park on Thursday. What did Carol do?,met,met,1,0.0,pre_replay,False
+7,Carol saw at the Library on Tuesday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+8,Dave met at the Mall on Wednesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+9,Alice saw at the Park on Monday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+10,Carol met at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+11,Alice found at the Park on Tuesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+12,Alice saw at the Park on Wednesday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+13,Dave helped at the Library on Tuesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+14,Dave saw at the Mall on Wednesday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+15,Dave helped at the Park on Thursday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+16,Dave found at the Mall on Tuesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+17,Alice found at the Cafe on Wednesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+18,Dave saw at the Cafe on Thursday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+19,Bob helped at the Cafe on Thursday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+20,Carol met at the Library on Monday. When was Carol at the Library?,Monday,Monday,1,0.0,pre_replay,False
+21,Dave met at the Mall on Thursday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+22,Bob saw at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+23,Carol helped at the Cafe on Thursday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+24,Bob met at the Cafe on Wednesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+25,Alice saw at the Mall on Tuesday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+26,Dave helped at the Mall on Thursday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+27,Bob helped at the Park on Thursday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+28,Bob met at the Cafe on Thursday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+29,Bob met at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+30,Carol met at the Cafe on Monday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+31,Dave found at the Mall on Thursday. What did Dave do?,found,found,1,0.0,pre_replay,False
+32,Bob saw at the Cafe on Thursday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+33,Bob found at the Library on Monday. What did Bob do?,found,found,1,0.0,pre_replay,False
+34,Dave helped at the Cafe on Wednesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+35,Dave helped at the Park on Monday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+36,Bob met at the Cafe on Monday. When was Bob at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+37,Alice found at the Cafe on Monday. When was Alice at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+38,Carol found at the Library on Monday. When was Carol at the Library?,Monday,Monday,1,0.0,pre_replay,False
+39,Carol helped at the Cafe on Tuesday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+40,Dave saw at the Library on Tuesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+41,Carol saw at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+42,Carol found at the Park on Tuesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+43,Bob saw at the Library on Monday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+44,Alice helped at the Library on Monday. When was Alice at the Library?,Monday,Monday,1,0.0,pre_replay,False
+45,Dave found at the Cafe on Tuesday. What did Dave do?,found,found,1,0.0,pre_replay,False
+46,Bob met at the Library on Monday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+47,Carol met at the Park on Thursday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+48,Carol helped at the Cafe on Wednesday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+49,Dave helped at the Library on Thursday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+50,Dave helped at the Library on Thursday. When was Dave at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+51,Bob found at the Mall on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+52,Carol helped at the Park on Monday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+53,Dave saw at the Cafe on Tuesday. When was Dave at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+54,Dave met at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+55,Dave met at the Cafe on Monday. What did Dave do?,met,met,1,0.0,pre_replay,False
+56,Alice met at the Cafe on Monday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+57,Bob helped at the Library on Wednesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+58,Dave helped at the Library on Monday. When was Dave at the Library?,Monday,Monday,1,0.0,pre_replay,False
+59,Dave saw at the Mall on Monday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+60,Bob found at the Park on Wednesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+61,Carol helped at the Mall on Monday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+62,Dave met at the Park on Monday. Who was at the Park?,Dave,Dave,1,0.0,pre_replay,False
+63,Carol found at the Park on Thursday. What did Carol do?,found,found,1,0.0,pre_replay,False
+64,Carol found at the Mall on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+65,Dave saw at the Mall on Wednesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+66,Carol found at the Mall on Thursday. When was Carol at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+67,Alice found at the Park on Monday. What did Alice do?,found,found,1,0.0,pre_replay,False
+68,Dave saw at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+69,Alice saw at the Library on Tuesday. When was Alice at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+70,Alice met at the Cafe on Tuesday. What did Alice do?,met,met,1,0.0,pre_replay,False
+71,Dave met at the Library on Monday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+72,Carol helped at the Mall on Wednesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+73,Alice met at the Library on Wednesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+74,Bob saw at the Library on Monday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+75,Alice saw at the Park on Thursday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+76,Bob helped at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+77,Alice helped at the Library on Wednesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+78,Dave saw at the Mall on Wednesday. When was Dave at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+79,Bob helped at the Park on Monday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+80,Bob helped at the Park on Tuesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+81,Bob helped at the Library on Wednesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+82,Carol found at the Library on Wednesday. When was Carol at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+83,Bob helped at the Park on Tuesday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+84,Dave found at the Cafe on Wednesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+85,Carol met at the Park on Monday. What did Carol do?,met,met,1,0.0,pre_replay,False
+86,Bob found at the Library on Wednesday. When was Bob at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+87,Alice helped at the Library on Thursday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+88,Alice helped at the Mall on Monday. When was Alice at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+89,Carol saw at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+90,Dave helped at the Mall on Thursday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+91,Carol met at the Mall on Wednesday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+92,Alice met at the Cafe on Monday. What did Alice do?,met,met,1,0.0,pre_replay,False
+93,Dave helped at the Library on Wednesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+94,Dave saw at the Cafe on Monday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+95,Carol helped at the Park on Thursday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+96,Alice saw at the Mall on Wednesday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+97,Dave found at the Library on Wednesday. When was Dave at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+98,Carol saw at the Cafe on Tuesday. What did Carol do?,saw,saw,1,0.0,pre_replay,False
+99,Alice found at the Cafe on Tuesday. What did Alice do?,found,found,1,0.0,pre_replay,False
+100,Bob found at the Library on Thursday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+101,Bob helped at the Park on Wednesday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+102,Carol met at the Cafe on Monday. When was Carol at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+103,Alice met at the Park on Tuesday. When was Alice at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+104,Carol met at the Cafe on Tuesday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+105,Alice found at the Library on Tuesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+106,Bob found at the Park on Thursday. When was Bob at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+107,Alice saw at the Library on Monday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+108,Bob helped at the Library on Tuesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+109,Alice helped at the Park on Thursday. When was Alice at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+110,Dave helped at the Cafe on Wednesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+111,Dave helped at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+112,Bob saw at the Cafe on Monday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+113,Carol helped at the Park on Tuesday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+114,Bob met at the Library on Monday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+115,Dave met at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+116,Dave saw at the Mall on Wednesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+117,Bob found at the Cafe on Tuesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+118,Alice met at the Cafe on Monday. What did Alice do?,met,met,1,0.0,pre_replay,False
+119,Dave helped at the Park on Monday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+120,Dave found at the Park on Thursday. What did Dave do?,found,found,1,0.0,pre_replay,False
+121,Carol saw at the Park on Wednesday. What did Carol do?,saw,saw,1,0.0,pre_replay,False
+122,Carol found at the Mall on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+123,Bob found at the Park on Tuesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+124,Dave saw at the Mall on Monday. When was Dave at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+125,Bob found at the Cafe on Monday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+126,Carol found at the Library on Wednesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+127,Carol saw at the Park on Wednesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+128,Carol helped at the Park on Monday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+129,Carol helped at the Mall on Tuesday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+130,Alice saw at the Cafe on Tuesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+131,Dave helped at the Library on Tuesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+132,Carol found at the Cafe on Wednesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+133,Carol helped at the Library on Tuesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+134,Alice met at the Park on Monday. What did Alice do?,met,met,1,0.0,pre_replay,False
+135,Alice found at the Cafe on Thursday. What did Alice do?,found,found,1,0.0,pre_replay,False
+136,Bob met at the Library on Wednesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+137,Dave helped at the Library on Tuesday. When was Dave at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+138,Carol met at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+139,Bob helped at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+140,Carol found at the Cafe on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+141,Alice helped at the Library on Thursday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+142,Bob found at the Library on Monday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+143,Bob met at the Park on Tuesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+144,Dave helped at the Park on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+145,Bob saw at the Cafe on Thursday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+146,Bob found at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+147,Carol met at the Library on Wednesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+148,Bob found at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+149,Alice saw at the Mall on Thursday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+150,Alice met at the Cafe on Thursday. What did Alice do?,met,met,1,0.0,pre_replay,False
+151,Alice met at the Park on Tuesday. When was Alice at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+152,Alice met at the Library on Tuesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+153,Dave met at the Park on Wednesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+154,Carol saw at the Library on Thursday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+155,Carol saw at the Library on Monday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+156,Carol saw at the Park on Thursday. When was Carol at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+157,Bob helped at the Library on Wednesday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+158,Alice met at the Cafe on Wednesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+159,Carol helped at the Park on Wednesday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+160,Bob saw at the Cafe on Monday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+161,Alice helped at the Mall on Wednesday. When was Alice at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+162,Bob met at the Mall on Thursday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+163,Dave found at the Library on Wednesday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+164,Bob found at the Library on Tuesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+165,Carol saw at the Mall on Monday. When was Carol at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+166,Carol saw at the Mall on Tuesday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+167,Bob met at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+168,Bob found at the Library on Wednesday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+169,Dave found at the Park on Wednesday. Who was at the Park?,Dave,Dave,1,0.0,pre_replay,False
+170,Dave found at the Mall on Wednesday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+171,Carol helped at the Mall on Monday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+172,Alice met at the Park on Wednesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+173,Dave helped at the Cafe on Wednesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+174,Dave saw at the Cafe on Monday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+175,Alice met at the Mall on Tuesday. What did Alice do?,met,met,1,0.0,pre_replay,False
+176,Alice found at the Cafe on Thursday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+177,Alice saw at the Mall on Wednesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+178,Bob saw at the Mall on Thursday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+179,Bob helped at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+180,Alice helped at the Mall on Wednesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+181,Bob saw at the Cafe on Monday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+182,Dave helped at the Cafe on Thursday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+183,Alice found at the Mall on Monday. What did Alice do?,found,found,1,0.0,pre_replay,False
+184,Bob met at the Park on Thursday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+185,Bob saw at the Park on Thursday. When was Bob at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+186,Bob helped at the Library on Thursday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+187,Bob met at the Mall on Thursday. When was Bob at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+188,Alice helped at the Mall on Thursday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+189,Carol met at the Mall on Monday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+190,Carol met at the Park on Tuesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+191,Carol met at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+192,Dave helped at the Cafe on Thursday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+193,Alice found at the Park on Monday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+194,Bob saw at the Cafe on Monday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+195,Alice found at the Library on Monday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+196,Bob helped at the Library on Tuesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+197,Carol helped at the Park on Wednesday. When was Carol at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+198,Carol met at the Mall on Thursday. What did Carol do?,met,met,1,0.0,pre_replay,False
+199,Carol helped at the Mall on Wednesday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+200,Carol met at the Cafe on Tuesday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+201,Bob helped at the Library on Wednesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+202,Bob met at the Cafe on Tuesday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+203,Carol saw at the Mall on Thursday. When was Carol at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+204,Bob helped at the Cafe on Monday. When was Bob at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+205,Dave found at the Mall on Wednesday. When was Dave at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+206,Alice helped at the Mall on Thursday. When was Alice at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+207,Bob saw at the Library on Thursday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+208,Dave found at the Mall on Tuesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+209,Carol helped at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+210,Alice saw at the Park on Monday. When was Alice at the Park?,Monday,Monday,1,0.0,pre_replay,False
+211,Bob met at the Mall on Thursday. When was Bob at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+212,Bob saw at the Cafe on Tuesday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+213,Alice saw at the Mall on Tuesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+214,Alice met at the Library on Wednesday. What did Alice do?,met,met,1,0.0,pre_replay,False
+215,Alice found at the Cafe on Monday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+216,Alice helped at the Mall on Tuesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+217,Carol saw at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+218,Bob saw at the Mall on Tuesday. When was Bob at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+219,Alice found at the Cafe on Tuesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+220,Carol met at the Cafe on Monday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+221,Alice saw at the Mall on Wednesday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+222,Alice met at the Mall on Wednesday. What did Alice do?,met,met,1,0.0,pre_replay,False
+223,Bob met at the Library on Wednesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+224,Carol helped at the Park on Monday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+225,Carol saw at the Library on Monday. What did Carol do?,saw,saw,1,0.0,pre_replay,False
+226,Alice found at the Mall on Thursday. When was Alice at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+227,Alice met at the Cafe on Monday. What did Alice do?,met,met,1,0.0,pre_replay,False
+228,Dave met at the Cafe on Wednesday. When was Dave at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+229,Bob helped at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+230,Alice helped at the Park on Thursday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+231,Alice helped at the Park on Tuesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+232,Dave saw at the Cafe on Monday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+233,Carol helped at the Library on Thursday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+234,Carol met at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+235,Bob helped at the Library on Tuesday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+236,Alice found at the Mall on Tuesday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+237,Carol found at the Park on Wednesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+238,Dave saw at the Cafe on Thursday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+239,Dave saw at the Cafe on Monday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+240,Bob saw at the Mall on Tuesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+241,Alice helped at the Library on Tuesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+242,Dave helped at the Library on Monday. When was Dave at the Library?,Monday,Monday,1,0.0,pre_replay,False
+243,Alice helped at the Mall on Wednesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+244,Dave met at the Cafe on Tuesday. When was Dave at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+245,Alice saw at the Park on Monday. When was Alice at the Park?,Monday,Monday,1,0.0,pre_replay,False
+246,Carol helped at the Mall on Thursday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+247,Carol met at the Park on Wednesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+248,Alice saw at the Mall on Monday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+249,Carol met at the Library on Wednesday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+250,Carol helped at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+251,Dave met at the Cafe on Wednesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+252,Dave saw at the Cafe on Thursday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+253,Bob met at the Mall on Wednesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+254,Carol helped at the Library on Tuesday. When was Carol at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+255,Dave saw at the Mall on Tuesday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+256,Bob saw at the Cafe on Wednesday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+257,Dave met at the Mall on Thursday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+258,Alice met at the Cafe on Thursday. When was Alice at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+259,Carol helped at the Park on Thursday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+260,Alice saw at the Park on Monday. When was Alice at the Park?,Monday,Monday,1,0.0,pre_replay,False
+261,Dave saw at the Park on Tuesday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+262,Alice found at the Mall on Tuesday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+263,Alice helped at the Park on Wednesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+264,Bob met at the Park on Thursday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+265,Carol met at the Library on Thursday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+266,Carol found at the Cafe on Thursday. When was Carol at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+267,Alice saw at the Cafe on Tuesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+268,Carol helped at the Cafe on Thursday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+269,Bob saw at the Cafe on Wednesday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+270,Carol found at the Cafe on Thursday. When was Carol at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+271,Dave saw at the Park on Wednesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+272,Carol found at the Park on Wednesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+273,Carol met at the Park on Tuesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+274,Dave found at the Library on Tuesday. When was Dave at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+275,Alice helped at the Park on Wednesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+276,Bob helped at the Library on Monday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+277,Alice met at the Cafe on Tuesday. When was Alice at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+278,Alice saw at the Cafe on Thursday. When was Alice at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+279,Bob saw at the Library on Thursday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+280,Alice found at the Cafe on Tuesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+281,Alice saw at the Mall on Thursday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+282,Carol found at the Library on Tuesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+283,Bob met at the Park on Thursday. When was Bob at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+284,Bob saw at the Mall on Monday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+285,Alice saw at the Library on Wednesday. When was Alice at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+286,Dave found at the Mall on Monday. What did Dave do?,found,found,1,0.0,pre_replay,False
+287,Bob found at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+288,Alice helped at the Cafe on Wednesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+289,Alice saw at the Park on Wednesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+290,Alice helped at the Mall on Thursday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+291,Carol saw at the Library on Tuesday. What did Carol do?,saw,saw,1,0.0,pre_replay,False
+292,Bob saw at the Park on Monday. When was Bob at the Park?,Monday,Monday,1,0.0,pre_replay,False
+293,Dave saw at the Mall on Tuesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+294,Alice found at the Mall on Wednesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+295,Carol helped at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+296,Bob found at the Park on Tuesday. When was Bob at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+297,Alice saw at the Cafe on Tuesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+298,Dave saw at the Mall on Thursday. When was Dave at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+299,Alice saw at the Cafe on Tuesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+300,Carol met at the Cafe on Wednesday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+301,Dave saw at the Cafe on Thursday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+302,Alice helped at the Park on Tuesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+303,Dave met at the Library on Thursday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+304,Alice met at the Cafe on Wednesday. What did Alice do?,met,met,1,0.0,pre_replay,False
+305,Alice helped at the Cafe on Wednesday. When was Alice at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+306,Bob found at the Library on Wednesday. When was Bob at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+307,Carol found at the Cafe on Tuesday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+308,Alice met at the Cafe on Wednesday. When was Alice at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+309,Alice found at the Park on Thursday. When was Alice at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+310,Dave helped at the Cafe on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+311,Dave found at the Library on Monday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+312,Carol saw at the Park on Tuesday. When was Carol at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+313,Carol saw at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+314,Carol saw at the Park on Wednesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+315,Alice met at the Cafe on Wednesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+316,Dave helped at the Park on Tuesday. When was Dave at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+317,Dave met at the Library on Tuesday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+318,Carol saw at the Library on Thursday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+319,Carol met at the Cafe on Monday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+320,Carol met at the Park on Tuesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+321,Dave helped at the Park on Thursday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+322,Alice found at the Library on Wednesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+323,Bob saw at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+324,Alice found at the Mall on Thursday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+325,Bob met at the Park on Monday. What did Bob do?,met,met,1,0.0,pre_replay,False
+326,Dave found at the Cafe on Wednesday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+327,Alice met at the Mall on Thursday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+328,Dave found at the Cafe on Monday. When was Dave at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+329,Bob saw at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+330,Alice helped at the Mall on Wednesday. When was Alice at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+331,Dave met at the Cafe on Monday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+332,Bob saw at the Park on Wednesday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+333,Carol found at the Cafe on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+334,Bob found at the Mall on Thursday. When was Bob at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+335,Bob saw at the Library on Tuesday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+336,Bob helped at the Park on Wednesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+337,Dave helped at the Cafe on Monday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+338,Alice found at the Library on Wednesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+339,Bob saw at the Mall on Thursday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+340,Carol saw at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+341,Carol found at the Park on Thursday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+342,Bob found at the Cafe on Thursday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+343,Alice saw at the Mall on Monday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+344,Bob found at the Mall on Tuesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+345,Carol saw at the Cafe on Thursday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+346,Dave helped at the Library on Thursday. When was Dave at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+347,Alice helped at the Park on Wednesday. When was Alice at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+348,Alice saw at the Library on Thursday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+349,Bob met at the Library on Wednesday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+350,Carol found at the Park on Thursday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+351,Dave met at the Library on Thursday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+352,Bob helped at the Park on Wednesday. When was Bob at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+353,Bob met at the Mall on Tuesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+354,Bob found at the Mall on Monday. When was Bob at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+355,Dave helped at the Park on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+356,Carol saw at the Library on Tuesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+357,Dave saw at the Cafe on Wednesday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+358,Alice helped at the Mall on Tuesday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+359,Bob found at the Park on Monday. When was Bob at the Park?,Monday,Monday,1,0.0,pre_replay,False
+360,Carol helped at the Library on Tuesday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+361,Carol saw at the Park on Wednesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+362,Carol helped at the Library on Tuesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+363,Carol saw at the Library on Thursday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+364,Alice found at the Park on Thursday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+365,Bob found at the Cafe on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+366,Alice saw at the Park on Wednesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+367,Carol helped at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+368,Bob helped at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+369,Carol found at the Library on Tuesday. When was Carol at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+370,Alice met at the Mall on Wednesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+371,Dave saw at the Park on Tuesday. When was Dave at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+372,Alice found at the Mall on Tuesday. When was Alice at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+373,Bob found at the Library on Thursday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+374,Carol found at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+375,Alice saw at the Cafe on Tuesday. When was Alice at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+376,Alice helped at the Park on Wednesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+377,Bob helped at the Mall on Tuesday. When was Bob at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+378,Carol met at the Mall on Thursday. What did Carol do?,met,met,1,0.0,pre_replay,False
+379,Bob saw at the Library on Wednesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+380,Bob found at the Cafe on Monday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+381,Dave saw at the Cafe on Thursday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+382,Bob found at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+383,Bob saw at the Cafe on Monday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+384,Bob met at the Library on Tuesday. When was Bob at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+385,Dave saw at the Mall on Thursday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+386,Dave helped at the Library on Monday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+387,Dave saw at the Library on Tuesday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+388,Alice met at the Mall on Thursday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+389,Bob saw at the Park on Tuesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+390,Alice found at the Mall on Tuesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+391,Carol saw at the Mall on Tuesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+392,Bob met at the Park on Thursday. What did Bob do?,met,met,1,0.0,pre_replay,False
+393,Bob found at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+394,Bob helped at the Park on Monday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+395,Alice met at the Cafe on Monday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+396,Alice found at the Mall on Monday. What did Alice do?,found,found,1,0.0,pre_replay,False
+397,Carol met at the Park on Tuesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+398,Alice met at the Library on Wednesday. When was Alice at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+399,Bob found at the Park on Tuesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+400,Dave found at the Library on Monday. What did Dave do?,found,found,1,0.0,pre_replay,False
+401,Dave met at the Library on Wednesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+402,Dave met at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+403,Bob saw at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+404,Bob met at the Park on Tuesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+405,Alice found at the Park on Wednesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+406,Bob saw at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+407,Dave helped at the Park on Tuesday. Who was at the Park?,Dave,Dave,1,0.0,pre_replay,False
+408,Carol saw at the Park on Tuesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+409,Bob met at the Mall on Monday. What did Bob do?,met,met,1,0.0,pre_replay,False
+410,Bob helped at the Mall on Tuesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+411,Bob met at the Cafe on Monday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+412,Bob found at the Library on Wednesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+413,Alice saw at the Library on Tuesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+414,Bob helped at the Library on Thursday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+415,Alice found at the Cafe on Tuesday. When was Alice at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+416,Alice found at the Mall on Monday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+417,Dave helped at the Cafe on Thursday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+418,Dave saw at the Library on Tuesday. When was Dave at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+419,Bob found at the Mall on Monday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+420,Dave saw at the Library on Wednesday. When was Dave at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+421,Alice helped at the Mall on Wednesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+422,Bob met at the Cafe on Monday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+423,Dave found at the Mall on Monday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+424,Alice helped at the Mall on Thursday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+425,Dave saw at the Mall on Thursday. When was Dave at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+426,Dave found at the Park on Wednesday. When was Dave at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+427,Bob met at the Park on Thursday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+428,Alice saw at the Park on Tuesday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+429,Bob saw at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+430,Dave helped at the Mall on Monday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+431,Alice found at the Cafe on Thursday. When was Alice at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+432,Alice met at the Mall on Monday. When was Alice at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+433,Bob found at the Cafe on Thursday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+434,Alice found at the Library on Tuesday. When was Alice at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+435,Bob met at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+436,Bob helped at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+437,Alice helped at the Park on Wednesday. When was Alice at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+438,Dave found at the Library on Wednesday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+439,Dave met at the Cafe on Wednesday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+440,Dave helped at the Library on Wednesday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+441,Carol helped at the Library on Wednesday. When was Carol at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+442,Bob found at the Park on Tuesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+443,Alice saw at the Library on Wednesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+444,Carol met at the Park on Wednesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+445,Bob saw at the Park on Wednesday. When was Bob at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+446,Alice helped at the Library on Tuesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+447,Bob found at the Library on Tuesday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+448,Carol saw at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+449,Bob helped at the Cafe on Tuesday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+450,Alice met at the Cafe on Wednesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+451,Bob met at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+452,Alice met at the Cafe on Monday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+453,Alice helped at the Park on Tuesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+454,Alice found at the Cafe on Thursday. When was Alice at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+455,Carol met at the Library on Tuesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+456,Carol found at the Park on Tuesday. When was Carol at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+457,Carol met at the Library on Tuesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+458,Carol found at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+459,Carol helped at the Cafe on Tuesday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+460,Bob helped at the Cafe on Tuesday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+461,Bob helped at the Mall on Wednesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+462,Dave helped at the Mall on Tuesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+463,Bob found at the Mall on Tuesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+464,Dave saw at the Park on Wednesday. When was Dave at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+465,Bob found at the Cafe on Thursday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+466,Dave saw at the Cafe on Wednesday. When was Dave at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+467,Dave saw at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+468,Carol helped at the Cafe on Wednesday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+469,Alice found at the Library on Thursday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+470,Bob saw at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+471,Alice found at the Cafe on Wednesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+472,Bob met at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+473,Dave helped at the Park on Thursday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+474,Alice helped at the Mall on Thursday. When was Alice at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+475,Alice met at the Library on Thursday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+476,Dave met at the Mall on Monday. What did Dave do?,met,met,1,0.0,pre_replay,False
+477,Carol found at the Cafe on Monday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+478,Carol found at the Park on Monday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+479,Bob helped at the Mall on Monday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+480,Carol helped at the Library on Monday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+481,Alice saw at the Mall on Thursday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+482,Dave helped at the Park on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+483,Alice found at the Library on Monday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+484,Dave saw at the Library on Monday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+485,Bob found at the Park on Thursday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+486,Dave saw at the Mall on Thursday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+487,Carol met at the Park on Thursday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+488,Dave saw at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+489,Carol saw at the Park on Monday. When was Carol at the Park?,Monday,Monday,1,0.0,pre_replay,False
+490,Dave helped at the Library on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+491,Bob saw at the Mall on Wednesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+492,Bob helped at the Cafe on Wednesday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+493,Bob helped at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+494,Bob saw at the Library on Monday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+495,Bob saw at the Library on Monday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+496,Bob found at the Park on Thursday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+497,Carol saw at the Park on Tuesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+498,Bob helped at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+499,Bob helped at the Park on Monday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+500,Carol helped at the Cafe on Wednesday. When was Carol at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+501,Dave helped at the Park on Thursday. Who was at the Park?,Dave,Dave,1,0.0,pre_replay,False
+502,Alice helped at the Park on Thursday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+503,Alice met at the Library on Thursday. When was Alice at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+504,Carol found at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+505,Bob helped at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+506,Alice met at the Park on Wednesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+507,Bob met at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+508,Carol found at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+509,Carol saw at the Mall on Tuesday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+510,Alice saw at the Cafe on Tuesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+511,Bob saw at the Park on Thursday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+512,Carol saw at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+513,Dave met at the Library on Monday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+514,Dave saw at the Cafe on Monday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+515,Alice saw at the Cafe on Tuesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+516,Bob helped at the Cafe on Monday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+517,Bob helped at the Mall on Tuesday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+518,Bob found at the Cafe on Monday. What did Bob do?,found,found,1,0.0,pre_replay,False
+519,Bob found at the Park on Tuesday. When was Bob at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+520,Carol saw at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+521,Dave met at the Mall on Thursday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+522,Bob saw at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+523,Carol met at the Cafe on Tuesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+524,Bob found at the Mall on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+525,Carol found at the Library on Monday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+526,Dave saw at the Library on Thursday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+527,Bob found at the Cafe on Thursday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+528,Alice found at the Library on Thursday. What did Alice do?,found,found,1,0.0,pre_replay,False
+529,Dave saw at the Park on Tuesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+530,Alice found at the Mall on Wednesday. What did Alice do?,found,found,1,0.0,pre_replay,False
+531,Bob found at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+532,Carol met at the Library on Tuesday. When was Carol at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+533,Carol helped at the Library on Monday. When was Carol at the Library?,Monday,Monday,1,0.0,pre_replay,False
+534,Bob helped at the Park on Tuesday. When was Bob at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+535,Bob helped at the Park on Monday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+536,Carol met at the Library on Wednesday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+537,Carol saw at the Mall on Thursday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+538,Carol found at the Cafe on Thursday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+539,Carol helped at the Cafe on Wednesday. When was Carol at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+540,Bob saw at the Cafe on Thursday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+541,Carol saw at the Park on Monday. When was Carol at the Park?,Monday,Monday,1,0.0,pre_replay,False
+542,Alice helped at the Cafe on Tuesday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+543,Dave helped at the Mall on Wednesday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+544,Alice saw at the Mall on Thursday. When was Alice at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+545,Bob found at the Mall on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+546,Dave saw at the Cafe on Monday. When was Dave at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+547,Bob saw at the Mall on Tuesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+548,Alice met at the Cafe on Tuesday. When was Alice at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+549,Carol helped at the Cafe on Wednesday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+550,Dave found at the Park on Wednesday. Who was at the Park?,Dave,Dave,1,0.0,pre_replay,False
+551,Dave met at the Mall on Monday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+552,Carol met at the Mall on Monday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+553,Alice found at the Cafe on Tuesday. What did Alice do?,found,found,1,0.0,pre_replay,False
+554,Bob saw at the Mall on Monday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+555,Carol found at the Cafe on Thursday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+556,Carol helped at the Cafe on Wednesday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+557,Dave met at the Park on Wednesday. Who was at the Park?,Dave,Dave,1,0.0,pre_replay,False
+558,Alice saw at the Park on Wednesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+559,Dave met at the Mall on Monday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+560,Dave found at the Mall on Tuesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+561,Carol helped at the Mall on Wednesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+562,Carol saw at the Mall on Tuesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+563,Bob met at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+564,Dave met at the Park on Wednesday. What did Dave do?,met,met,1,0.0,pre_replay,False
+565,Bob met at the Library on Tuesday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+566,Carol met at the Mall on Monday. What did Carol do?,met,met,1,0.0,pre_replay,False
+567,Carol saw at the Cafe on Thursday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+568,Carol met at the Library on Wednesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+569,Alice saw at the Park on Tuesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+570,Dave helped at the Mall on Monday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+571,Alice helped at the Cafe on Monday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+572,Carol found at the Mall on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+573,Carol helped at the Cafe on Tuesday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+574,Carol found at the Cafe on Thursday. What did Carol do?,found,found,1,0.0,pre_replay,False
+575,Bob met at the Mall on Wednesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+576,Bob saw at the Park on Monday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+577,Carol helped at the Mall on Thursday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+578,Dave found at the Mall on Tuesday. When was Dave at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+579,Dave met at the Mall on Thursday. What did Dave do?,met,met,1,0.0,pre_replay,False
+580,Dave met at the Library on Monday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+581,Bob helped at the Library on Thursday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+582,Alice met at the Library on Wednesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+583,Carol helped at the Cafe on Wednesday. When was Carol at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+584,Alice helped at the Library on Tuesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+585,Bob helped at the Mall on Tuesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+586,Bob met at the Park on Wednesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+587,Bob found at the Library on Tuesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+588,Alice saw at the Cafe on Tuesday. When was Alice at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+589,Alice found at the Cafe on Tuesday. When was Alice at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+590,Alice met at the Park on Monday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+591,Alice found at the Park on Monday. When was Alice at the Park?,Monday,Monday,1,0.0,pre_replay,False
+592,Bob saw at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+593,Bob found at the Mall on Tuesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+594,Bob helped at the Park on Monday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+595,Dave helped at the Mall on Monday. When was Dave at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+596,Carol met at the Mall on Tuesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+597,Alice met at the Library on Thursday. What did Alice do?,met,met,1,0.0,pre_replay,False
+598,Alice met at the Library on Wednesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+599,Carol met at the Library on Tuesday. When was Carol at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+600,Bob saw at the Library on Tuesday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+601,Bob met at the Park on Monday. What did Bob do?,met,met,1,0.0,pre_replay,False
+602,Alice helped at the Mall on Monday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+603,Carol found at the Library on Monday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+604,Dave helped at the Mall on Wednesday. When was Dave at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+605,Dave helped at the Library on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+606,Carol saw at the Park on Wednesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+607,Bob found at the Park on Tuesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+608,Carol saw at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+609,Dave found at the Cafe on Thursday. What did Dave do?,found,found,1,0.0,pre_replay,False
+610,Alice met at the Cafe on Thursday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+611,Alice saw at the Park on Thursday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+612,Dave helped at the Mall on Monday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+613,Bob saw at the Library on Wednesday. When was Bob at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+614,Carol met at the Park on Tuesday. When was Carol at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+615,Dave found at the Cafe on Tuesday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+616,Bob found at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+617,Carol saw at the Park on Tuesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+618,Bob helped at the Library on Tuesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+619,Carol saw at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+620,Alice helped at the Mall on Wednesday. When was Alice at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+621,Dave helped at the Mall on Tuesday. When was Dave at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+622,Carol found at the Mall on Tuesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+623,Dave helped at the Library on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+624,Carol met at the Library on Monday. When was Carol at the Library?,Monday,Monday,1,0.0,pre_replay,False
+625,Dave helped at the Mall on Tuesday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+626,Bob saw at the Park on Thursday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+627,Dave found at the Cafe on Wednesday. What did Dave do?,found,found,1,0.0,pre_replay,False
+628,Carol met at the Mall on Thursday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+629,Dave saw at the Mall on Monday. When was Dave at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+630,Carol met at the Mall on Wednesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+631,Alice helped at the Cafe on Thursday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+632,Alice met at the Library on Tuesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+633,Alice met at the Cafe on Monday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+634,Dave saw at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+635,Carol met at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+636,Carol saw at the Park on Monday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+637,Bob met at the Mall on Tuesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+638,Dave helped at the Cafe on Tuesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+639,Bob helped at the Library on Tuesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+640,Bob helped at the Library on Monday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+641,Alice saw at the Library on Tuesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+642,Carol helped at the Park on Monday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+643,Dave helped at the Cafe on Monday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+644,Alice saw at the Park on Wednesday. When was Alice at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+645,Carol found at the Library on Tuesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+646,Bob found at the Park on Thursday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+647,Bob met at the Library on Thursday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+648,Dave met at the Cafe on Tuesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+649,Carol saw at the Park on Tuesday. What did Carol do?,saw,saw,1,0.0,pre_replay,False
+650,Carol met at the Park on Wednesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+651,Carol met at the Mall on Tuesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+652,Bob helped at the Park on Monday. When was Bob at the Park?,Monday,Monday,1,0.0,pre_replay,False
+653,Bob met at the Library on Wednesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+654,Dave met at the Library on Wednesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+655,Dave saw at the Cafe on Thursday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+656,Dave saw at the Cafe on Thursday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+657,Bob saw at the Cafe on Wednesday. When was Bob at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+658,Dave met at the Park on Wednesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+659,Bob helped at the Park on Thursday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+660,Dave found at the Library on Wednesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+661,Bob met at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+662,Dave saw at the Mall on Wednesday. When was Dave at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+663,Alice found at the Mall on Thursday. What did Alice do?,found,found,1,0.0,pre_replay,False
+664,Dave found at the Library on Thursday. When was Dave at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+665,Bob saw at the Park on Thursday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+666,Carol helped at the Park on Monday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+667,Dave found at the Cafe on Monday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+668,Carol helped at the Mall on Wednesday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+669,Alice found at the Library on Thursday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+670,Dave helped at the Library on Monday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+671,Carol saw at the Mall on Wednesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+672,Alice saw at the Cafe on Thursday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+673,Dave found at the Mall on Tuesday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+674,Alice found at the Library on Monday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+675,Dave found at the Mall on Monday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+676,Carol helped at the Mall on Monday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+677,Dave met at the Mall on Thursday. What did Dave do?,met,met,1,0.0,pre_replay,False
+678,Bob met at the Mall on Thursday. What did Bob do?,met,met,1,0.0,pre_replay,False
+679,Carol found at the Park on Thursday. When was Carol at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+680,Alice helped at the Park on Tuesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+681,Carol met at the Park on Tuesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+682,Carol met at the Library on Thursday. What did Carol do?,met,met,1,0.0,pre_replay,False
+683,Dave helped at the Park on Wednesday. When was Dave at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+684,Carol met at the Mall on Monday. What did Carol do?,met,met,1,0.0,pre_replay,False
+685,Dave found at the Park on Monday. What did Dave do?,found,found,1,0.0,pre_replay,False
+686,Dave saw at the Cafe on Monday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+687,Dave helped at the Park on Tuesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+688,Carol saw at the Cafe on Thursday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+689,Bob found at the Cafe on Thursday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+690,Alice met at the Library on Thursday. What did Alice do?,met,met,1,0.0,pre_replay,False
+691,Dave met at the Library on Monday. What did Dave do?,met,met,1,0.0,pre_replay,False
+692,Carol helped at the Mall on Monday. When was Carol at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+693,Alice helped at the Library on Tuesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+694,Carol helped at the Library on Monday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+695,Carol saw at the Park on Tuesday. What did Carol do?,saw,saw,1,0.0,pre_replay,False
+696,Bob saw at the Cafe on Thursday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+697,Dave saw at the Library on Monday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+698,Carol met at the Park on Tuesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+699,Carol saw at the Mall on Wednesday. What did Carol do?,saw,saw,1,0.0,pre_replay,False
+700,Alice saw at the Library on Thursday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+701,Bob found at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+702,Dave helped at the Cafe on Monday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+703,Carol found at the Library on Tuesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+704,Carol met at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+705,Carol found at the Park on Wednesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+706,Carol helped at the Library on Monday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+707,Bob met at the Cafe on Thursday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+708,Bob helped at the Mall on Tuesday. When was Bob at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+709,Carol saw at the Mall on Tuesday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+710,Carol helped at the Library on Thursday. When was Carol at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+711,Alice saw at the Mall on Monday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+712,Bob saw at the Library on Monday. When was Bob at the Library?,Monday,Monday,1,0.0,pre_replay,False
+713,Carol met at the Library on Wednesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+714,Bob saw at the Library on Thursday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+715,Dave met at the Cafe on Monday. What did Dave do?,met,met,1,0.0,pre_replay,False
+716,Bob met at the Cafe on Monday. When was Bob at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+717,Bob helped at the Park on Thursday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+718,Dave saw at the Cafe on Monday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+719,Alice found at the Cafe on Tuesday. What did Alice do?,found,found,1,0.0,pre_replay,False
+720,Dave saw at the Cafe on Tuesday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+721,Dave found at the Cafe on Thursday. When was Dave at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+722,Dave met at the Library on Wednesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+723,Dave found at the Library on Tuesday. What did Dave do?,found,found,1,0.0,pre_replay,False
+724,Carol found at the Mall on Tuesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+725,Bob met at the Mall on Monday. What did Bob do?,met,met,1,0.0,pre_replay,False
+726,Bob met at the Park on Tuesday. When was Bob at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+727,Bob saw at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+728,Carol found at the Mall on Monday. When was Carol at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+729,Bob found at the Cafe on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+730,Bob found at the Library on Monday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+731,Bob helped at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+732,Alice found at the Library on Wednesday. When was Alice at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+733,Dave helped at the Cafe on Monday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+734,Bob found at the Park on Tuesday. When was Bob at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+735,Dave found at the Park on Tuesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+736,Carol found at the Park on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+737,Carol helped at the Mall on Tuesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+738,Bob saw at the Library on Tuesday. When was Bob at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+739,Alice found at the Cafe on Monday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+740,Carol found at the Cafe on Thursday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+741,Carol met at the Cafe on Monday. When was Carol at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+742,Alice saw at the Library on Wednesday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+743,Carol found at the Park on Wednesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+744,Bob helped at the Mall on Tuesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+745,Dave helped at the Cafe on Thursday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+746,Dave met at the Cafe on Wednesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+747,Bob saw at the Cafe on Tuesday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+748,Carol saw at the Mall on Thursday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+749,Bob found at the Mall on Wednesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+750,Alice saw at the Mall on Monday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+751,Alice saw at the Mall on Monday. When was Alice at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+752,Alice helped at the Park on Monday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+753,Bob met at the Cafe on Thursday. What did Bob do?,met,met,1,0.0,pre_replay,False
+754,Bob helped at the Park on Monday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+755,Dave met at the Cafe on Monday. When was Dave at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+756,Bob helped at the Library on Monday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+757,Dave saw at the Library on Wednesday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+758,Dave found at the Park on Thursday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+759,Bob found at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+760,Alice saw at the Library on Thursday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+761,Dave helped at the Park on Tuesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+762,Alice met at the Mall on Monday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+763,Bob helped at the Mall on Monday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+764,Alice found at the Mall on Thursday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+765,Carol met at the Library on Thursday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+766,Alice saw at the Park on Monday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+767,Dave helped at the Mall on Monday. Who was at the Mall?,Dave,Dave,1,0.0,pre_replay,False
+768,Bob helped at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+769,Dave saw at the Mall on Wednesday. When was Dave at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+770,Carol met at the Cafe on Wednesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+771,Dave saw at the Library on Monday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+772,Carol saw at the Cafe on Thursday. When was Carol at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+773,Alice found at the Park on Thursday. When was Alice at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+774,Alice helped at the Cafe on Wednesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+775,Carol found at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+776,Alice found at the Park on Tuesday. When was Alice at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+777,Carol found at the Mall on Thursday. When was Carol at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+778,Bob saw at the Mall on Tuesday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+779,Bob helped at the Library on Thursday. When was Bob at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+780,Bob found at the Cafe on Monday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+781,Bob met at the Park on Monday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+782,Alice helped at the Mall on Tuesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+783,Dave met at the Library on Thursday. What did Dave do?,met,met,1,0.0,pre_replay,False
+784,Dave found at the Library on Thursday. When was Dave at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+785,Dave found at the Cafe on Wednesday. When was Dave at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+786,Carol saw at the Cafe on Tuesday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False
+787,Carol saw at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+788,Carol helped at the Library on Tuesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+789,Bob found at the Library on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+790,Bob helped at the Mall on Wednesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+791,Bob met at the Mall on Tuesday. When was Bob at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+792,Dave saw at the Park on Tuesday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+793,Dave found at the Library on Thursday. What did Dave do?,found,found,1,0.0,pre_replay,False
+794,Dave saw at the Library on Wednesday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+795,Carol met at the Library on Wednesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+796,Alice helped at the Park on Thursday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+797,Bob found at the Park on Monday. What did Bob do?,found,found,1,0.0,pre_replay,False
+798,Bob found at the Cafe on Tuesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+799,Alice saw at the Mall on Monday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+800,Alice helped at the Cafe on Wednesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+801,Dave found at the Cafe on Tuesday. What did Dave do?,found,found,1,0.0,pre_replay,False
+802,Alice helped at the Mall on Thursday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+803,Carol saw at the Library on Wednesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+804,Carol helped at the Cafe on Thursday. When was Carol at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+805,Dave saw at the Park on Tuesday. Who was at the Park?,Dave,Dave,1,0.0,pre_replay,False
+806,Alice saw at the Library on Monday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+807,Bob met at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+808,Carol helped at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+809,Bob met at the Mall on Wednesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+810,Dave helped at the Library on Thursday. What did Dave do?,helped,helped,1,0.0,pre_replay,False
+811,Dave saw at the Park on Tuesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+812,Dave met at the Mall on Tuesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+813,Bob found at the Cafe on Wednesday. When was Bob at the Cafe?,Wednesday,Wednesday,1,0.0,pre_replay,False
+814,Carol met at the Park on Monday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+815,Dave helped at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+816,Dave found at the Park on Tuesday. What did Dave do?,found,found,1,0.0,pre_replay,False
+817,Carol found at the Library on Tuesday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+818,Dave saw at the Mall on Monday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+819,Alice found at the Park on Wednesday. When was Alice at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+820,Alice helped at the Park on Monday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+821,Alice saw at the Library on Thursday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+822,Alice saw at the Cafe on Monday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+823,Carol helped at the Cafe on Tuesday. When was Carol at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+824,Carol helped at the Cafe on Wednesday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+825,Alice found at the Mall on Thursday. When was Alice at the Mall?,Thursday,Thursday,1,0.0,pre_replay,False
+826,Carol met at the Mall on Monday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+827,Alice saw at the Library on Monday. When was Alice at the Library?,Monday,Monday,1,0.0,pre_replay,False
+828,Carol saw at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+829,Bob saw at the Cafe on Tuesday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+830,Dave saw at the Library on Thursday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+831,Alice saw at the Cafe on Monday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+832,Carol found at the Library on Tuesday. What did Carol do?,found,found,1,0.0,pre_replay,False
+833,Dave found at the Cafe on Tuesday. When was Dave at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+834,Dave met at the Park on Wednesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+835,Carol found at the Mall on Monday. When was Carol at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+836,Alice found at the Mall on Thursday. Who was at the Mall?,Alice,Alice,1,0.0,pre_replay,False
+837,Dave saw at the Cafe on Monday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+838,Dave met at the Library on Thursday. What did Dave do?,met,met,1,0.0,pre_replay,False
+839,Carol helped at the Library on Tuesday. Who was at the Library?,Carol,Carol,1,0.0,pre_replay,False
+840,Bob saw at the Cafe on Wednesday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+841,Bob helped at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+842,Carol saw at the Library on Thursday. When was Carol at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+843,Bob met at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+844,Bob helped at the Mall on Wednesday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+845,Bob saw at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+846,Dave found at the Cafe on Monday. What did Dave do?,found,found,1,0.0,pre_replay,False
+847,Alice saw at the Park on Wednesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+848,Dave found at the Library on Wednesday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+849,Dave found at the Mall on Tuesday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+850,Alice met at the Library on Monday. When was Alice at the Library?,Monday,Monday,1,0.0,pre_replay,False
+851,Alice found at the Mall on Thursday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+852,Alice met at the Park on Wednesday. When was Alice at the Park?,Wednesday,Wednesday,1,0.0,pre_replay,False
+853,Bob found at the Mall on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+854,Bob helped at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+855,Dave saw at the Library on Monday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+856,Bob helped at the Mall on Monday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+857,Dave saw at the Mall on Thursday. Where was Dave?,the Mall,the Mall,1,0.0,pre_replay,False
+858,Bob saw at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+859,Alice saw at the Library on Monday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+860,Dave found at the Park on Monday. When was Dave at the Park?,Monday,Monday,1,0.0,pre_replay,False
+861,Bob found at the Cafe on Monday. When was Bob at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+862,Alice helped at the Library on Tuesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+863,Bob found at the Library on Monday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+864,Alice saw at the Library on Wednesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+865,Dave met at the Library on Wednesday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+866,Alice helped at the Library on Monday. When was Alice at the Library?,Monday,Monday,1,0.0,pre_replay,False
+867,Alice saw at the Library on Monday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+868,Bob saw at the Park on Wednesday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+869,Alice helped at the Park on Wednesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+870,Bob met at the Library on Wednesday. What did Bob do?,met,met,1,0.0,pre_replay,False
+871,Alice saw at the Cafe on Wednesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+872,Alice saw at the Mall on Monday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+873,Dave helped at the Mall on Monday. When was Dave at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+874,Carol helped at the Mall on Tuesday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+875,Carol saw at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+876,Dave helped at the Mall on Monday. When was Dave at the Mall?,Monday,Monday,1,0.0,pre_replay,False
+877,Carol helped at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+878,Alice found at the Park on Monday. What did Alice do?,found,found,1,0.0,pre_replay,False
+879,Carol met at the Mall on Tuesday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+880,Alice found at the Park on Wednesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+881,Bob found at the Library on Thursday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+882,Bob met at the Park on Thursday. When was Bob at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+883,Dave found at the Library on Monday. When was Dave at the Library?,Monday,Monday,1,0.0,pre_replay,False
+884,Dave saw at the Cafe on Monday. When was Dave at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+885,Carol met at the Mall on Monday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+886,Bob helped at the Library on Thursday. When was Bob at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+887,Bob met at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+888,Dave found at the Cafe on Wednesday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+889,Bob found at the Park on Thursday. What did Bob do?,found,found,1,0.0,pre_replay,False
+890,Bob met at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+891,Carol helped at the Park on Monday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+892,Dave saw at the Cafe on Tuesday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+893,Alice met at the Mall on Thursday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+894,Bob helped at the Park on Thursday. When was Bob at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+895,Alice helped at the Mall on Tuesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+896,Alice saw at the Park on Tuesday. Where was Alice?,the Park,the Park,1,0.0,pre_replay,False
+897,Dave saw at the Park on Tuesday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+898,Carol met at the Cafe on Tuesday. When was Carol at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+899,Dave met at the Library on Monday. What did Dave do?,met,met,1,0.0,pre_replay,False
+900,Bob found at the Cafe on Monday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+901,Bob saw at the Mall on Monday. Where was Bob?,the Mall,the Mall,1,0.0,pre_replay,False
+902,Carol met at the Park on Monday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+903,Bob found at the Library on Wednesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+904,Bob found at the Library on Tuesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+905,Dave met at the Library on Tuesday. When was Dave at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+906,Bob helped at the Cafe on Thursday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+907,Carol helped at the Park on Monday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+908,Carol found at the Park on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+909,Bob helped at the Mall on Tuesday. Who was at the Mall?,Bob,Bob,1,0.0,pre_replay,False
+910,Alice found at the Cafe on Thursday. Who was at the Cafe?,Alice,Alice,1,0.0,pre_replay,False
+911,Carol found at the Park on Thursday. When was Carol at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+912,Bob found at the Library on Tuesday. When was Bob at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+913,Carol met at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+914,Bob found at the Mall on Tuesday. When was Bob at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+915,Dave met at the Cafe on Tuesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+916,Alice met at the Cafe on Tuesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+917,Dave found at the Library on Tuesday. When was Dave at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+918,Alice saw at the Cafe on Thursday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+919,Dave found at the Cafe on Wednesday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+920,Dave met at the Cafe on Tuesday. When was Dave at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+921,Alice saw at the Library on Thursday. When was Alice at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+922,Alice found at the Mall on Monday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+923,Bob helped at the Mall on Tuesday. When was Bob at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+924,Carol met at the Cafe on Tuesday. What did Carol do?,met,met,1,0.0,pre_replay,False
+925,Dave saw at the Park on Monday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+926,Bob found at the Library on Wednesday. What did Bob do?,found,found,1,0.0,pre_replay,False
+927,Alice met at the Mall on Tuesday. When was Alice at the Mall?,Tuesday,Tuesday,1,0.0,pre_replay,False
+928,Alice found at the Library on Monday. When was Alice at the Library?,Monday,Monday,1,0.0,pre_replay,False
+929,Dave met at the Mall on Wednesday. What did Dave do?,met,met,1,0.0,pre_replay,False
+930,Carol helped at the Cafe on Wednesday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+931,Alice helped at the Library on Wednesday. What did Alice do?,helped,helped,1,0.0,pre_replay,False
+932,Alice found at the Mall on Wednesday. When was Alice at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+933,Bob saw at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+934,Dave met at the Cafe on Tuesday. What did Dave do?,met,met,1,0.0,pre_replay,False
+935,Carol helped at the Library on Wednesday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+936,Bob met at the Cafe on Tuesday. Who was at the Cafe?,Bob,Bob,1,0.0,pre_replay,False
+937,Bob saw at the Park on Thursday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+938,Dave saw at the Library on Tuesday. When was Dave at the Library?,Tuesday,Tuesday,1,0.0,pre_replay,False
+939,Dave met at the Cafe on Thursday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+940,Carol saw at the Mall on Wednesday. Where was Carol?,the Mall,the Mall,1,0.0,pre_replay,False
+941,Bob saw at the Park on Thursday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+942,Alice found at the Mall on Wednesday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+943,Carol helped at the Mall on Monday. Who was at the Mall?,Carol,Carol,1,0.0,pre_replay,False
+944,Bob saw at the Mall on Thursday. What did Bob do?,saw,saw,1,0.0,pre_replay,False
+945,Dave found at the Library on Wednesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+946,Alice helped at the Library on Wednesday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+947,Alice saw at the Cafe on Thursday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+948,Alice helped at the Park on Tuesday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+949,Alice found at the Library on Monday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+950,Bob found at the Library on Tuesday. Where was Bob?,the Library,the Library,1,0.0,pre_replay,False
+951,Dave saw at the Cafe on Monday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+952,Carol helped at the Mall on Monday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+953,Dave met at the Cafe on Tuesday. What did Dave do?,met,met,1,0.0,pre_replay,False
+954,Alice found at the Cafe on Tuesday. Where was Alice?,the Cafe,the Cafe,1,0.0,pre_replay,False
+955,Bob saw at the Library on Wednesday. When was Bob at the Library?,Wednesday,Wednesday,1,0.0,pre_replay,False
+956,Carol found at the Library on Monday. What did Carol do?,found,found,1,0.0,pre_replay,False
+957,Alice found at the Park on Monday. Who was at the Park?,Alice,Alice,1,0.0,pre_replay,False
+958,Carol helped at the Library on Monday. What did Carol do?,helped,helped,1,0.0,pre_replay,False
+959,Carol met at the Park on Wednesday. Who was at the Park?,Carol,Carol,1,0.0,pre_replay,False
+960,Bob helped at the Park on Monday. What did Bob do?,helped,helped,1,0.0,pre_replay,False
+961,Dave helped at the Park on Wednesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+962,Alice met at the Library on Thursday. When was Alice at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+963,Alice saw at the Cafe on Wednesday. What did Alice do?,saw,saw,1,0.0,pre_replay,False
+964,Bob helped at the Library on Monday. Who was at the Library?,Bob,Bob,1,0.0,pre_replay,False
+965,Bob found at the Park on Thursday. When was Bob at the Park?,Thursday,Thursday,1,0.0,pre_replay,False
+966,Dave found at the Cafe on Tuesday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+967,Alice found at the Park on Tuesday. When was Alice at the Park?,Tuesday,Tuesday,1,0.0,pre_replay,False
+968,Bob helped at the Cafe on Monday. Where was Bob?,the Cafe,the Cafe,1,0.0,pre_replay,False
+969,Alice met at the Library on Monday. Who was at the Library?,Alice,Alice,1,0.0,pre_replay,False
+970,Carol helped at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+971,Bob met at the Park on Tuesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+972,Alice found at the Park on Wednesday. What did Alice do?,found,found,1,0.0,pre_replay,False
+973,Carol saw at the Library on Thursday. Where was Carol?,the Library,the Library,1,0.0,pre_replay,False
+974,Carol met at the Cafe on Monday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+975,Alice found at the Mall on Thursday. Where was Alice?,the Mall,the Mall,1,0.0,pre_replay,False
+976,Dave met at the Cafe on Thursday. Who was at the Cafe?,Dave,Dave,1,0.0,pre_replay,False
+977,Carol saw at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+978,Carol helped at the Cafe on Wednesday. Who was at the Cafe?,Carol,Carol,1,0.0,pre_replay,False
+979,Dave found at the Library on Tuesday. Where was Dave?,the Library,the Library,1,0.0,pre_replay,False
+980,Carol found at the Cafe on Thursday. When was Carol at the Cafe?,Thursday,Thursday,1,0.0,pre_replay,False
+981,Dave met at the Cafe on Tuesday. When was Dave at the Cafe?,Tuesday,Tuesday,1,0.0,pre_replay,False
+982,Alice met at the Library on Thursday. Where was Alice?,the Library,the Library,1,0.0,pre_replay,False
+983,Alice found at the Library on Wednesday. What did Alice do?,found,found,1,0.0,pre_replay,False
+984,Dave found at the Cafe on Monday. Where was Dave?,the Cafe,the Cafe,1,0.0,pre_replay,False
+985,Alice found at the Library on Monday. When was Alice at the Library?,Monday,Monday,1,0.0,pre_replay,False
+986,Alice helped at the Cafe on Monday. When was Alice at the Cafe?,Monday,Monday,1,0.0,pre_replay,False
+987,Dave met at the Park on Wednesday. Where was Dave?,the Park,the Park,1,0.0,pre_replay,False
+988,Bob found at the Cafe on Monday. What did Bob do?,found,found,1,0.0,pre_replay,False
+989,Bob met at the Park on Tuesday. Where was Bob?,the Park,the Park,1,0.0,pre_replay,False
+990,Alice helped at the Library on Thursday. When was Alice at the Library?,Thursday,Thursday,1,0.0,pre_replay,False
+991,Alice helped at the Park on Monday. When was Alice at the Park?,Monday,Monday,1,0.0,pre_replay,False
+992,Dave met at the Library on Monday. Who was at the Library?,Dave,Dave,1,0.0,pre_replay,False
+993,Carol met at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,0.0,pre_replay,False
+994,Carol met at the Park on Tuesday. Where was Carol?,the Park,the Park,1,0.0,pre_replay,False
+995,Dave met at the Cafe on Monday. What did Dave do?,met,met,1,0.0,pre_replay,False
+996,Bob found at the Park on Tuesday. Who was at the Park?,Bob,Bob,1,0.0,pre_replay,False
+997,Alice met at the Mall on Tuesday. What did Alice do?,met,met,1,0.0,pre_replay,False
+998,Dave saw at the Mall on Tuesday. What did Dave do?,saw,saw,1,0.0,pre_replay,False
+999,Carol helped at the Cafe on Wednesday. Where was Carol?,the Cafe,the Cafe,1,0.0,pre_replay,False

@@ -1,0 +1,1 @@
+{"suite": "spatial", "n": 50, "seed": 4242, "preset": "baselines/core", "metrics": {"spatial": {"em": 1.0}, "compute": {"tokens": 1600}}, "memory": {}}
