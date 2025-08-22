@@ -22,13 +22,14 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from statistics import mean
+from statistics import mean, stdev
 from typing import Dict, Iterable, Tuple
 
 log = logging.getLogger(__name__)
 
 MetricDict = Dict[str, float]
-Summary = Dict[str, Dict[str, MetricDict]]
+MetricStats = Dict[str, tuple[float, float]]
+Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
 
 
 def _find_latest_date(root: Path) -> str:
@@ -47,15 +48,24 @@ def _find_latest_date(root: Path) -> str:
     return dates[-1]
 
 
-def collect_metrics(base: Path) -> Dict[Tuple[str, str], Iterable[MetricDict]]:
-    """Collect metric dictionaries grouped by ``(suite, preset)``."""
+def collect_metrics(
+    base: Path,
+) -> Dict[Tuple[str, str, int], Iterable[MetricDict]]:
+    """Collect metric dictionaries grouped by ``(suite, preset, size)``."""
 
-    data: Dict[Tuple[str, str], list[MetricDict]] = defaultdict(list)
+    data: Dict[Tuple[str, str, int], list[MetricDict]] = defaultdict(list)
     for metrics_path in base.rglob("metrics.json"):
         parts = metrics_path.relative_to(base).parts
-        if len(parts) < 3:
+        # expect: <preset...>/<suite>/<size>_<seed>/metrics.json
+        if len(parts) < 4:
             continue
         suite = parts[-3]
+        size_seed = parts[-2]
+        try:
+            size = int(size_seed.split("_")[0])
+        except ValueError:
+            log.warning("could not parse size from %s", metrics_path)
+            continue
         preset = "/".join(parts[:-3]) or "unknown"
         try:
             with metrics_path.open() as fh:
@@ -69,7 +79,7 @@ def collect_metrics(base: Path) -> Dict[Tuple[str, str], Iterable[MetricDict]]:
             continue
         suite_metrics = metrics[suite]
         compute_metrics = metrics.get("compute", {})
-        data[(suite, preset)].append({**suite_metrics, **compute_metrics})
+        data[(suite, preset, size)].append({**suite_metrics, **compute_metrics})
     return data
 
 
@@ -124,15 +134,24 @@ def collect_gates(base: Path) -> Dict[str, Dict[str, list[dict[str, MetricDict]]
     return data
 
 
-def summarise(data: Dict[Tuple[str, str], Iterable[MetricDict]]) -> Summary:
-    """Average metrics for each suite/preset pair."""
+def summarise(data: Dict[Tuple[str, str, int], Iterable[MetricDict]]) -> Summary:
+    """Average metrics for each ``(suite, preset, size)`` with standard deviation."""
 
     summary: Summary = {}
-    for (suite, preset), metrics_list in data.items():
+    for (suite, preset, size), metrics_list in data.items():
         if not metrics_list:
             continue
-        agg = {k: mean(m[k] for m in metrics_list) for k in metrics_list[0]}
-        summary.setdefault(suite, {})[preset] = agg
+        # union of metric keys across records to be robust to missing fields
+        keys: set[str] = set()
+        for rec in metrics_list:
+            keys.update(rec.keys())
+        agg: Dict[str, tuple[float, float]] = {}
+        for key in keys:
+            vals = [m.get(key, 0.0) for m in metrics_list]
+            mval = mean(vals)
+            sval = stdev(vals) if len(vals) > 1 else 0.0
+            agg[key] = (mval, sval)
+        summary.setdefault(suite, {}).setdefault(preset, {})[size] = agg
     return summary
 
 
@@ -188,7 +207,7 @@ def summarise_gates(
 
 def _render_markdown_suite(
     suite: str,
-    presets: Dict[str, MetricDict],
+    presets: Dict[str, Dict[int, MetricStats]],
     retrieval: Dict[str, MetricDict] | None,
     gates: Dict[str, Dict[str, MetricDict]] | None,
 ) -> str:
@@ -196,16 +215,31 @@ def _render_markdown_suite(
 
     lines: list[str] = [f"# {suite} Summary", ""]
     if presets:
-        metric_keys = sorted(next(iter(presets.values())).keys())
-        header = "| Preset | " + " | ".join(metric_keys) + " |"
-        sep = "|---" * (len(metric_keys) + 1) + "|"
+        metric_keys = sorted(
+            {
+                key
+                for preset in presets.values()
+                for size_stats in preset.values()
+                for key in size_stats
+            }
+        )
+        header = "| Preset | Size | " + " | ".join(metric_keys) + " |"
+        sep = "|---" * (len(metric_keys) + 2) + "|"
         lines.extend([header, sep])
         for preset in sorted(presets):
-            metrics = presets[preset]
-            row = (
-                "| " + preset + " | " + " | ".join(f"{metrics[m]:.3f}" for m in metric_keys) + " |"
-            )
-            lines.append(row)
+            sizes = presets[preset]
+            for size in sorted(sizes):
+                metrics = sizes[size]
+                vals: list[str] = []
+                for key in metric_keys:
+                    stat = metrics.get(key)
+                    if stat is None:
+                        vals.append("–")
+                    else:
+                        mval, sval = stat
+                        vals.append(f"{mval:.3f} ± {sval:.3f}")
+                row = f"| {preset} | {size} | " + " | ".join(vals) + " |"
+                lines.append(row)
         lines.append("")
     if retrieval:
         lines.append("## Retrieval Telemetry")
@@ -287,7 +321,9 @@ def _render_markdown_suite(
     return "\n".join(lines)
 
 
-def _render_plots_suite(suite: str, presets: Dict[str, MetricDict], out_dir: Path) -> None:
+def _render_plots_suite(
+    suite: str, presets: Dict[str, Dict[int, MetricStats]], out_dir: Path
+) -> None:
     """Render simple bar plots for one suite if ``matplotlib`` is available."""
 
     try:  # pragma: no cover - optional dependency
@@ -296,14 +332,22 @@ def _render_plots_suite(suite: str, presets: Dict[str, MetricDict], out_dir: Pat
         log.warning("matplotlib unavailable: %s", exc)
         return
 
-    metric_keys = sorted(next(iter(presets.values())).keys())
+    metric_keys = sorted(
+        {key for preset in presets.values() for size_stats in preset.values() for key in size_stats}
+    )
     for metric in metric_keys:
-        labels = list(presets.keys())
-        values = [presets[p][metric] for p in labels]
+        labels: list[str] = []
+        values: list[float] = []
+        for preset in sorted(presets):
+            for size in sorted(presets[preset]):
+                labels.append(f"{preset}-{size}")
+                stats = presets[preset][size].get(metric)
+                values.append(stats[0] if stats else 0.0)
         plt.figure()
         plt.bar(labels, values)
         plt.ylabel(metric)
         plt.title(f"{suite} {metric}")
+        plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
         out_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(out_dir / f"{metric}.png")
