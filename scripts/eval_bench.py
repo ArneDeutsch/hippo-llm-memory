@@ -339,6 +339,16 @@ def write_outputs(
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f)
 
+    mem_obj = cfg.get("memory")
+    mem_dict = (
+        OmegaConf.to_container(mem_obj, resolve=True) if isinstance(mem_obj, DictConfig) else {}
+    )
+    rel_gate = mem_dict.get("relational", {}).get("gate")
+    spat_gate = mem_dict.get("spatial", {}).get("gate")
+    gating_enabled = bool(
+        (rel_gate or {}).get("enabled", False) or (spat_gate or {}).get("enabled", False)
+    )
+
     with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
             f,
@@ -350,10 +360,13 @@ def write_outputs(
                 "correct",
                 "latency_ms",
                 "flags",
+                "gating_enabled",
             ],
         )
         writer.writeheader()
         for row in rows:
+            row = dict(row)
+            row["gating_enabled"] = gating_enabled
             writer.writerow(row)
 
     cfg_hash = _config_hash(cfg)
@@ -363,7 +376,16 @@ def write_outputs(
         "config_hash": cfg_hash,
         "ablate": flat_ablate,
         "seed": cfg.seed,
+        "gating_enabled": gating_enabled,
     }
+    config_meta: Dict[str, Dict[str, object]] = {}
+    if rel_gate is not None:
+        config_meta.setdefault("relational", {})["gate"] = rel_gate
+    if spat_gate is not None:
+        config_meta.setdefault("spatial", {})["gate"] = spat_gate
+    if config_meta:
+        meta["config"] = config_meta
+
     with (outdir / "meta.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f)
 
@@ -401,7 +423,33 @@ def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
                 run_cfg.n = int(n)
                 run_cfg.seed = int(seed)
                 outdir = root_outdir / suite / f"n{n}_seed{seed}"
-                evaluate(run_cfg, outdir)
+                mem = run_cfg.get("memory")
+                if isinstance(mem, DictConfig):
+                    rel_gate = (
+                        mem.relational.gate
+                        if mem.get("relational") and mem.relational.get("gate")
+                        else None
+                    )
+                    spat_gate = (
+                        mem.spatial.gate if mem.get("spatial") and mem.spatial.get("gate") else None
+                    )
+                else:
+                    rel_gate = spat_gate = None
+                if rel_gate or spat_gate:
+                    for enabled in [True, False]:
+                        gate_cfg = OmegaConf.create(OmegaConf.to_container(run_cfg, resolve=True))
+                        if rel_gate:
+                            OmegaConf.update(
+                                gate_cfg, "memory.relational.gate.enabled", enabled, merge=True
+                            )
+                        if spat_gate:
+                            OmegaConf.update(
+                                gate_cfg, "memory.spatial.gate.enabled", enabled, merge=True
+                            )
+                        gate_dir = outdir / ("gate_on" if enabled else "gate_off")
+                        evaluate(gate_cfg, gate_dir)
+                else:
+                    evaluate(run_cfg, outdir)
 
 
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")

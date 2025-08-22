@@ -291,6 +291,15 @@ def _write_outputs(
             row = dict(row)
             row["flags"] = "post_replay"
             csv_rows.append(row)
+    mem_obj = cfg.get("memory")
+    mem_dict = (
+        OmegaConf.to_container(mem_obj, resolve=True) if isinstance(mem_obj, DictConfig) else {}
+    )
+    rel_gate = mem_dict.get("relational", {}).get("gate")
+    spat_gate = mem_dict.get("spatial", {}).get("gate")
+    gating_enabled = bool(
+        (rel_gate or {}).get("enabled", False) or (spat_gate or {}).get("enabled", False)
+    )
     retrieval_fields = {
         f"retrieval.{m}.{k}": v for m, snap in metrics["retrieval"].items() for k, v in snap.items()
     }
@@ -300,6 +309,7 @@ def _write_outputs(
     for row in csv_rows:
         row.update(retrieval_fields)
         row.update(gate_fields)
+        row["gating_enabled"] = gating_enabled
     fieldnames = [
         "idx",
         "prompt",
@@ -308,6 +318,7 @@ def _write_outputs(
         "correct",
         "latency_ms",
         "flags",
+        "gating_enabled",
         *sorted(retrieval_fields),
         *sorted(gate_fields),
     ]
@@ -326,7 +337,16 @@ def _write_outputs(
         "seed": cfg.seed,
         "preset": cfg.preset,
         "replay_cycles": cfg.get("replay", {}).get("cycles", 0),
+        "gating_enabled": gating_enabled,
     }
+    config_meta: Dict[str, Dict[str, object]] = {}
+    if rel_gate is not None:
+        config_meta.setdefault("relational", {})["gate"] = rel_gate
+    if spat_gate is not None:
+        config_meta.setdefault("spatial", {})["gate"] = spat_gate
+    if config_meta:
+        meta["config"] = config_meta
+
     with (outdir / "meta.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f)
 
