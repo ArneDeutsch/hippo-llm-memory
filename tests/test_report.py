@@ -3,7 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.report import collect_metrics, summarise, write_reports
+from scripts.report import (
+    collect_metrics,
+    collect_retrieval,
+    summarise,
+    summarise_retrieval,
+    write_reports,
+)
 
 
 def _make_metrics(path: Path, suite: str, metrics: dict, compute: dict | None = None) -> None:
@@ -29,13 +35,14 @@ def test_report_aggregation(tmp_path: Path) -> None:
         {"tokens": 30},
     )
 
-    data = collect_metrics(tmp_path / "runs" / "20250101")
-    summary = summarise(data)
+    metrics = collect_metrics(tmp_path / "runs" / "20250101")
+    summary = summarise(metrics)
+    retrieval = summarise_retrieval(collect_retrieval(tmp_path / "runs" / "20250101"))
 
     assert summary["episodic"]["baselines/core"]["em"] == 0.6
     assert summary["episodic"]["baselines/core"]["tokens"] == 20
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, out, plots=False)
+    paths = write_reports(summary, retrieval, out, plots=False)
     md_path = paths["episodic"]
     assert md_path.exists()
     assert "episodic Summary" in md_path.read_text()

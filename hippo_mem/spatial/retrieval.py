@@ -8,6 +8,7 @@ import torch
 from torch import nn
 
 from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common.telemetry import registry
 
 from .place_graph import PlaceGraph
 
@@ -85,6 +86,9 @@ def spatial_retrieve_and_pack(
         "num_edges": len(edges),
         "latency_ms": latency_ms,
     }
+    k_req = total
+    hits_actual = len(nodes) + len(edges)
+    registry.get("spatial").update(k=k_req, hits=hits_actual, tokens=total, latency_ms=latency_ms)
     return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
 

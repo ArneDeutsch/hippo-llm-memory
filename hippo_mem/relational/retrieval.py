@@ -11,6 +11,7 @@ import torch
 from torch import nn
 
 from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common.telemetry import registry
 
 from .kg import KnowledgeGraph
 
@@ -163,6 +164,11 @@ def relational_retrieve_and_pack(
 
     tokens = torch.stack(packed) if packed else torch.zeros(0, limit, d_model, device=device)
     meta = build_meta(limit, hops, seeds, hit_total, bsz, start)
+
+    k_req = limit * bsz
+    latency_ms = meta.get("latency_ms", 0.0)
+    registry.get("relational").update(k=k_req, hits=hit_total, tokens=limit, latency_ms=latency_ms)
+
     return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
 
