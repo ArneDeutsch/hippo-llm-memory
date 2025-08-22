@@ -1,0 +1,27 @@
+{
+  "suite": "spatial",
+  "sizes": [
+    50,
+    200,
+    1000
+  ],
+  "seeds": [
+    1337,
+    2025,
+    4242
+  ],
+  "generator_version": "79ed997faba9e6517aabfc342b803e76e90517bb",
+  "files": {
+    "50_1337.jsonl": "532a4938de9ad9b5a5cdd23e7f0937ac43c4c1fca6f394e4bd2eab22a2d6f1c6",
+    "50_2025.jsonl": "580bf5d27fb8c3055813ae0fd0c68897abfefdf34fd5f87af60e9faf7496f764",
+    "50_4242.jsonl": "f65294b502d65cc63da98f66cf54df6db07ccdff28ecdb4d71ef1098b4ffafdd",
+    "200_1337.jsonl": "aa6855bcd5ad303afdfa8f9b4ca4a36fa3715cd3af2b681f89027ca336295604",
+    "200_2025.jsonl": "a5acc025672d678306e3dce4ae36abafee631214426bb18da8dec5976490c19c",
+    "200_4242.jsonl": "a12278e890802aa9a8a8f1bc6ce055413d12fd78928a61fdc1dde205014affc4",
+    "1000_1337.jsonl": "ac5e12fa3e895b3320908e646441a83441e8cccecc92061a5581663b740ccc4b",
+    "1000_2025.jsonl": "11734d07de499a36c82dfb6a385c56e42fd239064a2b1e93ce595466bf683ee4",
+    "1000_4242.jsonl": "1983e67b02ba810dbaee3197467e0b76fac433616c92639fe45ab552313b282c"
+  },
+  "created_utc": "2025-08-22T12:30:03.678014+00:00",
+  "cli_example": "python scripts/build_datasets.py suite=spatial size=<size> seed=<seed> out=data/spatial/<size>_<seed>.jsonl"
+}
