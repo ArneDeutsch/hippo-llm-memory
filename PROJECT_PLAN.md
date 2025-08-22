@@ -134,37 +134,37 @@
 
 ## Work packages
 
-1. **Dataset generation & registry**
+1. [ ] **Dataset generation & registry**
    - Use `scripts/build_datasets.py` to generate JSONL datasets for each suite × size × seed.
    - Write files to `data/<suite>/<size>_<seed>.jsonl`.
    - Compute and store SHA256 checksums in `data/<suite>/checksums.json`.
    - Emit a lightweight `data/<suite>/dataset_card.json` with fields: `suite`, `sizes`, `seeds`, `generator_version`, `sha256`, `created_utc`, and the exact CLI used.
 
-2. **Run‑matrix driver**
+2. [ ] **Run‑matrix driver**
    - Add a small driver (CLI or Make target) to iterate over *all* presets × suites × sizes × seeds and invoke `scripts/eval_bench.py` with the correct Hydra overrides.
    - Layout: `runs/YYYYMMDD/<preset>/<suite>/<size>_<seed>/` containing `metrics.json`, `metrics.csv`, and `meta.json` (with `git_sha`, `config_hash`, `ablate`, `seed`, `python`, `platform`).
    - Provide `Makefile` targets:
      - `make eval-baselines DATE=20250822` – full matrix.
      - `make eval-baselines-smoke` – minimal (one suite × one size × one seed) for CI.
 
-3. **Environment capture & determinism**
+3. [ ] **Environment capture & determinism**
    - Extend `scripts/eval_bench.py` to record: Python version, `pip freeze` hash, OS, CPU model, and (if available) CUDA/driver versions into `meta.json`.
    - Assert deterministic generation via checksum validation before each run; fail fast if mismatched.
 
-4. **Aggregation & reports**
+4. [ ] **Aggregation & reports**
    - Extend `scripts/report.py` to:
      - Aggregate metrics per suite across presets, sizes, and seeds (mean ± std) and write Markdown to `reports/YYYYMMDD/<suite>/summary.md`.
      - Include optional plots when matplotlib is present (saved as PNG).
      - Tolerate missing retrieval/gate fields for baselines while still producing tables.
 
-5. **CI & smoke wiring**
+5. [ ] **CI & smoke wiring**
    - Add `smoke_8.sh` that generates size=50 datasets for all suites, runs the `baselines/core` preset for seed=1337, and runs `scripts/report.py --date YYYYMMDD`.
    - Add/extend `tests/test_report.py` to assert:
        - discovery of latest date dir,
        - presence and schema of aggregated tables,
        - report files exist for each suite.
 
-6. **Documentation**
+6. [ ] **Documentation**
    - Update `EVAL_PLAN.md` section “Baselines” to pin the **exact** presets, run‑matrix (suites, sizes, seeds), directory layout, and required artifacts.
    - Note in `DESIGN.md` that memory adapters are not involved in Milestone 8; any retrieval/gating logs MUST be no‑ops for baselines.
 
