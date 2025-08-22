@@ -93,6 +93,32 @@ This document specifies a production-ready design for hippocampus-inspired memor
 * Planner: A\*/Dijkstra (text worlds) or learned planner (ablation).
 * Successful trajectories → **behavior cloning** into `MacroLib`; suggest at inference (top-k).
 
+## 5.6 Optional salience gates (relational & spatial)
+
+*Scope.* Engineering option to reduce churn and capacity waste while preserving provenance. Complements the episodic neuromodulatory gate and schema fast‑track; **ablatable**.
+
+**Principles**
+
+1. **Route/aggregate, don’t drop.** Low‑score items are routed to the episodic store or **aggregated as evidence**; redundant graph/map insertions are blocked, but the observation is *not discarded*.
+2. **Provenance preserved.** Every decision records a `gate_reason` and destination.
+3. **Ablation‑friendly.** A single flag disables the gates for clean comparisons.
+
+**Relational (SGC‑RSS).** Compute a score `S = w_conf·conf + w_schema·schema_fit + w_rec·recency − w_hub·degree_penalty`. Decision:
+
+* **insert\_graph** if `S ≥ τ` and edge does not exist;
+* **aggregate\_duplicate** if edge exists → increment edge evidence/weight and update recency; no new edge is created;
+* **route\_to\_episodic** otherwise (defer consolidation; replay later).
+
+**Spatial (SMPD).** Penalize immediate repeats and short‑window A↔B flapping; cap node degree. Decision:
+
+* **add\_node/edge** when novel and within degree limits;
+* **aggregate\_duplicate** for repeated transitions (increase edge weight/recency);
+* **block\_new\_edge** only when creating a *redundant* new edge; the observation still contributes to weights/recency.
+
+**Telemetry.** Per‑memory counters: `attempts, inserted, aggregated, routed_to_episodic (relational), blocked_new_edges (spatial)`.
+
+**Guarantee.** Gates never delete inputs; provenance and rollback are maintained.
+
 # 6) Adapters & Memory I/O
 
 * **Targets:** `q_proj`, `k_proj`, `v_proj`, `o_proj`, optionally FFN `{up, down}` in adapter blocks only.
@@ -133,12 +159,33 @@ lora:
   dropout: 0.05
 memory:
   episodic: {k: 8, metric: cosine, write_threshold: 0.7, hopfield: true, pq: true}
-  relational: {topk_subgraphs: 4, tuple_conf_min: 0.8, schema_fasttrack: true}
-  spatial: {planner: astar, path_integration: true}
+  relational:
+    topk_subgraphs: 4
+    tuple_conf_min: 0.8
+    schema_fasttrack: true
+    gate:
+      enabled: true
+      threshold: 0.6
+      w_conf: 0.6
+      w_schema: 0.5
+      w_hub: 0.4
+      w_rec: 0.2
+      max_degree: 64
+  spatial:
+    planner: astar
+    path_integration: true
+    gate:
+      enabled: true
+      block_threshold: 1.0
+      repeat_N: 3
+      recent_window: 20
+      max_degree: 64
 consolidation:
   batch_mix: {episodic: 0.5, semantic: 0.3, fresh: 0.2}
   schedule: {minimize_grad_overlap: true}
 ```
+
+**Note.** Gates are optional and ablatable; see §10 (Ablations) for on/off switches and §11 for runtime counters and provenance logs.
 
 # 8) Public APIs
 
@@ -163,6 +210,14 @@ class KG:
     def upsert(self, tuples: list[Tuple]) -> None: ...
     def retrieve(self, query: str, k: int) -> "Subgraph": ...
     def prune(self, ttl_days: int) -> None: ...
+    def aggregate_duplicate(self, tup: Tuple) -> None:
+        """Increase evidence/weight and refresh recency for an existing edge."""
+    def route_to_episodic(self, tup: Tuple) -> None:
+        """Append tuple to episodic writer queue for later replay/consolidation."""
+
+class RelationalGate:
+    def decide(self, tup: Tuple, kg: "KG") -> tuple[str, str]:
+        """Return (action, reason) where action ∈ {"insert","aggregate","route_to_episodic"}."""
 ```
 
 ## 8.3 Spatial
@@ -172,10 +227,16 @@ class PlaceGraph:
     def observe(self, context: dict) -> int: ...
     def plan(self, start: int, goal: int) -> list[int]: ...
     def merge_similar(self, thr: float) -> None: ...
+    def aggregate_duplicate(self, prev_ctx: dict, ctx: dict) -> None:
+        """Bump edge weight/evidence and recency without adding a new edge."""
 
 class MacroLib:
     def add(self, trajectory: list[dict]) -> str: ...
     def suggest(self, context: dict, topk: int = 3) -> list[dict]: ...
+
+class SpatialGate:
+    def decide(self, prev_ctx: dict, ctx: dict, graph: "PlaceGraph") -> tuple[str, str]:
+        """Return (action, reason) where action ∈ {"insert","aggregate","block_new_edge"}."""
 ```
 
 # 9) Training & consolidation
@@ -206,6 +267,9 @@ class MacroLib:
   * KG pruning of stale/low-confidence edges.
   * PlaceGraph node merging and TTL on unused nodes; MacroLib success aging.
 * Structured logs as JSONL under `runs/<date>/<exp>/events.jsonl`.
+* **Gate telemetry (JSON):** Counters emitted in `metrics.json` under `gates.{relational|spatial}` with fields `attempts, inserted, aggregated, routed_to_episodic/blocked_new_edges`.
+* **Provenance NDJSON:** Per‑decision records in `runs/<date>/<exp>/provenance.ndjson` with `{ts, memory, action, reason, payload}` where payload minimally includes tuple ids or `(prev_ctx, ctx)` and degree/conf/score.
+* **Config echo:** Effective gate config serialized into `meta.json` for audit and reproducibility.
 
 # 12) Risks & mitigations
 
@@ -225,6 +289,8 @@ class MacroLib:
 6. **Adapters wired**: Episodic/Relational/Spatial with GQA & FlashAttn.
 7. **Trainer**: QLoRA trainer + consolidation mix + scheduler.
 8. **Eval harness**: metrics, baselines, stress tests, user-pin flows.
+9. **Gating semantics + telemetry:** implement decide‑actions, aggregation/routing, counters, provenance; tests & docs updated.
+10. **Ablations & reports:** ON/OFF gate runs; duplicate‑rate and map‑growth tables in reports; CI smoke with gates enabled.
 
 # 14) Reproducibility
 
@@ -258,3 +324,16 @@ Context → Place encoder (+path-integration) → PlaceGraph
 Goal → plan() → route scaffold → SpatialAdapter/tool hints → LLM
 Trajectories → MacroLib (behavior cloning) → suggest()
 ```
+
+## 15.4 Gating flows
+
+```
+Relational ingest:
+  tuple → gate.decide() → {insert_graph | aggregate_duplicate | route_to_episodic}
+  counters++ ; provenance.log(...)
+
+Spatial ingest:
+  (prev_ctx, ctx) → gate.decide() → {add_edge | aggregate_duplicate | block_new_edge}
+  counters++ ; provenance.log(...)
+```
+
