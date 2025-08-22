@@ -185,7 +185,8 @@
 
 **Objective**: train models with each memory module, evaluate them, perform ablations and compare against baselines.
 
-+**Work packages**
+**Work packages**
+
 0. [ ] **Establish real (non‑oracle) baselines** with `scripts/eval_model.py` (no memory) over the same matrix (sizes 50/200/1000 × seeds 1337/2025/4242).
 1. [ ] HEI‑NW evaluation: fine‑tune with episodic memory; log gate accept %, store growth, retrieval hit@k, replay cycles; record compute (tokens, time_ms_per_100, rss_mb).
 2. [ ] SGC‑RSS evaluation: train with relational memory; log schema fast‑track rate and contradiction filter stats; record compute columns.
@@ -195,6 +196,7 @@
 6. [ ] Reports: create `reports/<date>/index.md` aggregating tables and plots across baselines and memory variants.
 
 **Gate**
+
 - [ ] For each memory variant and baselines (real), runs exist at sizes 50 and 200 with seeds 1337/2025/4242 and include compute & telemetry fields.
 - [ ] Improvements over real baselines are demonstrated on n=200 (episodic EM +10 points suggested; others suite‑specific).
 - [ ] Ablation effects are clear (directional, non‑noisy).
