@@ -456,6 +456,8 @@ Below are concrete build plans for the three designs from Pass 3, plus shared in
 * **No consolidation/replay** → episodic recall ok, semantic generalization poor; track drift over time.&#x20;
 * **No CA2-like scheduling** → induce interference by replay order; compare retention after sleep cycles.&#x20;
 * **Turn off Schema fast-track** → slower factual stabilization on schema-fit items.&#x20;
+* **Disable relational/spatial gates** → expect higher duplicate churn, larger graphs/maps, and slightly higher retrieval latency without quality gains; quantify edge duplication rate and plan stability.&#x20;
+* **Enable gates (aggregate mode)** → expect lower churn with unchanged or improved EM/F1 on multi-hop and navigation tasks; verify no loss on schema-mismatch cases.&#x20;
 
 ### 10.3) Metrics
 
@@ -475,3 +477,38 @@ Below are concrete build plans for the three designs from Pass 3, plus shared in
 4. **Stress tests:** rapid new episode bursts to test interference; schema-flip events to test gating; map-scale growth tests for SMPD.
 5. **User-like setting:** interactive sessions with explicit “pin” (reward) signals to probe neuromodulatory gating behavior.&#x20;
 
+## Appendix A — Optional Salience Gates for Relational & Spatial Stores (Engineering Option)
+
+**Scope.** To reduce churn and interference while preserving provenance, we introduce *optional* salience gates for the **relational semantic store (SGC-RSS)** and the **spatial map (SMPD)**. These gates complement the **episodic neuromodulatory write gate** and the existing **schema-based routing**; they do **not** alter the core hypotheses.
+
+**Design principles.**
+
+1. **Route/aggregate rather than drop.** Low-score items are routed to the episodic store or aggregated as evidence; only new graph/map insertions are blocked when redundant.
+2. **Provenance preserved.** All decisions log `gate_reason`, confidence, and destination.
+3. **Ablatable.** Gates can be disabled for comparisons (see §10.2 ablations).
+
+**Relational gate (SGC-RSS).**
+
+Score `S = w_conf·conf + w_schema·schema_fit − w_hub·degree_penalty + w_rec·recency_bonus`.
+Decision:
+* `insert_graph` if `S ≥ τ` **and** edge not present;
+* `aggregate_duplicate` if edge exists → increment evidence/weight;
+* `route_to_episodic` otherwise (defer consolidation; replay later).
+  *Rationale:* matches the spec’s **schema fast-track** vs. episodic linger, while curbing duplicate/hub churn.&#x20;
+
+**Spatial gate (SMPD).**
+
+Penalize immediate repeats and short-window edge flapping; cap node degree.
+Decision:
+* `add_edge/add_node` when novel and within degree limits;
+* `aggregate_duplicate` for repeated transitions;
+* `block_new_edge` only when redundant, updating weights instead.
+  *Rationale:* aligns with **map control** (merge, TTL) and avoids explosion without losing evidence.&#x20;
+
+**Telemetry & evaluation.**
+
+Log counters `{attempts, inserted, aggregated, routed_to_episodic}` (relational) and `{attempts, nodes_added, edges_added, aggregated, blocked_new_edges}` (spatial), plus hit-rate/latency (§Metrics). Evaluate **with/without gates** to quantify interference reduction and map stability impacts (see §10.2).&#x20;
+
+**Safeguards.**
+
+Never discard inputs; maintain rollback via provenance; episodic fallback ensures eventual consolidation.&#x20;
