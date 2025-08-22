@@ -53,10 +53,12 @@ from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
 from hippo_mem.relational.extract import extract_tuples
+from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.adapter import SpatialAdapter
+from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.map import PlaceGraph
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from scripts.utils import log_memory_status
@@ -78,6 +80,7 @@ class RelationalSpec:
     enabled: bool = False
     k: int = 0
     hops: int = 1
+    gate: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -86,6 +89,7 @@ class SpatialSpec:
     radius: int = 1
     max_nodes: int = 0
     max_edges: int = 0
+    gate: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -490,7 +494,11 @@ def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) 
             kg.ingest(tup)
 
 
-def ingest_spatial_traces(records: Iterable[dict[str, Any]], graph: PlaceGraph) -> None:
+def ingest_spatial_traces(
+    records: Iterable[dict[str, Any]],
+    graph: PlaceGraph,
+    gate_cfg: Optional[dict] = None,
+) -> None:
     """Insert trajectories from ``records`` into ``graph``.
 
     Parameters
@@ -499,7 +507,18 @@ def ingest_spatial_traces(records: Iterable[dict[str, Any]], graph: PlaceGraph) 
         Training examples optionally containing a ``"trajectory"`` field.
     graph : PlaceGraph
         Spatial map receiving the observed coordinates.
+    gate_cfg : Optional[dict], optional
+        Gate configuration with ``enabled`` flag.
     """
+
+    gate: SpatialGate | None = None
+    if gate_cfg and gate_cfg.get("enabled"):
+        gate = SpatialGate(
+            block_threshold=gate_cfg.get("block_threshold", 1.0),
+            repeat_N=gate_cfg.get("repeat_N", 3),
+            recent_window=gate_cfg.get("recent_window", 20),
+            max_degree=gate_cfg.get("max_degree", 64),
+        )
 
     count = 0
     steps = 0
@@ -514,7 +533,8 @@ def ingest_spatial_traces(records: Iterable[dict[str, Any]], graph: PlaceGraph) 
                 ctx = f"{coord[0]},{coord[1]}"
             else:  # pragma: no cover - defensive
                 ctx = str(coord)
-            graph.observe(ctx)
+            if gate is None or gate.allow(ctx, graph):
+                graph.observe(ctx)
     if count:
         logging.info(
             "spatial_ingest_traces=%d avg_len=%.2f",
@@ -558,7 +578,11 @@ class _IngestCallback(TrainerCallback):
             )
             self._kg_nodes, self._kg_edges = nodes, edges
         if self.cfg.spatial.enabled and self.records:
-            ingest_spatial_traces(self.records, self.graph)
+            gate_cfg = getattr(self.cfg.memory.spatial, "gate", None)
+            if gate_cfg:
+                ingest_spatial_traces(self.records, self.graph, gate_cfg)
+            else:
+                ingest_spatial_traces(self.records, self.graph)
             nodes = len(self.graph.graph)
             edges = sum(len(v) for v in self.graph.graph.values())
             logging.info(
@@ -721,7 +745,20 @@ def init_memory(context: TrainerContext, cfg: TrainConfig) -> None:
             "max_age": cfg.relational_mem.prune_max_age,
         }
     }
-    context.kg = KnowledgeGraph(config=kg_cfg)
+    kg_gate = None
+    gate_cfg = getattr(cfg.memory.relational, "gate", {})
+    if gate_cfg.get("enabled"):
+        kg_gate = RelationalGate(
+            threshold=gate_cfg.get("threshold", 0.6),
+            w_conf=gate_cfg.get("w_conf", 0.6),
+            w_nov=gate_cfg.get("w_nov", 0.5),
+            w_deg=gate_cfg.get("w_deg", 0.4),
+            w_rec=gate_cfg.get("w_rec", 0.2),
+            max_degree=gate_cfg.get("max_degree", 64),
+        )
+        context.kg = KnowledgeGraph(config=kg_cfg, gate=kg_gate)
+    else:
+        context.kg = KnowledgeGraph(config=kg_cfg)
     kg_interval = 0.1 if cfg.dry_run else cfg.relational_mem.maintenance_interval
     context.kg.start_background_tasks(kg_interval)
 
@@ -855,7 +892,11 @@ def _train(
                 if cfg.schema_fasttrack_ingest:
                     ingest_training_text(train_ds, context.kg)
                 if cfg.spatial.enabled:
-                    ingest_spatial_traces(train_ds, context.spatial_map)
+                    gate_cfg = getattr(cfg.memory.spatial, "gate", None)
+                    if gate_cfg:
+                        ingest_spatial_traces(train_ds, context.spatial_map, gate_cfg)
+                    else:
+                        ingest_spatial_traces(train_ds, context.spatial_map)
             return
 
         training_args = SFTConfig(

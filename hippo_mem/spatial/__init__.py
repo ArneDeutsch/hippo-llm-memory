@@ -25,6 +25,7 @@ hippo_mem.spatial.macros
 """
 
 from .adapter import AdapterConfig, SpatialAdapter
+from .gating import SpatialGate
 from .macros import Macro, MacroLib
 from .map import PlaceGraph
 
@@ -34,4 +35,5 @@ __all__ = [
     "Macro",
     "MacroLib",
     "PlaceGraph",
+    "SpatialGate",
 ]

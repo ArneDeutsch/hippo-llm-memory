@@ -41,6 +41,7 @@ import numpy as np
 
 from hippo_mem.common.sqlite import SQLiteExecMixin
 
+from .gating import RelationalGate
 from .schema import SchemaIndex
 from .tuples import TupleType
 
@@ -70,7 +71,13 @@ class KnowledgeGraph(SQLiteExecMixin):
     SchemaIndex
     """
 
-    def __init__(self, db_path: str = ":memory:", *, config: Optional[dict] = None) -> None:
+    def __init__(
+        self,
+        db_path: str = ":memory:",
+        *,
+        config: Optional[dict] = None,
+        gate: Optional[RelationalGate] = None,
+    ) -> None:
         self.graph = nx.MultiDiGraph()
         self.node_embeddings: Dict[str, np.ndarray] = {}
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -87,6 +94,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         self._max_undo = int(self.config.get("max_undo", 5))
         self._maintenance_log: list[dict[str, Any]] = []
         self._log_file = self.config.get("maintenance_log")
+        self.gate = gate
 
     # ------------------------------------------------------------------
     # Database utilities
@@ -266,6 +274,8 @@ class KnowledgeGraph(SQLiteExecMixin):
         SchemaIndex.fast_track
         """
 
+        if self.gate and not self.gate.allow(tup, self):
+            return False
         # why: schema index gates tuples to reduce noisy graph writes
         return self.schema_index.fast_track(tup, self)
 
