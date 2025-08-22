@@ -281,7 +281,7 @@ SUITE_TO_GENERATOR = {
 }
 
 
-# TODO: appears unused; consider referencing or removing.
+# kept: used by tests/test_datasets.py
 def generate_dataset(suite: str, size: int, seed: int, **kwargs: object) -> List[Dict[str, object]]:
     """Dispatch to the generator for ``suite``.
 

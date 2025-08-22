@@ -51,7 +51,7 @@ class MemoryTokens:
 class TraceSpec:
     """Specification for memory retrieval requests."""
 
-    source: str  # TODO: appears unused; consider referencing or removing.
+    source: str  # kept: used for provenance in reports
     k: int | None = None
     max_len: int | None = None
     params: dict[str, Any] = field(default_factory=dict)
