@@ -18,6 +18,23 @@ Define three presets under `configs/eval/baselines/`:
 - `rag.yaml` — vector DB over the same corpus used by stores (FAISS‑CPU), retrieved text concatenated to inputs.
 - `longctx.yaml` — same base model with the longest feasible context (no memory modules).
 
+**Milestone 8 run matrix**
+
+- **Presets:** `baselines/core`, `baselines/rag`, `baselines/longctx`.
+- **Suites:** `episodic`, `semantic`, `spatial`.
+- **Sizes:** `50`, `200`, `1000` items.
+- **Seeds:** `1337`, `2025`, `4242`.
+
+Each combo writes `metrics.json`, `metrics.csv`, and `meta.json` under
+`runs/<DATE>/<preset>/<suite>/<size>_<seed>/`.
+
+**How to reproduce Milestone 8**
+
+```bash
+make datasets DATE=20250822
+make eval-baselines DATE=20250822 && python scripts/report.py --date 20250822
+```
+
 Memory variants under `configs/eval/memory/`:
 
 - `hei_nw.yaml`, `sgc_rss.yaml`, `smpd.yaml`, and `all.yaml` (combined).
