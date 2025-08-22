@@ -7,6 +7,8 @@ A concrete, repeatable plan to **validate** HEI‑NW, SGC‑RSS, and SMPD on a s
 - **HEI‑NW (episodic):** one‑shot episodic recall from partial cues with durability after replay; lower interference than long‑context.
 - **SGC‑RSS (semantic/relational):** higher multi‑hop factual accuracy and lower contradiction rate; faster stabilization for schema‑fit items.
 - **SMPD (spatial/procedural):** higher path success and lower path suboptimality; fewer steps via macro reuse on repeated tasks.
+* **Relational gates:** reduce duplicate churn and hub growth **without degrading** multi‑hop accuracy; faster stabilization via reduced noise.
+* **Spatial gates:** reduce graph/map growth (nodes/edges per 1k obs) and planning latency with unchanged success/suboptimality.
 
 # 2) Baselines
 
@@ -61,6 +63,8 @@ For each **suite**:
 - Seeds: {1337, 2025, 4242}.
 - Replay: evaluate **pre‑replay** and **post‑replay** (1–3 cycles).
 
+For relational and spatial suites, execute **paired runs** with gates `enabled=true` and `enabled=false` per (size, seed). Report ON→OFF deltas for duplicate rate and map growth alongside primary accuracy metrics.
+
 # 5) Metrics
 
 ## 5.1 Primary
@@ -85,6 +89,15 @@ For each **suite**:
 | **SMPD**: path integration | Robust localization over long trajectories | Spatial suite with sequential trajectories; ablate path integration | localization error, path success |
 | **SMPD**: macro distillation | Reuse learned procedures | Spatial macro tasks; ablate `spatial.macros` | steps reduction %, success rate |
 
+## 5.4 Gate telemetry & KPIs
+
+* **Raw counters** (by memory): `attempts, inserted, aggregated, routed_to_episodic (relational), blocked_new_edges (spatial)`.
+* **Derived:**
+  * **Duplicate rate (relational):** `aggregated / attempts`.
+  * **Map growth per 1k obs (spatial):** `nodes_added/1k`, `edges_added/1k`.
+  * **Gating overhead:** Δ runtime/100 queries (gates ON vs OFF).
+* **Integrity checks:** gates ON must not reduce **accuracy** by >1pp vs OFF at matched seeds/sizes.
+
 # 6) Ablations (toggles)
 
 Exposed in Hydra and consumed by the harness. Useful flags:
@@ -96,12 +109,21 @@ Exposed in Hydra and consumed by the harness. Useful flags:
 - `memory.runtime.enable_writes=false`
 - `relational.schema_fasttrack=false`
 - `spatial.macros=false`
+- `relational.gate.enabled={true,false}`
+- `spatial.gate.enabled={true,false}`
+
+*(Optional sensitivity sweeps)*
+
+- `relational.gate.threshold ∈ {0.5, 0.6, 0.7}`
+- `spatial.gate.block_threshold ∈ {0.8, 1.0, 1.2}`
 
 Run example:
 
 ```bash
 python scripts/eval_bench.py suite=episodic +ablate=episodic.use_gate=false
 ```
+
+When gates are disabled, ingestion reverts to pre‑gate behavior (no aggregation/routing). Use the same seeds and dataset sizes for ON/OFF comparisons.
 
 # 7) Harness behavior (`scripts/eval_bench.py`)
 
@@ -114,6 +136,7 @@ python scripts/eval_bench.py suite=episodic +ablate=episodic.use_gate=false
 - Supports `dry_run=true` for CI smoke tests (e.g., 5 tasks).
 - Milestone 8a adds hooks logging retrieval hit rates, memory token shapes,
   and gate decisions; exercised via `scripts/smoke_8a.sh`.
+- Include `metrics["gates"]` and `meta["config"].{relational.gate, spatial.gate}` in outputs. When present, `scripts/report.py` renders §5.4 tables; otherwise it skips.
 
 ## 7.1 File schemas
 
@@ -197,6 +220,10 @@ python scripts/eval_bench.py suite=episodic preset=memory/hei_nw eval.post_repla
 - Aggregates all `metrics.json`/`metrics.csv` under `runs/**`.
 - Produces a markdown table and simple charts (optional) comparing presets.
 - Outputs to `reports/<date>/<suite>/summary.md`.
+* **Gate Telemetry table** (per suite): columns `mem, attempts, inserted, aggregated, routed_to_episodic/blocked_new_edges`.
+* **ON/OFF delta table** when both present for a date: `duplicate_rateΔ`, `nodesΔ/1k`, `edgesΔ/1k`, and `runtimeΔ/100q` with 95% CIs if multiple seeds.
+
+*(If only one condition present, omit delta gracefully.)*
 
 ## 10.1 Example output table (markdown)
 
@@ -212,6 +239,9 @@ python scripts/eval_bench.py suite=episodic preset=memory/hei_nw eval.post_repla
 - **HEI‑NW:** +15pp EM over **core** on partial‑cue; +5pp over **RAG**; positive Δ after replay ≥ +3pp.
 - **SGC‑RSS:** ≥10pp multi‑hop accuracy over **core**; contradiction rate ≤50% of **core**.
 - **SMPD:** ≥90% path success on 5×5; ≥20% steps reduction with macros.
+* **Relational:** duplicate rate reduced by ≥30% (ON vs OFF) with multi‑hop accuracy change within ±1pp.
+* **Spatial:** edges/1k reduced by ≥25% with success rate within ±1pp and suboptimality unchanged (±0.02 absolute).
+* **Overhead:** gating overhead ≤10% runtime/100 queries.
 
 # 12) CI & Codex scope
 
@@ -282,6 +312,20 @@ python scripts/eval_model.py suite=spatial  preset=memory/smpd    n=50 seed=1337
 
 ```bash
 python scripts/report.py --date YYYYMMDD
+```
+
+```bash
+# Paired relational ON/OFF
+python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=200 seed=1337 relational.gate.enabled=true
+python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=200 seed=1337 relational.gate.enabled=false
+
+# Paired spatial ON/OFF
+python scripts/eval_model.py suite=spatial  preset=memory/smpd    n=200 seed=1337 spatial.gate.enabled=true
+python scripts/eval_model.py suite=spatial  preset=memory/smpd    n=200 seed=1337 spatial.gate.enabled=false
+
+# Sensitivity (optional)
+python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=200 seed=1337 relational.gate.threshold=0.5
+python scripts/eval_model.py suite=spatial  preset=memory/smpd    n=200 seed=1337 spatial.gate.block_threshold=1.2
 ```
 
 ---
