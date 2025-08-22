@@ -94,15 +94,24 @@ def collect_retrieval(base: Path) -> Dict[str, list[dict[str, MetricDict]]]:
     return data
 
 
-def collect_gates(base: Path) -> Dict[str, list[dict[str, MetricDict]]]:
-    """Collect gate telemetry grouped by suite."""
+def collect_gates(base: Path) -> Dict[str, Dict[str, list[dict[str, MetricDict]]]]:
+    """Collect gate telemetry grouped by suite and gate status."""
 
-    data: Dict[str, list[dict[str, MetricDict]]] = defaultdict(list)
+    data: Dict[str, Dict[str, list[dict[str, MetricDict]]]] = defaultdict(lambda: defaultdict(list))
     for metrics_path in base.rglob("metrics.json"):
         parts = metrics_path.relative_to(base).parts
         if len(parts) < 3:
             continue
         suite = parts[-3]
+        status = "on"
+        for p in parts:
+            low = p.lower()
+            if "gate" in low and ("off" in low or "false" in low):
+                status = "off"
+                break
+            if "gate" in low and ("on" in low or "true" in low):
+                status = "on"
+                break
         try:
             with metrics_path.open() as fh:
                 record = json.load(fh)
@@ -111,7 +120,7 @@ def collect_gates(base: Path) -> Dict[str, list[dict[str, MetricDict]]]:
             continue
         gates = record.get("gates")
         if gates:
-            data[suite].append(gates)
+            data[suite][status].append(gates)
     return data
 
 
@@ -148,22 +157,32 @@ def summarise_retrieval(
 
 
 def summarise_gates(
-    data: Dict[str, list[dict[str, MetricDict]]],
-) -> Dict[str, Dict[str, MetricDict]]:
-    """Average gate stats per suite and memory."""
+    data: Dict[str, Dict[str, list[dict[str, MetricDict]]]],
+) -> Dict[str, Dict[str, Dict[str, MetricDict]]]:
+    """Average gate stats per suite, status and memory with derived metrics."""
 
-    summary: Dict[str, Dict[str, MetricDict]] = {}
-    for suite, records in data.items():
-        agg: Dict[str, Dict[str, float]] = {}
-        for rec in records:
-            for mem, stats in rec.items():
-                dest = agg.setdefault(mem, {k: 0.0 for k in stats})
-                for k, v in stats.items():
-                    dest[k] += float(v)
-        count = len(records)
-        summary[suite] = {
-            mem: {k: v / count for k, v in stats.items()} for mem, stats in agg.items()
-        }
+    summary: Dict[str, Dict[str, Dict[str, MetricDict]]] = {}
+    for suite, variants in data.items():
+        summary[suite] = {}
+        for status, records in variants.items():
+            agg: Dict[str, Dict[str, float]] = {}
+            for rec in records:
+                for mem, stats in rec.items():
+                    dest = agg.setdefault(mem, {k: 0.0 for k in stats})
+                    for k, v in stats.items():
+                        dest[k] += float(v)
+            count = len(records)
+            mem_summary: Dict[str, MetricDict] = {
+                mem: {k: v / count for k, v in stats.items()} for mem, stats in agg.items()
+            }
+            for mem, stats in mem_summary.items():
+                attempts = stats.get("attempts", 0.0)
+                if mem == "relational" and attempts:
+                    stats["duplicate_rate"] = stats.get("aggregated", 0.0) / attempts
+                if mem == "spatial" and attempts:
+                    stats["nodes_per_1k"] = stats.get("nodes_added", 0.0) / attempts * 1000.0
+                    stats["edges_per_1k"] = stats.get("edges_added", 0.0) / attempts * 1000.0
+            summary[suite][status] = mem_summary
     return summary
 
 
@@ -171,7 +190,7 @@ def _render_markdown_suite(
     suite: str,
     presets: Dict[str, MetricDict],
     retrieval: Dict[str, MetricDict] | None,
-    gates: Dict[str, MetricDict] | None,
+    gates: Dict[str, Dict[str, MetricDict]] | None,
 ) -> str:
     """Return a Markdown table for a single suite."""
 
@@ -202,19 +221,69 @@ def _render_markdown_suite(
         lines.append("")
     if gates:
         lines.append("## Gate Telemetry")
-        lines.append(
-            "| mem | attempts | inserted | aggregated | routed_to_episodic/blocked_new_edges |"
-        )
-        lines.append("|---|---|---|---|---|")
-        for mem in sorted(gates):
-            stats = gates[mem]
-            key = "routed_to_episodic" if mem == "relational" else "blocked_new_edges"
-            row = (
-                f"| {mem} | {int(stats['attempts'])} | {int(stats['inserted'])} | "
-                f"{int(stats['aggregated'])} | {int(stats.get(key, 0))} |"
-            )
-            lines.append(row)
-        lines.append("")
+        int_keys = {
+            "attempts",
+            "inserted",
+            "aggregated",
+            "routed_to_episodic",
+            "blocked_new_edges",
+            "nodes_added",
+            "edges_added",
+        }
+        order = [
+            "attempts",
+            "inserted",
+            "aggregated",
+            "duplicate_rate",
+            "nodes_added",
+            "edges_added",
+            "nodes_per_1k",
+            "edges_per_1k",
+            "routed_to_episodic",
+            "blocked_new_edges",
+        ]
+        for status, mems in gates.items():
+            lines.append(f"### Gate {status.upper()}")
+            metric_keys = [k for k in order if any(k in s for s in mems.values())]
+            header = "| mem | " + " | ".join(metric_keys) + " |"
+            sep = "|---" * (len(metric_keys) + 1) + "|"
+            lines.extend([header, sep])
+            for mem in sorted(mems):
+                stats = mems[mem]
+                vals: list[str] = []
+                for key in metric_keys:
+                    val = stats.get(key, 0)
+                    if key in int_keys:
+                        vals.append(str(int(val)))
+                    else:
+                        vals.append(f"{val:.3f}")
+                lines.append("| " + mem + " | " + " | ".join(vals) + " |")
+            lines.append("")
+        if "on" in gates and "off" in gates:
+            lines.append("### Gate ON vs OFF")
+            lines.append("| mem | metric | on | off | Δ |")
+            lines.append("|---|---|---|---|---|")
+            on = gates["on"]
+            off = gates["off"]
+            rel_on = on.get("relational")
+            rel_off = off.get("relational")
+            if rel_on and rel_off and "duplicate_rate" in rel_on and "duplicate_rate" in rel_off:
+                dv = rel_on["duplicate_rate"] - rel_off["duplicate_rate"]
+                lines.append(
+                    f"| relational | duplicate_rate | {rel_on['duplicate_rate']:.3f} | "
+                    f"{rel_off['duplicate_rate']:.3f} | {dv:+.3f} |"
+                )
+            spa_on = on.get("spatial")
+            spa_off = off.get("spatial")
+            if spa_on and spa_off:
+                for metric in ["nodes_per_1k", "edges_per_1k"]:
+                    if metric in spa_on and metric in spa_off:
+                        dv = spa_on[metric] - spa_off[metric]
+                        lines.append(
+                            f"| spatial | {metric} | {spa_on[metric]:.3f} | "
+                            f"{spa_off[metric]:.3f} | {dv:+.3f} |"
+                        )
+            lines.append("")
     return "\n".join(lines)
 
 
@@ -244,7 +313,7 @@ def _render_plots_suite(suite: str, presets: Dict[str, MetricDict], out_dir: Pat
 def write_reports(
     summary: Summary,
     retrieval: Dict[str, Dict[str, MetricDict]],
-    gates: Dict[str, Dict[str, MetricDict]],
+    gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
     out_dir: Path,
     plots: bool,
 ) -> Dict[str, Path]:
