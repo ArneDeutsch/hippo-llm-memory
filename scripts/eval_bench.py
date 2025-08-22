@@ -421,10 +421,10 @@ def write_outputs(
         "pip_hash": _pip_hash(),
     }
     if torch.cuda.is_available():
-        meta["cuda"] = {
-            "version": torch.version.cuda,
-            "driver": torch._C._cuda_getDriverVersion(),
-        }
+        cuda_meta = {"version": torch.version.cuda}
+        if hasattr(torch._C, "_cuda_getDriverVersion"):
+            cuda_meta["driver"] = torch._C._cuda_getDriverVersion()
+        meta["cuda"] = cuda_meta
     config_meta: Dict[str, Dict[str, object]] = {}
     if rel_gate is not None:
         config_meta.setdefault("relational", {})["gate"] = rel_gate
