@@ -52,6 +52,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from hippo_mem.common import ProvenanceLogger
+
 from .utils import cosine_dissimilarity
 
 logger = logging.getLogger(__name__)
@@ -291,6 +293,7 @@ class WriteGate:
         beta: float = 0.5,
         gamma: float = 1.0,
         delta: float = 1.0,
+        logger: ProvenanceLogger | None = None,
     ) -> None:
         """Initialise the gate.
 
@@ -322,6 +325,7 @@ class WriteGate:
         self.beta = beta
         self.gamma = gamma
         self.delta = delta
+        self.logger = logger
 
     def score(
         self,
@@ -420,8 +424,17 @@ class WriteGate:
         if timestamp is None:
             timestamp = time.time()
         sc = self.score(prob, query, keys, reward, pin)
-        # why: compare to threshold to decide on write
-        return GateDecision(sc > self.tau, sc, provenance, timestamp)
+        allow = sc > self.tau
+        decision = GateDecision(allow, sc, provenance, timestamp)
+        if self.logger is not None:
+            action = "insert" if allow else "skip"
+            self.logger.log(
+                mem="episodic",
+                action=action,
+                reason=f"score={sc:.2f}",
+                payload={"score": sc, "prob": prob},
+            )
+        return decision
 
 
 def gate_batch(

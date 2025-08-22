@@ -14,6 +14,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Deque, Optional, Tuple
 
+from hippo_mem.common import ProvenanceLogger
+
 from .map import PlaceGraph
 
 
@@ -25,6 +27,7 @@ class SpatialGate:
     repeat_N: int = 3
     recent_window: int = 20
     max_degree: int = 64
+    logger: ProvenanceLogger | None = None
     _ctx_hist: Deque[str] = field(init=False)
     _edge_hist: Deque[Tuple[str, str]] = field(init=False)
 
@@ -55,21 +58,26 @@ class SpatialGate:
         score = repeat_pen + edge_pen + deg_pen
 
         self._ctx_hist.append(context)
-        action = "insert"
-        reason = "new_edge"
         if score >= self.block_threshold:
-            return "route_to_episodic", f"score={score:.2f}>=thr"
-
-        if prev_ctx is not None:
-            a_id = graph._context_to_id.get(prev_ctx)
-            b_id = graph._context_to_id.get(context)
-            if a_id is not None and b_id is not None and graph.graph.get(a_id, {}).get(b_id):
-                action = "aggregate"
-                reason = "duplicate_edge"
-            else:
-                action = "insert"
-                reason = "new_edge"
-            self._edge_hist.append((prev_ctx, context))
+            action, reason = "route_to_episodic", f"score={score:.2f}>=thr"
+        else:
+            action = "insert"
+            reason = "new_edge"
+            if prev_ctx is not None:
+                a_id = graph._context_to_id.get(prev_ctx)
+                b_id = graph._context_to_id.get(context)
+                if a_id is not None and b_id is not None and graph.graph.get(a_id, {}).get(b_id):
+                    action = "aggregate"
+                    reason = "duplicate_edge"
+                self._edge_hist.append((prev_ctx, context))
+        if self.logger is not None:
+            payload = {
+                "prev": prev_ctx,
+                "ctx": context,
+                "deg_pen": deg_pen,
+                "score": score,
+            }
+            self.logger.log(mem="spatial", action=action, reason=reason, payload=payload)
         return action, reason
 
 

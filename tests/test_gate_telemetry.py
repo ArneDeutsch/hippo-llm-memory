@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from hippo_mem.common import ProvenanceLogger
 from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph
@@ -22,6 +23,18 @@ def test_gate_counters_increment() -> None:
     spa = gate_registry.get("spatial")
     assert spa.attempts >= 2
     assert spa.inserted >= 2
+
+
+def test_provenance_logger_writes(tmp_path: Path) -> None:
+    logger = ProvenanceLogger(str(tmp_path))
+    kg = KnowledgeGraph(gate=RelationalGate(logger=logger))
+    kg.ingest(("A", "likes", "B", "ctx", None, 0.9, 0))
+    graph = PlaceGraph()
+    records = [{"trajectory": [(0, 0), (1, 0)]}]
+    ingest_spatial_traces(records, graph, {"enabled": True}, logger)
+    log_file = tmp_path / "provenance.ndjson"
+    assert log_file.exists()
+    assert log_file.read_text().strip()
 
 
 def test_gate_metrics_propagate(tmp_path: Path) -> None:

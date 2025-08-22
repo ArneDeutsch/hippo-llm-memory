@@ -44,7 +44,7 @@ from hippo_mem.adapters.episodic_adapter import EpisodicMemoryAdapter
 from hippo_mem.adapters.lora import count_trainable_parameters, default_target_modules
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
-from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common import MemoryTokens, ProvenanceLogger, TraceSpec
 from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
@@ -499,6 +499,7 @@ def ingest_spatial_traces(
     records: Iterable[dict[str, Any]],
     graph: PlaceGraph,
     gate_cfg: Optional[dict] = None,
+    logger: ProvenanceLogger | None = None,
 ) -> None:
     """Insert trajectories from ``records`` into ``graph``.
 
@@ -519,6 +520,7 @@ def ingest_spatial_traces(
             repeat_N=gate_cfg.get("repeat_N", 3),
             recent_window=gate_cfg.get("recent_window", 20),
             max_degree=gate_cfg.get("max_degree", 64),
+            logger=logger,
         )
     stats = gate_registry.get("spatial")
 
@@ -567,11 +569,13 @@ class _IngestCallback(TrainerCallback):
         records: Iterable[dict[str, Any]] | None,
         kg: KnowledgeGraph,
         graph: PlaceGraph,
+        provenance: ProvenanceLogger | None,
     ) -> None:
         self.cfg = cfg
         self.records = list(records) if records is not None else []
         self.kg = kg
         self.graph = graph
+        self.provenance = provenance
         self._kg_nodes = kg.graph.number_of_nodes()
         self._kg_edges = kg.graph.number_of_edges()
         self._pg_nodes = len(graph.graph)
@@ -595,9 +599,9 @@ class _IngestCallback(TrainerCallback):
         if self.cfg.spatial.enabled and self.records:
             gate_cfg = getattr(self.cfg.memory.spatial, "gate", None)
             if gate_cfg:
-                ingest_spatial_traces(self.records, self.graph, gate_cfg)
+                ingest_spatial_traces(self.records, self.graph, gate_cfg, self.provenance)
             else:
-                ingest_spatial_traces(self.records, self.graph)
+                ingest_spatial_traces(self.records, self.graph, logger=self.provenance)
             nodes = len(self.graph.graph)
             edges = sum(len(v) for v in self.graph.graph.values())
             logging.info(
@@ -637,7 +641,11 @@ def prepare_datasets(cfg: TrainConfig):
     return train_ds, val_ds
 
 
-def init_memory(context: TrainerContext, cfg: TrainConfig) -> None:
+def init_memory(
+    context: TrainerContext,
+    cfg: TrainConfig,
+    provenance: ProvenanceLogger | None = None,
+) -> None:
     """Configure stores, adapters and replay workers."""
 
     model = context.model
@@ -654,7 +662,7 @@ def init_memory(context: TrainerContext, cfg: TrainConfig) -> None:
     }
     context.store = EpisodicStore(hidden, config=store_cfg)
     context.writer = AsyncStoreWriter(context.store)
-    context.gate = WriteGate(tau=cfg.write_threshold)
+    context.gate = WriteGate(tau=cfg.write_threshold, logger=provenance)
     epi_interval = 0.1 if cfg.dry_run else cfg.episodic_mem.maintenance_interval
     context.store.start_background_tasks(epi_interval)
 
@@ -770,6 +778,7 @@ def init_memory(context: TrainerContext, cfg: TrainConfig) -> None:
             w_deg=gate_cfg.get("w_deg", 0.4),
             w_rec=gate_cfg.get("w_rec", 0.2),
             max_degree=gate_cfg.get("max_degree", 64),
+            logger=provenance,
         )
         context.kg = KnowledgeGraph(config=kg_cfg, gate=kg_gate)
     else:
@@ -813,6 +822,7 @@ def _train(
     tokenizer,
     train_ds,
     val_ds,
+    provenance: ProvenanceLogger | None,
 ) -> None:
     """Execute the training or dry‑run."""
     random.seed(cfg.seed)
@@ -909,9 +919,9 @@ def _train(
                 if cfg.spatial.enabled:
                     gate_cfg = getattr(cfg.memory.spatial, "gate", None)
                     if gate_cfg:
-                        ingest_spatial_traces(train_ds, context.spatial_map, gate_cfg)
+                        ingest_spatial_traces(train_ds, context.spatial_map, gate_cfg, provenance)
                     else:
-                        ingest_spatial_traces(train_ds, context.spatial_map)
+                        ingest_spatial_traces(train_ds, context.spatial_map, logger=provenance)
             return
 
         training_args = SFTConfig(
@@ -935,7 +945,9 @@ def _train(
             eval_dataset=val_ds,
         )
         if hasattr(trainer, "add_callback"):
-            trainer.add_callback(_IngestCallback(cfg, train_ds, context.kg, context.spatial_map))
+            trainer.add_callback(
+                _IngestCallback(cfg, train_ds, context.kg, context.spatial_map, provenance)
+            )
         orig_compute_loss = trainer.compute_loss
 
         def compute_loss_with_memory(self, model, inputs, return_outputs=False):
@@ -1018,9 +1030,10 @@ def train(cfg: TrainConfig) -> None:
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
     context = TrainerContext(model=model, log_interval=cfg.memory.runtime.log_interval)
-    init_memory(context, cfg)
+    provenance = ProvenanceLogger(os.getcwd())
+    init_memory(context, cfg, provenance)
     train_ds, val_ds = prepare_datasets(cfg)
-    _train(cfg, context, tokenizer, train_ds, val_ds)
+    _train(cfg, context, tokenizer, train_ds, val_ds, provenance)
 
 
 @hydra.main(config_name="train_lora_config", version_base=None)
