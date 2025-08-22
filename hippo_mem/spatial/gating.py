@@ -27,14 +27,13 @@ class SpatialGate:
     max_degree: int = 64
     _ctx_hist: Deque[str] = field(init=False)
     _edge_hist: Deque[Tuple[str, str]] = field(init=False)
-    _last_ctx: Optional[str] = None
 
     def __post_init__(self) -> None:
         self._ctx_hist = deque(maxlen=self.repeat_N)
         self._edge_hist = deque(maxlen=self.recent_window)
 
-    def allow(self, context: str, graph: PlaceGraph) -> bool:
-        """Return ``True`` if ``context`` should be observed."""
+    def decide(self, prev_ctx: Optional[str], context: str, graph: PlaceGraph) -> Tuple[str, str]:
+        """Return ``(action, reason)`` for a context transition."""
 
         repeat_pen = 0.0
         if len(self._ctx_hist) >= self.repeat_N - 1 and all(
@@ -43,7 +42,7 @@ class SpatialGate:
             repeat_pen = 1.0
 
         edge_pen = 0.0
-        if self._last_ctx is not None and (self._last_ctx, context) in self._edge_hist:
+        if prev_ctx is not None and (prev_ctx, context) in self._edge_hist:
             edge_pen = 1.0
 
         deg_pen = 0.0
@@ -54,14 +53,24 @@ class SpatialGate:
                 deg_pen = (deg - self.max_degree) / self.max_degree
 
         score = repeat_pen + edge_pen + deg_pen
-        allow = score < self.block_threshold
 
         self._ctx_hist.append(context)
-        if allow:
-            if self._last_ctx is not None:
-                self._edge_hist.append((self._last_ctx, context))
-            self._last_ctx = context
-        return allow
+        action = "insert"
+        reason = "new_edge"
+        if score >= self.block_threshold:
+            return "route_to_episodic", f"score={score:.2f}>=thr"
+
+        if prev_ctx is not None:
+            a_id = graph._context_to_id.get(prev_ctx)
+            b_id = graph._context_to_id.get(context)
+            if a_id is not None and b_id is not None and graph.graph.get(a_id, {}).get(b_id):
+                action = "aggregate"
+                reason = "duplicate_edge"
+            else:
+                action = "insert"
+                reason = "new_edge"
+            self._edge_hist.append((prev_ctx, context))
+        return action, reason
 
 
 __all__ = ["SpatialGate"]

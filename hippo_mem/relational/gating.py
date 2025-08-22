@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, Tuple
 
 from .tuples import TupleType
 
@@ -33,8 +33,8 @@ class RelationalGate:
     recency_window: float = 60.0
     _last_seen: Dict[str, float] = field(default_factory=dict)
 
-    def allow(self, tup: TupleType, kg: "KnowledgeGraph") -> bool:
-        """Return ``True`` when ``tup`` should be inserted."""
+    def decide(self, tup: TupleType, kg: "KnowledgeGraph") -> Tuple[str, str]:
+        """Return ``(action, reason)`` for ``tup``."""
 
         head, rel, tail, *_rest, conf, _prov = tup
 
@@ -66,7 +66,12 @@ class RelationalGate:
 
         self._last_seen[head] = now
         self._last_seen[tail] = now
-        return score >= self.threshold
+
+        if novelty == 0.0:
+            return "aggregate", "duplicate_edge"
+        if score >= self.threshold:
+            return "insert", f"score={score:.2f}>=thr"
+        return "route_to_episodic", f"score={score:.2f}<thr"
 
 
 __all__ = ["RelationalGate"]

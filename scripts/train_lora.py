@@ -528,13 +528,21 @@ def ingest_spatial_traces(
             continue
         count += 1
         steps += len(traj)
+        prev = None
         for coord in traj:
             if isinstance(coord, (list, tuple)) and len(coord) == 2:
                 ctx = f"{coord[0]},{coord[1]}"
             else:  # pragma: no cover - defensive
                 ctx = str(coord)
-            if gate is None or gate.allow(ctx, graph):
+            if gate is None:
                 graph.observe(ctx)
+            else:
+                action, _reason = gate.decide(prev, ctx, graph)
+                if action == "insert":
+                    graph.observe(ctx)
+                elif action == "aggregate" and prev is not None:
+                    graph.aggregate_duplicate(prev, ctx)
+            prev = ctx
     if count:
         logging.info(
             "spatial_ingest_traces=%d avg_len=%.2f",

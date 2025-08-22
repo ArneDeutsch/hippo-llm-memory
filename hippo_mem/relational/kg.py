@@ -95,6 +95,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         self._maintenance_log: list[dict[str, Any]] = []
         self._log_file = self.config.get("maintenance_log")
         self.gate = gate
+        self._episodic_queue: list[TupleType] = []
 
     # ------------------------------------------------------------------
     # Database utilities
@@ -237,13 +238,13 @@ class KnowledgeGraph(SQLiteExecMixin):
             self._gnn_update([head, tail])
         self._log["writes"] += 1
 
-    def ingest(self, tup: TupleType) -> bool:
-        """Route a tuple through ``SchemaIndex`` and insert if confident.
+    def ingest(self, tup: TupleType) -> tuple[str, str]:
+        """Route ``tup`` and return the chosen action and reason.
 
         Summary
         -------
-        Delegates to :meth:`SchemaIndex.fast_track` to decide whether the
-        tuple belongs in the graph or should remain episodic.
+        Delegates to :meth:`SchemaIndex.fast_track` for inserts, aggregates
+        duplicates or routes low-score tuples to the episodic queue.
 
         Parameters
         ----------
@@ -252,11 +253,11 @@ class KnowledgeGraph(SQLiteExecMixin):
 
         Returns
         -------
-        bool
-            ``True`` if the tuple was inserted.
+        tuple[str, str]
+            Action and gate reason.
         Side Effects
         ------------
-        May mutate the graph and ``SchemaIndex`` buffers.
+        May mutate the graph or enqueue tuples for episodic storage.
 
         Complexity
         ----------
@@ -266,18 +267,49 @@ class KnowledgeGraph(SQLiteExecMixin):
         --------
         >>> kg = KnowledgeGraph()
         >>> kg.schema_index.add_schema('likes', 'likes')
-        >>> kg.ingest(('A', 'likes', 'B', 'ctx', None, 0.9, 0))
-        True
+        >>> kg.ingest(('A', 'likes', 'B', 'ctx', None, 0.9, 0))[0]
+        'insert'
 
         See Also
         --------
         SchemaIndex.fast_track
         """
 
-        if self.gate and not self.gate.allow(tup, self):
-            return False
-        # why: schema index gates tuples to reduce noisy graph writes
-        return self.schema_index.fast_track(tup, self)
+        action = "insert"
+        reason = "no_gate"
+        if self.gate:
+            action, reason = self.gate.decide(tup, self)
+
+        if action == "insert":
+            self.schema_index.fast_track(tup, self)
+        elif action == "aggregate":
+            self.aggregate_duplicate(tup)
+        elif action == "route_to_episodic":
+            self.route_to_episodic(tup)
+        return action, reason
+
+    def aggregate_duplicate(self, tup: TupleType) -> None:
+        """Increase edge evidence for an existing tuple."""
+
+        head, rel, tail, ctx, time_str, conf, prov = tup
+        data = self.graph.get_edge_data(head, tail) or {}
+        for edge_id, edge in data.items():
+            if edge.get("relation") == rel:
+                edge["conf"] = edge.get("conf", 0.0) + conf
+                edge["time"] = time_str
+                cur = self.conn.cursor()
+                cur.execute(
+                    "UPDATE edges SET conf=?, time=? WHERE id=?",
+                    (edge["conf"], time_str, edge_id),
+                )
+                self.conn.commit()
+                break
+
+    def route_to_episodic(self, tup: TupleType) -> None:
+        """Enqueue ``tup`` for episodic storage."""
+
+        # TODO unify with episodic async writer
+        self._episodic_queue.append(tup)
 
     def _to_json(self, emb: Optional[Iterable[float]]) -> Optional[str]:
         if emb is None:
