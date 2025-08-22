@@ -185,15 +185,20 @@
 
 **Objective**: train models with each memory module, evaluate them, perform ablations and compare against baselines.
 
-**Work packages**
++**Work packages**
+0. [ ] **Establish real (non‑oracle) baselines** with `scripts/eval_model.py` (no memory) over the same matrix (sizes 50/200/1000 × seeds 1337/2025/4242).
+1. [ ] HEI‑NW evaluation: fine‑tune with episodic memory; log gate accept %, store growth, retrieval hit@k, replay cycles; record compute (tokens, time_ms_per_100, rss_mb).
+2. [ ] SGC‑RSS evaluation: train with relational memory; log schema fast‑track rate and contradiction filter stats; record compute columns.
+3. [ ] SMPD evaluation: train with spatial memory; log local‑map size and steps‑to‑solve; record compute columns.
+4. [ ] Combined model: enable all memories; run at n=200 with 3 seeds; collect trade‑offs.
+5. [ ] Ablations: for each memory, toggle its key knobs (gate on/off, completion on/off, fast‑track on/off, macro distillation on/off) at n=200 × 3 seeds.
+6. [ ] Reports: create `reports/<date>/index.md` aggregating tables and plots across baselines and memory variants.
 
-1. [ ] **HEI‑NW evaluation**: fine-tune the model with the episodic module; measure episodic metrics (EM, F1, recall@k, robustness vs distractors, ΔEM after replay) on all dataset sizes and seeds. Target improvements should exceed baseline by a meaningful margin (e.g., ≥10 percentage points EM); record compute/memory overheads.
-2. [ ] **SGC-RSS evaluation**: train with the relational module; compute multi-hop accuracy, contradiction rate and time-to-stabilize; aim for significant improvements over baselines.
-3. [ ] **SMPD evaluation**: train with the spatial module; compute success rate, path suboptimality and steps‑to‑solve; evaluate macro-based step reduction.
-4. [ ] **Combined model**: train with all modules enabled ( memory/all preset); evaluate on the three suites; analyze trade-offs.
-5. [ ] **Ablation study**: run controlled experiments toggling key components (sparsity, Hopfield completion, gating, replay, schema fast‑track, path-integration, macros) using Hydra flags ; report how each contributes to performance. 6. Result aggregation: update scripts/report.py to include memory-augmented metrics and ablation results; produce tables and plots comparing baselines, memory variants and ablations.
-
-- [ ] **Gate**: experiments are logged under runs/YYYYMMDD/; metrics and reports are generated; scripts/eval_model.py exists and is used; adapter wiring verified by tests and trainable-count logs; ablation report demonstrates contribution of each component; aggregated report summarises findings.
+**Gate**
+- [ ] For each memory variant and baselines (real), runs exist at sizes 50 and 200 with seeds 1337/2025/4242 and include compute & telemetry fields.
+- [ ] Improvements over real baselines are demonstrated on n=200 (episodic EM +10 points suggested; others suite‑specific).
+- [ ] Ablation effects are clear (directional, non‑noisy).
+- [ ] `reports/<date>/index.md` is present with tables/plots and links to per‑suite summaries.
 
 # Milestone 10 – Research paper & public release
 
