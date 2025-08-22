@@ -13,3 +13,12 @@ prune:
   min_conf: 0.2   # drop tuples below this confidence
   max_age: 86400  # seconds (1 day)
 
+gate:
+  enabled: true
+  threshold: 0.6
+  w_conf: 0.6
+  w_nov: 0.5
+  w_deg: 0.4
+  w_rec: 0.2
+  max_degree: 64
+

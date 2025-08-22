@@ -28,4 +28,4 @@ hippo_mem.relational.kg : SemanticGraph persistence and retrieval.
 hippo_mem.relational.adapter : Dual-path fusion adapter.
 """
 
-__all__ = ["adapter", "kg", "schema", "tuples"]
+__all__ = ["adapter", "kg", "schema", "tuples", "gating"]
