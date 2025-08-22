@@ -10,6 +10,7 @@ gating_weights:
 prune:
   max_age: 1000  # steps; see EVAL_PLAN §3.3
 
+# Gate regulating map growth; toggle via ``memory.spatial.gate.enabled``
 gate:
   enabled: true
   block_threshold: 1.0
