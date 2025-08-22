@@ -15,8 +15,13 @@ import argparse
 import hashlib
 import json
 import random
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Set
+
+SIZES = [50, 200, 1000]
+SEEDS = [1337, 2025, 4242]
 
 
 def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[str, object]]:
@@ -317,13 +322,45 @@ def sha256_file(path: Path) -> str:
 
 
 def record_checksum(data_path: Path, checksum_file: Path) -> str:
-    """Append SHA256 of ``data_path`` to ``checksum_file`` and return it."""
+    """Record SHA256 of ``data_path`` in ``checksum_file`` and return it."""
 
     digest = sha256_file(data_path)
     checksum_file.parent.mkdir(parents=True, exist_ok=True)
-    with checksum_file.open("a", encoding="utf-8") as f:
-        f.write(f"{digest}  {data_path.name}\n")
+    data: Dict[str, str] = {}
+    if checksum_file.exists():
+        data = json.loads(checksum_file.read_text())
+    data[data_path.name] = digest
+    checksum_file.write_text(json.dumps(data, indent=2))
     return digest
+
+
+def update_dataset_card(
+    suite: str,
+    suite_dir: Path,
+    filename: str,
+    digest: str,
+    generator_version: str,
+) -> None:
+    """Update ``dataset_card.json`` for ``suite`` with ``filename`` → ``digest``."""
+
+    card_path = suite_dir / "dataset_card.json"
+    if card_path.exists():
+        card = json.loads(card_path.read_text())
+    else:
+        card = {
+            "suite": suite,
+            "sizes": SIZES,
+            "seeds": SEEDS,
+            "generator_version": generator_version,
+            "files": {},
+            "created_utc": datetime.now(timezone.utc).isoformat(),
+            "cli_example": (
+                f"python scripts/build_datasets.py suite={suite} size=<size> seed=<seed> "
+                f"out=data/{suite}/<size>_<seed>.jsonl"
+            ),
+        }
+    card["files"][filename] = digest
+    card_path.write_text(json.dumps(card, indent=2))
 
 
 def main() -> None:
@@ -402,8 +439,10 @@ def main() -> None:
     else:
         items = generator(args.size, args.seed)
     write_jsonl(args.out, items)
-    checksum_path = args.out.parent / "checksums.txt"
-    record_checksum(args.out, checksum_path)
+    checksum_path = args.out.parent / "checksums.json"
+    digest = record_checksum(args.out, checksum_path)
+    version = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+    update_dataset_card(args.suite, args.out.parent, args.out.name, digest, version)
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point

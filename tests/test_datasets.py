@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from scripts import build_datasets
@@ -9,23 +10,30 @@ def test_dataset_generators_deterministic(tmp_path: Path) -> None:
     """Datasets with same seed should produce identical JSONL outputs."""
 
     for suite in SUITES:
+        suite_dir = tmp_path / suite
+        suite_dir.mkdir()
         items1 = build_datasets.generate_dataset(suite, size=5, seed=123)
         items2 = build_datasets.generate_dataset(suite, size=5, seed=123)
         assert items1 == items2
 
-        file1 = tmp_path / f"{suite}_a.jsonl"
-        file2 = tmp_path / f"{suite}_b.jsonl"
+        file1 = suite_dir / f"{suite}_a.jsonl"
+        file2 = suite_dir / f"{suite}_b.jsonl"
         build_datasets.write_jsonl(file1, items1)
         build_datasets.write_jsonl(file2, items2)
 
         assert file1.read_text() == file2.read_text()
         assert len(file1.read_text().splitlines()) == 5
 
-        checksum_file = tmp_path / "checksums.txt"
+        checksum_file = suite_dir / "checksums.json"
         hash_written = build_datasets.record_checksum(file1, checksum_file)
-        last_line = checksum_file.read_text().strip().splitlines()[-1]
-        assert last_line == f"{hash_written}  {file1.name}"
+        data = json.loads(checksum_file.read_text())
+        assert data[file1.name] == hash_written
         assert hash_written == build_datasets.sha256_file(file1)
+
+        build_datasets.update_dataset_card(suite, suite_dir, file1.name, hash_written, "test")
+        card = json.loads((suite_dir / "dataset_card.json").read_text())
+        assert card["files"][file1.name] == hash_written
+        assert card["suite"] == suite
 
 
 def test_semantic_options() -> None:
