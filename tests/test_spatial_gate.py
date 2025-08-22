@@ -1,5 +1,7 @@
 """Tests for ``SpatialGate`` heuristics."""
 
+import pytest
+
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.map import PlaceGraph
 
@@ -26,3 +28,12 @@ def test_spatial_gate_reduces_repeats() -> None:
     edge = g1.graph[g1._context_to_id["P"]][g1._context_to_id["Q"]]
     assert edge.weight > 1.0
     assert writes_gate < writes_plain
+
+
+def test_spatial_gate_rejects_bad_config() -> None:
+    with pytest.raises(ValueError):
+        SpatialGate(block_threshold=1.5)
+    with pytest.raises(ValueError):
+        SpatialGate(repeat_N=0)
+    with pytest.raises(ValueError):
+        SpatialGate(max_degree=0)

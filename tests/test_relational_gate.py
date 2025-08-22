@@ -1,5 +1,7 @@
 """Tests for ``RelationalGate`` salience gating."""
 
+import pytest
+
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph
 
@@ -23,3 +25,12 @@ def test_relational_gate_skips_duplicates() -> None:
     edge = next(iter(kg.graph.get_edge_data("A", "B").values()))
     assert edge["conf"] > 0.9
     assert with_gate < without_gate
+
+
+def test_relational_gate_rejects_bad_config() -> None:
+    with pytest.raises(ValueError):
+        RelationalGate(threshold=1.1)
+    with pytest.raises(ValueError):
+        RelationalGate(w_conf=-0.1)
+    with pytest.raises(ValueError):
+        RelationalGate(max_degree=0)

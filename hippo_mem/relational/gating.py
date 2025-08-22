@@ -36,6 +36,18 @@ class RelationalGate:
     logger: ProvenanceLogger | None = None
     _last_seen: Dict[str, float] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.threshold <= 1.0:
+            raise ValueError("threshold must be in [0, 1]")
+        for name in ("w_conf", "w_nov", "w_deg", "w_rec"):
+            val = getattr(self, name)
+            if not 0.0 <= val <= 1.0:
+                raise ValueError(f"{name} must be in [0, 1]")
+        if self.max_degree < 1:
+            raise ValueError("max_degree must be >= 1")
+        if self.recency_window <= 0:
+            raise ValueError("recency_window must be > 0")
+
     def decide(self, tup: TupleType, kg: "KnowledgeGraph") -> Tuple[str, str]:
         """Return ``(action, reason)`` for ``tup``."""
 

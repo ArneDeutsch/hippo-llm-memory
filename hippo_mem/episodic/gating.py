@@ -320,6 +320,16 @@ class WriteGate:
         score, __call__
         """
 
+        if not 0.0 <= tau <= 1.0:
+            raise ValueError("tau must be in [0, 1]")
+        for name, val in {
+            "alpha": alpha,
+            "beta": beta,
+            "gamma": gamma,
+            "delta": delta,
+        }.items():
+            if not 0.0 <= val <= 1.0:
+                raise ValueError(f"{name} must be in [0, 1]")
         self.tau = tau
         self.alpha = alpha
         self.beta = beta

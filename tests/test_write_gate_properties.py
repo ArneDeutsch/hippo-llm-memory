@@ -4,6 +4,7 @@ import math
 
 import hypothesis.extra.numpy as hnp
 import numpy as np
+import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
@@ -54,9 +55,17 @@ def test_threshold_blocks_writes(prob: float, query: np.ndarray) -> None:
     keys = np.zeros((0, 4), dtype="float32")
     base_gate = WriteGate()
     score = base_gate.score(prob, query, keys)
+    assume(score < 1 - 1e-6)
     gate_block = WriteGate(tau=score + 1e-6)
     decision = gate_block(prob, query, keys)
     assert not decision.allow
     gate_allow = WriteGate(tau=max(score - 1e-6, 0.0))
     decision2 = gate_allow(prob, query, keys)
     assert decision2.allow
+
+
+def test_write_gate_rejects_bad_config() -> None:
+    with pytest.raises(ValueError):
+        WriteGate(tau=-0.1)
+    with pytest.raises(ValueError):
+        WriteGate(alpha=1.5)
