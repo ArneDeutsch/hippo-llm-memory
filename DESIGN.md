@@ -255,6 +255,8 @@ class SpatialGate:
 * **Stress tests:** rapid novel-episode bursts; schema-flip events; large-map growth.
 * **User-like setting:** interactive sessions with explicit **pin** signals to validate gating.
 * **Baselines:** core LM (FlashAttn), +RAG, +long-context (ALiBi/RoPE), +Compressive/Longformer variants.
+* **Baseline presets (Milestone 8):** all memory adapters, retrieval calls, and gates are disabled;
+  memory telemetry is a no-op so latency and metrics reflect the core model only.
 * **Ablations:** −DG sparsity, −Hopfield, −gate, −replay scheduler, −schema fast-track, −path-integration, −macros.
 * **Compute:** FLOPs saved vs. long-context; KV memory with/without MQA/GQA.
 
