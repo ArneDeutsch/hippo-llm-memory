@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from scripts.report import (
+    _find_latest_date,
     collect_gates,
     collect_metrics,
     collect_retrieval,
@@ -70,7 +71,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
         gates_on,
     )
     _make_metrics(
-        runs_on / "200_2025",
+        runs_on / "50_2025",
         "episodic",
         {"em": 0.7, "r": 0.9},
         {"tokens": 30},
@@ -83,6 +84,9 @@ def test_report_aggregation(tmp_path: Path) -> None:
         {"tokens": 20},
         gates_off,
     )
+    # also create another suite to ensure per-suite report generation
+    other = tmp_path / "runs" / "20250101" / "baselines" / "core" / "semantic"
+    _make_metrics(other / "50_1337", "semantic", {"f1": 0.4}, {"tokens": 5})
 
     base = tmp_path / "runs" / "20250101"
     metrics = collect_metrics(base)
@@ -90,15 +94,45 @@ def test_report_aggregation(tmp_path: Path) -> None:
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
 
-    assert summary["episodic"]["baselines/core/gate_on"]["em"] == 0.6
-    assert summary["episodic"]["baselines/core/gate_on"]["tokens"] == 20
+    em_stats = summary["episodic"]["baselines/core/gate_on"][50]["em"]
+    assert em_stats[0] == 0.6
+    assert round(em_stats[1], 3) == 0.141
+
     out = tmp_path / "reports" / "20250101"
     paths = write_reports(summary, retrieval, gates, out, plots=False)
+    # per-suite summaries present
+    assert set(paths.keys()) == {"episodic", "semantic"}
     md_path = paths["episodic"]
-    assert md_path.exists()
     text = md_path.read_text()
+    # table header contains all fields
+    assert "| Preset | Size | em | r | tokens |" in text
+    # both presets appear as rows
+    assert "| baselines/core/gate_on | 50 |" in text
+    assert "| baselines/core/gate_off | 50 |" in text
+    # gate telemetry rendered
     assert "duplicate_rate" in text
     assert "nodes_per_1k" in text
     assert "Gate ON vs OFF" in text
     assert "+0.200" in text
     assert "-250.000" in text
+
+
+def test_report_handles_missing_optional(tmp_path: Path) -> None:
+    base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
+    _make_metrics(base_dir / "50_1337", "episodic", {"em": 0.5}, {"tokens": 10})
+    base = tmp_path / "runs" / "20250101"
+    summary = summarise(collect_metrics(base))
+    retrieval = summarise_retrieval(collect_retrieval(base))
+    gates = summarise_gates(collect_gates(base))
+    out = tmp_path / "reports" / "20250101"
+    paths = write_reports(summary, retrieval, gates, out, plots=False)
+    text = paths["episodic"].read_text()
+    assert "Retrieval Telemetry" not in text
+    assert "Gate Telemetry" not in text
+
+
+def test_find_latest_date(tmp_path: Path) -> None:
+    base = tmp_path / "runs"
+    (base / "20240101").mkdir(parents=True)
+    (base / "20250102").mkdir()
+    assert _find_latest_date(base) == "20250102"
