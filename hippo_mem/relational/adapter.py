@@ -63,26 +63,6 @@ class RelationalAdapter:
         weights /= weights.sum() if weights.size else 1.0
         return weights @ g
 
-    # why: expose pooling for external callers such as retrieval utilities
-    # TODO: appears unused; consider referencing or removing.
-    def pool(self, query: np.ndarray, feats: np.ndarray) -> np.ndarray:
-        """Public wrapper around :meth:`_attend`.
-
-        Parameters
-        ----------
-        query : np.ndarray
-            Query vector ``(D,)``.
-        feats : np.ndarray
-            Feature matrix ``(N, D)``.
-
-        Returns
-        -------
-        np.ndarray
-            Attention-pooled representation ``(D,)``.
-        """
-
-        return self._attend(query, feats)
-
     def __call__(
         self,
         query: np.ndarray,

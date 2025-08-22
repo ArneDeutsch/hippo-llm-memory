@@ -66,9 +66,9 @@ class Macro:
     name: str
     trajectory: List[str]
     signature: str
-    steps: int  # TODO: appears unused; consider referencing or removing.
+    steps: int  # kept: exposed for debugging and tests
     success_stats: Tuple[int, int]
-    last_update: int  # TODO: appears unused; consider referencing or removing.
+    last_update: int  # kept: updated for recency bias
 
 
 class MacroLib:
@@ -132,7 +132,7 @@ class MacroLib:
             last_update=self._time,
         )
 
-    # TODO: appears unused; consider referencing or removing.
+    # kept: exercised by tests/test_spatial.py
     def update_stats(self, macro_name: str, success: bool) -> None:
         """Update macro performance.
 
@@ -174,9 +174,9 @@ class MacroLib:
             succ += 1
         macro.success_stats = (succ, total)
         self._time += 1
-        macro.last_update = self._time  # TODO: appears unused; consider referencing or removing.
+        macro.last_update = self._time
 
-    # TODO: appears unused; consider referencing or removing.
+    # kept: exercised by tests/test_spatial.py
     def suggest(self, start: str, goal: str, k: int = 1) -> List[Macro]:
         """Return candidate macros.
 

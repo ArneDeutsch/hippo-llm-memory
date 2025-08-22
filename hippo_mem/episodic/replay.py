@@ -403,7 +403,7 @@ class BatchMixLike(Protocol):
 
     episodic: float
     semantic: float
-    fresh: float  # TODO: appears unused; consider referencing or removing.
+    fresh: float  # kept: scheduler derives fresh from remainder; see tests/test_replay_scheduler.py
 
 
 class ReplayScheduler:

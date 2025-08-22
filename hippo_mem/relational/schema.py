@@ -82,7 +82,8 @@ class SchemaIndex:
         self.threshold = threshold
         self.episodic_buffer: List[TupleType] = []
 
-    def add_schema(  # TODO: appears unused; consider referencing or removing.
+    # kept: used by tests/test_relational.py and tests/test_replay_scheduler.py
+    def add_schema(
         self,
         name: str,
         relation: str,

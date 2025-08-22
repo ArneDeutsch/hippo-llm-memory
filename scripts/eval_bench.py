@@ -243,7 +243,7 @@ def _eval_tasks(
 class _BatchMix(SimpleNamespace):
     episodic: float = 1.0
     semantic: float = 0.0
-    fresh: float = 0.0  # TODO: appears unused; consider referencing or removing.
+    fresh: float = 0.0  # kept: scheduler infers remainder; see tests/test_replay_scheduler.py
 
 
 def _run_replay_once(modules: Dict[str, Dict[str, object]]) -> None:

@@ -133,7 +133,7 @@ class Trace:
     EpisodicStore.recall
     """
 
-    id: int  # TODO: appears unused; consider referencing or removing.
+    id: int  # kept: unique trace identifier for audits
     value: TraceValue
     key: DGKey
     score: float
@@ -736,7 +736,7 @@ class EpisodicStore:
         self._stop_event = stop_event
         self._bg_thread = t
 
-    # TODO: appears unused; consider referencing or removing.
+    # kept: exercised by tests/test_episodic.py
     def stop_background_tasks(self) -> None:
         """Stop background maintenance thread if running.
 
@@ -754,7 +754,7 @@ class EpisodicStore:
         self._bg_thread = None
         self._stop_event = None
 
-    # TODO: appears unused; consider referencing or removing.
+    # kept: exercised by tests/test_episodic.py
     def rollback(self, n: int = 1) -> None:
         """Rollback the last ``n`` maintenance operations.
 
