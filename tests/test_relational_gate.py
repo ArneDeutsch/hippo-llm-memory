@@ -10,8 +10,8 @@ def test_relational_gate_skips_duplicates() -> None:
     kg.schema_index.add_schema("likes", "likes")
     tup = ("A", "likes", "B", "ctx", None, 0.9, 0)
 
-    assert kg.ingest(tup) is True
-    assert kg.ingest(tup) is False
+    assert kg.ingest(tup)[0] == "insert"
+    assert kg.ingest(tup)[0] == "aggregate"
     with_gate = kg.graph.number_of_edges()
 
     kg2 = KnowledgeGraph(config={"schema_threshold": 0.0})
@@ -20,4 +20,6 @@ def test_relational_gate_skips_duplicates() -> None:
     kg2.ingest(tup)
     without_gate = kg2.graph.number_of_edges()
 
+    edge = next(iter(kg.graph.get_edge_data("A", "B").values()))
+    assert edge["conf"] > 0.9
     assert with_gate < without_gate

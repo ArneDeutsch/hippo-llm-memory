@@ -46,7 +46,7 @@ class Edge:
 
     Summary
     -------
-    Stores edge cost, success probability, and last observation step.
+    Stores edge cost, success probability, weight and last observation step.
 
     Parameters
     ----------
@@ -56,10 +56,12 @@ class Edge:
         Probability of success in ``[0, 1]``, by default ``1.0``.
     last_seen : int, optional
         Step index when edge was last traversed, by default ``0``.
+    weight : float, optional
+        Evidence count for the edge, by default ``1.0``.
     Examples
     --------
     >>> Edge()
-    Edge(cost=1.0, success=1.0, last_seen=0)
+    Edge(cost=1.0, success=1.0, last_seen=0, weight=1.0)
 
     See Also
     --------
@@ -69,6 +71,7 @@ class Edge:
     cost: float = 1.0
     success: float = 1.0
     last_seen: int = 0
+    weight: float = 1.0
 
 
 @dataclass
@@ -307,6 +310,23 @@ class PlaceGraph:
         self._log["writes"] += 1
         return node
 
+    def aggregate_duplicate(self, prev_ctx: str, context: str) -> None:
+        """Bump edge weight and recency without creating a new edge."""
+
+        self._step += 1
+        a = self._ensure_node(prev_ctx)
+        b = self._ensure_node(context)
+        edge = self.graph[a].get(b)
+        if edge is None:
+            return
+        edge.weight = getattr(edge, "weight", 1.0) + 1.0
+        edge.last_seen = self._step
+        rev = self.graph[b].get(a)
+        if rev is not None:
+            rev.weight = getattr(rev, "weight", 1.0) + 1.0
+            rev.last_seen = self._step
+        self._last_obs = b
+
     def connect(
         self,
         a_context: str,
@@ -358,7 +378,7 @@ class PlaceGraph:
         # why: track last_seen for TTL pruning
         edge = self.graph[a].get(b)
         if edge is None:
-            self.graph[a][b] = Edge(cost, success, last_seen=step or self._step)
+            self.graph[a][b] = Edge(cost, success, last_seen=step or self._step, weight=1.0)
         else:
             edge.cost = cost
             edge.success = success
