@@ -74,4 +74,62 @@ class _Registry:
 
 registry = _Registry()
 
-__all__ = ["RetrievalStats", "registry"]
+
+@dataclass
+class GateStats:
+    """Counters for gate decisions."""
+
+    attempts: int = 0
+    inserted: int = 0
+    aggregated: int = 0
+    routed_to_episodic: int = 0
+    blocked_new_edges: int = 0
+
+    def snapshot(self) -> Dict[str, int]:
+        """Return raw gate counters."""
+
+        return {
+            "attempts": self.attempts,
+            "inserted": self.inserted,
+            "aggregated": self.aggregated,
+            "routed_to_episodic": self.routed_to_episodic,
+            "blocked_new_edges": self.blocked_new_edges,
+        }
+
+
+class GateRegistry:
+    """Thread-safe container for per-memory :class:`GateStats`."""
+
+    def __init__(self, names: list[str]) -> None:
+        self._lock = threading.Lock()
+        self._stats: Dict[str, GateStats] = {name: GateStats() for name in names}
+
+    def get(self, name: str) -> GateStats:
+        """Return stats object for ``name``."""
+
+        with self._lock:
+            return self._stats[name]
+
+    def reset(self) -> None:
+        """Reset all counters to zero."""
+
+        with self._lock:
+            for key in self._stats:
+                self._stats[key] = GateStats()
+
+    def all_snapshots(self) -> Dict[str, Dict[str, int]]:
+        """Return snapshots for all registered memories."""
+
+        with self._lock:
+            return {k: v.snapshot() for k, v in self._stats.items()}
+
+
+gate_registry = GateRegistry(["relational", "spatial"])
+
+__all__ = [
+    "RetrievalStats",
+    "registry",
+    "GateStats",
+    "GateRegistry",
+    "gate_registry",
+]

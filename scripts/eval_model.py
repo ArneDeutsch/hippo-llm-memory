@@ -36,7 +36,7 @@ sys.path.append(str(Path(__file__).resolve().parent))
 from eval_bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 
 from hippo_mem.common import MemoryTokens, TraceSpec
-from hippo_mem.common.telemetry import registry
+from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
@@ -198,6 +198,7 @@ def run_suite(
     """Execute a suite according to ``cfg`` and return rows and metrics."""
 
     registry.reset()
+    gate_registry.reset()
 
     base_cfg = OmegaConf.create(
         {
@@ -236,6 +237,7 @@ def run_suite(
         "preset": cfg.preset,
         "metrics": {cfg.suite: metrics},
         "retrieval": registry.all_snapshots(),
+        "gates": gate_registry.all_snapshots(),
     }
     return rows, metrics_dict, flat_ablate
 
@@ -273,6 +275,7 @@ def _write_outputs(
         "preset": cfg.preset,
         "metrics": {cfg.suite: suite_metrics},
         "retrieval": registry.all_snapshots(),
+        "gates": gate_registry.all_snapshots(),
     }
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f)
@@ -291,8 +294,12 @@ def _write_outputs(
     retrieval_fields = {
         f"retrieval.{m}.{k}": v for m, snap in metrics["retrieval"].items() for k, v in snap.items()
     }
+    gate_fields = {
+        f"gates.{m}.{k}": v for m, snap in metrics["gates"].items() for k, v in snap.items()
+    }
     for row in csv_rows:
         row.update(retrieval_fields)
+        row.update(gate_fields)
     fieldnames = [
         "idx",
         "prompt",
@@ -302,6 +309,7 @@ def _write_outputs(
         "latency_ms",
         "flags",
         *sorted(retrieval_fields),
+        *sorted(gate_fields),
     ]
     with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -348,6 +356,7 @@ def main(cfg: DictConfig) -> None:
         cfg.n = min(cfg.n, 5)
 
     registry.reset()
+    gate_registry.reset()
 
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed)
     tasks = _load_tasks(dataset, cfg.n)
