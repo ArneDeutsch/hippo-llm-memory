@@ -44,7 +44,7 @@ from hippo_mem.adapters.episodic_adapter import EpisodicMemoryAdapter
 from hippo_mem.adapters.lora import count_trainable_parameters, default_target_modules
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
-from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common import MemoryTokens, ProvenanceLogger, TraceSpec
 from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
@@ -440,6 +440,7 @@ class TrainerContext:
     store_size: int = 0
     writer_queue_depth: int = 0
     adapters_attached: bool = False
+    provenance: ProvenanceLogger | None = None
 
     def start(self) -> None:
         if self.worker is not None:
@@ -499,6 +500,7 @@ def ingest_spatial_traces(
     records: Iterable[dict[str, Any]],
     graph: PlaceGraph,
     gate_cfg: Optional[dict] = None,
+    provenance: ProvenanceLogger | None = None,
 ) -> None:
     """Insert trajectories from ``records`` into ``graph``.
 
@@ -540,7 +542,16 @@ def ingest_spatial_traces(
                 graph.observe(ctx)
             else:
                 stats.attempts += 1
-                action, _reason = gate.decide(prev, ctx, graph)
+                action, reason = gate.decide(prev, ctx, graph)
+                if provenance:
+                    payload = {
+                        "prev_ctx": prev,
+                        "ctx": ctx,
+                        "deg": len(
+                            graph.graph.get(graph._context_to_id.get(ctx, -1), {})  # noqa: SLF001
+                        ),
+                    }
+                    provenance.log(mem="spatial", action=action, reason=reason, payload=payload)
                 if action == "insert":
                     stats.inserted += 1
                     graph.observe(ctx)
@@ -567,11 +578,13 @@ class _IngestCallback(TrainerCallback):
         records: Iterable[dict[str, Any]] | None,
         kg: KnowledgeGraph,
         graph: PlaceGraph,
+        provenance: ProvenanceLogger | None,
     ) -> None:
         self.cfg = cfg
         self.records = list(records) if records is not None else []
         self.kg = kg
         self.graph = graph
+        self.provenance = provenance
         self._kg_nodes = kg.graph.number_of_nodes()
         self._kg_edges = kg.graph.number_of_edges()
         self._pg_nodes = len(graph.graph)
@@ -595,9 +608,9 @@ class _IngestCallback(TrainerCallback):
         if self.cfg.spatial.enabled and self.records:
             gate_cfg = getattr(self.cfg.memory.spatial, "gate", None)
             if gate_cfg:
-                ingest_spatial_traces(self.records, self.graph, gate_cfg)
+                ingest_spatial_traces(self.records, self.graph, gate_cfg, self.provenance)
             else:
-                ingest_spatial_traces(self.records, self.graph)
+                ingest_spatial_traces(self.records, self.graph, provenance=self.provenance)
             nodes = len(self.graph.graph)
             edges = sum(len(v) for v in self.graph.graph.values())
             logging.info(
@@ -771,9 +784,9 @@ def init_memory(context: TrainerContext, cfg: TrainConfig) -> None:
             w_rec=gate_cfg.get("w_rec", 0.2),
             max_degree=gate_cfg.get("max_degree", 64),
         )
-        context.kg = KnowledgeGraph(config=kg_cfg, gate=kg_gate)
+        context.kg = KnowledgeGraph(config=kg_cfg, gate=kg_gate, provenance=context.provenance)
     else:
-        context.kg = KnowledgeGraph(config=kg_cfg)
+        context.kg = KnowledgeGraph(config=kg_cfg, provenance=context.provenance)
     kg_interval = 0.1 if cfg.dry_run else cfg.relational_mem.maintenance_interval
     context.kg.start_background_tasks(kg_interval)
 
@@ -888,7 +901,14 @@ def _train(
                 probs = np.array([1.0])
                 queries = np.zeros((1, hidden), dtype=np.float32)
                 keys = np.zeros((0, hidden), dtype=np.float32)
-                decisions, _ = gate_batch(context.gate, probs, queries, keys)
+                decisions, _ = gate_batch(
+                    context.gate,
+                    probs,
+                    queries,
+                    keys,
+                    provenance="dry_run",
+                    prov_logger=context.provenance,
+                )
                 context.gate_attempts += len(decisions)
                 context.gate_accepts += sum(d.allow for d in decisions)
                 for dec, q in zip(decisions, queries):
@@ -909,9 +929,13 @@ def _train(
                 if cfg.spatial.enabled:
                     gate_cfg = getattr(cfg.memory.spatial, "gate", None)
                     if gate_cfg:
-                        ingest_spatial_traces(train_ds, context.spatial_map, gate_cfg)
+                        ingest_spatial_traces(
+                            train_ds, context.spatial_map, gate_cfg, context.provenance
+                        )
                     else:
-                        ingest_spatial_traces(train_ds, context.spatial_map)
+                        ingest_spatial_traces(
+                            train_ds, context.spatial_map, provenance=context.provenance
+                        )
             return
 
         training_args = SFTConfig(
@@ -935,7 +959,9 @@ def _train(
             eval_dataset=val_ds,
         )
         if hasattr(trainer, "add_callback"):
-            trainer.add_callback(_IngestCallback(cfg, train_ds, context.kg, context.spatial_map))
+            trainer.add_callback(
+                _IngestCallback(cfg, train_ds, context.kg, context.spatial_map, context.provenance)
+            )
         orig_compute_loss = trainer.compute_loss
 
         def compute_loss_with_memory(self, model, inputs, return_outputs=False):
@@ -976,7 +1002,14 @@ def _train(
                     )
                     queries = hidden[:, -1, :].detach().cpu().numpy()
                     keys = store.keys()
-                decisions, _ = gate_batch(gate, probs, queries, keys)
+                decisions, _ = gate_batch(
+                    gate,
+                    probs,
+                    queries,
+                    keys,
+                    provenance="train",
+                    prov_logger=context.provenance,
+                )
                 context.gate_attempts += len(decisions)
                 context.gate_accepts += sum(d.allow for d in decisions)
                 for dec, q in zip(decisions, queries):
@@ -1017,7 +1050,10 @@ def train(cfg: TrainConfig) -> None:
     """Wrapper that prepares context and datasets then runs training."""
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
-    context = TrainerContext(model=model, log_interval=cfg.memory.runtime.log_interval)
+    provenance = ProvenanceLogger(cfg.output_dir)
+    context = TrainerContext(
+        model=model, log_interval=cfg.memory.runtime.log_interval, provenance=provenance
+    )
     init_memory(context, cfg)
     train_ds, val_ds = prepare_datasets(cfg)
     _train(cfg, context, tokenizer, train_ds, val_ds)

@@ -52,6 +52,7 @@ from hippo_mem.adapters import (
     RelationalMemoryAdapter,
     SpatialMemoryAdapter,
 )
+from hippo_mem.common.provenance import ProvenanceLogger
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.replay import ReplayScheduler
@@ -79,7 +80,9 @@ def _config_hash(cfg: DictConfig) -> str:
 
 
 def _init_modules(
-    memory: Optional[object], ablate: Dict[str, object]
+    memory: Optional[object],
+    ablate: Dict[str, object],
+    provenance: ProvenanceLogger | None = None,
 ) -> Dict[str, Dict[str, object]]:
     """Initialise memory modules based on ``memory`` config.
 
@@ -102,7 +105,7 @@ def _init_modules(
         modules["episodic"] = {"store": store, "adapter": EpisodicMemoryAdapter(adapter_cfg)}
 
     def _add_relational() -> None:
-        kg = KnowledgeGraph()
+        kg = KnowledgeGraph(provenance=provenance)
         kg.upsert("a", "rel", "b", "a rel b")
         modules["relational"] = {"kg": kg, "adapter": RelationalMemoryAdapter()}
 

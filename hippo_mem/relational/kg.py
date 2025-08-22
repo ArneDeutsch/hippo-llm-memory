@@ -39,6 +39,7 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 import networkx as nx
 import numpy as np
 
+from hippo_mem.common.provenance import ProvenanceLogger
 from hippo_mem.common.sqlite import SQLiteExecMixin
 from hippo_mem.common.telemetry import gate_registry
 
@@ -78,6 +79,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         *,
         config: Optional[dict] = None,
         gate: Optional[RelationalGate] = None,
+        provenance: Optional[ProvenanceLogger] = None,
     ) -> None:
         self.graph = nx.MultiDiGraph()
         self.node_embeddings: Dict[str, np.ndarray] = {}
@@ -96,6 +98,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         self._maintenance_log: list[dict[str, Any]] = []
         self._log_file = self.config.get("maintenance_log")
         self.gate = gate
+        self.provenance = provenance
         self._episodic_queue: list[TupleType] = []
 
     # ------------------------------------------------------------------
@@ -281,6 +284,26 @@ class KnowledgeGraph(SQLiteExecMixin):
         reason = "no_gate"
         if self.gate:
             action, reason = self.gate.decide(tup, self)
+
+        if self.provenance:
+            head, rel, tail, *_rest, conf, _prov = tup
+            score = None
+            if "score=" in reason:
+                try:
+                    score = float(reason.split("score=")[1].split(">", 1)[0])
+                except ValueError:  # pragma: no cover - defensive
+                    score = None
+            payload: dict[str, float | str] = {
+                "head": head,
+                "rel": rel,
+                "tail": tail,
+                "conf": conf,
+                "deg_h": self.graph.degree(head) if self.graph.has_node(head) else 0,
+                "deg_t": self.graph.degree(tail) if self.graph.has_node(tail) else 0,
+            }
+            if score is not None:
+                payload["score"] = score
+            self.provenance.log(mem="relational", action=action, reason=reason, payload=payload)
 
         if action == "insert":
             stats.inserted += 1

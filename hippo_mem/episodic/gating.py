@@ -52,6 +52,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from hippo_mem.common.provenance import ProvenanceLogger
+
 from .utils import cosine_dissimilarity
 
 logger = logging.getLogger(__name__)
@@ -432,6 +434,7 @@ def gate_batch(
     rewards: np.ndarray | None = None,
     pins: np.ndarray | None = None,
     provenance: str = "",
+    prov_logger: ProvenanceLogger | None = None,
 ) -> tuple[list[GateDecision], float]:
     """Apply :class:`WriteGate` over a batch of items.
 
@@ -490,6 +493,13 @@ def gate_batch(
         pin = bool(pins[i]) if pins is not None else False
         dec = gate(p, queries[i], keys, r, pin, provenance)
         decisions.append(dec)
+        if prov_logger is not None:
+            prov_logger.log(
+                mem="episodic",
+                action="write" if dec.allow else "skip",
+                reason=f"score={dec.score:.2f}",
+                payload={"provenance": dec.provenance},
+            )
         if dec.allow:
             accepts += 1
 

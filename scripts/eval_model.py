@@ -36,6 +36,7 @@ sys.path.append(str(Path(__file__).resolve().parent))
 from eval_bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 
 from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common.provenance import ProvenanceLogger
 from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
@@ -212,10 +213,21 @@ def run_suite(
     if cfg.preset:
         preset_cfg = OmegaConf.load(cfg.preset)
         base_cfg = OmegaConf.merge(base_cfg, preset_cfg)
+    outdir_cfg = getattr(cfg, "outdir", None)
+    if outdir_cfg is not None:
+        outdir = Path(to_absolute_path(str(outdir_cfg)))
+    else:
+        date = datetime.now(timezone.utc).strftime("%Y%m%d")
+        preset_path = Path(str(cfg.preset))
+        if preset_path.parts and preset_path.parts[0] == "baselines":
+            outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
+        else:
+            outdir = Path("runs") / date / preset_path.name / cfg.suite
 
+    provenance = ProvenanceLogger(str(outdir))
     tasks = _load_tasks(_dataset_path(cfg.suite, cfg.n, cfg.seed), cfg.n)
     flat_ablate = _flatten_ablate(base_cfg.get("ablate"))
-    modules = _init_modules(base_cfg.get("memory"), flat_ablate)
+    modules = _init_modules(base_cfg.get("memory"), flat_ablate, provenance=provenance)
 
     model_path = to_absolute_path(str(base_cfg.model))
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -358,10 +370,22 @@ def main(cfg: DictConfig) -> None:
     registry.reset()
     gate_registry.reset()
 
+    outdir_cfg = cfg.get("outdir")
+    if outdir_cfg is not None:
+        outdir = Path(to_absolute_path(str(outdir_cfg)))
+    else:
+        date = datetime.now(timezone.utc).strftime("%Y%m%d")
+        preset_path = Path(str(cfg.preset))
+        if preset_path.parts and preset_path.parts[0] == "baselines":
+            outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
+        else:
+            outdir = Path("runs") / date / preset_path.name / cfg.suite
+
+    provenance = ProvenanceLogger(str(outdir))
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed)
     tasks = _load_tasks(dataset, cfg.n)
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
-    modules = _init_modules(cfg.get("memory"), flat_ablate)
+    modules = _init_modules(cfg.get("memory"), flat_ablate, provenance=provenance)
 
     model_path = to_absolute_path(str(cfg.model))
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -379,17 +403,6 @@ def main(cfg: DictConfig) -> None:
         post_rows, post_metrics = _evaluate(
             tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
         )
-
-    outdir_cfg = cfg.get("outdir")
-    if outdir_cfg is not None:
-        outdir = Path(to_absolute_path(str(outdir_cfg)))
-    else:
-        date = datetime.now(timezone.utc).strftime("%Y%m%d")
-        preset_path = Path(str(cfg.preset))
-        if preset_path.parts and preset_path.parts[0] == "baselines":
-            outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
-        else:
-            outdir = Path("runs") / date / preset_path.name / cfg.suite
 
     _write_outputs(outdir, pre_rows, pre_metrics, post_rows, post_metrics, cfg, flat_ablate)
 
