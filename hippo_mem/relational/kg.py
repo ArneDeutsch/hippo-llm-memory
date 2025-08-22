@@ -40,6 +40,7 @@ import networkx as nx
 import numpy as np
 
 from hippo_mem.common.sqlite import SQLiteExecMixin
+from hippo_mem.common.telemetry import gate_registry
 
 from .gating import RelationalGate
 from .schema import SchemaIndex
@@ -274,17 +275,21 @@ class KnowledgeGraph(SQLiteExecMixin):
         --------
         SchemaIndex.fast_track
         """
-
+        stats = gate_registry.get("relational")
+        stats.attempts += 1
         action = "insert"
         reason = "no_gate"
         if self.gate:
             action, reason = self.gate.decide(tup, self)
 
         if action == "insert":
+            stats.inserted += 1
             self.schema_index.fast_track(tup, self)
         elif action == "aggregate":
+            stats.aggregated += 1
             self.aggregate_duplicate(tup)
         elif action == "route_to_episodic":
+            stats.routed_to_episodic += 1
             self.route_to_episodic(tup)
         return action, reason
 

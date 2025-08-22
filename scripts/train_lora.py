@@ -45,6 +45,7 @@ from hippo_mem.adapters.lora import count_trainable_parameters, default_target_m
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
 from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
 from hippo_mem.episodic.adapter import AdapterConfig
@@ -519,6 +520,7 @@ def ingest_spatial_traces(
             recent_window=gate_cfg.get("recent_window", 20),
             max_degree=gate_cfg.get("max_degree", 64),
         )
+    stats = gate_registry.get("spatial")
 
     count = 0
     steps = 0
@@ -537,11 +539,16 @@ def ingest_spatial_traces(
             if gate is None:
                 graph.observe(ctx)
             else:
+                stats.attempts += 1
                 action, _reason = gate.decide(prev, ctx, graph)
                 if action == "insert":
+                    stats.inserted += 1
                     graph.observe(ctx)
                 elif action == "aggregate" and prev is not None:
+                    stats.aggregated += 1
                     graph.aggregate_duplicate(prev, ctx)
+                elif action == "route_to_episodic":
+                    stats.blocked_new_edges += 1
             prev = ctx
     if count:
         logging.info(
