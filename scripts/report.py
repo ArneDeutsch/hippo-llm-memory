@@ -48,18 +48,7 @@ def _find_latest_date(root: Path) -> str:
 
 
 def collect_metrics(base: Path) -> Dict[Tuple[str, str], Iterable[MetricDict]]:
-    """Collect metric dictionaries grouped by ``(suite, preset)``.
-
-    Each ``metrics.json`` is expected to contain a ``{"metrics": {...}}`` object
-    where the suite metrics live under ``record["metrics"][suite]`` and optional
-    compute metrics are provided under ``record["metrics"]["compute"]``. Compute
-    metrics are merged with the suite metrics.
-
-    Parameters
-    ----------
-    base:
-        Path pointing to ``runs/<date>``.
-    """
+    """Collect metric dictionaries grouped by ``(suite, preset)``."""
 
     data: Dict[Tuple[str, str], list[MetricDict]] = defaultdict(list)
     for metrics_path in base.rglob("metrics.json"):
@@ -84,6 +73,27 @@ def collect_metrics(base: Path) -> Dict[Tuple[str, str], Iterable[MetricDict]]:
     return data
 
 
+def collect_retrieval(base: Path) -> Dict[str, list[dict[str, MetricDict]]]:
+    """Collect retrieval telemetry grouped by suite."""
+
+    data: Dict[str, list[dict[str, MetricDict]]] = defaultdict(list)
+    for metrics_path in base.rglob("metrics.json"):
+        parts = metrics_path.relative_to(base).parts
+        if len(parts) < 3:
+            continue
+        suite = parts[-3]
+        try:
+            with metrics_path.open() as fh:
+                record = json.load(fh)
+        except json.JSONDecodeError as exc:  # pragma: no cover - file is corrupt
+            log.warning("failed to parse %s: %s", metrics_path, exc)
+            continue
+        ret = record.get("retrieval")
+        if ret:
+            data[suite].append(ret)
+    return data
+
+
 def summarise(data: Dict[Tuple[str, str], Iterable[MetricDict]]) -> Summary:
     """Average metrics for each suite/preset pair."""
 
@@ -96,21 +106,56 @@ def summarise(data: Dict[Tuple[str, str], Iterable[MetricDict]]) -> Summary:
     return summary
 
 
-def _render_markdown_suite(suite: str, presets: Dict[str, MetricDict]) -> str:
+def summarise_retrieval(
+    data: Dict[str, list[dict[str, MetricDict]]],
+) -> Dict[str, Dict[str, MetricDict]]:
+    """Average retrieval stats per suite and memory."""
+
+    summary: Dict[str, Dict[str, MetricDict]] = {}
+    for suite, records in data.items():
+        agg: Dict[str, Dict[str, float]] = {}
+        for rec in records:
+            for mem, stats in rec.items():
+                dest = agg.setdefault(mem, {k: 0.0 for k in stats})
+                for k, v in stats.items():
+                    dest[k] += float(v)
+        count = len(records)
+        summary[suite] = {
+            mem: {k: v / count for k, v in stats.items()} for mem, stats in agg.items()
+        }
+    return summary
+
+
+def _render_markdown_suite(
+    suite: str, presets: Dict[str, MetricDict], retrieval: Dict[str, MetricDict] | None
+) -> str:
     """Return a Markdown table for a single suite."""
 
     lines: list[str] = [f"# {suite} Summary", ""]
-    if not presets:
-        return "\n".join(lines)
-    metric_keys = sorted(next(iter(presets.values())).keys())
-    header = "| Preset | " + " | ".join(metric_keys) + " |"
-    sep = "|---" * (len(metric_keys) + 1) + "|"
-    lines.extend([header, sep])
-    for preset in sorted(presets):
-        metrics = presets[preset]
-        row = "| " + preset + " | " + " | ".join(f"{metrics[m]:.3f}" for m in metric_keys) + " |"
-        lines.append(row)
-    lines.append("")
+    if presets:
+        metric_keys = sorted(next(iter(presets.values())).keys())
+        header = "| Preset | " + " | ".join(metric_keys) + " |"
+        sep = "|---" * (len(metric_keys) + 1) + "|"
+        lines.extend([header, sep])
+        for preset in sorted(presets):
+            metrics = presets[preset]
+            row = (
+                "| " + preset + " | " + " | ".join(f"{metrics[m]:.3f}" for m in metric_keys) + " |"
+            )
+            lines.append(row)
+        lines.append("")
+    if retrieval:
+        lines.append("## Retrieval Telemetry")
+        lines.append("| mem | requests | hit_rate_at_k | avg_latency_ms | tokens_returned |")
+        lines.append("|---|---|---|---|---|")
+        for mem in sorted(retrieval):
+            stats = retrieval[mem]
+            row = (
+                f"| {mem} | {int(stats['requests'])} | {stats['hit_rate_at_k']:.3f} | "
+                f"{stats['avg_latency_ms']:.3f} | {int(stats['tokens_returned'])} |"
+            )
+            lines.append(row)
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -137,18 +182,20 @@ def _render_plots_suite(suite: str, presets: Dict[str, MetricDict], out_dir: Pat
         plt.close()
 
 
-def write_reports(summary: Summary, out_dir: Path, plots: bool) -> Dict[str, Path]:
-    """Write per-suite reports and optional plots to ``out_dir``.
-
-    Returns a mapping from suite name to the written Markdown path.
-    """
+def write_reports(
+    summary: Summary,
+    retrieval: Dict[str, Dict[str, MetricDict]],
+    out_dir: Path,
+    plots: bool,
+) -> Dict[str, Path]:
+    """Write per-suite reports and optional plots to ``out_dir``."""
 
     paths: Dict[str, Path] = {}
     for suite, presets in summary.items():
         suite_dir = out_dir / suite
         suite_dir.mkdir(parents=True, exist_ok=True)
         md_path = suite_dir / "summary.md"
-        md_path.write_text(_render_markdown_suite(suite, presets))
+        md_path.write_text(_render_markdown_suite(suite, presets, retrieval.get(suite)))
         paths[suite] = md_path
         if plots:
             _render_plots_suite(suite, presets, suite_dir)
@@ -168,9 +215,12 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     runs_root = Path(args.runs_dir)
     date = args.date or _find_latest_date(runs_root)
     runs_path = runs_root / date
-    summary = summarise(collect_metrics(runs_path))
+    metric_data = collect_metrics(runs_path)
+    retrieval_data = collect_retrieval(runs_path)
+    summary = summarise(metric_data)
+    retrieval_summary = summarise_retrieval(retrieval_data)
     out_dir = Path(args.out_dir) / date
-    paths = write_reports(summary, out_dir, args.plots)
+    paths = write_reports(summary, retrieval_summary, out_dir, args.plots)
     for suite, md_path in paths.items():
         log.info("wrote %s for %s", md_path, suite)
 

@@ -32,10 +32,11 @@ from omegaconf import DictConfig, OmegaConf, open_dict
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+sys.path.append(str(Path(__file__).resolve().parent))
 from eval_bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 
 from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common.telemetry import registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
@@ -47,6 +48,19 @@ class Task:
 
     prompt: str
     answer: str
+
+
+@dataclass
+class EvalConfig:
+    """Lightweight configuration for :func:`run_suite`."""
+
+    suite: str
+    n: int = 5
+    seed: int = 0
+    preset: str = "configs/eval/memory/hei_nw.yaml"
+    model: str = "models/tiny-gpt2"
+    max_new_tokens: int = 32
+    replay_cycles: int = 0
 
 
 def _dataset_path(suite: str, n: int, seed: int) -> Path:
@@ -178,6 +192,54 @@ def _run_replay(modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]) ->
         store.write(key, task.answer)
 
 
+def run_suite(
+    cfg: EvalConfig,
+) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
+    """Execute a suite according to ``cfg`` and return rows and metrics."""
+
+    registry.reset()
+
+    base_cfg = OmegaConf.create(
+        {
+            "suite": cfg.suite,
+            "n": cfg.n,
+            "seed": cfg.seed,
+            "model": cfg.model,
+            "max_new_tokens": cfg.max_new_tokens,
+        }
+    )
+    if cfg.preset:
+        preset_cfg = OmegaConf.load(cfg.preset)
+        base_cfg = OmegaConf.merge(base_cfg, preset_cfg)
+
+    tasks = _load_tasks(_dataset_path(cfg.suite, cfg.n, cfg.seed), cfg.n)
+    flat_ablate = _flatten_ablate(base_cfg.get("ablate"))
+    modules = _init_modules(base_cfg.get("memory"), flat_ablate)
+
+    model_path = to_absolute_path(str(base_cfg.model))
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    model = AutoModelForCausalLM.from_pretrained(model_path)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
+    rows, metrics = _evaluate(tasks, modules, tokenizer, model, int(base_cfg.max_new_tokens))
+
+    for _ in range(int(cfg.replay_cycles)):
+        _run_replay(modules, tasks)
+
+    metrics_dict = {
+        "suite": cfg.suite,
+        "n": cfg.n,
+        "seed": cfg.seed,
+        "preset": cfg.preset,
+        "metrics": {cfg.suite: metrics},
+        "retrieval": registry.all_snapshots(),
+    }
+    return rows, metrics_dict, flat_ablate
+
+
 def _write_outputs(
     outdir: Path,
     pre_rows: List[Dict[str, object]],
@@ -210,6 +272,7 @@ def _write_outputs(
         "seed": cfg.seed,
         "preset": cfg.preset,
         "metrics": {cfg.suite: suite_metrics},
+        "retrieval": registry.all_snapshots(),
     }
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f)
@@ -225,10 +288,23 @@ def _write_outputs(
             row = dict(row)
             row["flags"] = "post_replay"
             csv_rows.append(row)
+    retrieval_fields = {
+        f"retrieval.{m}.{k}": v for m, snap in metrics["retrieval"].items() for k, v in snap.items()
+    }
+    for row in csv_rows:
+        row.update(retrieval_fields)
+    fieldnames = [
+        "idx",
+        "prompt",
+        "answer",
+        "pred",
+        "correct",
+        "latency_ms",
+        "flags",
+        *sorted(retrieval_fields),
+    ]
     with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["idx", "prompt", "answer", "pred", "correct", "latency_ms", "flags"]
-        )
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in csv_rows:
             writer.writerow(row)
@@ -270,6 +346,8 @@ def main(cfg: DictConfig) -> None:
     cfg.max_new_tokens = cfg.get("max_new_tokens", 32)
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
+
+    registry.reset()
 
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed)
     tasks = _load_tasks(dataset, cfg.n)

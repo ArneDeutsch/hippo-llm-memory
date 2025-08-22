@@ -14,6 +14,7 @@ import torch
 from torch import nn
 
 from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common.telemetry import registry
 
 from .store import EpisodicStore
 
@@ -138,5 +139,13 @@ def episodic_retrieve_and_pack(
     latency_ms = (time.perf_counter() - start) * 1000
     hit_rate = mask.sum().item() / (bsz * k) if k > 0 else 0.0
     meta = {"k": k, "latency_ms": latency_ms, "hit_rate": hit_rate}
+
+    k_req = int(k) * bsz
+    hits_actual = int(mask.sum().item())
+    tokens_returned = int(tokens.shape[1])
+    registry.get("episodic").update(
+        k=k_req, hits=hits_actual, tokens=tokens_returned, latency_ms=latency_ms
+    )
+
     logger.info("episodic_retrieval_k=%d episodic_latency_ms=%.2f", k, latency_ms)
     return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
