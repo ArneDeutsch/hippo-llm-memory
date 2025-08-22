@@ -32,6 +32,14 @@ class SpatialGate:
     _edge_hist: Deque[Tuple[str, str]] = field(init=False)
 
     def __post_init__(self) -> None:
+        if not 0.0 <= self.block_threshold <= 1.0:
+            raise ValueError("block_threshold must be in [0, 1]")
+        if self.repeat_N < 1:
+            raise ValueError("repeat_N must be >= 1")
+        if self.recent_window < 1:
+            raise ValueError("recent_window must be >= 1")
+        if self.max_degree < 1:
+            raise ValueError("max_degree must be >= 1")
         self._ctx_hist = deque(maxlen=self.repeat_N)
         self._edge_hist = deque(maxlen=self.recent_window)
 
