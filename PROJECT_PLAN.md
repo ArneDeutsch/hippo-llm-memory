@@ -113,15 +113,15 @@
 
 **Work packages**
 1. [x] **TraceSpec:** define a unified schema and shapes for traces passed to adapters (tokens or pooled vectors + optional metadata).
-2. [ ] **Retrieval hooks:** given batch text, compute query encodings and retrieve top-K: (a) episodic store, (b) semantic KG neighborhoods/paths, (c) spatial local map/plan. Bound K and length.
+2. [x] **Retrieval hooks:** given batch text, compute query encodings and retrieve top-K: (a) episodic store, (b) semantic KG neighborhoods/paths, (c) spatial local map/plan. Bound K and length.
 3. [x] **Projection & packing:** project retrieved features to `d_model`; pack to `memory_tokens` `[B, M, d_model]` (+ optional masks).
 4. [x] **Adapter API:** update adapters to accept `memory_tokens` (+ masks) via the patcher; no-op if empty.
-5. [ ] **Write-gate & store update:** compute gate S; when passing threshold, persist new episode/tuple/place; respect async worker lifecycles.
-6. [ ] **Config & toggles:** Hydra flags to enable/disable each memory, set K, max tokens, and gating threshold τ.
-7. [ ] **Telemetry:** log retrieval hit-rates, avg M, % writes, and latency per step.
+5. [x] **Write-gate & store update:** compute gate S; when passing threshold, persist new episode/tuple/place; respect async worker lifecycles.
+6. [x] **Config & toggles:** Hydra flags to enable/disable each memory, set K, max tokens, and gating threshold τ.
+7. [x] **Telemetry:** log retrieval hit-rates, avg M, % writes, and latency per step.
 
 
-- [ ] **Gate:** write-gate is executed on real batches; acceptance rate & store growth logged; async writer commits.
+- [x] **Gate:** write-gate is executed on real batches; acceptance rate & store growth logged; async writer commits.
   - evidence: sample log with `gate_accept_rate>0`
   - evidence: `store_size` increasing
   - evidence: snippet showing adapter block index and retrieval latency
