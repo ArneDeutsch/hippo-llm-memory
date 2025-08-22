@@ -30,4 +30,8 @@ datasets:
 	      python scripts/build_datasets.py --suite $$suite --size $$size --seed $$seed --out data/$$suite/$$size\_$$seed.jsonl; \
 	    done; \
 	  done; \
-	 done
+         done
+
+eval-baselines:
+	python scripts/run_baselines.py --date $(DATE)
+
