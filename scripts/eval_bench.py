@@ -89,6 +89,15 @@ def _pip_hash() -> str:
     return hashlib.sha256(out.encode("utf-8")).hexdigest()
 
 
+def _cpu_info() -> str:
+    """Return the CPU model string if available."""
+
+    info = platform.processor()
+    if not info:
+        info = platform.machine()
+    return info or "unknown"
+
+
 def _sha256_file(path: Path) -> str:
     """Compute SHA256 for ``path``."""
 
@@ -419,6 +428,7 @@ def write_outputs(
         "python": sys.version,
         "platform": platform.platform(),
         "pip_hash": _pip_hash(),
+        "cpu": _cpu_info(),
     }
     if torch.cuda.is_available():
         cuda_meta = {"version": torch.version.cuda}
