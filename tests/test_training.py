@@ -132,7 +132,7 @@ def test_adapter_ablation_flags(monkeypatch) -> None:
             return "store"
 
     class DummyKG:
-        def __init__(self, config=None) -> None:
+        def __init__(self, config=None, gate=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -142,7 +142,7 @@ def test_adapter_ablation_flags(monkeypatch) -> None:
             return "kg"
 
     class DummyMap:
-        def __init__(self, path_integration=False, config=None) -> None:
+        def __init__(self, path_integration=False, config=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -219,7 +219,7 @@ def test_replay_flag_controls_scheduler(monkeypatch) -> None:
             return "store"
 
     class DummyKG:
-        def __init__(self, config=None) -> None:
+        def __init__(self, config=None, gate=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -229,7 +229,7 @@ def test_replay_flag_controls_scheduler(monkeypatch) -> None:
             return "kg"
 
     class DummyMap:
-        def __init__(self, path_integration=False, config=None) -> None:
+        def __init__(self, path_integration=False, config=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -342,7 +342,7 @@ def test_train_respects_mqa_gqa_flag(monkeypatch) -> None:
             return "store"
 
     class DummyKG:
-        def __init__(self, config=None) -> None:
+        def __init__(self, config=None, gate=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -352,7 +352,7 @@ def test_train_respects_mqa_gqa_flag(monkeypatch) -> None:
             return "kg"
 
     class DummyMap:
-        def __init__(self, path_integration=False, config=None) -> None:
+        def __init__(self, path_integration=False, config=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -457,7 +457,7 @@ def test_train_respects_hopfield_flag(monkeypatch) -> None:
             return query
 
     class DummyKG:
-        def __init__(self, config=None) -> None:
+        def __init__(self, config=None, gate=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -467,7 +467,7 @@ def test_train_respects_hopfield_flag(monkeypatch) -> None:
             return {}
 
     class DummyMap:
-        def __init__(self, path_integration=False, config=None) -> None:
+        def __init__(self, path_integration=False, config=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:

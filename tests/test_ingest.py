@@ -45,7 +45,7 @@ def test_fast_track_ingestion(monkeypatch, tmp_path):
     kg.start_background_tasks = lambda _interval: None
 
     class DummyMap:
-        def __init__(self, path_integration=False, config=None) -> None:
+        def __init__(self, path_integration=False, config=None, provenance=None) -> None:
             pass
 
         def start_background_tasks(self, _interval) -> None:
@@ -60,7 +60,10 @@ def test_fast_track_ingestion(monkeypatch, tmp_path):
     monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
     monkeypatch.setattr("scripts.train_lora.AsyncStoreWriter", DummyWriter)
-    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", lambda config=None: kg)
+    monkeypatch.setattr(
+        "scripts.train_lora.KnowledgeGraph",
+        lambda config=None, gate=None, provenance=None: kg,
+    )
     monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
     monkeypatch.setattr(
         "scripts.train_lora.attach_adapters", lambda *a, **k: {"target_block": 0, "num_blocks": 1}
@@ -127,9 +130,13 @@ def test_spatial_trace_ingestion(monkeypatch, tmp_path):
     monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
     monkeypatch.setattr("scripts.train_lora.AsyncStoreWriter", DummyWriter)
-    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", lambda config=None: kg)
     monkeypatch.setattr(
-        "scripts.train_lora.PlaceGraph", lambda path_integration=False, config=None: spat
+        "scripts.train_lora.KnowledgeGraph",
+        lambda config=None, gate=None, provenance=None: kg,
+    )
+    monkeypatch.setattr(
+        "scripts.train_lora.PlaceGraph",
+        lambda path_integration=False, config=None, provenance=None: spat,
     )
     monkeypatch.setattr(
         "scripts.train_lora.attach_adapters", lambda *a, **k: {"target_block": 0, "num_blocks": 1}
