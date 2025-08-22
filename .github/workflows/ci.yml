@@ -39,3 +39,5 @@ jobs:
 
       - name: Smoke 8a
         run: bash scripts/smoke_8a.sh
+      - name: Smoke 8
+        run: bash scripts/smoke_8.sh
