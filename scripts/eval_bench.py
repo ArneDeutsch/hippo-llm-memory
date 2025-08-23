@@ -260,7 +260,9 @@ def _eval_tasks(
     correct = 0
     total_tokens = 0
     t0 = time.perf_counter()
+    latencies: List[float] = []
     for off, item in enumerate(tasks):
+        item_t0 = time.perf_counter()
         epi_feats = None
         if "episodic" in modules:
             store = modules["episodic"]["store"]
@@ -290,6 +292,9 @@ def _eval_tasks(
         is_correct = int(pred.strip().lower() == answer.strip().lower())
         correct += is_correct
         total_tokens += len(prompt.split()) + len(answer.split())
+        item_t1 = time.perf_counter()
+        latency_ms = (item_t1 - item_t0) * 1000.0
+        latencies.append(latency_ms)
         rows.append(
             {
                 "idx": start_idx + off,
@@ -297,14 +302,20 @@ def _eval_tasks(
                 "answer": answer,
                 "pred": pred,
                 "correct": is_correct,
-                "latency_ms": 0.0,
+                "latency_ms": latency_ms,
                 "flags": flag,
             }
         )
 
     t1 = time.perf_counter()
+    if all(lat == 0.0 for lat in latencies) and latencies:
+        fallback = (t1 - t0) * 1000.0 / len(latencies)
+        for row in rows:
+            row["latency_ms"] = fallback
+        latencies = [fallback] * len(rows)
     em = correct / len(tasks) if tasks else 0.0
-    return rows, em, total_tokens, t1 - t0
+    avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
+    return rows, em, total_tokens, t1 - t0, avg_latency
 
 
 class _BatchMix(SimpleNamespace):
@@ -360,8 +371,11 @@ def run_suite(
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
-    rows, em, total_tokens, elapsed = _eval_tasks(tasks, modules, flag="pre_replay", start_idx=0)
+    rows, em, total_tokens, elapsed, lat_mean = _eval_tasks(
+        tasks, modules, flag="pre_replay", start_idx=0
+    )
     total_time = elapsed
+    lat_sum = lat_mean * len(tasks)
 
     post_cycles = int(cfg.get("post_replay_cycles", 0))
     post_metrics: Dict[str, Dict[str, object]] = {}
@@ -369,7 +383,7 @@ def run_suite(
         start = len(tasks)
         for cycle in range(1, post_cycles + 1):
             _run_replay_once(modules)
-            cycle_rows, cycle_em, cycle_tokens, cycle_time = _eval_tasks(
+            cycle_rows, cycle_em, cycle_tokens, cycle_time, cycle_lat = _eval_tasks(
                 tasks, modules, flag=f"post_replay_{cycle}", start_idx=start
             )
             rows.extend(cycle_rows)
@@ -379,14 +393,17 @@ def run_suite(
                     "tokens": cycle_tokens,
                     "time_ms_per_100": 100000 * cycle_time / max(1, len(tasks)),
                     "rss_mb": _rss_mb(),
+                    "latency_ms_mean": cycle_lat,
                 },
             }
             total_tokens += cycle_tokens
             total_time += cycle_time
+            lat_sum += cycle_lat * len(tasks)
             start += len(tasks)
 
     mem_usage = _memory_usage(modules)
     total_items = len(rows)
+    avg_latency = lat_sum / max(1, total_items)
     metrics = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -398,6 +415,7 @@ def run_suite(
                 "tokens": total_tokens,
                 "time_ms_per_100": 100000 * total_time / max(1, total_items),
                 "rss_mb": _rss_mb(),
+                "latency_ms_mean": avg_latency,
             },
         },
         "memory": mem_usage,

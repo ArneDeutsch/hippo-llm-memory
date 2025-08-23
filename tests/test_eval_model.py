@@ -1,5 +1,6 @@
 """Smoke test for :mod:`scripts.eval_model`."""
 
+import csv
 import json
 import subprocess
 import sys
@@ -39,3 +40,9 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     compute = metrics["metrics"]["compute"]
     assert isinstance(compute["time_ms_per_100"], float)
     assert isinstance(compute["rss_mb"], float)
+    assert compute["latency_ms_mean"] > 0
+
+    with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+    assert rows and float(rows[0]["latency_ms"]) > 0
