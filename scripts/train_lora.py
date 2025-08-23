@@ -878,118 +878,137 @@ def init_memory(
     MemoryInitializer(context, cfg, provenance).initialize()
 
 
-def _train(
-    cfg: TrainConfig,
-    context: TrainerContext,
-    tokenizer,
-    train_ds,
-    val_ds,
-    provenance: ProvenanceLogger | None,
-) -> None:
-    """Execute the training or dry‑run."""
-    random.seed(cfg.seed)
-    np.random.seed(cfg.seed)
-    torch.manual_seed(cfg.seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(cfg.seed)
-    logging.info("Data format: %s", cfg.data_format)
-    logging.info("Train files: %s", cfg.train_files)
-    logging.info("Validation files: %s", cfg.val_files)
-    logging.info("Fusion insert block index: %d", cfg.fusion_insert_block_index)
-    logging.info("Replay enabled: %s", cfg.replay.enabled)
-    logging.info("Replay ratio: %.2f", cfg.replay.ratio)
+@dataclass
+class TrainingSession:
+    """Coordinates the sequential phases of the training workflow.
 
-    model = context.model
-    hidden = context.hidden_size
-    sources = context.sources
+    The session owns the configuration, context and datasets and exposes
+    helper methods representing the major steps of the training loop:
 
-    if context.adapters_attached:
+    1. :meth:`prepare_peft` – build the LoRA configuration.
+    2. :meth:`maybe_wrap_replay_dataset` – enable replay mixing when requested.
+    3. :meth:`perform_dry_run` – execute the lightweight dry‑run and return ``True``
+       if training should stop early.
+    4. :meth:`create_trainer` – construct the :class:`~trl.SFTTrainer`.
+    5. :meth:`patch_compute_loss` – install the memory‑aware loss callback.
+    6. ``trainer.train()`` – launched by the caller after patching.
+    """
 
-        def _block_retrieval_cb(hs: torch.Tensor) -> MemoryTokens | None:
-            setattr(model, "_hippo_last_hidden", hs.detach())
-            return _gather_memory_tokens(hs, cfg, sources)
+    cfg: TrainConfig
+    context: TrainerContext
+    tokenizer: Any
+    train_ds: Any
+    val_ds: Any
+    provenance: ProvenanceLogger | None
+    model: nn.Module = field(init=False)
+    peft_config: LoraConfig | None = field(init=False, default=None)
 
-        setattr(model, "_hippo_retrieval_cb", _block_retrieval_cb)  # type: ignore[attr-defined]
+    def __post_init__(self) -> None:  # pragma: no cover - trivial
+        self.model = self.context.model
 
-    context.start()
-    try:
-        peft_config = None
-        if isinstance(model, torch.nn.Module):
-            modules = cfg.target_modules or default_target_modules(model)
+    # Phase 1
+    def prepare_peft(self) -> tuple[nn.Module, LoraConfig | None]:
+        """Return model and PEFT configuration for LoRA."""
+
+        if isinstance(self.model, nn.Module):
+            modules = self.cfg.target_modules or default_target_modules(self.model)
             logging.info("Target modules: %s", modules)
-            peft_config = LoraConfig(
-                r=cfg.lora_r,
-                lora_alpha=cfg.lora_alpha,
-                lora_dropout=cfg.lora_dropout,
+            self.peft_config = LoraConfig(
+                r=self.cfg.lora_r,
+                lora_alpha=self.cfg.lora_alpha,
+                lora_dropout=self.cfg.lora_dropout,
                 bias="none",
                 task_type="CAUSAL_LM",
                 target_modules=modules,
             )
+        return self.model, self.peft_config
 
-        if cfg.replay.enabled and train_ds is not None and context.scheduler is not None:
+    # Phase 2
+    def maybe_wrap_replay_dataset(self) -> Any:
+        """Wrap ``train_ds`` with replay items when scheduler is active."""
+
+        if (
+            self.cfg.replay.enabled
+            and self.train_ds is not None
+            and self.context.scheduler is not None
+        ):
             from scripts.replay_dataset import ReplayIterableDataset
 
             def replay_reader():
                 while True:
-                    kind, trace_id = context.scheduler.next_batch(1)[0]
+                    kind, trace_id = self.context.scheduler.next_batch(1)[0]
                     yield {"prompt": f"replay {kind}", "answer": trace_id or ""}
 
-            train_ds = ReplayIterableDataset(train_ds, replay_reader, cfg.replay.ratio)
-            logging.info("Replay mixing active (ratio=%.2f)", cfg.replay.ratio)
+            self.train_ds = ReplayIterableDataset(
+                self.train_ds, replay_reader, self.cfg.replay.ratio
+            )
+            logging.info("Replay mixing active (ratio=%.2f)", self.cfg.replay.ratio)
+        return self.train_ds
 
-        if cfg.dry_run:
-            if peft_config is not None:
-                model = get_peft_model(model, peft_config)
-                count = count_trainable_parameters(model)
-                logging.info("Trainable parameters: %d", count)
-                if count <= 0:
-                    raise RuntimeError(
-                        "No trainable parameters found. Set `target_modules` to attach LoRA.",
-                    )
-            device = torch.device("cpu")
-            try:
-                device = next(model.parameters()).device  # type: ignore[call-arg]
-            except Exception:  # pragma: no cover - defensive
-                pass
-            dummy_hidden = torch.zeros(1, 1, hidden, device=device)
-            mem = _gather_memory_tokens(dummy_hidden, cfg, sources)
-            dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
-            if callable(model):
-                _ = model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
-            if cfg.memory.runtime.enable_writes:
-                probs = np.array([1.0])
-                queries = np.zeros((1, hidden), dtype=np.float32)
-                keys = np.zeros((0, hidden), dtype=np.float32)
-                decisions, _ = gate_batch(context.gate, probs, queries, keys)
-                context.gate_attempts += len(decisions)
-                context.gate_accepts += sum(d.allow for d in decisions)
-                for dec, q in zip(decisions, queries):
-                    if dec.allow and context.writer is not None:
-                        context.writer.enqueue(q, TraceValue(provenance="dry_run"))
-            for _ in range(3):
-                log_memory_status(
-                    context.store,
-                    context.kg,
-                    context.spatial_map,
-                    context.scheduler,
-                    context.worker,
+    # Phase 3
+    def perform_dry_run(self) -> bool:
+        """Execute dry‑run logic and return ``True`` if it handled the run."""
+
+        if not self.cfg.dry_run:
+            return False
+
+        if self.peft_config is not None:
+            self.model = get_peft_model(self.model, self.peft_config)
+            count = count_trainable_parameters(self.model)
+            logging.info("Trainable parameters: %d", count)
+            if count <= 0:
+                raise RuntimeError(
+                    "No trainable parameters found. Set `target_modules` to attach LoRA."
                 )
-                time.sleep(0.1)
-            if train_ds is not None:
-                if cfg.schema_fasttrack_ingest:
-                    ingest_training_text(train_ds, context.kg)
-                if cfg.spatial.enabled:
-                    gate_cfg = getattr(cfg.memory.spatial, "gate", None)
-                    gate = build_spatial_gate(gate_cfg, provenance)
-                    ingest_spatial_traces(train_ds, context.spatial_map, gate)
-            return
+        device = torch.device("cpu")
+        try:
+            device = next(self.model.parameters()).device  # type: ignore[call-arg]
+        except Exception:  # pragma: no cover - defensive
+            pass
+        hidden = self.context.hidden_size
+        dummy_hidden = torch.zeros(1, 1, hidden, device=device)
+        mem = _gather_memory_tokens(dummy_hidden, self.cfg, self.context.sources)
+        dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
+        if callable(self.model):
+            _ = self.model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
+        if self.cfg.memory.runtime.enable_writes:
+            probs = np.array([1.0])
+            queries = np.zeros((1, hidden), dtype=np.float32)
+            keys = np.zeros((0, hidden), dtype=np.float32)
+            decisions, _ = gate_batch(self.context.gate, probs, queries, keys)
+            self.context.gate_attempts += len(decisions)
+            self.context.gate_accepts += sum(d.allow for d in decisions)
+            for dec, q in zip(decisions, queries):
+                if dec.allow and self.context.writer is not None:
+                    self.context.writer.enqueue(q, TraceValue(provenance="dry_run"))
+        for _ in range(3):
+            log_memory_status(
+                self.context.store,
+                self.context.kg,
+                self.context.spatial_map,
+                self.context.scheduler,
+                self.context.worker,
+            )
+            time.sleep(0.1)
+        if self.train_ds is not None:
+            if self.cfg.schema_fasttrack_ingest:
+                ingest_training_text(self.train_ds, self.context.kg)
+            if self.cfg.spatial.enabled:
+                gate_cfg = getattr(self.cfg.memory.spatial, "gate", None)
+                gate = build_spatial_gate(gate_cfg, self.provenance)
+                ingest_spatial_traces(self.train_ds, self.context.spatial_map, gate)
+        return True
+
+    # Phase 4
+    def create_trainer(self) -> SFTTrainer:
+        """Instantiate :class:`~trl.SFTTrainer` for the session."""
 
         training_args = SFTConfig(
-            output_dir=cfg.output_dir,
-            per_device_train_batch_size=cfg.per_device_train_batch_size,
-            gradient_accumulation_steps=cfg.gradient_accumulation_steps,
-            max_steps=cfg.max_steps,
-            learning_rate=cfg.learning_rate,
+            output_dir=self.cfg.output_dir,
+            per_device_train_batch_size=self.cfg.per_device_train_batch_size,
+            gradient_accumulation_steps=self.cfg.gradient_accumulation_steps,
+            max_steps=self.cfg.max_steps,
+            learning_rate=self.cfg.learning_rate,
             logging_steps=1,
             bf16=torch.cuda.is_available(),
             gradient_checkpointing=True,
@@ -997,20 +1016,35 @@ def _train(
         )
 
         trainer = _init_sft_trainer(
-            model,
-            train_ds,
+            self.model,
+            self.train_ds,
             training_args,
-            tokenizer,
-            peft_config,
-            eval_dataset=val_ds,
+            self.tokenizer,
+            self.peft_config,
+            eval_dataset=self.val_ds,
         )
         if hasattr(trainer, "add_callback"):
             trainer.add_callback(
-                _IngestCallback(cfg, train_ds, context.kg, context.spatial_map, provenance)
+                _IngestCallback(
+                    self.cfg,
+                    self.train_ds,
+                    self.context.kg,
+                    self.context.spatial_map,
+                    self.provenance,
+                )
             )
-        orig_compute_loss = trainer.compute_loss
+        return trainer
 
-        def compute_loss_with_memory(self, model, inputs, return_outputs=False):
+    # Phase 5
+    def patch_compute_loss(self, trainer: SFTTrainer) -> None:
+        """Install memory‑aware loss and validate trainable params."""
+
+        orig_compute_loss = trainer.compute_loss
+        cfg = self.cfg
+        context = self.context
+        sources = self.context.sources
+
+        def compute_loss_with_memory(self_tr, model, inputs, return_outputs=False):
             mem_cb = getattr(model, "_hippo_retrieval_cb", None)
             inputs = dict(inputs)
             if not callable(mem_cb):
@@ -1077,8 +1111,54 @@ def _train(
                 "No trainable parameters found. Set `target_modules` to attach LoRA."
             )
 
-        trainer.train()
 
+def _train(
+    cfg: TrainConfig,
+    context: TrainerContext,
+    tokenizer,
+    train_ds,
+    val_ds,
+    provenance: ProvenanceLogger | None,
+) -> None:
+    """Execute the training or dry‑run orchestrating session phases.
+
+    Returns nothing but may raise ``RuntimeError`` if no trainable parameters are
+    detected after attaching LoRA modules. When ``cfg.dry_run`` is ``True`` the
+    function exits early after :meth:`TrainingSession.perform_dry_run`.
+    """
+
+    random.seed(cfg.seed)
+    np.random.seed(cfg.seed)
+    torch.manual_seed(cfg.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(cfg.seed)
+    logging.info("Data format: %s", cfg.data_format)
+    logging.info("Train files: %s", cfg.train_files)
+    logging.info("Validation files: %s", cfg.val_files)
+    logging.info("Fusion insert block index: %d", cfg.fusion_insert_block_index)
+    logging.info("Replay enabled: %s", cfg.replay.enabled)
+    logging.info("Replay ratio: %.2f", cfg.replay.ratio)
+
+    model = context.model
+    sources = context.sources
+    if context.adapters_attached:
+
+        def _block_retrieval_cb(hs: torch.Tensor) -> MemoryTokens | None:
+            setattr(model, "_hippo_last_hidden", hs.detach())
+            return _gather_memory_tokens(hs, cfg, sources)
+
+        setattr(model, "_hippo_retrieval_cb", _block_retrieval_cb)  # type: ignore[attr-defined]
+
+    session = TrainingSession(cfg, context, tokenizer, train_ds, val_ds, provenance)
+    context.start()
+    try:
+        session.prepare_peft()
+        session.maybe_wrap_replay_dataset()
+        if session.perform_dry_run():
+            return
+        trainer = session.create_trainer()
+        session.patch_compute_loss(trainer)
+        trainer.train()
     except KeyboardInterrupt:
         logging.info("Training interrupted by user")
     finally:
