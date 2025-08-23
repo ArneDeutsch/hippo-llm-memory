@@ -31,7 +31,6 @@ hippo_mem.relational.tuples.extract_tuples
 from __future__ import annotations
 
 import json
-import sqlite3
 import threading
 import time
 from typing import Any, Dict, Iterable, Optional, Sequence
@@ -39,15 +38,16 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 import networkx as nx
 import numpy as np
 
-from hippo_mem.common.sqlite import SQLiteExecMixin
 from hippo_mem.common.telemetry import gate_registry
 
+from .backend import PersistenceStrategy, SQLiteBackend
 from .gating import RelationalGate
+from .maintenance import MaintenanceManager
 from .schema import SchemaIndex
 from .tuples import TupleType
 
 
-class KnowledgeGraph(SQLiteExecMixin):
+class KnowledgeGraph:
     """Persistent semantic graph with provenance tracking.
 
     Summary
@@ -78,12 +78,14 @@ class KnowledgeGraph(SQLiteExecMixin):
         *,
         config: Optional[dict] = None,
         gate: Optional[RelationalGate] = None,
+        backend: Optional[PersistenceStrategy] = None,
+        maintenance: Optional[MaintenanceManager] = None,
     ) -> None:
         self.graph = nx.MultiDiGraph()
         self.node_embeddings: Dict[str, np.ndarray] = {}
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
-        self._init_db()
-        self._load()
+        self.backend = backend or SQLiteBackend(db_path)
+        self.backend.init_db()
+        self.backend.load(self.graph, self.node_embeddings)
         self.config = config or {}
         thresh = float(self.config.get("schema_threshold", 0.8))
         self.schema_index = SchemaIndex(threshold=thresh)
@@ -97,50 +99,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         self._log_file = self.config.get("maintenance_log")
         self.gate = gate
         self._episodic_queue: list[TupleType] = []
-
-    # ------------------------------------------------------------------
-    # Database utilities
-    def _init_db(self) -> None:
-        self._exec("CREATE TABLE IF NOT EXISTS nodes (name TEXT PRIMARY KEY, embedding TEXT)")
-        self._exec(
-            """
-            CREATE TABLE IF NOT EXISTS edges (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                src TEXT,
-                relation TEXT,
-                dst TEXT,
-                context TEXT,
-                time TEXT,
-                conf REAL,
-                provenance INTEGER,
-                embedding TEXT
-            )
-            """
-        )
-
-    def _load(self) -> None:
-        cur = self.conn.cursor()
-        for name, emb in cur.execute("SELECT name, embedding FROM nodes"):
-            self.graph.add_node(name)
-            if emb is not None:
-                self.node_embeddings[name] = np.asarray(json.loads(emb), dtype=float)
-        for edge_id, src, rel, dst, ctx, t, conf, prov, emb in cur.execute(
-            "SELECT id, src, relation, dst, context, time, conf, provenance, embedding FROM edges"
-        ):
-            self.graph.add_edge(
-                src,
-                dst,
-                key=edge_id,
-                relation=rel,
-                context=ctx,
-                time=t,
-                conf=conf,
-                provenance=prov,
-            )
-            if emb is not None:
-                self.graph[src][dst][edge_id]["embedding"] = np.asarray(
-                    json.loads(emb), dtype=float
-                )
+        self._maintenance = maintenance or MaintenanceManager(self)
 
     # ------------------------------------------------------------------
     # Graph manipulation
@@ -190,17 +149,16 @@ class KnowledgeGraph(SQLiteExecMixin):
         self.graph.add_node(head)
         self.graph.add_node(tail)
 
-        cur = self.conn.cursor()
         # why: persist tuple and provenance for rollback
-        cur.execute(
+        self.backend.exec(
             "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
             (head, self._to_json(head_embedding)),
         )
-        cur.execute(
+        self.backend.exec(
             "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
             (tail, self._to_json(tail_embedding)),
         )
-        cur.execute(
+        edge_id = self.backend.exec(
             "INSERT INTO edges(src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?)",
             (
                 head,
@@ -212,9 +170,8 @@ class KnowledgeGraph(SQLiteExecMixin):
                 provenance,
                 self._to_json(edge_embedding),
             ),
+            fetch="lastrowid",
         )
-        edge_id = cur.lastrowid
-        self.conn.commit()
 
         self.graph.add_edge(
             head,
@@ -302,12 +259,10 @@ class KnowledgeGraph(SQLiteExecMixin):
             if edge.get("relation") == rel:
                 edge["conf"] = edge.get("conf", 0.0) + conf
                 edge["time"] = time_str
-                cur = self.conn.cursor()
-                cur.execute(
+                self.backend.exec(
                     "UPDATE edges SET conf=?, time=? WHERE id=?",
                     (edge["conf"], time_str, edge_id),
                 )
-                self.conn.commit()
                 break
 
     def route_to_episodic(self, tup: TupleType) -> None:
@@ -476,19 +431,18 @@ class KnowledgeGraph(SQLiteExecMixin):
             params.append(cutoff)
         return " OR ".join(conditions), params
 
-    def _remove_edges(self, edges: Sequence[tuple], cur: sqlite3.Cursor) -> None:
+    def _remove_edges(self, edges: Sequence[tuple]) -> None:
         """Delete ``edges`` from graph and SQLite store."""
 
         for edge_id, src, _rel, dst, *_ in edges:
             if self.graph.has_edge(src, dst, key=edge_id):
                 self.graph.remove_edge(src, dst, key=edge_id)
-            cur.execute("DELETE FROM edges WHERE id=?", (edge_id,))
+            self.backend.exec("DELETE FROM edges WHERE id=?", (edge_id,))
 
     def _remove_orphan_nodes(
         self,
         candidate_nodes: set[str],
         node_data: dict[str, Optional[np.ndarray]],
-        cur: sqlite3.Cursor,
     ) -> list[tuple[str, Optional[np.ndarray]]]:
         """Delete nodes with no remaining edges and return their data."""
 
@@ -496,7 +450,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         for n in list(candidate_nodes):
             if self.graph.degree(n) == 0:
                 self.graph.remove_node(n)
-                cur.execute("DELETE FROM nodes WHERE name=?", (n,))
+                self.backend.exec("DELETE FROM nodes WHERE name=?", (n,))
                 removed.append((n, node_data.get(n)))
                 self.node_embeddings.pop(n, None)
         return removed
@@ -536,24 +490,20 @@ class KnowledgeGraph(SQLiteExecMixin):
         rollback
         """
 
-        cur = self.conn.cursor()
         where, params = self._build_prune_conditions(min_conf, max_age)
         if not where:
             return
-        cur.execute(
+        edges = self.backend.exec(
             f"SELECT id, src, relation, dst, context, time, conf, provenance, embedding FROM edges WHERE {where}",
             params,
+            fetch="all",
         )
-        edges = cur.fetchall()
         if not edges:
             return
         candidate_nodes = {e[1] for e in edges} | {e[3] for e in edges}
         node_data = {n: self.node_embeddings.get(n) for n in candidate_nodes}
-        self._remove_edges(edges, cur)
-        self.conn.commit()
-
-        removed_nodes = self._remove_orphan_nodes(candidate_nodes, node_data, cur)
-        self.conn.commit()
+        self._remove_edges(edges)
+        removed_nodes = self._remove_orphan_nodes(candidate_nodes, node_data)
 
         ops = [{"type": "edge", "data": e} for e in edges]
         ops.extend({"type": "node", "data": n} for n in removed_nodes)
@@ -608,24 +558,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         >>> kg._bg_thread is not None
         True
         """
-        if self._bg_thread is not None:
-            return
-
-        stop_event = threading.Event()
-
-        def loop() -> None:
-            while not stop_event.wait(interval):
-                cfg = self.config.get("prune", {})
-                self.prune(
-                    float(cfg.get("min_conf", 0.0)),
-                    cfg.get("max_age"),
-                )
-                self._log["maintenance"] += 1
-
-        t = threading.Thread(target=loop, daemon=True)
-        t.start()
-        self._stop_event = stop_event
-        self._bg_thread = t
+        self._maintenance.start(interval)
 
     # kept: exercised by tests/test_relational.py
     def stop_background_tasks(self) -> None:
@@ -637,13 +570,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         briefly for the thread to terminate.
         """
 
-        if self._bg_thread is None:
-            return
-        if self._stop_event is not None:
-            self._stop_event.set()
-        self._bg_thread.join(timeout=1.0)
-        self._bg_thread = None
-        self._stop_event = None
+        self._maintenance.stop()
 
     # kept: exercised by tests/test_relational.py
     def rollback(self, n: int = 1) -> None:
@@ -685,28 +612,26 @@ class KnowledgeGraph(SQLiteExecMixin):
             entry = self._history.pop()
             if entry.get("op") != "prune":
                 continue
-            cur = self.conn.cursor()
             for op in entry.get("ops", []):
                 if op["type"] == "node":
-                    self._restore_node(op["data"], cur)
+                    self._restore_node(op["data"])
                 elif op["type"] == "edge":
-                    self._restore_edge(op["data"], cur)
-            self.conn.commit()
+                    self._restore_edge(op["data"])
             self._log_event("rollback", {"op": "prune"})
 
-    def _restore_node(self, data: tuple[str, Optional[np.ndarray]], cur: sqlite3.Cursor) -> None:
+    def _restore_node(self, data: tuple[str, Optional[np.ndarray]]) -> None:
         """Recreate a single node from ``rollback`` data."""
 
         name, emb = data
         self.graph.add_node(name)
-        cur.execute(
+        self.backend.exec(
             "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
             (name, self._to_json(emb)),
         )
         if emb is not None:
             self.node_embeddings[name] = np.asarray(emb, dtype=float)
 
-    def _restore_edge(self, edge: tuple, cur: sqlite3.Cursor) -> None:
+    def _restore_edge(self, edge: tuple) -> None:
         """Recreate a single edge from ``rollback`` data."""
 
         edge_id, src, rel, dst, ctx, t_, conf, prov, emb = edge
@@ -722,7 +647,7 @@ class KnowledgeGraph(SQLiteExecMixin):
         )
         if emb is not None:
             self.graph[src][dst][edge_id]["embedding"] = np.asarray(json.loads(emb), dtype=float)
-        cur.execute(
+        self.backend.exec(
             "INSERT INTO edges(id, src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
             (edge_id, src, rel, dst, ctx, t_, conf, prov, emb),
         )
