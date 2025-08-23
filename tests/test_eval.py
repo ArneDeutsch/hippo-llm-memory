@@ -5,6 +5,7 @@ baseline presets to ensure that metrics and metadata files are produced with
 the expected structure.
 """
 
+import csv
 import json
 import subprocess
 import sys
@@ -32,6 +33,7 @@ def test_baseline_presets_create_metrics(tmp_path: Path) -> None:
 
         metrics_path = outdir / "metrics.json"
         meta_path = outdir / "meta.json"
+        csv_path = outdir / "metrics.csv"
 
         assert metrics_path.exists()
         data = json.loads(metrics_path.read_text())
@@ -42,6 +44,7 @@ def test_baseline_presets_create_metrics(tmp_path: Path) -> None:
         assert isinstance(compute["tokens"], int)
         assert isinstance(compute["time_ms_per_100"], float)
         assert isinstance(compute["rss_mb"], float)
+        assert compute["latency_ms_mean"] > 0
 
         assert meta_path.exists()
         meta = json.loads(meta_path.read_text())
@@ -54,3 +57,9 @@ def test_baseline_presets_create_metrics(tmp_path: Path) -> None:
         assert isinstance(meta.get("platform"), str)
         assert len(meta.get("pip_hash", "")) == 64
         assert isinstance(meta.get("cpu"), str)
+
+        assert csv_path.exists()
+        with csv_path.open("r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+        assert rows and float(rows[0]["latency_ms"]) > 0

@@ -146,8 +146,10 @@ def _evaluate(
     correct = 0
     f1_total = 0.0
     total_tokens = 0
+    latencies: List[float] = []
     t0 = time.perf_counter()
     for idx, item in enumerate(tasks):
+        item_t0 = time.perf_counter()
         # Optional memory retrieval and adapter calls for plumbing coverage.
         if modules:
             hidden = torch.zeros(1, 1, 8)
@@ -191,6 +193,9 @@ def _evaluate(
         correct += is_correct
         f1_total += _f1(pred, item.answer)
         total_tokens += len(item.prompt.split()) + len(item.answer.split())
+        item_t1 = time.perf_counter()
+        latency_ms = (item_t1 - item_t0) * 1000.0
+        latencies.append(latency_ms)
         rows.append(
             {
                 "idx": idx,
@@ -198,11 +203,17 @@ def _evaluate(
                 "answer": item.answer,
                 "pred": pred,
                 "correct": is_correct,
-                "latency_ms": 0.0,
+                "latency_ms": latency_ms,
             }
         )
     n = len(rows)
-    elapsed = time.perf_counter() - t0
+    t1 = time.perf_counter()
+    if all(lat == 0.0 for lat in latencies) and latencies:
+        fallback = (t1 - t0) * 1000.0 / len(latencies)
+        for row in rows:
+            row["latency_ms"] = fallback
+        latencies = [fallback] * len(rows)
+    elapsed = t1 - t0
     metrics = {"em": correct / n if n else 0.0, "f1": f1_total / n if n else 0.0}
     return rows, metrics, total_tokens, elapsed
 
@@ -254,6 +265,7 @@ def run_suite(
     rows, metrics, total_tokens, elapsed = _evaluate(
         tasks, modules, tokenizer, model, int(base_cfg.max_new_tokens)
     )
+    lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
 
     for _ in range(int(cfg.replay_cycles)):
         _run_replay(modules, tasks)
@@ -269,6 +281,7 @@ def run_suite(
                 "tokens": total_tokens,
                 "time_ms_per_100": 100000 * elapsed / max(1, len(rows)),
                 "rss_mb": _rss_mb(),
+                "latency_ms_mean": lat_mean,
             },
         },
         "retrieval": registry.all_snapshots(),
@@ -440,6 +453,7 @@ def main(cfg: DictConfig) -> None:
     pre_rows, pre_metrics, pre_tokens, pre_time = _evaluate(
         tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
     )
+    latencies = [row["latency_ms"] for row in pre_rows]
     post_rows = post_metrics = None
     total_items = len(pre_rows)
     total_tokens = pre_tokens
@@ -450,6 +464,7 @@ def main(cfg: DictConfig) -> None:
         post_rows, post_metrics, post_tokens, post_time = _evaluate(
             tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
         )
+        latencies.extend(row["latency_ms"] for row in post_rows)
         total_items += len(post_rows)
         total_tokens += post_tokens
         total_time += post_time
@@ -469,6 +484,7 @@ def main(cfg: DictConfig) -> None:
         "tokens": total_tokens,
         "time_ms_per_100": 100000 * total_time / max(1, total_items),
         "rss_mb": _rss_mb(),
+        "latency_ms_mean": sum(latencies) / max(1, len(latencies)),
     }
     _write_outputs(
         outdir, pre_rows, pre_metrics, post_rows, post_metrics, cfg, flat_ablate, compute
