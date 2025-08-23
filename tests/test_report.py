@@ -125,6 +125,15 @@ def test_report_aggregation(tmp_path: Path) -> None:
     assert "+0.200" in text
     assert "-250.000" in text
 
+    idx = out / "index.md"
+    assert idx.exists()
+    idx_text = idx.read_text()
+    header = next(line for line in idx_text.splitlines() if line.startswith("| Suite"))
+    for col in ["em", "r", "rss_mb", "time_ms_per_100", "tokens"]:
+        assert col in header
+    assert "[episodic](episodic/summary.md)" in idx_text
+    assert "[semantic](semantic/summary.md)" in idx_text
+
 
 def test_report_handles_missing_optional(tmp_path: Path) -> None:
     base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
@@ -138,6 +147,7 @@ def test_report_handles_missing_optional(tmp_path: Path) -> None:
     text = paths["episodic"].read_text()
     assert "Retrieval Telemetry" not in text
     assert "Gate Telemetry" not in text
+    assert (out / "index.md").exists()
 
 
 def test_find_latest_date(tmp_path: Path) -> None:
