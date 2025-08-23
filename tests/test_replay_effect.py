@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import os
 import random
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 import torch
 
 from hippo_mem.consolidation.worker import ConsolidationWorker
@@ -43,11 +43,11 @@ class _DatasetWorker(ConsolidationWorker):
         self._optim_step(loss)
 
 
-def test_replay_improves_em() -> None:
-    """Replay cycle should increase EM when enabled."""
-    random.seed(4)
-    np.random.seed(4)
-    torch.manual_seed(4)
+def _em_delta(seed: int, enable_replay: bool) -> int:
+    """Return EM delta for a given seed with optional replay."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
     dim = 2
     store = EpisodicStore(dim)
     kg = KnowledgeGraph()
@@ -55,15 +55,23 @@ def test_replay_improves_em() -> None:
         store, kg, batch_mix=SimpleNamespace(episodic=1.0, semantic=0.0, fresh=0.0)
     )
     scheduler.add_trace("t", np.zeros(dim, dtype=np.float32), score=1.0)
-
     adapter_cfg = AdapterConfig(hidden_size=dim, num_heads=1, lora_r=dim, enabled=True)
     adapter = EpisodicAdapter(adapter_cfg)
     model = torch.nn.Linear(dim, dim)
-
     pre = _eval_em(adapter, dim)
-    if os.getenv("REPLAY_ENABLED", "true").lower() != "false":
+    if enable_replay:
         worker = _DatasetWorker(scheduler, model, adapter, dim)
         for _ in range(2):
             worker.step_adapters([("episodic", None)])
     post = _eval_em(adapter, dim)
-    assert post - pre > 0, f"ΔEM should be positive, got {post} vs {pre}"
+    return post - pre
+
+
+@pytest.mark.parametrize("seed", [4, 6, 7])
+def test_replay_improves_em(seed: int) -> None:
+    """Replay should deterministically improve EM across seeds."""
+    delta_on = _em_delta(seed, True)
+    delta_off = _em_delta(seed, False)
+    assert delta_on > 0, f"Expected positive ΔEM with replay for seed {seed}"
+    assert delta_off == 0, f"Expected no ΔEM without replay for seed {seed}"
+    assert delta_on > delta_off
