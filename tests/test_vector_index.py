@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from hippo_mem._faiss import faiss
 from hippo_mem.episodic.index import VectorIndex
@@ -63,3 +64,42 @@ def test_duplicate_ids_are_supported() -> None:
     assert index.ntotal == 2
     dist, ids = index.search(v2, k=2)
     assert list(ids[0]) == [42, 42]
+
+
+def test_pq_train_requires_data() -> None:
+    """Training a PQ index on empty data raises an error."""
+    index = VectorIndex(dim=4, index_str="PQ2", train_threshold=1)
+    empty = np.empty((0, 4), dtype="float32")
+    with pytest.raises(RuntimeError):
+        index.index.train(empty)
+
+
+def test_add_raises_on_dimension_mismatch() -> None:
+    """Adding a vector with wrong dims fails."""
+    index = VectorIndex(dim=3, index_str="IVF1,Flat", train_threshold=1)
+    wrong = _vec([1.0, 0.0, 0.0, 0.0])
+    with pytest.raises(Exception):
+        index.add(wrong, 1)
+
+
+def test_search_raises_on_dimension_mismatch() -> None:
+    """Searching with wrong dims fails."""
+    index = VectorIndex(dim=3, index_str="IVF1,Flat", train_threshold=1)
+    v1 = _vec([1.0, 0.0, 0.0])
+    index.add(v1, 1)
+    wrong = _vec([0.0, 0.0, 0.0, 1.0])
+    with pytest.raises(Exception):
+        index.search(wrong, k=1)
+
+
+def test_remove_rejects_invalid_ids() -> None:
+    """Removing negative or missing ids leaves the index intact."""
+    index = VectorIndex(dim=3, index_str="IVF1,Flat", train_threshold=1)
+    v1 = _vec([1.0, 0.0, 0.0])
+    v2 = _vec([0.0, 1.0, 0.0])
+    index.add(v1, 1)
+    index.add(v2, 2)
+    assert index.ntotal == 2
+    index.remove(-1)
+    index.remove(99)
+    assert index.ntotal == 2
