@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import networkx as nx
 import numpy as np
+import pytest
 import torch
 
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
@@ -254,3 +255,75 @@ def test_handle_errors_logs_and_stops(caplog) -> None:
         assert worker.handle_errors(boom) is None
     assert worker.stop_event.is_set()
     assert "consolidation step failed" in caplog.text
+
+
+def test_optim_step_returns_without_optimizer() -> None:
+    """_optim_step exits silently when no optimiser is configured."""
+
+    class DummyScheduler:
+        def next_batch(self, size: int) -> list[tuple[str, object]]:  # pragma: no cover
+            return []
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1))
+    assert worker.optimizer is None
+    # Should not raise even though loss lacks gradients
+    worker._optim_step(torch.tensor(0.0))
+
+
+def test_optim_step_requires_grad_loss_error() -> None:
+    """_optim_step raises when loss has no gradient information."""
+
+    class DummyScheduler:
+        def next_batch(self, size: int) -> list[tuple[str, object]]:  # pragma: no cover
+            return []
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1))
+    param = torch.nn.Parameter(torch.tensor(1.0))
+    worker.optimizer = torch.optim.SGD([param], lr=0.1)
+    loss = torch.tensor(1.0)
+    with pytest.raises(RuntimeError):
+        worker._optim_step(loss)
+
+
+@pytest.mark.parametrize("setup", ["no_adapter", "no_kg"])
+def test_step_semantic_returns_early(setup: str) -> None:
+    """_step_semantic returns without optimisation when prerequisites missing."""
+
+    class DummyScheduler:
+        def next_batch(self, size: int) -> list[tuple[str, object]]:  # pragma: no cover
+            return []
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1))
+    if setup == "no_adapter":
+        worker.kg_store = KnowledgeGraph()
+    else:
+        worker.rel_adapter = RelationalMemoryAdapter()
+
+    called: list[int] = []
+    worker._optim_step = lambda loss: called.append(1)  # type: ignore[assignment]
+    worker._step_semantic()
+    assert not called
+
+
+def test_step_adapters_stops_on_flag() -> None:
+    """step_adapters halts processing when stop_event is set mid-batch."""
+
+    class DummyScheduler:
+        def next_batch(self, size: int) -> list[tuple[str, object]]:  # pragma: no cover
+            return []
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1))
+    calls: list[str] = []
+
+    def step_e() -> None:
+        calls.append("e")
+        worker.stop_event.set()
+
+    def step_s() -> None:
+        calls.append("s")
+
+    worker._step_episodic = step_e  # type: ignore[assignment]
+    worker._step_semantic = step_s  # type: ignore[assignment]
+
+    worker.step_adapters([("episodic", None), ("semantic", None)])
+    assert calls == ["e"]

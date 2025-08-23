@@ -43,6 +43,16 @@ def test_load_jsonl_files_skips_blank_lines(tmp_path: Path) -> None:
     assert ds[1]["text"] == "p2\nAnswer: a2"
 
 
+def test_load_jsonl_files_all_blank_returns_empty(tmp_path: Path) -> None:
+    """Files containing only blank lines yield an empty dataset."""
+
+    file = tmp_path / "empty.jsonl"
+    with file.open("w", encoding="utf-8") as fh:
+        fh.write("\n\n   \n")
+    ds = jsonl_dataset.load_jsonl_files([str(file)])
+    assert ds.num_rows == 0
+
+
 def test_split_train_val_creates_deterministic_split(tmp_path: Path) -> None:
     """split_train_val yields deterministic 95/5 split without overlap."""
 
