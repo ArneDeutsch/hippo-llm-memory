@@ -14,7 +14,7 @@ from hypothesis import strategies as st
 
 from hippo_mem.common import TraceSpec
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
-from hippo_mem.episodic.gating import WriteGate, surprise
+from hippo_mem.episodic.gating import WriteGate, k_wta, surprise
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.episodic.store import EpisodicStore, TraceValue
@@ -429,6 +429,17 @@ def test_sparse_encode_k_wta_idempotent(vec: np.ndarray, k: int) -> None:
     key2 = store.sparse_encode(dense, k)
     assert np.array_equal(np.sort(key.indices), np.sort(key2.indices))
     assert np.allclose(key.values, key2.values)
+
+
+def test_k_wta_returns_empty_for_non_positive_k() -> None:
+    """Non-positive ``k`` yields an empty key."""
+
+    q = np.array([0.2, -0.3], dtype=np.float32)
+    for invalid_k in (0, -1):
+        key = k_wta(q, invalid_k)
+        assert key.indices.size == 0
+        assert key.values.size == 0
+        assert key.dim == q.size
 
 
 def test_kwta_produces_sparse_indices() -> None:
