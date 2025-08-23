@@ -31,6 +31,7 @@ datasets:
 	    done; \
 	  done; \
          done
+	python scripts/audit_datasets.py
 
 eval-baselines:
 	python scripts/run_baselines.py --date $(DATE)
