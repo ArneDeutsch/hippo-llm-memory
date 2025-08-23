@@ -70,3 +70,18 @@ def test_replay_dataset_falls_back_when_replay_exhausted() -> None:
     assert samples[0]["prompt"] == "r"
     assert samples[1]["text"] == "base1"
     assert "prompt" not in samples[1]
+
+
+def test_replay_dataset_handles_empty_replay_iter() -> None:
+    """Empty replay streams yield only base dataset items."""
+
+    base_ds = [{"text": "base0"}, {"text": "base1"}]
+
+    def replay_reader():
+        return iter([])
+
+    ds = ReplayIterableDataset(base_ds, replay_reader, ratio=1.0, seed=0)
+    samples = list(iter(ds))
+
+    assert samples == base_ds
+    assert all("prompt" not in s for s in samples)
