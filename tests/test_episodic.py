@@ -17,7 +17,8 @@ from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate, k_wta, surprise
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
-from hippo_mem.episodic.store import EpisodicStore, TraceValue
+from hippo_mem.episodic.store import EpisodicStore
+from hippo_mem.episodic.types import TraceValue
 from hippo_mem.episodic.utils import cosine_dissimilarity
 from hippo_mem.relational.kg import KnowledgeGraph
 

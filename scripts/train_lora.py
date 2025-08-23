@@ -52,7 +52,8 @@ from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.async_writer import AsyncStoreWriter
 from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.replay import ReplayScheduler
-from hippo_mem.episodic.store import EpisodicStore, TraceValue
+from hippo_mem.episodic.store import EpisodicStore
+from hippo_mem.episodic.types import TraceValue
 from hippo_mem.relational.extract import extract_tuples
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph

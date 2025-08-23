@@ -7,7 +7,7 @@
 - `hippo_mem.episodic.gating.surprise()`
 - `hippo_mem.episodic.gating.novelty()`
 - `hippo_mem.episodic.gating.WriteGate`
-- `hippo_mem.episodic.store.TraceValue`
+- `hippo_mem.episodic.types.TraceValue`
 - `hippo_mem.episodic.store.Trace`
 - `hippo_mem.episodic.store.EpisodicStore`
 - `hippo_mem.episodic.replay.ReplayQueue`
@@ -15,7 +15,8 @@
 - `hippo_mem.episodic.adapter.AdapterConfig`
 - `hippo_mem.episodic.adapter.EpisodicAdapter`
 - `hippo_mem.episodic.adapter.LoraLinear`
-- `hippo_mem.episodic.index.VectorIndex`
+- `hippo_mem.episodic.index.FaissIndex`
+- `hippo_mem.episodic.index.NumpyIndex`
 - `hippo_mem.episodic.db.TraceDB`
 
 ## SGC-RSS (relational)
