@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -30,3 +31,16 @@ def test_dry_run_smoke(tmp_path: Path, preset: str, suite: str) -> None:
     subprocess.run(cmd, check=True)
     for name in ["metrics.json", "metrics.csv", "meta.json"]:
         assert (outdir / name).exists()
+
+    metrics = json.loads((outdir / "metrics.json").read_text())
+    meta = json.loads((outdir / "meta.json").read_text())
+
+    assert metrics["preset"] == preset
+    assert metrics["suite"] == suite
+    compute = metrics["metrics"]["compute"]
+    assert compute["time_ms_per_100"] > 0
+    assert compute["latency_ms_mean"] > 0
+    assert "em" in metrics["metrics"][suite]
+
+    assert meta["preset"] == preset
+    assert meta["suite"] == suite
