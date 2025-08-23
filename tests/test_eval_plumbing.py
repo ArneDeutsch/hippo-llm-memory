@@ -43,6 +43,9 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     meta = json.loads(meta_path.read_text())
     assert len(meta.get("config_hash", "")) == 64
     assert meta.get("seed") == 0
+    assert meta.get("suite") == suite
+    assert meta.get("preset") == "baselines/core"
+    assert meta.get("n") == 3
 
 
 def test_ablate_disables_hopfield(tmp_path: Path) -> None:
@@ -63,6 +66,9 @@ def test_ablate_disables_hopfield(tmp_path: Path) -> None:
 
     meta = json.loads((outdir / "meta.json").read_text())
     assert meta["ablate"]["memory.episodic.hopfield"] is False
+    assert meta.get("suite") == "episodic"
+    assert meta.get("preset") == "memory/hei_nw"
+    assert meta.get("n") == 2
 
     modules = eval_bench._init_modules("hei_nw", meta["ablate"])
     assert modules["episodic"]["store"].config["hopfield"] is False

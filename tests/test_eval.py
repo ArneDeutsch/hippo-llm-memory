@@ -47,6 +47,9 @@ def test_baseline_presets_create_metrics(tmp_path: Path) -> None:
         meta = json.loads(meta_path.read_text())
         assert isinstance(meta.get("model"), str)
         assert meta.get("seed") == 0
+        assert meta.get("suite") == "episodic"
+        assert meta.get("preset") == preset
+        assert meta.get("n") == data["n"]
         assert isinstance(meta.get("python"), str)
         assert isinstance(meta.get("platform"), str)
         assert len(meta.get("pip_hash", "")) == 64
