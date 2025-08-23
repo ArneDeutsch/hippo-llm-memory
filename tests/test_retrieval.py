@@ -14,6 +14,14 @@ def test_embed_text_is_deterministic() -> None:
     assert vec1[0] == pytest.approx(ord("a") / 255.0)
 
 
+def test_embed_text_truncates_long_input() -> None:
+    """Long strings are truncated to the target dimension."""
+    text = "abcdef"
+    vec = embed_text(text, dim=3)
+    assert len(vec) == 3
+    assert vec == [pytest.approx(ord(c) / 255.0) for c in "abc"]
+
+
 def test_faiss_index_add_and_search() -> None:
     """Vectors can be added and queried by nearest neighbour."""
     index = FaissIndex(dim=4)
