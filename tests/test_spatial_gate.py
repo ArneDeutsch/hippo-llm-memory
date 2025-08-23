@@ -2,8 +2,10 @@
 
 import pytest
 
+from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.map import PlaceGraph
+from scripts.train_lora import ingest_spatial_traces
 
 
 def test_spatial_gate_reduces_repeats() -> None:
@@ -49,3 +51,20 @@ def test_spatial_gate_penalizes_high_degree() -> None:
     g.connect("A", "Z")
     action, _ = gate.decide(None, "A", g)
     assert action == "route_to_episodic"
+
+
+def test_spatial_gate_threshold_and_counters() -> None:
+    gate_registry.reset()
+    graph = PlaceGraph()
+    graph.connect("hub", "a")
+    graph.connect("hub", "b")
+    graph.connect("hub", "c")
+    gate = SpatialGate(block_threshold=0.5, max_degree=2)
+    action, _ = SpatialGate(block_threshold=0.5, max_degree=2).decide(None, "hub", graph)
+    assert action == "route_to_episodic"
+    records = [{"trajectory": ["hub"]}, {"trajectory": ["new"]}]
+    ingest_spatial_traces(records, graph, gate)
+    stats = gate_registry.get("spatial")
+    assert stats.attempts == 2
+    assert stats.blocked_new_edges == 1
+    assert stats.inserted == 1
