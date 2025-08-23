@@ -15,7 +15,11 @@ def test_fast_track_ingestion(monkeypatch, tmp_path):
     data_file.write_text(json.dumps({"prompt": "Alice likes Bob.", "answer": ""}) + "\n")
 
     def fake_loader(_cfg):
-        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
+        class DummyModel(SimpleNamespace):
+            def __call__(self, *args, **kwargs):
+                return SimpleNamespace(logits=torch.zeros(1), loss=torch.tensor(0.0))
+
+        model = DummyModel(config=SimpleNamespace(use_cache=False, hidden_size=8))
         model.gradient_checkpointing_enable = lambda: None
         tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
         return model, tokenizer
@@ -89,7 +93,11 @@ def test_spatial_trace_ingestion(monkeypatch, tmp_path):
     data_file.write_text(json.dumps(rec) + "\n")
 
     def fake_loader(_cfg):
-        model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
+        class DummyModel(SimpleNamespace):
+            def __call__(self, *args, **kwargs):
+                return SimpleNamespace(logits=torch.zeros(1), loss=torch.tensor(0.0))
+
+        model = DummyModel(config=SimpleNamespace(use_cache=False, hidden_size=8))
         model.gradient_checkpointing_enable = lambda: None
         tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
         return model, tokenizer

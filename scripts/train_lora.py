@@ -1027,12 +1027,8 @@ class TrainingSession:
             logging.info("Replay mixing active (ratio=%.2f)", self.cfg.replay.ratio)
         return self.train_ds
 
-    # Phase 3
-    def perform_dry_run(self) -> bool:
-        """Execute dry‑run logic and return ``True`` if it handled the run."""
-
-        if not self.cfg.dry_run:
-            return False
+    def _prepare_model_for_dry_run(self) -> bool:
+        """Wrap adapters and execute a dummy forward pass."""
 
         if self.peft_config is not None:
             self.model = get_peft_model(self.model, self.peft_config)
@@ -1051,18 +1047,51 @@ class TrainingSession:
         dummy_hidden = torch.zeros(1, 1, hidden, device=device)
         mem = _gather_memory_tokens(dummy_hidden, self.cfg, self.context.sources)
         dummy_ids = torch.ones(1, 1, dtype=torch.long, device=device)
-        if callable(self.model):
-            _ = self.model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
-        if self.cfg.memory.runtime.enable_writes:
-            probs = np.array([1.0])
-            queries = np.zeros((1, hidden), dtype=np.float32)
-            keys = np.zeros((0, hidden), dtype=np.float32)
-            decisions, _ = gate_batch(self.context.gate, probs, queries, keys)
-            self.context.gate_attempts += len(decisions)
-            self.context.gate_accepts += sum(d.allow for d in decisions)
-            for dec, q in zip(decisions, queries):
-                if dec.allow and self.context.writer is not None:
-                    self.context.writer.enqueue(q, TraceValue(provenance="dry_run"))
+        if not callable(self.model):
+            return False
+        _ = self.model(dummy_ids, labels=dummy_ids, memory_tokens=mem)
+        return True
+
+    def _simulate_memory_write(self) -> None:
+        """Run a dummy write through the gate and writer."""
+
+        if not self.cfg.memory.runtime.enable_writes:
+            return
+        hidden = self.context.hidden_size
+        probs = np.array([1.0])
+        queries = np.zeros((1, hidden), dtype=np.float32)
+        keys = np.zeros((0, hidden), dtype=np.float32)
+        decisions, _ = gate_batch(self.context.gate, probs, queries, keys)
+        self.context.gate_attempts += len(decisions)
+        self.context.gate_accepts += sum(d.allow for d in decisions)
+        for dec, q in zip(decisions, queries):
+            if dec.allow and self.context.writer is not None:
+                self.context.writer.enqueue(q, TraceValue(provenance="dry_run"))
+
+    def _ingest_training_artifacts(self) -> None:
+        """Ingest KG text and spatial traces for the dry run."""
+
+        if self.train_ds is None:
+            return
+        if self.cfg.schema_fasttrack_ingest:
+            ingest_training_text(self.train_ds, self.context.kg)
+        if self.cfg.spatial.enabled:
+            gate_cfg = getattr(self.cfg.memory.spatial, "gate", None)
+            gate = build_spatial_gate(gate_cfg, self.provenance)
+            ingest_spatial_traces(self.train_ds, self.context.spatial_map, gate)
+
+    # Phase 3
+    def perform_dry_run(self) -> bool:
+        """Execute dry‑run logic and return ``True`` if it handled the run."""
+
+        if not self.cfg.dry_run:
+            return False
+
+        if not self._prepare_model_for_dry_run():
+            return True
+
+        self._simulate_memory_write()
+
         for _ in range(3):
             log_memory_status(
                 self.context.store,
@@ -1072,13 +1101,8 @@ class TrainingSession:
                 self.context.worker,
             )
             time.sleep(0.1)
-        if self.train_ds is not None:
-            if self.cfg.schema_fasttrack_ingest:
-                ingest_training_text(self.train_ds, self.context.kg)
-            if self.cfg.spatial.enabled:
-                gate_cfg = getattr(self.cfg.memory.spatial, "gate", None)
-                gate = build_spatial_gate(gate_cfg, self.provenance)
-                ingest_spatial_traces(self.train_ds, self.context.spatial_map, gate)
+
+        self._ingest_training_artifacts()
         return True
 
     # Phase 4
