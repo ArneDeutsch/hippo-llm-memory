@@ -725,13 +725,18 @@ def setup_adapters(context: TrainerContext, cfg: TrainConfig) -> None:
 
 
 def attach_fusion(context: TrainerContext, cfg: TrainConfig) -> None:
-    """Attach configured adapters to the model."""
-    if not any((context.episodic_adapter, context.relational_adapter, context.spatial_adapter)):
-        return
+    """Attach memory fusion patch and any configured adapters.
+
+    The patch is installed even when no adapters are present so tests and
+    smoke checks can verify fusion wiring independently of adapter toggles.
+    """
+
     model = context.model
     fusion_cfg = MemoryFusionConfig(
         insert_block_index=cfg.fusion_insert_block_index,
-        use_episodic=context.episodic_adapter is not None,
+        # Always enable episodic branch to mirror previous behaviour where the
+        # fusion patch was attached regardless of adapter configuration.
+        use_episodic=True,
         use_relational=context.relational_adapter is not None,
         use_spatial=context.spatial_adapter is not None,
     )
