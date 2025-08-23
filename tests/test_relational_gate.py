@@ -4,6 +4,7 @@ import time
 
 import pytest
 
+from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph
 
@@ -50,3 +51,17 @@ def test_relational_gate_penalizes_high_degree() -> None:
     tup = ("A", "likes", "B", "ctx", None, 1.0, 0)
     action, _ = gate.decide(tup, kg)
     assert action == "route_to_episodic"
+
+
+def test_relational_gate_threshold_and_counters() -> None:
+    gate_registry.reset()
+    gate = RelationalGate(threshold=0.8, w_conf=1.0, w_nov=0.0, w_deg=0.0, w_rec=0.0)
+    kg = KnowledgeGraph(config={"schema_threshold": 0.0}, gate=gate)
+    t_thr = ("A", "rel", "B", "ctx", None, 0.8, 0)
+    t_low = ("C", "rel", "D", "ctx", None, 0.79, 0)
+    assert kg.ingest(t_thr)[0] == "insert"
+    assert kg.ingest(t_low)[0] == "route_to_episodic"
+    stats = gate_registry.get("relational")
+    assert stats.attempts == 2
+    assert stats.inserted == 1
+    assert stats.routed_to_episodic == 1
