@@ -38,7 +38,10 @@ def test_baseline_presets_create_metrics(tmp_path: Path) -> None:
         assert data["preset"] == preset
         assert data["suite"] == "episodic"
         assert isinstance(data["metrics"]["episodic"]["em"], float)
-        assert isinstance(data["metrics"]["compute"]["tokens"], int)
+        compute = data["metrics"]["compute"]
+        assert isinstance(compute["tokens"], int)
+        assert isinstance(compute["time_ms_per_100"], float)
+        assert isinstance(compute["rss_mb"], float)
 
         assert meta_path.exists()
         meta = json.loads(meta_path.read_text())

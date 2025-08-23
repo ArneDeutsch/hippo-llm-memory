@@ -32,3 +32,8 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     assert meta["replay_cycles"] == 1
     assert meta["ablate"]["memory.episodic.hopfield"] is False
     assert len(meta["config_hash"]) == 64
+
+    metrics = json.loads((outdir / "metrics.json").read_text())
+    compute = metrics["metrics"]["compute"]
+    assert isinstance(compute["time_ms_per_100"], float)
+    assert isinstance(compute["rss_mb"], float)

@@ -27,6 +27,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -96,6 +97,22 @@ def _cpu_info() -> str:
     if not info:
         info = platform.machine()
     return info or "unknown"
+
+
+def _rss_mb() -> float:
+    """Return resident set size of current process in megabytes."""
+
+    try:
+        import psutil
+
+        return psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+    except Exception:  # pragma: no cover - psutil may be missing
+        import resource
+
+        rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        if sys.platform == "darwin":
+            rss /= 1024
+        return rss / 1024
 
 
 def _sha256_file(path: Path) -> str:
@@ -224,8 +241,8 @@ def _eval_tasks(
     *,
     flag: str,
     start_idx: int,
-) -> tuple[List[Dict[str, object]], float, int]:
-    """Evaluate ``tasks`` returning rows, EM and token count.
+) -> tuple[List[Dict[str, object]], float, int, float]:
+    """Evaluate ``tasks`` returning rows, EM, token count and elapsed seconds.
 
     Parameters
     ----------
@@ -242,6 +259,7 @@ def _eval_tasks(
     rows: List[Dict[str, object]] = []
     correct = 0
     total_tokens = 0
+    t0 = time.perf_counter()
     for off, item in enumerate(tasks):
         epi_feats = None
         if "episodic" in modules:
@@ -284,8 +302,9 @@ def _eval_tasks(
             }
         )
 
+    t1 = time.perf_counter()
     em = correct / len(tasks) if tasks else 0.0
-    return rows, em, total_tokens
+    return rows, em, total_tokens, t1 - t0
 
 
 class _BatchMix(SimpleNamespace):
@@ -341,7 +360,8 @@ def run_suite(
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
-    rows, em, total_tokens = _eval_tasks(tasks, modules, flag="pre_replay", start_idx=0)
+    rows, em, total_tokens, elapsed = _eval_tasks(tasks, modules, flag="pre_replay", start_idx=0)
+    total_time = elapsed
 
     post_cycles = int(cfg.get("post_replay_cycles", 0))
     post_metrics: Dict[str, Dict[str, object]] = {}
@@ -349,24 +369,37 @@ def run_suite(
         start = len(tasks)
         for cycle in range(1, post_cycles + 1):
             _run_replay_once(modules)
-            cycle_rows, cycle_em, cycle_tokens = _eval_tasks(
+            cycle_rows, cycle_em, cycle_tokens, cycle_time = _eval_tasks(
                 tasks, modules, flag=f"post_replay_{cycle}", start_idx=start
             )
             rows.extend(cycle_rows)
             post_metrics[str(cycle)] = {
                 cfg.suite: {"em": cycle_em},
-                "compute": {"tokens": cycle_tokens},
+                "compute": {
+                    "tokens": cycle_tokens,
+                    "time_ms_per_100": 100000 * cycle_time / max(1, len(tasks)),
+                    "rss_mb": _rss_mb(),
+                },
             }
             total_tokens += cycle_tokens
+            total_time += cycle_time
             start += len(tasks)
 
     mem_usage = _memory_usage(modules)
+    total_items = len(rows)
     metrics = {
         "suite": cfg.suite,
         "n": cfg.n,
         "seed": cfg.seed,
         "preset": cfg.preset,
-        "metrics": {cfg.suite: {"em": em}, "compute": {"tokens": total_tokens}},
+        "metrics": {
+            cfg.suite: {"em": em},
+            "compute": {
+                "tokens": total_tokens,
+                "time_ms_per_100": 100000 * total_time / max(1, total_items),
+                "rss_mb": _rss_mb(),
+            },
+        },
         "memory": mem_usage,
     }
     if post_metrics:
@@ -398,22 +431,25 @@ def write_outputs(
     )
 
     with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f,
-            fieldnames=[
-                "idx",
-                "prompt",
-                "answer",
-                "pred",
-                "correct",
-                "latency_ms",
-                "flags",
-                "gating_enabled",
-            ],
-        )
+        compute = metrics.get("metrics", {}).get("compute", {})
+        compute_cols = [k for k in ("time_ms_per_100", "rss_mb") if k in compute]
+        fieldnames = [
+            "idx",
+            "prompt",
+            "answer",
+            "pred",
+            "correct",
+            "latency_ms",
+            *compute_cols,
+            "flags",
+            "gating_enabled",
+        ]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
             row = dict(row)
+            for col in compute_cols:
+                row[col] = compute.get(col)
             row["gating_enabled"] = gating_enabled
             writer.writerow(row)
 
