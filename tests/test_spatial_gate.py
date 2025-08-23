@@ -37,3 +37,15 @@ def test_spatial_gate_rejects_bad_config() -> None:
         SpatialGate(repeat_N=0)
     with pytest.raises(ValueError):
         SpatialGate(max_degree=0)
+    with pytest.raises(ValueError):
+        SpatialGate(recent_window=0)
+
+
+def test_spatial_gate_penalizes_high_degree() -> None:
+    gate = SpatialGate(block_threshold=0.3, max_degree=2)
+    g = PlaceGraph()
+    g.connect("A", "X")
+    g.connect("A", "Y")
+    g.connect("A", "Z")
+    action, _ = gate.decide(None, "A", g)
+    assert action == "route_to_episodic"
