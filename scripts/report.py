@@ -206,6 +206,64 @@ def summarise_gates(
     return summary
 
 
+def write_smoke(data_root: Path, out_path: Path, n_rows: int = 3) -> Path:
+    """Write sample rows from each suite to ``out_path``.
+
+    The function looks for the smallest ``*.jsonl`` dataset file in every
+    ``data/<suite>`` directory, extracts up to ``n_rows`` rows, and renders
+    them as a Markdown table.  The resulting file is intended for quick
+    human inspection of prompt/answer formats.
+
+    Parameters
+    ----------
+    data_root:
+        Root directory containing per-suite datasets.
+    out_path:
+        Path of the Markdown file to write.
+    n_rows:
+        Maximum number of rows to sample per suite.
+    """
+
+    lines: list[str] = ["# Smoke Samples", ""]
+    for suite_dir in sorted(p for p in data_root.iterdir() if p.is_dir()):
+        candidates = sorted(suite_dir.glob("*.jsonl"))
+        if not candidates:
+            continue
+
+        def size_key(p: Path) -> int:
+            try:
+                return int(p.stem.split("_")[0])
+            except ValueError:  # pragma: no cover - file name mismatch
+                return 10**9
+
+        sample_file = min(candidates, key=size_key)
+        rows: list[tuple[str, str]] = []
+        with sample_file.open() as fh:
+            for _ in range(n_rows):
+                line = fh.readline()
+                if not line:
+                    break
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                prompt = str(obj.get("prompt") or obj.get("question") or "")
+                answer = str(obj.get("answer"))
+                rows.append((prompt, answer))
+        if not rows:
+            continue
+        lines.extend([f"## {suite_dir.name}", "", "| prompt | answer |", "|---|---|"])
+        for prompt, answer in rows:
+            p = prompt.replace("|", "\\|")
+            a = answer.replace("|", "\\|")
+            lines.append(f"| {p} | {a} |")
+        lines.append("")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(lines))
+    return out_path
+
+
 def _render_markdown_suite(
     suite: str,
     presets: Dict[str, Dict[int, MetricStats]],
@@ -447,10 +505,12 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runs-dir", default="runs", help="directory containing run outputs")
     parser.add_argument("--out-dir", default="reports", help="directory to write reports to")
+    parser.add_argument("--data-dir", default="data", help="dataset directory for smoke report")
     parser.add_argument(
         "--date", default=None, help="run date in YYYYMMDD format; latest if omitted"
     )
     parser.add_argument("--plots", action="store_true", help="render bar plots using matplotlib")
+    parser.add_argument("--smoke", action="store_true", help="also write smoke.md with sample rows")
     args = parser.parse_args()
 
     runs_root = Path(args.runs_dir)
@@ -463,6 +523,8 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     retrieval_summary = summarise_retrieval(retrieval_data)
     gate_summary = summarise_gates(gate_data)
     out_dir = Path(args.out_dir) / date
+    if args.smoke:
+        write_smoke(Path(args.data_dir), out_dir / "smoke.md")
     paths = write_reports(summary, retrieval_summary, gate_summary, out_dir, args.plots)
     for suite, md_path in paths.items():
         log.info("wrote %s for %s", md_path, suite)

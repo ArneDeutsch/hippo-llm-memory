@@ -12,6 +12,7 @@ from scripts.report import (
     summarise_gates,
     summarise_retrieval,
     write_reports,
+    write_smoke,
 )
 
 
@@ -155,3 +156,31 @@ def test_find_latest_date(tmp_path: Path) -> None:
     (base / "20240101").mkdir(parents=True)
     (base / "20250102").mkdir()
     assert _find_latest_date(base) == "20250102"
+
+
+def test_smoke_report(tmp_path: Path) -> None:
+    data_root = tmp_path / "data"
+    for suite in ["episodic", "semantic", "spatial"]:
+        suite_dir = data_root / suite
+        suite_dir.mkdir(parents=True)
+        (suite_dir / "50_1337.jsonl").write_text('{"prompt":"Q","answer":"A"}\n')
+
+    runs_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
+    _make_metrics(
+        runs_dir / "50_1337",
+        "episodic",
+        {"em": 1.0},
+        {"tokens": 1, "rss_mb": 1.0, "time_ms_per_100": 1.0},
+    )
+    base = tmp_path / "runs" / "20250101"
+    summary = summarise(collect_metrics(base))
+    retrieval = summarise_retrieval(collect_retrieval(base))
+    gates = summarise_gates(collect_gates(base))
+    out_dir = tmp_path / "reports" / "20250101"
+    write_smoke(data_root, out_dir / "smoke.md")
+    write_reports(summary, retrieval, gates, out_dir, plots=False)
+    idx_text = (out_dir / "index.md").read_text()
+    assert "[smoke.md](smoke.md)" in idx_text
+    smoke_text = (out_dir / "smoke.md").read_text()
+    assert "## episodic" in smoke_text
+    assert "| Q | A |" in smoke_text
