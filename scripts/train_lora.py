@@ -416,6 +416,30 @@ def _gather_memory_tokens(
     return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
 
+def maybe_attach_memory(
+    inputs: dict,
+    model: nn.Module,
+    cfg: TrainConfig,
+    sources: Iterable[MemorySource],
+) -> dict:
+    """Attach memory tokens to ``inputs`` when retrieval is enabled."""
+
+    mem_cb = getattr(model, "_hippo_retrieval_cb", None)
+    inputs = dict(inputs)
+    if not callable(mem_cb):
+        input_ids = inputs.get("input_ids")
+        mem = None
+        embed_fn = getattr(model, "get_input_embeddings", None)
+        if callable(embed_fn) and input_ids is not None:
+            hidden_emb = embed_fn()(input_ids)
+            mem = _gather_memory_tokens(hidden_emb, cfg, sources)
+        if mem is not None:
+            inputs["memory_tokens"] = mem
+    else:
+        setattr(model, "_hippo_memory_tokens", None)
+    return inputs
+
+
 @dataclass
 class TrainerContext:
     """Holds model state and memory components for training."""
@@ -440,6 +464,7 @@ class TrainerContext:
     store_size: int = 0
     writer_queue_depth: int = 0
     adapters_attached: bool = False
+    enable_writes: bool = True
 
     def start(self) -> None:
         if self.worker is not None:
@@ -476,6 +501,62 @@ class TrainerContext:
             "store_size": self.store_size,
             "writer_queue_depth": self.writer_queue_depth,
         }
+
+
+def maybe_write_memory(context: TrainerContext, outputs, labels) -> None:
+    """Gate and enqueue writes if ``context.enable_writes`` is ``True``."""
+
+    if (
+        not context.enable_writes
+        or context.gate is None
+        or context.store is None
+        or context.writer is None
+        or labels is None
+    ):
+        return
+    hidden = getattr(context.model, "_hippo_last_hidden", None)
+    if hidden is None:
+        return
+    with torch.no_grad():
+        last_logits = outputs.logits[:, -1, :]
+        last_labels = labels[:, -1]
+        log_probs = F.log_softmax(last_logits, dim=-1)
+        probs = torch.exp(log_probs[torch.arange(last_labels.size(0)), last_labels]).cpu().numpy()
+        queries = hidden[:, -1, :].detach().cpu().numpy()
+        keys = context.store.keys()
+    decisions, _ = gate_batch(context.gate, probs, queries, keys)
+    context.gate_attempts += len(decisions)
+    context.gate_accepts += sum(d.allow for d in decisions)
+    for dec, q in zip(decisions, queries):
+        if dec.allow:
+            context.writer.enqueue(q, TraceValue(provenance="train"))
+    context.store_size = keys.shape[0]
+    context.writer_queue_depth = context.writer.queue.qsize()
+    if context.step % context.log_interval == 0:
+        logging.info(
+            "step=%d gate_accepts=%d gate_attempts=%d store_size=%d queue_depth=%d",
+            context.step,
+            context.gate_accepts,
+            context.gate_attempts,
+            context.store_size,
+            context.writer_queue_depth,
+        )
+
+
+def compute_loss_with_memory(self_tr, model, inputs, return_outputs=False):
+    """Wrapper around trainer ``compute_loss`` adding retrieval and writes."""
+
+    cfg = getattr(self_tr, "_hippo_cfg")
+    context = getattr(self_tr, "_hippo_context")
+    sources = getattr(self_tr, "_hippo_sources")
+    orig_compute_loss = getattr(self_tr, "_hippo_orig_compute_loss")
+    inputs = maybe_attach_memory(inputs, model, cfg, sources)
+    loss, outputs = orig_compute_loss(model, inputs, return_outputs=True)
+    context.step += 1
+    maybe_write_memory(context, outputs, inputs.get("labels"))
+    if return_outputs:
+        return loss, outputs
+    return loss
 
 
 def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) -> None:
@@ -1038,71 +1119,10 @@ class TrainingSession:
     # Phase 5
     def patch_compute_loss(self, trainer: SFTTrainer) -> None:
         """Install memory‑aware loss and validate trainable params."""
-
-        orig_compute_loss = trainer.compute_loss
-        cfg = self.cfg
-        context = self.context
-        sources = self.context.sources
-
-        def compute_loss_with_memory(self_tr, model, inputs, return_outputs=False):
-            mem_cb = getattr(model, "_hippo_retrieval_cb", None)
-            inputs = dict(inputs)
-            if not callable(mem_cb):
-                input_ids = inputs.get("input_ids")
-                mem = None
-                embed_fn = getattr(model, "get_input_embeddings", None)
-                if callable(embed_fn) and input_ids is not None:
-                    hidden_emb = embed_fn()(input_ids)
-                    mem = _gather_memory_tokens(hidden_emb, cfg, sources)
-                if mem is not None:
-                    inputs["memory_tokens"] = mem
-            else:
-                setattr(model, "_hippo_memory_tokens", None)
-            loss, outputs = orig_compute_loss(model, inputs, return_outputs=True)
-            gate, store, writer = context.gate, context.store, context.writer
-            context.step += 1
-            hidden = getattr(model, "_hippo_last_hidden", None)
-            labels = inputs.get("labels")
-            if (
-                cfg.memory.runtime.enable_writes
-                and gate
-                and store
-                and writer is not None
-                and hidden is not None
-                and labels is not None
-            ):
-                with torch.no_grad():
-                    last_logits = outputs.logits[:, -1, :]
-                    last_labels = labels[:, -1]
-                    log_probs = F.log_softmax(last_logits, dim=-1)
-                    probs = (
-                        torch.exp(log_probs[torch.arange(last_labels.size(0)), last_labels])
-                        .cpu()
-                        .numpy()
-                    )
-                    queries = hidden[:, -1, :].detach().cpu().numpy()
-                    keys = store.keys()
-                decisions, _ = gate_batch(gate, probs, queries, keys)
-                context.gate_attempts += len(decisions)
-                context.gate_accepts += sum(d.allow for d in decisions)
-                for dec, q in zip(decisions, queries):
-                    if dec.allow:
-                        writer.enqueue(q, TraceValue(provenance="train"))
-                context.store_size = keys.shape[0]
-                context.writer_queue_depth = writer.queue.qsize()
-                if context.step % context.log_interval == 0:
-                    logging.info(
-                        "step=%d gate_accepts=%d gate_attempts=%d store_size=%d queue_depth=%d",
-                        context.step,
-                        context.gate_accepts,
-                        context.gate_attempts,
-                        context.store_size,
-                        context.writer_queue_depth,
-                    )
-            if return_outputs:
-                return loss, outputs
-            return loss
-
+        trainer._hippo_orig_compute_loss = trainer.compute_loss
+        trainer._hippo_cfg = self.cfg
+        trainer._hippo_context = self.context
+        trainer._hippo_sources = self.context.sources
         trainer.compute_loss = compute_loss_with_memory.__get__(trainer, type(trainer))
         count = count_trainable_parameters(trainer.model)
         logging.info("Trainable parameters: %d", count)
@@ -1169,7 +1189,11 @@ def train(cfg: TrainConfig) -> None:
     """Wrapper that prepares context and datasets then runs training."""
 
     model, tokenizer = _load_model_and_tokenizer(cfg)
-    context = TrainerContext(model=model, log_interval=cfg.memory.runtime.log_interval)
+    context = TrainerContext(
+        model=model,
+        log_interval=cfg.memory.runtime.log_interval,
+        enable_writes=cfg.memory.runtime.enable_writes,
+    )
     provenance = ProvenanceLogger(os.getcwd())
     MemoryInitializer(context, cfg, provenance).initialize()
     train_ds, val_ds = prepare_datasets(cfg)
