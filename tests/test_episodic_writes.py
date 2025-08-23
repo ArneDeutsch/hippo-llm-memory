@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from hippo_mem.episodic.async_writer import AsyncStoreWriter
 from hippo_mem.episodic.gating import WriteGate, gate_batch
@@ -22,6 +23,20 @@ def test_gate_batch_deterministic():
     decisions, rate = gate_batch(gate, probs, queries, keys)
     assert [d.allow for d in decisions] == [True, False]
     assert rate == 0.5
+
+
+def test_gate_batch_applies_reward_and_pin() -> None:
+    """Reward and pin flags influence write decisions."""
+
+    gate = WriteGate(tau=0.5, alpha=0.0, beta=0.0, gamma=1.0, delta=1.0)
+    probs = np.ones(3, dtype=float)
+    queries = np.zeros((3, 1), dtype=np.float32)
+    keys = np.zeros((0, 1), dtype=np.float32)
+    rewards = np.array([0.0, 1.0, 0.0], dtype=float)
+    pins = np.array([False, False, True])
+    decisions, rate = gate_batch(gate, probs, queries, keys, rewards, pins)
+    assert [d.allow for d in decisions] == [False, True, True]
+    assert rate == pytest.approx(2 / 3)
 
 
 def test_async_writer_enqueues():
