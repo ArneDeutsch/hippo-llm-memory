@@ -657,17 +657,13 @@ def prepare_datasets(cfg: TrainConfig):
     return train_ds, val_ds
 
 
-def init_memory(
-    context: TrainerContext,
-    cfg: TrainConfig,
-    provenance: ProvenanceLogger | None = None,
+def setup_store(
+    context: TrainerContext, cfg: TrainConfig, provenance: ProvenanceLogger | None = None
 ) -> None:
-    """Configure stores, adapters and replay workers."""
-
+    """Configure episodic store, writer and gate."""
     model = context.model
     hidden = getattr(model.config, "hidden_size", cfg.episodic.hidden_size)
     context.hidden_size = hidden
-
     store_cfg = {
         "hopfield": cfg.episodic.hopfield,
         "decay_rate": cfg.episodic_mem.decay_rate,
@@ -682,6 +678,12 @@ def init_memory(
     epi_interval = 0.1 if cfg.dry_run else cfg.episodic_mem.maintenance_interval
     context.store.start_background_tasks(epi_interval)
 
+
+def setup_adapters(context: TrainerContext, cfg: TrainConfig) -> None:
+    """Initialise memory adapters."""
+    if not (cfg.episodic.enabled or cfg.relational or cfg.spatial.enabled):
+        return
+    hidden = context.hidden_size
     if cfg.efficiency.mqa_gqa == "mqa":
         epi_kv_heads = 1
         spat_kv_heads = 1
@@ -691,7 +693,6 @@ def init_memory(
     else:
         epi_kv_heads = cfg.episodic.num_kv_heads or cfg.episodic.num_heads
         spat_kv_heads = cfg.spatial.num_kv_heads or cfg.spatial.num_heads
-
     if cfg.episodic.enabled:
         epi_cfg = AdapterConfig(
             hidden_size=hidden,
@@ -708,7 +709,6 @@ def init_memory(
         context.episodic_adapter = EpisodicAdapter(epi_cfg)
         if not hasattr(context.episodic_adapter, "proj"):
             context.episodic_adapter.proj = nn.Linear(retrieval_dim, hidden)
-
     if cfg.relational:
         context.relational_adapter = RelationalMemoryAdapter()
     if cfg.spatial.enabled:
@@ -723,11 +723,22 @@ def init_memory(
         )
         context.spatial_adapter = SpatialAdapter(spat_cfg)
 
+
+def attach_fusion(context: TrainerContext, cfg: TrainConfig) -> None:
+    """Attach memory fusion patch and any configured adapters.
+
+    The patch is installed even when no adapters are present so tests and
+    smoke checks can verify fusion wiring independently of adapter toggles.
+    """
+
+    model = context.model
     fusion_cfg = MemoryFusionConfig(
         insert_block_index=cfg.fusion_insert_block_index,
+        # Always enable episodic branch to mirror previous behaviour where the
+        # fusion patch was attached regardless of adapter configuration.
         use_episodic=True,
-        use_relational=cfg.relational,
-        use_spatial=cfg.spatial.enabled,
+        use_relational=context.relational_adapter is not None,
+        use_spatial=context.spatial_adapter is not None,
     )
 
     class _RelationalProxy(nn.Module):
@@ -759,7 +770,6 @@ def init_memory(
     epi_proxy = context.episodic_adapter
     rel_proxy = _RelationalProxy(context.relational_adapter) if context.relational_adapter else None
     spat_proxy = _SpatialProxy(context.spatial_adapter) if context.spatial_adapter else None
-
     try:
         info = attach_adapters(
             model,
@@ -778,14 +788,18 @@ def init_memory(
         context.adapters_attached = False
         logging.warning("Adapter fusion attach failed: %s", exc)
 
+
+def setup_sources(context: TrainerContext, cfg: TrainConfig) -> None:
+    """Initialise knowledge graph, spatial map and memory sources."""
+    sources: list[MemorySource] = []
     kg_cfg = {
         "prune": {
             "min_conf": cfg.relational_mem.prune_min_conf,
             "max_age": cfg.relational_mem.prune_max_age,
         }
     }
-    kg_gate = None
     gate_cfg = getattr(cfg.memory.relational, "gate", {})
+    kg_gate = None
     if gate_cfg.get("enabled"):
         kg_gate = RelationalGate(
             threshold=gate_cfg.get("threshold", 0.6),
@@ -794,14 +808,16 @@ def init_memory(
             w_deg=gate_cfg.get("w_deg", 0.4),
             w_rec=gate_cfg.get("w_rec", 0.2),
             max_degree=gate_cfg.get("max_degree", 64),
-            logger=provenance,
         )
         context.kg = KnowledgeGraph(config=kg_cfg, gate=kg_gate)
     else:
         context.kg = KnowledgeGraph(config=kg_cfg)
     kg_interval = 0.1 if cfg.dry_run else cfg.relational_mem.maintenance_interval
     context.kg.start_background_tasks(kg_interval)
-
+    if cfg.memory.relational.enabled:
+        sources.append(
+            RelationalSource(context.kg, context.relational_adapter, cfg.memory.relational)
+        )
     spat_map_cfg = {
         "decay_rate": cfg.spatial_mem.decay_rate,
         "prune": {"max_age": cfg.spatial_mem.prune_max_age},
@@ -809,27 +825,57 @@ def init_memory(
     context.spatial_map = PlaceGraph(path_integration=cfg.spatial.enabled, config=spat_map_cfg)
     spat_interval = 0.1 if cfg.dry_run else cfg.spatial_mem.maintenance_interval
     context.spatial_map.start_background_tasks(spat_interval)
-
-    context.sources = [
-        EpisodicSource(context.store, context.episodic_adapter, cfg.memory.episodic),
-        RelationalSource(context.kg, context.relational_adapter, cfg.memory.relational),
-        SpatialSource(context.spatial_map, context.spatial_adapter, cfg.memory.spatial),
-    ]
-
-    if cfg.replay.enabled:
-        context.scheduler = ReplayScheduler(context.store, context.kg, batch_mix=cfg.batch_mix)
-        for i in range(10):
-            context.scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
-        context.worker = ConsolidationWorker(
-            context.scheduler,
-            model,
-            episodic_adapter=context.episodic_adapter,
-            relational_adapter=context.relational_adapter,
-            spatial_adapter=context.spatial_adapter,
+    if cfg.memory.spatial.enabled:
+        sources.append(
+            SpatialSource(context.spatial_map, context.spatial_adapter, cfg.memory.spatial)
         )
-    else:
+    if cfg.memory.episodic.enabled:
+        sources.append(EpisodicSource(context.store, context.episodic_adapter, cfg.memory.episodic))
+    context.sources = sources
+
+
+def setup_replay(context: TrainerContext, cfg: TrainConfig, model: nn.Module) -> None:
+    """Configure replay scheduler and worker."""
+    if not cfg.replay.enabled:
         context.scheduler = None
         context.worker = None
+        return
+    hidden = context.hidden_size
+    context.scheduler = ReplayScheduler(context.store, context.kg, batch_mix=cfg.batch_mix)
+    for i in range(10):
+        context.scheduler.add_trace(str(i), np.zeros(hidden, dtype=np.float32), score=float(i))
+    context.worker = ConsolidationWorker(
+        context.scheduler,
+        model,
+        episodic_adapter=context.episodic_adapter,
+        relational_adapter=context.relational_adapter,
+        spatial_adapter=context.spatial_adapter,
+    )
+
+
+@dataclass
+class MemoryInitializer:
+    """Facade around memory setup helpers."""
+
+    context: TrainerContext
+    cfg: TrainConfig
+    provenance: ProvenanceLogger | None = None
+
+    def initialize(self) -> None:
+        setup_store(self.context, self.cfg, self.provenance)
+        setup_adapters(self.context, self.cfg)
+        attach_fusion(self.context, self.cfg)
+        setup_sources(self.context, self.cfg)
+        setup_replay(self.context, self.cfg, self.context.model)
+
+
+def init_memory(
+    context: TrainerContext,
+    cfg: TrainConfig,
+    provenance: ProvenanceLogger | None = None,
+) -> None:
+    """Configure memory components via :class:`MemoryInitializer`."""
+    MemoryInitializer(context, cfg, provenance).initialize()
 
 
 def _train(
@@ -1045,7 +1091,7 @@ def train(cfg: TrainConfig) -> None:
     model, tokenizer = _load_model_and_tokenizer(cfg)
     context = TrainerContext(model=model, log_interval=cfg.memory.runtime.log_interval)
     provenance = ProvenanceLogger(os.getcwd())
-    init_memory(context, cfg, provenance)
+    MemoryInitializer(context, cfg, provenance).initialize()
     train_ds, val_ds = prepare_datasets(cfg)
     _train(cfg, context, tokenizer, train_ds, val_ds, provenance)
 
