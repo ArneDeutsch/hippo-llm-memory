@@ -1,5 +1,7 @@
 """Tests for ``RelationalGate`` salience gating."""
 
+import time
+
 import pytest
 
 from hippo_mem.relational.gating import RelationalGate
@@ -34,3 +36,17 @@ def test_relational_gate_rejects_bad_config() -> None:
         RelationalGate(w_conf=-0.1)
     with pytest.raises(ValueError):
         RelationalGate(max_degree=0)
+    with pytest.raises(ValueError):
+        RelationalGate(recency_window=0)
+
+
+def test_relational_gate_penalizes_high_degree() -> None:
+    gate = RelationalGate(threshold=0.8, max_degree=1)
+    kg = KnowledgeGraph(config={"schema_threshold": 0.0})
+    kg.graph.add_edge("A", "X", relation="knows", conf=1.0)
+    kg.graph.add_edge("A", "Y", relation="knows", conf=1.0)
+    gate._last_seen["A"] = time.time()
+    gate._last_seen["B"] = time.time()
+    tup = ("A", "likes", "B", "ctx", None, 1.0, 0)
+    action, _ = gate.decide(tup, kg)
+    assert action == "route_to_episodic"
