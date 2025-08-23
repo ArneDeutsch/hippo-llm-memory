@@ -41,104 +41,23 @@ Writes persist to SQLite and FAISS; duplicate writes with same id are idempotent
 
 from __future__ import annotations
 
-import json
 import logging
 import threading
 import time
-from dataclasses import asdict, dataclass
 from typing import Any, List, Optional, Union
 
 import numpy as np
 
 from hippo_mem._faiss import faiss
 
-from .db import TraceDB
 from .event_logger import EventLogger
 from .gating import DGKey, densify, k_wta
-from .index import VectorIndex
+from .index import FaissIndex, IndexStrategy
 from .maintenance import Decayer, Pruner
+from .persistence import TracePersistence
+from .types import Trace, TraceValue
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class TraceValue:
-    """Metadata associated with a stored trace.
-
-    Summary
-    -------
-    Optional fields describing an episode.
-
-    Parameters
-    ----------
-    tokens_span : tuple of int, optional
-        Token indices ``(start, end)``.
-    entity_slots : dict, optional
-        Mapping of entities ``{role: token}``.
-    state_sketch : list, optional
-        Abstract state representation.
-    salience_tags : list of str, optional
-        Tags contributing to initial salience.
-    provenance : str, optional
-        Source identifier.
-    Examples
-    --------
-    >>> TraceValue(provenance="unit").provenance
-    'unit'
-
-    See Also
-    --------
-    Trace
-    """
-
-    # TODO: tokens_span appears unused; consider referencing or removing.
-    tokens_span: Optional[tuple[int, int]] = None
-    # TODO: entity_slots appears unused; consider referencing or removing.
-    entity_slots: Optional[dict] = None
-    # TODO: state_sketch appears unused; consider referencing or removing.
-    state_sketch: Optional[list] = None
-    salience_tags: Optional[List[str]] = None
-    provenance: Optional[str] = None
-
-
-@dataclass
-class Trace:
-    """A retrieved memory trace.
-
-    Summary
-    -------
-    Container returned by :meth:`EpisodicStore.recall`.
-
-    Parameters
-    ----------
-    id : int
-        Unique identifier.
-    value : TraceValue
-        Payload metadata.
-    key : DGKey
-        Sparse key representing the episode.
-    score : float
-        Similarity score from FAISS.
-    ts : float
-        Unix timestamp.
-    salience : float
-        Current salience value.
-    Examples
-    --------
-    >>> Trace(1, TraceValue(), DGKey(np.array([]), np.array([], dtype=np.float32), 0), 0.0, 0.0, 0.0).id
-    1
-
-    See Also
-    --------
-    EpisodicStore.recall
-    """
-
-    id: int  # kept: unique trace identifier for audits
-    value: TraceValue
-    key: DGKey
-    score: float
-    ts: float
-    salience: float
 
 
 class EpisodicStore:
@@ -156,6 +75,8 @@ class EpisodicStore:
         index_str: str = "Flat",
         train_threshold: int = 100,
         *,
+        index: IndexStrategy | None = None,
+        persistence: TracePersistence | None = None,
         k_wta: int = 0,
         config: Optional[dict] = None,
         pruner: Optional[Pruner] = None,
@@ -194,8 +115,8 @@ class EpisodicStore:
 
         self.dim = dim
         self.k_wta = k_wta
-        self.index = VectorIndex(dim, index_str, train_threshold)
-        self.db = TraceDB(db_path)
+        self.index = index or FaissIndex(dim, index_str, train_threshold)
+        self.persistence = persistence or TracePersistence(db_path)
 
         # Hopfield parameter (inverse temperature)
         self.beta = 1.0
@@ -236,7 +157,7 @@ class EpisodicStore:
         write
         """
 
-        return self.db.keys(self.dim)
+        return self.persistence.keys(self.dim)
 
     # ------------------------------------------------------------------
     # Maintenance helpers
@@ -370,7 +291,7 @@ class EpisodicStore:
         ts = time.time()
         # why: tags approximate initial salience when explicit score absent
         salience = float(len(value.salience_tags) if value.salience_tags else 1.0)
-        idx = self.db.insert(key_arr[0], json.dumps(asdict(value)), ts, salience)
+        idx = self.persistence.insert(key_arr[0], value, ts, salience)
         self.index.add(key_arr, idx)
         self.logger.increment("writes")
         return idx
@@ -424,12 +345,10 @@ class EpisodicStore:
             if idx == -1:
                 # why: FAISS pads results with -1 when fewer than k matches
                 continue
-            trace = self.db.get(int(idx))
+            trace = self.persistence.get(int(idx))
             if trace is None:
                 continue
-            value_json, key_vec, ts, salience = trace
-            value_dict = json.loads(value_json)
-            value = TraceValue(**value_dict)
+            value, key_vec, ts, salience = trace
             dg_key = DGKey(
                 indices=np.nonzero(key_vec)[0].astype("int64"),
                 values=key_vec[np.nonzero(key_vec)].astype("float32"),
@@ -483,7 +402,7 @@ class EpisodicStore:
         """
 
         self.index.remove(idx)
-        self.db.delete(idx)
+        self.persistence.delete(idx)
 
     def update(
         self,
@@ -525,7 +444,7 @@ class EpisodicStore:
         """
 
         if value is not None:
-            self.db.update_value(idx, json.dumps(asdict(value)))
+            self.persistence.update_value(idx, value)
         if key is not None:
             if isinstance(key, np.ndarray):
                 if self.k_wta > 0:
@@ -540,7 +459,7 @@ class EpisodicStore:
             key_arr = self._to_dense(key).reshape(1, -1)
             faiss.normalize_L2(key_arr)
             self.index.update(key_arr, idx)
-            self.db.update_key(idx, key_arr[0])
+            self.persistence.update_key(idx, key_arr[0])
 
     # ------------------------------------------------------------------
     # Hopfield completion
@@ -791,9 +710,9 @@ class EpisodicStore:
             op = entry["op"]
             rows = entry["rows"]
             if op == "decay":
-                self.db.restore_salience(rows)
+                self.persistence.restore_salience(rows)
             elif op == "prune":
-                self.db.restore_rows(rows)
+                self.persistence.restore_rows(rows)
                 for idx, value_json, key_blob, ts, salience in rows:
                     # why: reconstruct dense vector before re-adding to FAISS
                     key_vec = np.frombuffer(key_blob, dtype="float32").reshape(1, -1)

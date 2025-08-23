@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 
 from .gating import DGKey
-from .store import TraceValue
+from .types import TraceValue
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints only
     from .store import EpisodicStore
