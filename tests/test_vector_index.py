@@ -78,7 +78,7 @@ def test_add_raises_on_dimension_mismatch() -> None:
     """Adding a vector with wrong dims fails."""
     index = VectorIndex(dim=3, index_str="IVF1,Flat", train_threshold=1)
     wrong = _vec([1.0, 0.0, 0.0, 0.0])
-    with pytest.raises(Exception):
+    with pytest.raises(AssertionError):
         index.add(wrong, 1)
 
 
@@ -88,12 +88,20 @@ def test_search_raises_on_dimension_mismatch() -> None:
     v1 = _vec([1.0, 0.0, 0.0])
     index.add(v1, 1)
     wrong = _vec([0.0, 0.0, 0.0, 1.0])
-    with pytest.raises(Exception):
+    with pytest.raises(AssertionError):
         index.search(wrong, k=1)
 
 
+def test_search_empty_index_returns_placeholder() -> None:
+    """Searching an empty index returns placeholder ids."""
+    index = VectorIndex(dim=3, index_str="IVF1,Flat", train_threshold=1)
+    query = _vec([1.0, 0.0, 0.0])
+    dist, ids = index.search(query, k=1)
+    assert ids[0][0] == -1
+
+
 def test_remove_rejects_invalid_ids() -> None:
-    """Removing negative or missing ids leaves the index intact."""
+    """Removing negative, overflow, or missing ids leaves the index intact."""
     index = VectorIndex(dim=3, index_str="IVF1,Flat", train_threshold=1)
     v1 = _vec([1.0, 0.0, 0.0])
     v2 = _vec([0.0, 1.0, 0.0])
@@ -102,4 +110,15 @@ def test_remove_rejects_invalid_ids() -> None:
     assert index.ntotal == 2
     index.remove(-1)
     index.remove(99)
+    index.remove(2**63 - 1)
     assert index.ntotal == 2
+
+
+def test_pq_search_untrained_raises() -> None:
+    """Searching a PQ index before training raises an error."""
+    index = VectorIndex(dim=4, index_str="PQ2", train_threshold=2)
+    v1 = _vec([1.0, 0.0, 0.0, 0.0])
+    index.add(v1, 1)
+    assert not index.is_trained
+    with pytest.raises(RuntimeError):
+        index.search(v1, k=1)
