@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
+import torch.nn as nn
 from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM
 
@@ -7,6 +10,7 @@ from hippo_mem.adapters.lora import (
     TARGET_MODULE_STRATEGIES,
     count_trainable_parameters,
     default_target_modules,
+    inspect_first_block,
     register_target_module_strategy,
 )
 
@@ -48,3 +52,28 @@ def test_strategy_registration(monkeypatch) -> None:
     finally:
         TARGET_MODULE_STRATEGIES.clear()
         TARGET_MODULE_STRATEGIES.update(original)
+
+
+def test_fallback_decoder_layers() -> None:
+    """Models without ``model_type`` use ``decoder.layers`` to infer targets."""
+
+    class Block(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.q_proj = nn.Linear(2, 2, bias=False)
+            self.k_proj = nn.Linear(2, 2, bias=False)
+            self.v_proj = nn.Linear(2, 2, bias=False)
+            self.o_proj = nn.Linear(2, 2, bias=False)
+
+    class Model(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.model = nn.Module()
+            self.model.decoder = nn.Module()
+            self.model.decoder.layers = nn.ModuleList([Block()])
+            self.config = SimpleNamespace()
+
+    model = Model()
+    expected = ["k_proj", "o_proj", "q_proj", "v_proj"]
+    assert inspect_first_block(model) == expected
+    assert default_target_modules(model) == expected
