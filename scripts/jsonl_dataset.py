@@ -17,8 +17,7 @@ def load_jsonl_files(paths: List[str]) -> Dataset:
     for path in paths:
         with open(path, "r", encoding="utf-8") as fh:
             for line in fh:
-                line = line.strip()
-                if not line:
+                if not line.strip():
                     continue
                 obj = json.loads(line)
                 prompt = obj.get("prompt", "")
