@@ -504,18 +504,39 @@ class TrainerContext:
         }
 
 
+def _writes_enabled(context: TrainerContext, labels) -> torch.Tensor | None:
+    """Return hidden state when writing is allowed."""
+
+    if (
+        context.enable_writes
+        and context.gate is not None
+        and context.store is not None
+        and context.writer is not None
+        and labels is not None
+    ):
+        hidden = getattr(context.model, "_hippo_last_hidden", None)
+        if hidden is not None:
+            return hidden
+    return None
+
+
+def _enqueue_allowed_writes(context: TrainerContext, probs, queries, keys) -> None:
+    """Gate writes and enqueue those permitted by the gate."""
+
+    decisions, _ = gate_batch(context.gate, probs, queries, keys)
+    context.gate_attempts += len(decisions)
+    context.gate_accepts += sum(d.allow for d in decisions)
+    for dec, q in zip(decisions, queries):
+        if dec.allow:
+            context.writer.enqueue(q, TraceValue(provenance="train"))
+    context.store_size = keys.shape[0]
+    context.writer_queue_depth = context.writer.queue.qsize()
+
+
 def maybe_write_memory(context: TrainerContext, outputs, labels) -> None:
     """Gate and enqueue writes if ``context.enable_writes`` is ``True``."""
 
-    if (
-        not context.enable_writes
-        or context.gate is None
-        or context.store is None
-        or context.writer is None
-        or labels is None
-    ):
-        return
-    hidden = getattr(context.model, "_hippo_last_hidden", None)
+    hidden = _writes_enabled(context, labels)
     if hidden is None:
         return
     with torch.no_grad():
@@ -525,14 +546,7 @@ def maybe_write_memory(context: TrainerContext, outputs, labels) -> None:
         probs = torch.exp(log_probs[torch.arange(last_labels.size(0)), last_labels]).cpu().numpy()
         queries = hidden[:, -1, :].detach().cpu().numpy()
         keys = context.store.keys()
-    decisions, _ = gate_batch(context.gate, probs, queries, keys)
-    context.gate_attempts += len(decisions)
-    context.gate_accepts += sum(d.allow for d in decisions)
-    for dec, q in zip(decisions, queries):
-        if dec.allow:
-            context.writer.enqueue(q, TraceValue(provenance="train"))
-    context.store_size = keys.shape[0]
-    context.writer_queue_depth = context.writer.queue.qsize()
+    _enqueue_allowed_writes(context, probs, queries, keys)
     if context.step % context.log_interval == 0:
         logging.info(
             "step=%d gate_accepts=%d gate_attempts=%d store_size=%d queue_depth=%d",
