@@ -2,4 +2,4 @@ On session start read: README.md, DESIGN.md, PROJECT_PLAN.md, EVAL_PLAN.md, rese
 
 Just before session end: Execute linter to ensure build server does not complain.
 
-When running tests with pytest finding the output [100%] in the log signals success of the test suite, except there is at least one F between the dots, signaling one or more failing tests.
+When running tests with pytest finding the output [100%] in the log signals success of the test suite, except there is at least one F between the dots, signaling one or more failing tests. Funning the full test suite can take around two minutes, hence some patience is needed.
