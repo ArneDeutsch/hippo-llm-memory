@@ -9,7 +9,7 @@ and unit tests.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Protocol, Union
+from typing import Dict, List, Optional, Protocol, Union
 
 import torch
 from peft import PeftModel
@@ -20,6 +20,12 @@ class TargetModuleStrategy(Protocol):
     """Callable returning target module names for ``model``."""
 
     def __call__(self, model: PreTrainedModel) -> List[str]: ...
+
+
+class BlockExtractor(Protocol):
+    """Callable returning the first transformer block for ``model``."""
+
+    def __call__(self, model: PreTrainedModel) -> Optional[torch.nn.Module]: ...
 
 
 def _targets_gpt2(model: PreTrainedModel) -> List[str]:
@@ -44,6 +50,57 @@ TARGET_MODULE_STRATEGIES: Dict[str, TargetModuleStrategy] = {
 }
 
 
+def _block_gpt2(model: PreTrainedModel) -> Optional[torch.nn.Module]:
+    """Return first block for GPT-2 style models."""
+
+    sub = getattr(model, "transformer", None)
+    h = getattr(sub, "h", None)
+    if h:
+        return h[0]
+    return None
+
+
+def _block_llama(model: PreTrainedModel) -> Optional[torch.nn.Module]:
+    """Return first block for LLaMA/Mistral models."""
+
+    sub = getattr(model, "model", model)
+    layers = getattr(sub, "layers", None)
+    if layers:
+        return layers[0]
+    return None
+
+
+BLOCK_EXTRACTORS: Dict[str, BlockExtractor] = {
+    "gpt2": _block_gpt2,
+    "llama": _block_llama,
+    "mistral": _block_llama,
+}
+
+
+def _find_first_block(model: PreTrainedModel) -> Optional[torch.nn.Module]:
+    """Scan common sub-attributes to locate the first block."""
+
+    for attr in ("model", "transformer", "base_model"):
+        sub = getattr(model, attr, None)
+        if sub is None:
+            continue
+        layers = getattr(sub, "layers", None)
+        if layers:
+            return layers[0]
+        h = getattr(sub, "h", None)
+        if h:
+            return h[0]
+        decoder = getattr(sub, "decoder", None)
+        if decoder is not None:
+            dec_layers = getattr(decoder, "layers", None)
+            if dec_layers:
+                return dec_layers[0]
+    layers = getattr(model, "layers", None)
+    if layers:
+        return layers[0]
+    return None
+
+
 def register_target_module_strategy(model_type: str, strategy: TargetModuleStrategy) -> None:
     """Register ``strategy`` for ``model_type``."""
 
@@ -52,32 +109,15 @@ def register_target_module_strategy(model_type: str, strategy: TargetModuleStrat
 
 
 def inspect_first_block(model: PreTrainedModel) -> List[str]:
-    """Scan the first transformer block for projection layer names."""
+    """Return projection layer names from the first transformer block."""
 
-    block = None
-    for attr in ("model", "transformer", "base_model"):
-        sub = getattr(model, attr, None)
-        if sub is None:
-            continue
-        if hasattr(sub, "layers") and len(sub.layers) > 0:
-            block = sub.layers[0]
-            break
-        if hasattr(sub, "h") and len(sub.h) > 0:
-            block = sub.h[0]
-            break
-        if (
-            hasattr(sub, "decoder")
-            and hasattr(sub.decoder, "layers")
-            and len(sub.decoder.layers) > 0
-        ):
-            block = sub.decoder.layers[0]
-            break
-    if block is None and hasattr(model, "layers") and len(model.layers) > 0:
-        block = model.layers[0]
+    model_type = getattr(getattr(model, "config", None), "model_type", "")
+    extractor = BLOCK_EXTRACTORS.get(model_type, _find_first_block)
+    block = extractor(model)
     if block is None:
         return []
 
-    names = set()
+    names: set[str] = set()
     for name, _ in block.named_modules():
         for target in ("q_proj", "k_proj", "v_proj", "o_proj", "qkv", "c_attn", "c_proj"):
             if name.endswith(target):
