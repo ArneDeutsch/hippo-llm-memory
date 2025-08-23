@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 try:  # pragma: no cover - import fallback for script execution
     from .build_datasets import sha256_file
@@ -15,6 +16,8 @@ except ImportError:  # pragma: no cover
 
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
+
+SUITES = ["episodic", "semantic", "spatial"]
 
 EPISODIC_PATTERN = "episodic_{size}_{seed}.jsonl"
 SEMANTIC_PATTERNS = [
@@ -48,7 +51,7 @@ def read_checksums(path: Path) -> Dict[str, str]:
 
 
 def audit(data_dir: Path | None = None) -> Tuple[bool, List[str]]:
-    """Verify datasets and configs exist with correct checksums.
+    """Verify datasets and configs exist with correct checksums and emit manifest.
 
     Parameters
     ----------
@@ -84,6 +87,9 @@ def audit(data_dir: Path | None = None) -> Tuple[bool, List[str]]:
         if not cfg.exists():
             issues.append(f"Missing config: {cfg}")
 
+    manifest = build_manifest(data_dir, issues)
+    (data_dir / "MANIFEST.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+
     return not issues, issues
 
 
@@ -96,6 +102,36 @@ def verify_file(path: Path, checksum_map: Dict[str, str], issues: List[str]) -> 
     recorded = checksum_map.get(path.name)
     if recorded != digest:
         issues.append(f"Checksum mismatch: {path.name}")
+
+
+def build_manifest(data_dir: Path, issues: List[str]) -> Dict[str, Any]:
+    """Construct a manifest of dataset files with checksums and item counts."""
+    manifest: Dict[str, Any] = {"sizes": SIZES, "seeds": SEEDS}
+    for suite in SUITES:
+        suite_dir = data_dir / suite
+        checksum_file = suite_dir / "checksums.json"
+        if not checksum_file.exists():
+            issues.append(f"Missing checksums file: {checksum_file}")
+            continue
+        try:
+            checksums = json.loads(checksum_file.read_text())
+        except json.JSONDecodeError:
+            issues.append(f"Invalid JSON: {checksum_file}")
+            continue
+        entries: List[Dict[str, Any]] = []
+        for fname, recorded in sorted(checksums.items()):
+            path = suite_dir / fname
+            if not path.exists():
+                issues.append(f"Missing dataset: {path}")
+                continue
+            digest = sha256_file(path)
+            if digest != recorded:
+                issues.append(f"Checksum mismatch: {path}")
+            with path.open("r", encoding="utf-8") as fh:
+                items = sum(1 for _ in fh)
+            entries.append({"file": f"{suite}/{fname}", "sha256": digest, "items": items})
+        manifest[suite] = entries
+    return manifest
 
 
 def main() -> int:
