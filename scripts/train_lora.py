@@ -495,11 +495,51 @@ def ingest_training_text(records: Iterable[dict[str, Any]], kg: KnowledgeGraph) 
             kg.ingest(tup)
 
 
+def build_spatial_gate(
+    gate_cfg: Optional[dict], logger: ProvenanceLogger | None = None
+) -> SpatialGate | None:
+    """Return a :class:`SpatialGate` from ``gate_cfg`` if enabled."""
+
+    if gate_cfg and gate_cfg.get("enabled"):
+        return SpatialGate(
+            block_threshold=gate_cfg.get("block_threshold", 1.0),
+            repeat_N=gate_cfg.get("repeat_N", 3),
+            recent_window=gate_cfg.get("recent_window", 20),
+            max_degree=gate_cfg.get("max_degree", 64),
+            logger=logger,
+        )
+    return None
+
+
+def process_coordinate(
+    prev: str | None,
+    ctx: str,
+    gate: SpatialGate | None,
+    graph: PlaceGraph,
+    stats,
+) -> str:
+    """Apply gate decision for ``ctx`` and insert/aggregate as needed."""
+
+    if gate is None:
+        graph.observe(ctx)
+    else:
+        stats.attempts += 1
+        action, _reason = gate.decide(prev, ctx, graph)
+        if action == "insert":
+            stats.inserted += 1
+            graph.observe(ctx)
+        elif action == "aggregate" and prev is not None:
+            stats.aggregated += 1
+            graph.aggregate_duplicate(prev, ctx)
+        elif action == "route_to_episodic":
+            stats.blocked_new_edges += 1
+    return ctx
+
+
 def ingest_spatial_traces(
     records: Iterable[dict[str, Any]],
     graph: PlaceGraph,
-    gate_cfg: Optional[dict] = None,
-    logger: ProvenanceLogger | None = None,
+    gate: SpatialGate | None = None,
 ) -> None:
     """Insert trajectories from ``records`` into ``graph``.
 
@@ -509,19 +549,10 @@ def ingest_spatial_traces(
         Training examples optionally containing a ``"trajectory"`` field.
     graph : PlaceGraph
         Spatial map receiving the observed coordinates.
-    gate_cfg : Optional[dict], optional
-        Gate configuration with ``enabled`` flag.
+    gate : SpatialGate | None, optional
+        Optional gating module controlling insert/aggregate decisions.
     """
 
-    gate: SpatialGate | None = None
-    if gate_cfg and gate_cfg.get("enabled"):
-        gate = SpatialGate(
-            block_threshold=gate_cfg.get("block_threshold", 1.0),
-            repeat_N=gate_cfg.get("repeat_N", 3),
-            recent_window=gate_cfg.get("recent_window", 20),
-            max_degree=gate_cfg.get("max_degree", 64),
-            logger=logger,
-        )
     stats = gate_registry.get("spatial")
 
     count = 0
@@ -538,20 +569,7 @@ def ingest_spatial_traces(
                 ctx = f"{coord[0]},{coord[1]}"
             else:  # pragma: no cover - defensive
                 ctx = str(coord)
-            if gate is None:
-                graph.observe(ctx)
-            else:
-                stats.attempts += 1
-                action, _reason = gate.decide(prev, ctx, graph)
-                if action == "insert":
-                    stats.inserted += 1
-                    graph.observe(ctx)
-                elif action == "aggregate" and prev is not None:
-                    stats.aggregated += 1
-                    graph.aggregate_duplicate(prev, ctx)
-                elif action == "route_to_episodic":
-                    stats.blocked_new_edges += 1
-            prev = ctx
+            prev = process_coordinate(prev, ctx, gate, graph, stats)
     if count:
         logging.info(
             "spatial_ingest_traces=%d avg_len=%.2f",
@@ -598,10 +616,8 @@ class _IngestCallback(TrainerCallback):
             self._kg_nodes, self._kg_edges = nodes, edges
         if self.cfg.spatial.enabled and self.records:
             gate_cfg = getattr(self.cfg.memory.spatial, "gate", None)
-            if gate_cfg:
-                ingest_spatial_traces(self.records, self.graph, gate_cfg, self.provenance)
-            else:
-                ingest_spatial_traces(self.records, self.graph, logger=self.provenance)
+            gate = build_spatial_gate(gate_cfg, self.provenance)
+            ingest_spatial_traces(self.records, self.graph, gate)
             nodes = len(self.graph.graph)
             edges = sum(len(v) for v in self.graph.graph.values())
             logging.info(
@@ -918,10 +934,8 @@ def _train(
                     ingest_training_text(train_ds, context.kg)
                 if cfg.spatial.enabled:
                     gate_cfg = getattr(cfg.memory.spatial, "gate", None)
-                    if gate_cfg:
-                        ingest_spatial_traces(train_ds, context.spatial_map, gate_cfg, provenance)
-                    else:
-                        ingest_spatial_traces(train_ds, context.spatial_map, logger=provenance)
+                    gate = build_spatial_gate(gate_cfg, provenance)
+                    ingest_spatial_traces(train_ds, context.spatial_map, gate)
             return
 
         training_args = SFTConfig(
