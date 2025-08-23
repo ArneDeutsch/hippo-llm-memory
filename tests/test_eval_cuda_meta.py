@@ -17,7 +17,7 @@ def test_meta_handles_missing_cuda_driver(tmp_path, monkeypatch):
     if hasattr(torch._C, "_cuda_getDriverVersion"):
         monkeypatch.delattr(torch._C, "_cuda_getDriverVersion", raising=False)
 
-    cfg = OmegaConf.create({"seed": 0})
+    cfg = OmegaConf.create({"seed": 0, "suite": "episodic", "preset": "baselines/core", "n": 0})
     eval_bench.write_outputs(tmp_path, [], {"acc": 1.0}, {}, cfg)
 
     meta = json.loads((tmp_path / "meta.json").read_text())

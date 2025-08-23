@@ -374,12 +374,14 @@ def _write_outputs(
 
     # Metadata JSON
     meta = {
+        "suite": cfg.suite,
+        "preset": cfg.preset,
+        "n": cfg.n,
         "git_sha": _git_sha(),
         "model": cfg.get("model", "mock"),
         "config_hash": _config_hash(cfg),
         "ablate": flat_ablate,
         "seed": cfg.seed,
-        "preset": cfg.preset,
         "replay_cycles": cfg.get("replay", {}).get("cycles", 0),
         "gating_enabled": gating_enabled,
     }

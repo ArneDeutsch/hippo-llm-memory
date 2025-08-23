@@ -455,6 +455,9 @@ def write_outputs(
 
     cfg_hash = _config_hash(cfg)
     meta = {
+        "suite": cfg.suite,
+        "preset": cfg.preset,
+        "n": cfg.n,
         "git_sha": _git_sha(),
         "model": cfg.get("model", "mock"),
         "config_hash": cfg_hash,

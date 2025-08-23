@@ -28,7 +28,9 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
         assert (outdir / name).exists()
 
     meta = json.loads((outdir / "meta.json").read_text())
+    assert meta["suite"] == "episodic"
     assert meta["preset"] == "memory/hei_nw"
+    assert meta["n"] == 2
     assert meta["replay_cycles"] == 1
     assert meta["ablate"]["memory.episodic.hopfield"] is False
     assert len(meta["config_hash"]) == 64
