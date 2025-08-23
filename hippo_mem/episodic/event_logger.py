@@ -27,7 +27,9 @@ class EventLogger:
         self._events.append(event)
         if self._log_file:
             with open(self._log_file, "a", encoding="utf-8") as fh:
-                fh.write(json.dumps(event) + "\n")
+                json.dump(event, fh)
+                fh.write("\n")
+                fh.flush()
 
     def status(self) -> dict[str, Any]:
         log = dict(self.counters)

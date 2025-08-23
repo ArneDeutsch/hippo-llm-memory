@@ -24,6 +24,25 @@ def test_load_jsonl_files_builds_text(tmp_path: Path) -> None:
     assert all("text" in row for row in ds)
 
 
+def test_load_jsonl_files_skips_blank_lines(tmp_path: Path) -> None:
+    """Blank lines are ignored when loading JSONL files."""
+
+    file = tmp_path / "sample.jsonl"
+    lines = [
+        "",
+        json.dumps({"prompt": "p1", "answer": "a1"}),
+        " ",
+        json.dumps({"prompt": "p2", "answer": "a2"}),
+        "",
+    ]
+    with file.open("w", encoding="utf-8") as fh:
+        for line in lines:
+            fh.write(line + "\n")
+    ds = jsonl_dataset.load_jsonl_files([str(file)])
+    assert ds.num_rows == 2
+    assert ds[1]["text"] == "p2\nAnswer: a2"
+
+
 def test_split_train_val_creates_deterministic_split(tmp_path: Path) -> None:
     """split_train_val yields deterministic 95/5 split without overlap."""
 

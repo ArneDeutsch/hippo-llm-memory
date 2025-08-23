@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import networkx as nx
 import numpy as np
+import pytest
 import torch
 
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
@@ -196,6 +197,23 @@ def test_step_adapters_dispatches() -> None:
     assert calls == ["e", "s", "f"]
 
 
+def test_optim_step_requires_gradients() -> None:
+    """`_optim_step` raises when given a gradient-less loss."""
+
+    class DummyScheduler:
+        def next_batch(self, size: int) -> list[tuple[str, object]]:  # pragma: no cover
+            return []
+
+    worker = ConsolidationWorker(DummyScheduler(), torch.nn.Linear(1, 1))
+    # create a dummy optimizer with a single parameter
+    param = torch.nn.Parameter(torch.ones(1))
+    worker.optimizer = torch.optim.Adam([param])
+
+    loss = torch.tensor(1.0)
+    with pytest.raises(RuntimeError, match="loss does not require gradients"):
+        worker._optim_step(loss)
+
+
 def test_step_semantic_uses_kg_features(caplog) -> None:
     """Semantic step uses KG embeddings and reports loss."""
 
@@ -203,6 +221,8 @@ def test_step_semantic_uses_kg_features(caplog) -> None:
 
     class DummyKG:
         def __init__(self) -> None:
+            self.graph = nx.MultiDiGraph()
+            self.graph.add_node("n")
             self.node_embeddings = {"n": np.ones(hidden, dtype=np.float32)}
 
         def retrieve(self, _q, k=1, radius=1):  # pragma: no cover - simple
@@ -227,6 +247,7 @@ def test_step_semantic_uses_kg_features(caplog) -> None:
         batch_size=1,
     )
     worker.rel_adapter = adapter
+    worker.optimizer = torch.optim.Adam([torch.nn.Parameter(torch.ones(1))])
     losses: list[float] = []
     worker._optim_step = lambda loss: losses.append(float(loss))  # type: ignore[assignment]
     caplog.set_level(logging.DEBUG)

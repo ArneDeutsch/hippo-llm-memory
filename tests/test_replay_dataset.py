@@ -52,3 +52,25 @@ def test_replay_dataset_respects_ratio(ratio: float) -> None:
     sampled_ratio = replay_count / len(samples)
 
     assert abs(sampled_ratio - ratio) <= 0.05
+
+
+def test_replay_dataset_falls_back_when_exhausted() -> None:
+    """Exhausted replay streams yield base items without errors."""
+
+    base_items = [{"text": f"base{i}"} for i in range(10)]
+    base_ds = itertools.cycle(base_items)
+
+    replay_records = [{"prompt": "r", "answer": "a"} for _ in range(2)]
+
+    def replay_reader():
+        if getattr(replay_reader, "called", False):
+            return iter([])
+        replay_reader.called = True
+        return iter(replay_records)
+
+    ds = ReplayIterableDataset(base_ds, replay_reader, ratio=1.0, seed=0)
+    samples = list(itertools.islice(iter(ds), 6))
+
+    # Only the first two items come from replay; the rest fall back to base data.
+    assert [s.get("prompt") for s in samples[:2]] == ["r", "r"]
+    assert all("prompt" not in s for s in samples[2:])

@@ -253,7 +253,7 @@ class ConsolidationWorker(threading.Thread):
         self.optimizer.step()
 
     def _step_episodic(self) -> None:
-        if self.epi_adapter is None:
+        if self.optimizer is None or self.epi_adapter is None:
             return
         h = torch.randn(1, 1, self.epi_adapter.hidden_size)
         m = torch.randn(1, 1, self.epi_adapter.hidden_size)
@@ -274,7 +274,13 @@ class ConsolidationWorker(threading.Thread):
         optimisation path. Real semantic consolidation will replace this with
         meaningful graph-based batches once KG integration is complete.
         """
-        if self.rel_adapter is None or self.kg_store is None:
+        if (
+            self.optimizer is None
+            or self.rel_adapter is None
+            or self.kg_store is None
+            or getattr(self.kg_store, "graph", None) is None
+            or self.kg_store.graph.number_of_nodes() == 0
+        ):
             return
         proj = getattr(self.rel_adapter, "proj", None)
         dim = getattr(proj, "out_features", getattr(self.kg_store, "dim", 1))
@@ -294,7 +300,7 @@ class ConsolidationWorker(threading.Thread):
         self.log.debug("relational adapter step loss=%.4f", float(loss.detach()))
 
     def _step_fresh(self) -> None:
-        if self.spat_adapter is None:
+        if self.optimizer is None or self.spat_adapter is None:
             return
         h = torch.randn(1, 1, self.spat_adapter.hidden_size)
         p = torch.randn(1, 1, self.spat_adapter.hidden_size)
