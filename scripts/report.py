@@ -5,7 +5,8 @@ the metrics for each suite/preset pair.  For every suite a Markdown
 report is written to ``reports/<date>/<suite>/summary.md`` and, if
 ``matplotlib`` is available, accompanying bar plots are produced.  The
 reports include compute and memory columns when present in the metrics
-files.
+files.  A top-level roll-up ``reports/<date>/index.md`` is also emitted
+with an overall matrix table and links to per-suite summaries.
 
 Example usage from the command line::
 
@@ -354,6 +355,69 @@ def _render_plots_suite(
         plt.close()
 
 
+def _write_index(summary: Summary, suite_paths: Dict[str, Path], out_dir: Path) -> Path:
+    """Write a top-level roll-up report and return its path."""
+
+    rollup: list[tuple[str, str, Dict[str, float]]] = []
+    metric_keys: set[str] = set()
+    em_by_preset: Dict[str, list[float]] = defaultdict(list)
+    for suite, presets in summary.items():
+        for preset, sizes in presets.items():
+            agg: Dict[str, float] = {}
+            for key in {k for stats in sizes.values() for k in stats}:
+                vals = [stats[key][0] for stats in sizes.values() if key in stats]
+                agg[key] = sum(vals) / len(vals)
+            rollup.append((suite, preset, agg))
+            metric_keys.update(agg.keys())
+            if "em" in agg:
+                em_by_preset[preset].append(agg["em"])
+
+    metric_keys = sorted(metric_keys)
+    lines: list[str] = ["# Overall Summary", ""]
+    if metric_keys:
+        header = "| Suite | Preset | " + " | ".join(metric_keys) + " |"
+        sep = "|---" * (len(metric_keys) + 2) + "|"
+        lines.extend([header, sep])
+        for suite, preset, metrics in rollup:
+            vals = [
+                f"{metrics.get(k, float('nan')):.3f}" if k in metrics else "–" for k in metric_keys
+            ]
+            lines.append(f"| {suite} | {preset} | " + " | ".join(vals) + " |")
+        lines.append("")
+
+    assets_dir = out_dir / "assets"
+    try:  # pragma: no cover - optional dependency
+        import matplotlib.pyplot as plt
+
+        if em_by_preset:
+            presets = sorted(em_by_preset)
+            values = [sum(em_by_preset[p]) / len(em_by_preset[p]) for p in presets]
+            assets_dir.mkdir(parents=True, exist_ok=True)
+            plt.figure()
+            plt.bar(presets, values)
+            plt.ylabel("EM")
+            plt.title("EM by preset")
+            plt.tight_layout()
+            plt.savefig(assets_dir / "overall_em.png")
+            plt.close()
+            lines.append("![Overall EM](assets/overall_em.png)")
+            lines.append("")
+    except Exception as exc:  # pragma: no cover - matplotlib missing
+        log.warning("matplotlib unavailable: %s", exc)
+
+    lines.append("## Per-suite summaries")
+    for suite in sorted(suite_paths):
+        lines.append(f"- [{suite}]({suite}/summary.md)")
+    smoke = out_dir / "smoke.md"
+    if smoke.exists():
+        lines.append("")
+        lines.append("See also: [smoke.md](smoke.md)")
+
+    index_path = out_dir / "index.md"
+    index_path.write_text("\n".join(lines))
+    return index_path
+
+
 def write_reports(
     summary: Summary,
     retrieval: Dict[str, Dict[str, MetricDict]],
@@ -374,6 +438,8 @@ def write_reports(
         paths[suite] = md_path
         if plots:
             _render_plots_suite(suite, presets, suite_dir)
+    idx = _write_index(summary, paths, out_dir)
+    log.info("wrote %s", idx)
     return paths
 
 
