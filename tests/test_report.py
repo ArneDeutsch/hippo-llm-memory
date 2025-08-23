@@ -16,7 +16,11 @@ from scripts.report import (
 
 
 def _make_metrics(
-    path: Path, suite: str, metrics: dict, compute: dict | None = None, gates: dict | None = None
+    path: Path,
+    suite: str,
+    metrics: dict,
+    compute: dict | None = None,
+    gates: dict | None = None,
 ) -> None:
     path.mkdir(parents=True, exist_ok=True)
     content = {"metrics": {suite: metrics}}
@@ -67,26 +71,31 @@ def test_report_aggregation(tmp_path: Path) -> None:
         runs_on / "50_1337",
         "episodic",
         {"em": 0.5, "r": 0.7},
-        {"tokens": 10},
+        {"tokens": 10, "rss_mb": 1.0, "time_ms_per_100": 2.0},
         gates_on,
     )
     _make_metrics(
         runs_on / "50_2025",
         "episodic",
         {"em": 0.7, "r": 0.9},
-        {"tokens": 30},
+        {"tokens": 30, "rss_mb": 1.5, "time_ms_per_100": 4.0},
         gates_on,
     )
     _make_metrics(
         runs_off / "50_4242",
         "episodic",
         {"em": 0.6, "r": 0.8},
-        {"tokens": 20},
+        {"tokens": 20, "rss_mb": 2.0, "time_ms_per_100": 3.0},
         gates_off,
     )
     # also create another suite to ensure per-suite report generation
     other = tmp_path / "runs" / "20250101" / "baselines" / "core" / "semantic"
-    _make_metrics(other / "50_1337", "semantic", {"f1": 0.4}, {"tokens": 5})
+    _make_metrics(
+        other / "50_1337",
+        "semantic",
+        {"f1": 0.4},
+        {"tokens": 5, "rss_mb": 0.5, "time_ms_per_100": 1.0},
+    )
 
     base = tmp_path / "runs" / "20250101"
     metrics = collect_metrics(base)
@@ -105,7 +114,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     md_path = paths["episodic"]
     text = md_path.read_text()
     # table header contains all fields
-    assert "| Preset | Size | em | r | tokens |" in text
+    assert "| Preset | Size | em | r | rss_mb | time_ms_per_100 | tokens |" in text
     # both presets appear as rows
     assert "| baselines/core/gate_on | 50 |" in text
     assert "| baselines/core/gate_off | 50 |" in text

@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
+import time
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -111,18 +113,40 @@ def _f1(pred: str, truth: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def _rss_mb() -> float:
+    """Return resident set size of current process in megabytes."""
+
+    try:
+        import psutil
+
+        return psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+    except Exception:  # pragma: no cover - psutil may be missing
+        import resource
+
+        rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        if sys.platform == "darwin":
+            rss /= 1024
+        return rss / 1024
+
+
 def _evaluate(
     tasks: Iterable[Task],
     modules: Dict[str, Dict[str, object]],
     tokenizer,
     model,
     max_new_tokens: int,
-) -> Tuple[List[Dict[str, object]], Dict[str, float]]:
-    """Generate predictions and compute metrics for ``tasks``."""
+) -> Tuple[List[Dict[str, object]], Dict[str, float], int, float]:
+    """Generate predictions and compute metrics for ``tasks``.
+
+    Returns the per-item rows, metric averages, total token count and elapsed
+    seconds.
+    """
 
     rows: List[Dict[str, object]] = []
     correct = 0
     f1_total = 0.0
+    total_tokens = 0
+    t0 = time.perf_counter()
     for idx, item in enumerate(tasks):
         # Optional memory retrieval and adapter calls for plumbing coverage.
         if modules:
@@ -166,6 +190,7 @@ def _evaluate(
         is_correct = int(pred.strip() == item.answer)
         correct += is_correct
         f1_total += _f1(pred, item.answer)
+        total_tokens += len(item.prompt.split()) + len(item.answer.split())
         rows.append(
             {
                 "idx": idx,
@@ -177,8 +202,9 @@ def _evaluate(
             }
         )
     n = len(rows)
+    elapsed = time.perf_counter() - t0
     metrics = {"em": correct / n if n else 0.0, "f1": f1_total / n if n else 0.0}
-    return rows, metrics
+    return rows, metrics, total_tokens, elapsed
 
 
 def _run_replay(modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]) -> None:
@@ -225,7 +251,9 @@ def run_suite(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    rows, metrics = _evaluate(tasks, modules, tokenizer, model, int(base_cfg.max_new_tokens))
+    rows, metrics, total_tokens, elapsed = _evaluate(
+        tasks, modules, tokenizer, model, int(base_cfg.max_new_tokens)
+    )
 
     for _ in range(int(cfg.replay_cycles)):
         _run_replay(modules, tasks)
@@ -235,7 +263,14 @@ def run_suite(
         "n": cfg.n,
         "seed": cfg.seed,
         "preset": cfg.preset,
-        "metrics": {cfg.suite: metrics},
+        "metrics": {
+            cfg.suite: metrics,
+            "compute": {
+                "tokens": total_tokens,
+                "time_ms_per_100": 100000 * elapsed / max(1, len(rows)),
+                "rss_mb": _rss_mb(),
+            },
+        },
         "retrieval": registry.all_snapshots(),
         "gates": gate_registry.all_snapshots(),
     }
@@ -250,6 +285,7 @@ def _write_outputs(
     post_metrics: Optional[Dict[str, float]],
     cfg: DictConfig,
     flat_ablate: Dict[str, object],
+    compute: Dict[str, float] | None = None,
 ) -> None:
     """Persist metrics and metadata."""
 
@@ -277,6 +313,8 @@ def _write_outputs(
         "retrieval": registry.all_snapshots(),
         "gates": gate_registry.all_snapshots(),
     }
+    if compute:
+        metrics["metrics"]["compute"] = compute
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f)
 
@@ -301,14 +339,19 @@ def _write_outputs(
         (rel_gate or {}).get("enabled", False) or (spat_gate or {}).get("enabled", False)
     )
     retrieval_fields = {
-        f"retrieval.{m}.{k}": v for m, snap in metrics["retrieval"].items() for k, v in snap.items()
+        f"retrieval.{m}.{k}": v
+        for m, snap in metrics.get("retrieval", {}).items()
+        for k, v in snap.items()
     }
     gate_fields = {
-        f"gates.{m}.{k}": v for m, snap in metrics["gates"].items() for k, v in snap.items()
+        f"gates.{m}.{k}": v for m, snap in metrics.get("gates", {}).items() for k, v in snap.items()
     }
+    compute_cols = [k for k in ("time_ms_per_100", "rss_mb") if compute and k in compute]
     for row in csv_rows:
         row.update(retrieval_fields)
         row.update(gate_fields)
+        for col in compute_cols:
+            row[col] = compute.get(col) if compute else None
         row["gating_enabled"] = gating_enabled
     fieldnames = [
         "idx",
@@ -317,6 +360,7 @@ def _write_outputs(
         "pred",
         "correct",
         "latency_ms",
+        *compute_cols,
         "flags",
         "gating_enabled",
         *sorted(retrieval_fields),
@@ -391,14 +435,22 @@ def main(cfg: DictConfig) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    pre_rows, pre_metrics = _evaluate(tasks, modules, tokenizer, model, int(cfg.max_new_tokens))
+    pre_rows, pre_metrics, pre_tokens, pre_time = _evaluate(
+        tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
+    )
     post_rows = post_metrics = None
+    total_items = len(pre_rows)
+    total_tokens = pre_tokens
+    total_time = pre_time
 
     for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
         _run_replay(modules, tasks)
-        post_rows, post_metrics = _evaluate(
+        post_rows, post_metrics, post_tokens, post_time = _evaluate(
             tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
         )
+        total_items += len(post_rows)
+        total_tokens += post_tokens
+        total_time += post_time
 
     outdir_cfg = cfg.get("outdir")
     if outdir_cfg is not None:
@@ -411,7 +463,14 @@ def main(cfg: DictConfig) -> None:
         else:
             outdir = Path("runs") / date / preset_path.name / cfg.suite
 
-    _write_outputs(outdir, pre_rows, pre_metrics, post_rows, post_metrics, cfg, flat_ablate)
+    compute = {
+        "tokens": total_tokens,
+        "time_ms_per_100": 100000 * total_time / max(1, total_items),
+        "rss_mb": _rss_mb(),
+    }
+    _write_outputs(
+        outdir, pre_rows, pre_metrics, post_rows, post_metrics, cfg, flat_ablate, compute
+    )
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
