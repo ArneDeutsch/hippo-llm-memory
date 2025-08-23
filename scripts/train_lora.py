@@ -761,49 +761,75 @@ def setup_store(
     context.store.start_background_tasks(epi_interval)
 
 
-def setup_adapters(context: TrainerContext, cfg: TrainConfig) -> None:
-    """Initialise memory adapters."""
-    if not (cfg.episodic.enabled or cfg.relational or cfg.spatial.enabled):
-        return
+def build_episodic_adapter(context: TrainerContext, cfg: TrainConfig) -> EpisodicMemoryAdapter:
+    """Return configured episodic adapter."""
+
     hidden = context.hidden_size
     if cfg.efficiency.mqa_gqa == "mqa":
-        epi_kv_heads = 1
-        spat_kv_heads = 1
+        kv_heads = 1
     elif cfg.efficiency.mqa_gqa == "gqa":
-        epi_kv_heads = max(1, cfg.episodic.num_heads // 2)
-        spat_kv_heads = max(1, cfg.spatial.num_heads // 2)
+        kv_heads = max(1, cfg.episodic.num_heads // 2)
     else:
-        epi_kv_heads = cfg.episodic.num_kv_heads or cfg.episodic.num_heads
-        spat_kv_heads = cfg.spatial.num_kv_heads or cfg.spatial.num_heads
-    if cfg.episodic.enabled:
-        epi_cfg = AdapterConfig(
-            hidden_size=hidden,
-            num_heads=cfg.episodic.num_heads,
-            num_kv_heads=epi_kv_heads,
-            lora_r=cfg.episodic.lora_r,
-            lora_alpha=cfg.episodic.lora_alpha,
-            lora_dropout=cfg.episodic.lora_dropout,
-            enabled=True,
-            flash_attention=cfg.efficiency.flash_attention,
-            hopfield=cfg.episodic.hopfield,
-        )
-        retrieval_dim = getattr(context.store, "dim", hidden)
-        context.episodic_adapter = EpisodicAdapter(epi_cfg)
-        if not hasattr(context.episodic_adapter, "proj"):
-            context.episodic_adapter.proj = nn.Linear(retrieval_dim, hidden)
-    if cfg.relational:
-        context.relational_adapter = RelationalMemoryAdapter()
-    if cfg.spatial.enabled:
-        spat_cfg = SpatialAdapterConfig(
-            hidden_size=hidden,
-            num_heads=cfg.spatial.num_heads,
-            num_kv_heads=spat_kv_heads,
-            lora_r=cfg.spatial.lora_r,
-            lora_alpha=cfg.spatial.lora_alpha,
-            lora_dropout=cfg.spatial.lora_dropout,
-            enabled=True,
-        )
-        context.spatial_adapter = SpatialAdapter(spat_cfg)
+        kv_heads = cfg.episodic.num_kv_heads or cfg.episodic.num_heads
+    epi_cfg = AdapterConfig(
+        hidden_size=hidden,
+        num_heads=cfg.episodic.num_heads,
+        num_kv_heads=kv_heads,
+        lora_r=cfg.episodic.lora_r,
+        lora_alpha=cfg.episodic.lora_alpha,
+        lora_dropout=cfg.episodic.lora_dropout,
+        enabled=True,
+        flash_attention=cfg.efficiency.flash_attention,
+        hopfield=cfg.episodic.hopfield,
+    )
+    retrieval_dim = getattr(context.store, "dim", hidden)
+    adapter = EpisodicAdapter(epi_cfg)
+    if not hasattr(adapter, "proj"):
+        adapter.proj = nn.Linear(retrieval_dim, hidden)
+    return adapter
+
+
+def build_relational_adapter(context: TrainerContext, cfg: TrainConfig) -> RelationalMemoryAdapter:
+    """Return configured relational adapter."""
+
+    return RelationalMemoryAdapter()
+
+
+def build_spatial_adapter(context: TrainerContext, cfg: TrainConfig) -> SpatialAdapter:
+    """Return configured spatial adapter."""
+
+    hidden = context.hidden_size
+    if cfg.efficiency.mqa_gqa == "mqa":
+        kv_heads = 1
+    elif cfg.efficiency.mqa_gqa == "gqa":
+        kv_heads = max(1, cfg.spatial.num_heads // 2)
+    else:
+        kv_heads = cfg.spatial.num_kv_heads or cfg.spatial.num_heads
+    spat_cfg = SpatialAdapterConfig(
+        hidden_size=hidden,
+        num_heads=cfg.spatial.num_heads,
+        num_kv_heads=kv_heads,
+        lora_r=cfg.spatial.lora_r,
+        lora_alpha=cfg.spatial.lora_alpha,
+        lora_dropout=cfg.spatial.lora_dropout,
+        enabled=True,
+    )
+    return SpatialAdapter(spat_cfg)
+
+
+def setup_adapters(context: TrainerContext, cfg: TrainConfig) -> dict[str, Any]:
+    """Initialise memory adapters and return them."""
+
+    builders: dict[str, tuple[bool, Any]] = {
+        "episodic_adapter": (cfg.episodic.enabled, build_episodic_adapter),
+        "relational_adapter": (cfg.relational, build_relational_adapter),
+        "spatial_adapter": (cfg.spatial.enabled, build_spatial_adapter),
+    }
+    adapters: dict[str, Any] = {}
+    for name, (enabled, builder) in builders.items():
+        if enabled:
+            adapters[name] = builder(context, cfg)
+    return adapters
 
 
 def attach_fusion(context: TrainerContext, cfg: TrainConfig) -> None:
@@ -943,21 +969,24 @@ class MemoryInitializer:
     cfg: TrainConfig
     provenance: ProvenanceLogger | None = None
 
-    def initialize(self) -> None:
+    def initialize(self) -> dict[str, Any]:
         setup_store(self.context, self.cfg, self.provenance)
-        setup_adapters(self.context, self.cfg)
+        adapters = setup_adapters(self.context, self.cfg)
+        for name, adapter in adapters.items():
+            setattr(self.context, name, adapter)
         attach_fusion(self.context, self.cfg)
         setup_sources(self.context, self.cfg)
         setup_replay(self.context, self.cfg, self.context.model)
+        return adapters
 
 
 def init_memory(
     context: TrainerContext,
     cfg: TrainConfig,
     provenance: ProvenanceLogger | None = None,
-) -> None:
+) -> dict[str, Any]:
     """Configure memory components via :class:`MemoryInitializer`."""
-    MemoryInitializer(context, cfg, provenance).initialize()
+    return MemoryInitializer(context, cfg, provenance).initialize()
 
 
 @dataclass
@@ -982,11 +1011,15 @@ class TrainingSession:
     train_ds: Any
     val_ds: Any
     provenance: ProvenanceLogger | None
+    adapters: dict[str, Any] | None = None
     model: nn.Module = field(init=False)
     peft_config: LoraConfig | None = field(init=False, default=None)
 
     def __post_init__(self) -> None:  # pragma: no cover - trivial
         self.model = self.context.model
+        if self.adapters:
+            for name, adapter in self.adapters.items():
+                setattr(self.context, name, adapter)
 
     # Phase 1
     def prepare_peft(self) -> tuple[nn.Module, LoraConfig | None]:
@@ -1164,6 +1197,7 @@ def _train(
     train_ds,
     val_ds,
     provenance: ProvenanceLogger | None,
+    adapters: dict[str, Any] | None,
 ) -> None:
     """Execute the training or dry‑run orchestrating session phases.
 
@@ -1194,7 +1228,7 @@ def _train(
 
         setattr(model, "_hippo_retrieval_cb", _block_retrieval_cb)  # type: ignore[attr-defined]
 
-    session = TrainingSession(cfg, context, tokenizer, train_ds, val_ds, provenance)
+    session = TrainingSession(cfg, context, tokenizer, train_ds, val_ds, provenance, adapters)
     context.start()
     try:
         session.prepare_peft()
@@ -1220,9 +1254,9 @@ def train(cfg: TrainConfig) -> None:
         enable_writes=cfg.memory.runtime.enable_writes,
     )
     provenance = ProvenanceLogger(os.getcwd())
-    MemoryInitializer(context, cfg, provenance).initialize()
+    adapters = MemoryInitializer(context, cfg, provenance).initialize()
     train_ds, val_ds = prepare_datasets(cfg)
-    _train(cfg, context, tokenizer, train_ds, val_ds, provenance)
+    _train(cfg, context, tokenizer, train_ds, val_ds, provenance, adapters)
 
 
 @hydra.main(config_name="train_lora_config", version_base=None)
