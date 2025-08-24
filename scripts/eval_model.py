@@ -433,7 +433,9 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
-    model_path = to_absolute_path(str(cfg.model))
+    model_id = str(cfg.model)
+    abs_model_path = Path(to_absolute_path(model_id))
+    model_path = abs_model_path if abs_model_path.exists() else model_id
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
