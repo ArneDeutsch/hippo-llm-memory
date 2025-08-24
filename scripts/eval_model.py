@@ -16,7 +16,9 @@ episodic store to mimic consolidation.
 from __future__ import annotations
 
 import csv
+import itertools
 import json
+import logging
 import os
 import sys
 import time
@@ -42,6 +44,9 @@ from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -147,8 +152,11 @@ def _evaluate(
     f1_total = 0.0
     total_tokens = 0
     latencies: List[float] = []
+    task_list = list(tasks)
+    total = len(task_list)
+    progress_interval = max(1, total // 10) if total else 1
     t0 = time.perf_counter()
-    for idx, item in enumerate(tasks):
+    for idx, item in enumerate(task_list, 1):
         item_t0 = time.perf_counter()
         # Optional memory retrieval and adapter calls for plumbing coverage.
         if modules:
@@ -198,7 +206,7 @@ def _evaluate(
         latencies.append(latency_ms)
         rows.append(
             {
-                "idx": idx,
+                "idx": idx - 1,
                 "prompt": item.prompt,
                 "answer": item.answer,
                 "pred": pred,
@@ -206,6 +214,8 @@ def _evaluate(
                 "latency_ms": latency_ms,
             }
         )
+        if idx % progress_interval == 0 or idx == total:
+            log.info("    processed %d/%d tasks", idx, total)
     n = len(rows)
     t1 = time.perf_counter()
     if all(lat == 0.0 for lat in latencies) and latencies:
@@ -483,16 +493,17 @@ def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
     suites = cfg.get("suites", ["episodic", "semantic", "spatial"])
     n_values = cfg.get("n_values", [50, 200, 1000])
     seeds = cfg.get("seeds", [1337, 2025, 4242])
+    combos = list(itertools.product(suites, n_values, seeds))
+    total = len(combos)
     base_cfg = OmegaConf.to_container(cfg, resolve=True)
-    for suite in suites:
-        for n in n_values:
-            for seed in seeds:
-                run_cfg = OmegaConf.create(base_cfg)
-                run_cfg.suite = suite
-                run_cfg.n = int(n)
-                run_cfg.seed = int(seed)
-                outdir = root_outdir / suite / f"{n}_{seed}"
-                evaluate(run_cfg, outdir)
+    for idx, (suite, n, seed) in enumerate(combos, 1):
+        log.info("run %d/%d: suite=%s n=%d seed=%d", idx, total, suite, n, seed)
+        run_cfg = OmegaConf.create(base_cfg)
+        run_cfg.suite = suite
+        run_cfg.n = int(n)
+        run_cfg.seed = int(seed)
+        outdir = root_outdir / suite / f"{n}_{seed}"
+        evaluate(run_cfg, outdir)
 
 
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
