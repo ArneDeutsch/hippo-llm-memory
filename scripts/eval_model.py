@@ -422,17 +422,8 @@ def _load_preset(cfg: DictConfig) -> DictConfig:
     return cfg
 
 
-@hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
-def main(cfg: DictConfig) -> None:
-    """CLI entry point for the evaluation harness."""
-
-    cfg = _load_preset(cfg)
-    cfg.n = cfg.get("n", 5)
-    cfg.seed = cfg.get("seed", 0)
-    cfg.model = cfg.get("model", "models/tiny-gpt2")
-    cfg.max_new_tokens = cfg.get("max_new_tokens", 32)
-    if cfg.get("dry_run"):
-        cfg.n = min(cfg.n, 5)
+def evaluate(cfg: DictConfig, outdir: Path) -> None:
+    """Run a single evaluation and write outputs to ``outdir``."""
 
     registry.reset()
     gate_registry.reset()
@@ -469,17 +460,6 @@ def main(cfg: DictConfig) -> None:
         total_tokens += post_tokens
         total_time += post_time
 
-    outdir_cfg = cfg.get("outdir")
-    if outdir_cfg is not None:
-        outdir = Path(to_absolute_path(str(outdir_cfg)))
-    else:
-        date = datetime.now(timezone.utc).strftime("%Y%m%d")
-        preset_path = Path(str(cfg.preset))
-        if preset_path.parts and preset_path.parts[0] == "baselines":
-            outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
-        else:
-            outdir = Path("runs") / date / preset_path.name / cfg.suite
-
     compute = {
         "tokens": total_tokens,
         "time_ms_per_100": 100000 * total_time / max(1, total_items),
@@ -489,6 +469,61 @@ def main(cfg: DictConfig) -> None:
     _write_outputs(
         outdir, pre_rows, pre_metrics, post_rows, post_metrics, cfg, flat_ablate, compute
     )
+
+
+def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
+    """Run evaluation over a grid of suites, sizes and seeds."""
+
+    suites = cfg.get("suites", ["episodic", "semantic", "spatial"])
+    n_values = cfg.get("n_values", [50, 200, 1000])
+    seeds = cfg.get("seeds", [1337, 2025, 4242])
+    base_cfg = OmegaConf.to_container(cfg, resolve=True)
+    for suite in suites:
+        for n in n_values:
+            for seed in seeds:
+                run_cfg = OmegaConf.create(base_cfg)
+                run_cfg.suite = suite
+                run_cfg.n = int(n)
+                run_cfg.seed = int(seed)
+                outdir = root_outdir / suite / f"{n}_{seed}"
+                evaluate(run_cfg, outdir)
+
+
+@hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
+def main(cfg: DictConfig) -> None:
+    """CLI entry point for the evaluation harness."""
+
+    cfg = _load_preset(cfg)
+    cfg.n = cfg.get("n", 5)
+    cfg.seed = cfg.get("seed", 0)
+    cfg.model = cfg.get("model", "models/tiny-gpt2")
+    cfg.max_new_tokens = cfg.get("max_new_tokens", 32)
+    if cfg.get("dry_run"):
+        cfg.n = min(cfg.n, 5)
+
+    outdir_cfg = cfg.get("outdir")
+    if cfg.get("run_matrix"):
+        if outdir_cfg is not None:
+            root_outdir = Path(to_absolute_path(str(outdir_cfg)))
+        else:
+            date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
+            preset_path = Path(str(cfg.preset))
+            if preset_path.parts and preset_path.parts[0] == "baselines":
+                root_outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name
+            else:
+                root_outdir = Path("runs") / date / preset_path.name
+        evaluate_matrix(cfg, root_outdir)
+    else:
+        if outdir_cfg is not None:
+            outdir = Path(to_absolute_path(str(outdir_cfg)))
+        else:
+            date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
+            preset_path = Path(str(cfg.preset))
+            if preset_path.parts and preset_path.parts[0] == "baselines":
+                outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
+            else:
+                outdir = Path("runs") / date / preset_path.name / cfg.suite
+        evaluate(cfg, outdir)
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
