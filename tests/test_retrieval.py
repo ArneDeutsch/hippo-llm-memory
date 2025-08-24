@@ -1,5 +1,11 @@
-import pytest
+import time
 
+import numpy as np
+import pytest
+import torch
+from torch import nn
+
+from hippo_mem.common.retrieval import build_meta, retrieve_and_pack_base
 from hippo_mem.retrieval.embed import embed_text
 from hippo_mem.retrieval.faiss_index import FaissIndex
 
@@ -100,3 +106,29 @@ def test_faiss_index_update_and_error_handling(monkeypatch: pytest.MonkeyPatch) 
     fallback.add([0.0, 1.0])
     with pytest.raises(IndexError):
         fallback.remove(10)
+
+
+def test_build_meta_schema() -> None:
+    """``build_meta`` emits the expected telemetry fields."""
+
+    start = time.perf_counter()
+    meta = build_meta("kind", start, hits=2, k=3, bsz=1)
+    assert set(meta.keys()) == {"source", "k", "latency_ms", "hit_rate"}
+
+
+def test_retrieve_and_pack_meta_schema() -> None:
+    """Retrieval wrapper constructs metadata with the centralised schema."""
+
+    def retrieve():
+        yield np.ones((1, 2), dtype=np.float32), 1
+
+    mem = retrieve_and_pack_base(
+        retrieve,
+        k=2,
+        device=torch.device("cpu"),
+        dtype=torch.float32,
+        proj=nn.Identity(),
+        build_meta_fn=lambda start, hits, k, bsz: build_meta("kind", start, hits, k, bsz=bsz),
+        telemetry_key="episodic",
+    )
+    assert set(mem.meta.keys()) == {"source", "k", "latency_ms", "hit_rate"}
