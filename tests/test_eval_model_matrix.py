@@ -4,7 +4,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 def test_eval_model_run_matrix(tmp_path: Path) -> None:
     """Matrix run writes metrics for each combination."""
 
@@ -26,7 +25,6 @@ def test_eval_model_run_matrix(tmp_path: Path) -> None:
     metrics = json.loads(expected.read_text())
     assert metrics["n"] == 2
     assert metrics["seed"] == 1337
-
 
 def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
     """Matrix run handles numeric date without explicit outdir."""
