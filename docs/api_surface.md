@@ -14,7 +14,6 @@
 - `hippo_mem.episodic.replay.ReplayScheduler`
 - `hippo_mem.episodic.adapter.AdapterConfig`
 - `hippo_mem.episodic.adapter.EpisodicAdapter`
-- `hippo_mem.episodic.adapter.LoraLinear`
 - `hippo_mem.episodic.index.FaissIndex`
 - `hippo_mem.episodic.index.NumpyIndex`
 - `hippo_mem.episodic.db.TraceDB`
@@ -46,5 +45,7 @@
 - `hippo_mem.adapters.lora.load_adapter()`
 - `hippo_mem.adapters.lora.merge_adapter()`
 - `hippo_mem.adapters.lora.export_adapter()`
+- `hippo_mem.common.attn_adapter.CrossAttnAdapter`
+- `hippo_mem.common.attn_adapter.LoraLinear`
 - `hippo_mem.consolidation.worker.ConsolidationWorker`
 - `_hippo_retrieval_cb(hidden: Tensor) -> MemoryTokens`

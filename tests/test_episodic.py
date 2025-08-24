@@ -12,7 +12,7 @@ import torch
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from hippo_mem.common import TraceSpec
+from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.gating import WriteGate, k_wta, surprise
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
@@ -265,6 +265,7 @@ def test_flash_attention_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     adapter = EpisodicAdapter(cfg)
     hidden = torch.randn(1, 3, 8)
     traces = torch.randn(1, 4, 8)
+    mem = MemoryTokens(tokens=traces, mask=torch.ones(1, 4, dtype=torch.bool))
 
     called = {}
     orig = torch.nn.functional.scaled_dot_product_attention
@@ -274,10 +275,11 @@ def test_flash_attention_flag(monkeypatch: pytest.MonkeyPatch) -> None:
         return orig(q, k, v, attn_mask=attn_mask, dropout_p=dropout_p, is_causal=is_causal)
 
     monkeypatch.setattr(
-        "hippo_mem.episodic.adapter.F.scaled_dot_product_attention", fake_sdp_attention
+        "hippo_mem.common.attn_adapter.F.scaled_dot_product_attention",
+        fake_sdp_attention,
     )
 
-    out = adapter(hidden, traces)
+    out = adapter(hidden, memory=mem)
     assert called.get("hit")
     assert out.shape == hidden.shape
 
