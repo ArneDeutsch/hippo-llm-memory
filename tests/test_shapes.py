@@ -26,8 +26,11 @@ def test_mask_broadcasting(batch: int, seq: int, mem: int) -> None:
     captured: dict[str, torch.Tensor] = {}
 
     class Dummy(torch.nn.Module):
-        def forward(self, hidden_states, traces, attn_mask=None):
-            captured["mask"] = attn_mask
+        def forward(self, hidden_states, *, memory=None):  # type: ignore[override]
+            mask = torch.where(memory.mask, 0.0, float("-inf"))
+            captured["mask"] = mask[:, None, :].expand(
+                hidden_states.size(0), hidden_states.size(1), mask.size(1)
+            )
             return hidden_states
 
     adapter.inner = Dummy()  # type: ignore[assignment]
