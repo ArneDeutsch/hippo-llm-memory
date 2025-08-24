@@ -15,8 +15,8 @@ def test_relational_gate_skips_duplicates() -> None:
     kg.schema_index.add_schema("likes", "likes")
     tup = ("A", "likes", "B", "ctx", None, 0.9, 0)
 
-    assert kg.ingest(tup)[0] == "insert"
-    assert kg.ingest(tup)[0] == "aggregate"
+    assert kg.ingest(tup).action == "insert"
+    assert kg.ingest(tup).action == "aggregate"
     with_gate = kg.graph.number_of_edges()
 
     kg2 = KnowledgeGraph(config={"schema_threshold": 0.0})
@@ -49,8 +49,8 @@ def test_relational_gate_penalizes_high_degree() -> None:
     gate._last_seen["A"] = time.time()
     gate._last_seen["B"] = time.time()
     tup = ("A", "likes", "B", "ctx", None, 1.0, 0)
-    action, _ = gate.decide(tup, kg)
-    assert action == "route_to_episodic"
+    decision = gate.decide(tup, kg)
+    assert decision.action == "route_to_episodic"
 
 
 def test_relational_gate_threshold_and_counters() -> None:
@@ -59,8 +59,8 @@ def test_relational_gate_threshold_and_counters() -> None:
     kg = KnowledgeGraph(config={"schema_threshold": 0.0}, gate=gate)
     t_thr = ("A", "rel", "B", "ctx", None, 0.8, 0)
     t_low = ("C", "rel", "D", "ctx", None, 0.79, 0)
-    assert kg.ingest(t_thr)[0] == "insert"
-    assert kg.ingest(t_low)[0] == "route_to_episodic"
+    assert kg.ingest(t_thr).action == "insert"
+    assert kg.ingest(t_low).action == "route_to_episodic"
     stats = gate_registry.get("relational")
     assert stats.attempts == 2
     assert stats.inserted == 1

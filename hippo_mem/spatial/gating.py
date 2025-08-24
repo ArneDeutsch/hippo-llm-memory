@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Optional, Tuple
+from typing import Deque, Optional
 
-from hippo_mem.common import ProvenanceLogger
+from hippo_mem.common import GateDecision, ProvenanceLogger, log_gate
 
 from .map import PlaceGraph
 
@@ -29,7 +29,7 @@ class SpatialGate:
     max_degree: int = 64
     logger: ProvenanceLogger | None = None
     _ctx_hist: Deque[str] = field(init=False)
-    _edge_hist: Deque[Tuple[str, str]] = field(init=False)
+    _edge_hist: Deque[tuple[str, str]] = field(init=False)
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.block_threshold <= 1.0:
@@ -43,8 +43,8 @@ class SpatialGate:
         self._ctx_hist = deque(maxlen=self.repeat_N)
         self._edge_hist = deque(maxlen=self.recent_window)
 
-    def decide(self, prev_ctx: Optional[str], context: str, graph: PlaceGraph) -> Tuple[str, str]:
-        """Return ``(action, reason)`` for a context transition."""
+    def decide(self, prev_ctx: Optional[str], context: str, graph: PlaceGraph) -> GateDecision:
+        """Return a :class:`GateDecision` for a context transition."""
 
         repeat_pen = 0.0
         if len(self._ctx_hist) >= self.repeat_N - 1 and all(
@@ -67,7 +67,7 @@ class SpatialGate:
 
         self._ctx_hist.append(context)
         if score >= self.block_threshold:
-            action, reason = "route_to_episodic", f"score={score:.2f}>=thr"
+            decision = GateDecision("route_to_episodic", f"score={score:.2f}>=thr", score)
         else:
             action = "insert"
             reason = "new_edge"
@@ -78,15 +78,14 @@ class SpatialGate:
                     action = "aggregate"
                     reason = "duplicate_edge"
                 self._edge_hist.append((prev_ctx, context))
-        if self.logger is not None:
-            payload = {
-                "prev": prev_ctx,
-                "ctx": context,
-                "deg_pen": deg_pen,
-                "score": score,
-            }
-            self.logger.log(mem="spatial", action=action, reason=reason, payload=payload)
-        return action, reason
+            decision = GateDecision(action, reason, score)
+        log_gate(
+            self.logger,
+            "spatial",
+            decision,
+            {"prev": prev_ctx, "ctx": context, "deg_pen": deg_pen, "score": score},
+        )
+        return decision
 
 
 __all__ = ["SpatialGate"]

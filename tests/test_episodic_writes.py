@@ -21,7 +21,7 @@ def test_gate_batch_deterministic():
     queries = np.ones((2, 1), dtype=np.float32)
     keys = np.ones((1, 1), dtype=np.float32)
     decisions, rate = gate_batch(gate, probs, queries, keys)
-    assert [d.allow for d in decisions] == [True, False]
+    assert [d.action for d in decisions] == ["insert", "skip"]
     assert rate == 0.5
 
 
@@ -35,7 +35,7 @@ def test_gate_batch_applies_reward_and_pin() -> None:
     rewards = np.array([0.0, 1.0, 0.0], dtype=float)
     pins = np.array([False, False, True])
     decisions, rate = gate_batch(gate, probs, queries, keys, rewards, pins)
-    assert [d.allow for d in decisions] == [False, True, True]
+    assert [d.action for d in decisions] == ["skip", "insert", "insert"]
     assert rate == pytest.approx(2 / 3)
 
 
@@ -45,7 +45,7 @@ def test_async_writer_enqueues():
     gate = WriteGate(tau=0.5)
     key = np.zeros(1, dtype=np.float32)
     dec = gate(0.1, key, np.zeros((0, 1), dtype=np.float32))
-    if dec.allow:
+    if dec.action == "insert":
         writer.enqueue(key, TraceValue(provenance="unit"))
     writer.queue.join()
     writer.stop()

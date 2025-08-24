@@ -47,12 +47,11 @@ from __future__ import annotations
 
 import logging
 import math
-import time
 from dataclasses import dataclass
 
 import numpy as np
 
-from hippo_mem.common import ProvenanceLogger
+from hippo_mem.common import GateDecision, ProvenanceLogger, log_gate
 
 from .utils import cosine_dissimilarity
 
@@ -243,40 +242,6 @@ def novelty(query: np.ndarray, keys: np.ndarray) -> float:
     return cosine_dissimilarity(query, keys, "max")
 
 
-@dataclass
-class GateDecision:
-    """Result of a write-gating decision.
-
-    Summary
-    -------
-    Records whether an episode was written and under what score.
-
-    Parameters
-    ----------
-    allow : bool
-        ``True`` if the write should proceed.
-    score : float
-        Salience score ``S``.
-    provenance : str
-        Source identifier.
-    timestamp : float
-        Unix time in seconds.
-    Examples
-    --------
-    >>> GateDecision(True, 0.8, "unit", 0.0).allow
-    True
-
-    See Also
-    --------
-    WriteGate
-    """
-
-    allow: bool
-    score: float
-    provenance: str
-    timestamp: float
-
-
 class WriteGate:
     """Combine surprise, novelty, reward and pin signals into a write decision.
 
@@ -391,7 +356,6 @@ class WriteGate:
         reward: float = 0.0,
         pin: bool = False,
         provenance: str = "",
-        timestamp: float | None = None,
     ) -> GateDecision:
         """Decide whether to write an episode.
 
@@ -409,8 +373,6 @@ class WriteGate:
             Force the decision irrespective of ``S``.
         provenance : str, optional
             Source identifier for logging.
-        timestamp : float, optional
-            Event time in seconds.
 
         Returns
         -------
@@ -423,27 +385,25 @@ class WriteGate:
         Examples
         --------
         >>> gate = WriteGate(tau=0.0)
-        >>> gate(0.5, np.zeros(1), np.zeros((0, 1))).allow
-        True
+        >>> gate(0.5, np.zeros(1), np.zeros((0, 1))).action
+        'insert'
 
         See Also
         --------
         score
         """
 
-        if timestamp is None:
-            timestamp = time.time()
         sc = self.score(prob, query, keys, reward, pin)
         allow = sc > self.tau
-        decision = GateDecision(allow, sc, provenance, timestamp)
-        if self.logger is not None:
-            action = "insert" if allow else "skip"
-            self.logger.log(
-                mem="episodic",
-                action=action,
-                reason=f"score={sc:.2f}",
-                payload={"score": sc, "prob": prob},
-            )
+        action = "insert" if allow else "skip"
+        reason = f"score={sc:.2f}"
+        decision = GateDecision(action=action, reason=reason, score=sc)
+        log_gate(
+            self.logger,
+            "episodic",
+            decision,
+            {"prob": prob, "provenance": provenance},
+        )
         return decision
 
 
@@ -495,8 +455,8 @@ def gate_batch(
     ...     np.zeros((2, 1), dtype=np.float32),
     ...     np.zeros((0, 1), dtype=np.float32),
     ... )
-    >>> (decisions[0].allow, decisions[1].allow, round(rate, 2))
-    (True, False, 0.5)
+    >>> (decisions[0].action, decisions[1].action, round(rate, 2))
+    ('insert', 'skip', 0.5)
     """
 
     probs = np.asarray(probs, dtype=float).reshape(-1)
@@ -513,7 +473,7 @@ def gate_batch(
         pin = bool(pins[i]) if pins is not None else False
         dec = gate(p, queries[i], keys, r, pin, provenance)
         decisions.append(dec)
-        if dec.allow:
+        if dec.action == "insert":
             accepts += 1
 
     rate = accepts / len(decisions) if decisions else 0.0

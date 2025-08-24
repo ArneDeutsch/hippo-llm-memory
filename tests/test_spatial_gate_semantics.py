@@ -17,10 +17,10 @@ def test_spatial_gate_blocks_self_and_flaps() -> None:
     g_gate = PlaceGraph()
     prev = None
     for ctx in trace_self:
-        action, _ = gate_self.decide(prev, ctx, g_gate)
-        if action == "insert":
+        decision = gate_self.decide(prev, ctx, g_gate)
+        if decision.action == "insert":
             g_gate.observe(ctx)
-        elif action == "aggregate":
+        elif decision.action == "aggregate":
             g_gate.aggregate_duplicate(prev, ctx)
         prev = ctx
     assert g_gate._log["writes"] == 2
@@ -39,10 +39,10 @@ def test_spatial_gate_blocks_self_and_flaps() -> None:
     g_gate2 = PlaceGraph()
     prev = None
     for ctx in trace_flap:
-        action, _ = gate_flap.decide(prev, ctx, g_gate2)
-        if action == "insert":
+        decision = gate_flap.decide(prev, ctx, g_gate2)
+        if decision.action == "insert":
             g_gate2.observe(ctx)
-        elif action == "aggregate":
+        elif decision.action == "aggregate":
             g_gate2.aggregate_duplicate(prev, ctx)
         prev = ctx
     writes_gate2 = g_gate2._log["writes"]

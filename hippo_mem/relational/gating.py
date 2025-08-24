@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Dict
 
-from hippo_mem.common import ProvenanceLogger
+from hippo_mem.common import GateDecision, ProvenanceLogger, log_gate
 
 from .tuples import TupleType
 
@@ -78,8 +78,8 @@ class RelationalGate:
         self._last_seen[tail] = now
         return 1.0 if rec_h > self.recency_window and rec_t > self.recency_window else 0.0
 
-    def decide(self, tup: TupleType, kg: "KnowledgeGraph") -> Tuple[str, str]:
-        """Return ``(action, reason)`` for ``tup``."""
+    def decide(self, tup: TupleType, kg: "KnowledgeGraph") -> GateDecision:
+        """Return a :class:`GateDecision` for ``tup``."""
 
         head, rel, tail, *_rest, conf, _prov = tup
 
@@ -94,40 +94,24 @@ class RelationalGate:
             + self.w_rec * rec_bonus
         )
 
+        payload = {
+            "tuple": [head, rel, tail],
+            "deg_pen": deg_pen,
+            "conf": conf,
+        }
         if novelty == 0.0:
-            action, reason = "aggregate", "duplicate_edge"
-            if self.logger is not None:
-                payload = {
-                    "tuple": [head, rel, tail],
-                    "deg_pen": deg_pen,
-                    "conf": conf,
-                    "score": score,
-                }
-                self.logger.log(mem="relational", action=action, reason=reason, payload=payload)
-            return action, reason
+            decision = GateDecision("aggregate", "duplicate_edge", score)
+            log_gate(self.logger, "relational", decision, payload | {"score": score})
+            return decision
 
         if score < self.threshold:
-            action, reason = "route_to_episodic", f"score={score:.2f}<thr"
-            if self.logger is not None:
-                payload = {
-                    "tuple": [head, rel, tail],
-                    "deg_pen": deg_pen,
-                    "conf": conf,
-                    "score": score,
-                }
-                self.logger.log(mem="relational", action=action, reason=reason, payload=payload)
-            return action, reason
+            decision = GateDecision("route_to_episodic", f"score={score:.2f}<thr", score)
+            log_gate(self.logger, "relational", decision, payload | {"score": score})
+            return decision
 
-        action, reason = "insert", f"score={score:.2f}>=thr"
-        if self.logger is not None:
-            payload = {
-                "tuple": [head, rel, tail],
-                "deg_pen": deg_pen,
-                "conf": conf,
-                "score": score,
-            }
-            self.logger.log(mem="relational", action=action, reason=reason, payload=payload)
-        return action, reason
+        decision = GateDecision("insert", f"score={score:.2f}>=thr", score)
+        log_gate(self.logger, "relational", decision, payload | {"score": score})
+        return decision
 
 
 __all__ = ["RelationalGate"]

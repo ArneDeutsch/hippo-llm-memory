@@ -146,11 +146,11 @@ def test_gating_threshold_and_pin_weight() -> None:
 
     gate = WriteGate(tau=0.5, alpha=0.0, beta=0.0, gamma=0.0, delta=0.0)
     decision = gate(prob, query, store.keys(), pin=True)
-    assert not decision.allow and decision.score == pytest.approx(0.0)
+    assert decision.action != "insert" and decision.score == pytest.approx(0.0)
 
     strong_gate = WriteGate(tau=0.5, alpha=0.0, beta=0.0, gamma=0.0, delta=1.0)
     decision2 = strong_gate(prob, query, store.keys(), pin=True)
-    assert decision2.allow and decision2.score == pytest.approx(1.0)
+    assert decision2.action == "insert" and decision2.score == pytest.approx(1.0)
 
 
 def test_low_prob_surprise_crosses_threshold() -> None:
@@ -163,12 +163,12 @@ def test_low_prob_surprise_crosses_threshold() -> None:
     high_prob = 0.9
     decision_high = gate(high_prob, query, keys)
     expected_high = surprise(high_prob)
-    assert not decision_high.allow and decision_high.score == pytest.approx(expected_high)
+    assert decision_high.action != "insert" and decision_high.score == pytest.approx(expected_high)
 
     low_prob = 0.1
     decision_low = gate(low_prob, query, keys)
     expected_low = surprise(low_prob)
-    assert decision_low.allow and decision_low.score == pytest.approx(expected_low)
+    assert decision_low.action == "insert" and decision_low.score == pytest.approx(expected_low)
 
 
 def test_novel_query_crosses_threshold() -> None:
@@ -180,12 +180,14 @@ def test_novel_query_crosses_threshold() -> None:
     seen_keys = np.array([query])
     decision_seen = gate(1.0, query, seen_keys)
     expected_seen = cosine_dissimilarity(query, seen_keys, "max")
-    assert not decision_seen.allow and decision_seen.score == pytest.approx(expected_seen)
+    assert decision_seen.action != "insert" and decision_seen.score == pytest.approx(expected_seen)
 
     novel_keys = np.zeros((0, 4), dtype="float32")
     decision_novel = gate(1.0, query, novel_keys)
     expected_novel = cosine_dissimilarity(query, novel_keys, "max")
-    assert decision_novel.allow and decision_novel.score == pytest.approx(expected_novel)
+    assert decision_novel.action == "insert" and decision_novel.score == pytest.approx(
+        expected_novel
+    )
 
 
 def test_writegate_scores_lower_for_duplicate_query() -> None:
@@ -215,11 +217,15 @@ def test_reward_flag_crosses_threshold() -> None:
 
     decision_no_reward = gate(1.0, query, keys, reward=0.0)
     expected_none = gate.gamma * 0.0
-    assert not decision_no_reward.allow and decision_no_reward.score == pytest.approx(expected_none)
+    assert decision_no_reward.action != "insert" and decision_no_reward.score == pytest.approx(
+        expected_none
+    )
 
     decision_reward = gate(1.0, query, keys, reward=1.0)
     expected_reward = gate.gamma * 1.0
-    assert decision_reward.allow and decision_reward.score == pytest.approx(expected_reward)
+    assert decision_reward.action == "insert" and decision_reward.score == pytest.approx(
+        expected_reward
+    )
 
 
 def test_delete_removes_trace() -> None:

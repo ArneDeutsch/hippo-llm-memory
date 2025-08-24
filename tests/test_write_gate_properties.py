@@ -58,10 +58,10 @@ def test_threshold_blocks_writes(prob: float, query: np.ndarray) -> None:
     assume(score < 1 - 1e-6)
     gate_block = WriteGate(tau=score + 1e-6)
     decision = gate_block(prob, query, keys)
-    assert not decision.allow
+    assert decision.action != "insert"
     gate_allow = WriteGate(tau=max(score - 1e-6, 0.0))
     decision2 = gate_allow(prob, query, keys)
-    assert decision2.allow
+    assert decision2.action == "insert"
 
 
 def test_write_gate_rejects_bad_config() -> None:
