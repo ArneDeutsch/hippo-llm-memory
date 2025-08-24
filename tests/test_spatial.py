@@ -74,6 +74,7 @@ def test_spatial_adapter_integration() -> None:
         [[[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]]],
         requires_grad=True,
     )
+    mem = MemoryTokens(tokens=plan, mask=torch.tensor([[True, True]], dtype=torch.bool))
 
     adapter = SpatialAdapter(AdapterConfig(hidden_size=4, num_heads=2))
     eye = torch.eye(4)
@@ -83,7 +84,7 @@ def test_spatial_adapter_integration() -> None:
         adapter.v_proj.weight.copy_(eye)
         adapter.o_proj.weight.copy_(eye)
 
-    out = adapter(hidden, plan)
+    out = adapter(hidden, mem)
 
     head_dim = adapter.head_dim
     q = hidden.view(1, 1, adapter.num_heads, head_dim).transpose(1, 2)
@@ -99,7 +100,8 @@ def test_spatial_adapter_integration() -> None:
     out.sum().backward()
     assert hidden.grad is not None and plan.grad is not None
 
-    empty_out = adapter(hidden, plan[:, :0], attn_mask=torch.zeros(1, 1, 0))
+    empty = MemoryTokens(tokens=plan[:, :0], mask=torch.zeros(1, 0, dtype=torch.bool))
+    empty_out = adapter(hidden, empty)
     assert torch.allclose(empty_out, hidden)
 
 

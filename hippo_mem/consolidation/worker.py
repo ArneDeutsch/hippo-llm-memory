@@ -22,7 +22,7 @@ from typing import Any, Callable, Optional, TypeVar
 import torch
 
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
-from hippo_mem.common import TraceSpec
+from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.episodic.adapter import EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
@@ -257,7 +257,8 @@ class ConsolidationWorker(threading.Thread):
             return
         h = torch.randn(1, 1, self.epi_adapter.hidden_size)
         m = torch.randn(1, 1, self.epi_adapter.hidden_size)
-        out = self.epi_adapter(h, m)
+        mem = MemoryTokens(tokens=m, mask=torch.ones(1, 1, dtype=torch.bool))
+        out = self.epi_adapter(h, mem)
         loss = out.sum()
         loss = loss + sum(
             p.sum() for name, p in self.epi_adapter.named_parameters() if "lora_" in name
@@ -298,7 +299,8 @@ class ConsolidationWorker(threading.Thread):
             return
         h = torch.randn(1, 1, self.spat_adapter.hidden_size)
         p = torch.randn(1, 1, self.spat_adapter.hidden_size)
-        out = self.spat_adapter(h, p)
+        mem = MemoryTokens(tokens=p, mask=torch.ones(1, 1, dtype=torch.bool))
+        out = self.spat_adapter(h, mem)
         loss = out.sum()
         loss = loss + sum(
             p.sum() for name, p in self.spat_adapter.named_parameters() if "lora_" in name

@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 import torch
 
+from hippo_mem.common import MemoryTokens
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
 from hippo_mem.episodic.replay import ReplayScheduler
@@ -18,8 +19,8 @@ def _eval_em(adapter: EpisodicAdapter, dim: int) -> int:
     """Return exact match for a fixed one-token recall task."""
     with torch.no_grad():
         hidden = torch.zeros(1, 1, dim)
-        memory = torch.ones(1, 1, dim)
-        out = adapter(hidden, memory)
+        mem = MemoryTokens(tokens=torch.ones(1, 1, dim), mask=torch.ones(1, 1, dtype=torch.bool))
+        out = adapter(hidden, mem)
     score = float(out.sum().item())
     return int(score > 0.5)
 
@@ -37,8 +38,11 @@ class _DatasetWorker(ConsolidationWorker):
         if self.epi_adapter is None:
             return
         hidden = torch.zeros(1, 1, self.dim)
-        memory = torch.ones(1, 1, self.dim)
-        out = self.epi_adapter(hidden, memory)
+        mem = MemoryTokens(
+            tokens=torch.ones(1, 1, self.dim),
+            mask=torch.ones(1, 1, dtype=torch.bool),
+        )
+        out = self.epi_adapter(hidden, mem)
         loss = (1.0 - out).pow(2).mean()
         self._optim_step(loss)
 
