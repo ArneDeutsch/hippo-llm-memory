@@ -39,6 +39,8 @@ import networkx as nx
 import numpy as np
 
 from hippo_mem.common import GateDecision
+from hippo_mem.common.history import HistoryEntry, RollbackMixin
+from hippo_mem.common.lifecycle import StoreLifecycleMixin
 from hippo_mem.common.telemetry import gate_registry
 
 from .backend import PersistenceStrategy, SQLiteBackend
@@ -48,7 +50,7 @@ from .schema import SchemaIndex
 from .tuples import TupleType
 
 
-class KnowledgeGraph:
+class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
     """Persistent semantic graph with provenance tracking.
 
     Summary
@@ -92,15 +94,13 @@ class KnowledgeGraph:
         self.schema_index = SchemaIndex(threshold=thresh)
         self._gnn_updates = bool(self.config.get("gnn_updates", True))
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
-        self._bg_thread: Optional[threading.Thread] = None
-        self._stop_event: Optional[threading.Event] = None
-        self._history: list[dict[str, Any]] = []
-        self._max_undo = int(self.config.get("max_undo", 5))
         self._maintenance_log: list[dict[str, Any]] = []
         self._log_file = self.config.get("maintenance_log")
         self.gate = gate
         self._episodic_queue: list[TupleType] = []
         self._maintenance = maintenance or MaintenanceManager(self)
+        StoreLifecycleMixin.__init__(self)
+        RollbackMixin.__init__(self, int(self.config.get("max_undo", 5)))
 
     # ------------------------------------------------------------------
     # Graph manipulation
@@ -407,11 +407,6 @@ class KnowledgeGraph:
             with open(self._log_file, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(event) + "\n")
 
-    def _push_history(self, entry: dict[str, Any]) -> None:
-        self._history.append(entry)
-        if len(self._history) > self._max_undo:
-            self._history.pop(0)
-
     # ------------------------------------------------------------------
     # Maintenance and logging
 
@@ -507,117 +502,22 @@ class KnowledgeGraph:
 
         ops = [{"type": "edge", "data": e} for e in edges]
         ops.extend({"type": "node", "data": n} for n in removed_nodes)
-        self._push_history({"op": "prune", "ops": ops})
+        self._push_history("prune", ops)
         # why: track deletions for provenance and undo
         self._log_event("prune", {"min_conf": min_conf, "max_age": max_age})
 
-    def log_status(self) -> dict:
-        """Return counters for writes, recalls, and maintenance events.
+    def _maintenance_tick(self, event: threading.Event) -> None:
+        self._maintenance.tick(event)
 
-        Summary
-        -------
-        Exposes lightweight statistics for monitoring.
-
-        Returns
-        -------
-        dict
-            Mapping of event name to count.
-
-        Examples
-        --------
-        >>> kg = KnowledgeGraph()
-        >>> kg.log_status()['writes']
-        0
-
-        See Also
-        --------
-        _log_event
-        """
-
-        return dict(self._log)
-
-    def start_background_tasks(self, interval: float = 300.0) -> None:
-        """Start periodic maintenance in a background thread.
-
-        Summary
-        -------
-        Runs :meth:`prune` at fixed intervals.
-
-        Parameters
-        ----------
-        interval : float, optional
-            Sleep seconds between maintenance cycles.
-        Side Effects
-        ------------
-        Spawns a daemon thread.
-
-        Examples
-        --------
-        >>> kg = KnowledgeGraph()
-        >>> kg.start_background_tasks(interval=0.1)
-        >>> kg._bg_thread is not None
-        True
-        """
-        self._maintenance.start(interval)
-
-    # kept: exercised by tests/test_relational.py
-    def stop_background_tasks(self) -> None:
-        """Stop background maintenance thread if running.
-
-        Summary
-        -------
-        Idempotently signals the maintenance loop to exit and waits
-        briefly for the thread to terminate.
-        """
-
-        self._maintenance.stop()
-
-    # kept: exercised by tests/test_relational.py
-    def rollback(self, n: int = 1) -> None:
-        """Rollback the last ``n`` prune operations.
-
-        Summary
-        -------
-        Restores previously pruned edges/nodes using logged history.
-
-        Parameters
-        ----------
-        n : int, optional
-            Number of prune operations to undo.
-        Side Effects
-        ------------
-        Mutates graph and SQLite store.
-
-        Complexity
-        ----------
-        ``O(#ops)`` in the restored batch.
-
-        Examples
-        --------
-        >>> kg = KnowledgeGraph()
-        >>> kg.upsert('A', 'rel', 'B', 'ctx', conf=0.4)
-        >>> kg.prune(min_conf=0.5)
-        >>> kg.rollback()
-        >>> kg.graph.has_edge('A', 'B')
-        True
-
-        See Also
-        --------
-        prune
-        """
-
-        for _ in range(n):
-            if not self._history:
-                break
-            entry = self._history.pop()
-            if entry.get("op") != "prune":
-                continue
-            for op in entry.get("ops", []):
-                if op["type"] == "node":
-                    self._restore_node(op["data"])
-                elif op["type"] == "edge":
-                    self._restore_edge(op["data"])
-            self._log_event("rollback", {"op": "prune"})
+    def _apply_rollback(self, entry: HistoryEntry) -> None:
+        if entry.op != "prune":
+            return
+        for op in entry.data:
+            if op["type"] == "node":
+                self._restore_node(op["data"])
+            elif op["type"] == "edge":
+                self._restore_edge(op["data"])
+        self._log_event("rollback", {"op": "prune"})
 
     def _restore_node(self, data: tuple[str, Optional[np.ndarray]]) -> None:
         """Recreate a single node from ``rollback`` data."""

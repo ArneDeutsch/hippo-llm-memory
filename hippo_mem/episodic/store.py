@@ -44,11 +44,13 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
 from hippo_mem._faiss import faiss
+from hippo_mem.common.history import HistoryEntry, RollbackMixin
+from hippo_mem.common.lifecycle import StoreLifecycleMixin
 
 from .event_logger import EventLogger
 from .gating import DGKey, densify, k_wta
@@ -60,7 +62,7 @@ from .types import Trace, TraceValue
 logger = logging.getLogger(__name__)
 
 
-class EpisodicStore:
+class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
     """Simple vector store for episodic memories.
 
     Summary
@@ -127,10 +129,8 @@ class EpisodicStore:
         self._maintenance_log = self.logger._events
         self.pruner = pruner or Pruner()
         self.decayer = decayer or Decayer()
-        self._bg_thread: Optional[threading.Thread] = None
-        self._stop_event: Optional[threading.Event] = None
-        self._history: List[dict[str, Any]] = []
-        self._max_undo = int(self.config.get("max_undo", 5))
+        StoreLifecycleMixin.__init__(self)
+        RollbackMixin.__init__(self, int(self.config.get("max_undo", 5)))
 
     # ------------------------------------------------------------------
     def keys(self) -> np.ndarray:
@@ -160,12 +160,6 @@ class EpisodicStore:
         return self.persistence.keys(self.dim)
 
     # ------------------------------------------------------------------
-    # Maintenance helpers
-    def _push_history(self, op: str, rows: list[Any]) -> None:
-        self._history.append({"op": op, "rows": rows})
-        if len(self._history) > self._max_undo:
-            self._history.pop(0)
-
     # ------------------------------------------------------------------
     # Encoding
     def sparse_encode(self, query: np.ndarray, k: int) -> DGKey:
@@ -608,117 +602,31 @@ class EpisodicStore:
 
         return self.logger.status()
 
-    def start_background_tasks(self, interval: float = 60.0) -> None:
-        """Start a thread that periodically decays and prunes memories.
+    # ------------------------------------------------------------------
+    # Lifecycle hooks
+    def _maintenance_tick(self, _event: threading.Event) -> None:
+        rate = float(self.config.get("decay_rate", 0.0))
+        if rate > 0:
+            self.decay(rate)
+        prune_cfg = self.config.get("prune", {})
+        self.prune(
+            float(prune_cfg.get("min_salience", 0.1)),
+            prune_cfg.get("max_age"),
+        )
+        self.logger.increment("maintenance")
 
-        Summary
-        -------
-        Spawns a daemon thread for maintenance.
-
-        Parameters
-        ----------
-        interval : float, optional
-            Sleep time between maintenance runs in seconds.
-        Side Effects
-        ------------
-        Launches a background thread.
-        Examples
-        --------
-        >>> store = EpisodicStore(1)
-        >>> store.start_background_tasks(0.01)
-
-        See Also
-        --------
-        decay, prune
-        """
-
-        if self._bg_thread is not None:
-            return
-
-        stop_event = threading.Event()
-
-        def loop() -> None:
-            # why: maintain store health without blocking caller
-            while not stop_event.wait(interval):
-                rate = float(self.config.get("decay_rate", 0.0))
-                if rate > 0:
-                    self.decay(rate)
-                prune_cfg = self.config.get("prune", {})
-                self.prune(
-                    float(prune_cfg.get("min_salience", 0.1)),
-                    prune_cfg.get("max_age"),
-                )
-                self.logger.increment("maintenance")
-
-        t = threading.Thread(target=loop, daemon=True)
-        t.start()
-        self._stop_event = stop_event
-        self._bg_thread = t
-
-    # kept: exercised by tests/test_episodic.py
-    def stop_background_tasks(self) -> None:
-        """Stop background maintenance thread if running.
-
-        Summary
-        -------
-        Idempotently signals the maintenance loop to exit and waits
-        briefly for the thread to terminate.
-        """
-
-        if self._bg_thread is None:
-            return
-        if self._stop_event is not None:
-            self._stop_event.set()
-        self._bg_thread.join(timeout=1.0)
-        self._bg_thread = None
-        self._stop_event = None
-
-    # kept: exercised by tests/test_episodic.py
-    def rollback(self, n: int = 1) -> None:
-        """Rollback the last ``n`` maintenance operations.
-
-        Summary
-        -------
-        Restores deleted/decayed entries from history.
-
-        Parameters
-        ----------
-        n : int, optional
-            Number of steps to undo.
-        Side Effects
-        ------------
-        Modifies store contents and logs event.
-
-        Complexity
-        ----------
-        ``O(n d)`` for key restoration.
-
-        Examples
-        --------
-        >>> store = EpisodicStore(1)
-        >>> store.rollback(0)
-
-        See Also
-        --------
-        decay, prune
-        """
-
-        for _ in range(n):
-            if not self._history:
-                break
-            entry = self._history.pop()
-            op = entry["op"]
-            rows = entry["rows"]
-            if op == "decay":
-                self.persistence.restore_salience(rows)
-            elif op == "prune":
-                self.persistence.restore_rows(rows)
-                for idx, value_json, key_blob, ts, salience in rows:
-                    # why: reconstruct dense vector before re-adding to FAISS
-                    key_vec = np.frombuffer(key_blob, dtype="float32").reshape(1, -1)
-                    faiss.normalize_L2(key_vec)
-                    self.index.add(key_vec, int(idx))
-            self.logger.log_event("rollback", {"op": op})
+    def _apply_rollback(self, entry: HistoryEntry) -> None:
+        op = entry.op
+        rows = entry.data
+        if op == "decay":
+            self.persistence.restore_salience(rows)
+        elif op == "prune":
+            self.persistence.restore_rows(rows)
+            for idx, _value_json, key_blob, _ts, _salience in rows:
+                key_vec = np.frombuffer(key_blob, dtype="float32").reshape(1, -1)
+                faiss.normalize_L2(key_vec)
+                self.index.add(key_vec, int(idx))
+        self.logger.log_event("rollback", {"op": op})
 
 
 __all__ = ["TraceValue", "Trace", "EpisodicStore"]

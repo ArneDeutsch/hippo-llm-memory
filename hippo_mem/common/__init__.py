@@ -1,6 +1,9 @@
 """Common data structures and specifications for memory modules."""
 
 from .gates import GateDecision, GateResult, MemoryGate
+from .history import HistoryEntry, RollbackMixin
+from .lifecycle import StoreLifecycleMixin
+from .maintenance import BackgroundTaskManager
 from .provenance import ProvenanceLogger, log_gate
 from .specs import MemoryTokens, TraceSpec
 
@@ -12,4 +15,8 @@ __all__ = [
     "GateDecision",
     "GateResult",
     "MemoryGate",
+    "BackgroundTaskManager",
+    "StoreLifecycleMixin",
+    "HistoryEntry",
+    "RollbackMixin",
 ]

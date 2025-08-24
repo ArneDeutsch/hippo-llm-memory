@@ -39,6 +39,9 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
+from hippo_mem.common.history import HistoryEntry, RollbackMixin
+from hippo_mem.common.lifecycle import StoreLifecycleMixin
+
 
 @dataclass
 class Edge:
@@ -155,7 +158,7 @@ class ContextEncoder:
         return self._cache[context]
 
 
-class PlaceGraph:
+class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
     """Graph of observed places with lightweight planning.
 
     Summary
@@ -204,12 +207,10 @@ class PlaceGraph:
         self._last_coord: Optional[Tuple[float, float]] = None
         self.config = config or {}
         self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
-        self._bg_thread: Optional[threading.Thread] = None
-        self._stop_event: Optional[threading.Event] = None
-        self._history: List[dict[str, Any]] = []
-        self._max_undo = int(self.config.get("max_undo", 5))
         self._maintenance_log: List[dict[str, Any]] = []
         self._log_file = self.config.get("maintenance_log")
+        StoreLifecycleMixin.__init__(self)
+        RollbackMixin.__init__(self, int(self.config.get("max_undo", 5)))
 
     # ------------------------------------------------------------------
     # Observation and graph construction
@@ -248,11 +249,6 @@ class PlaceGraph:
         if self._log_file:
             with open(self._log_file, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(event) + "\n")
-
-    def _push_history(self, op: str) -> None:
-        self._history.append({"op": op, "state": self._snapshot_state()})
-        if len(self._history) > self._max_undo:
-            self._history.pop(0)
 
     def observe(self, context: str) -> int:
         """Insert ``context`` into the graph.
@@ -530,7 +526,7 @@ class PlaceGraph:
         rollback
         """
 
-        self._push_history("decay")
+        self._push_history("decay", self._snapshot_state())
         factor = max(0.0, 1.0 - rate)
         # why: dampen coordinates to limit drift
         for place in self.encoder._cache.values():
@@ -601,7 +597,7 @@ class PlaceGraph:
         rollback
         """
 
-        self._push_history("prune")
+        self._push_history("prune", self._snapshot_state())
         threshold = self._step - max_age
         # why: drop stale nodes to bound map size
         self._prune_nodes(threshold)
@@ -613,117 +609,30 @@ class PlaceGraph:
 
         return dict(self._log)
 
-    def start_background_tasks(self, interval: float = 100.0) -> None:
-        """Launch periodic decay/prune thread.
+    def _maintenance_tick(self, _event: threading.Event) -> None:
+        rate = float(self.config.get("decay_rate", 0.0))
+        if rate > 0:
+            self.decay(rate)
+        cfg = self.config.get("prune", {})
+        age = cfg.get("max_age")
+        if age is not None:
+            self.prune(int(age))
+        self._log["maintenance"] += 1
 
-        Summary
-        -------
-        Offloads maintenance to a daemon thread.
-
-        Parameters
-        ----------
-        interval : float, optional
-            Sleep interval in seconds, by default ``100.0``.
-        Side Effects
-        ------------
-        Spawns a background thread.
-        Examples
-        --------
-        >>> g = PlaceGraph(); g.start_background_tasks()  # doctest: +ELLIPSIS
-
-        See Also
-        --------
-        decay
-        prune
-        """
-
-        if self._bg_thread is not None:
+    def _apply_rollback(self, entry: HistoryEntry) -> None:
+        state = entry.data
+        if state is None:
             return
-
-        stop_event = threading.Event()
-
-        def loop() -> None:
-            while not stop_event.wait(interval):
-                rate = float(self.config.get("decay_rate", 0.0))
-                if rate > 0:
-                    self.decay(rate)
-                cfg = self.config.get("prune", {})
-                age = cfg.get("max_age")
-                if age is not None:
-                    self.prune(int(age))
-                self._log["maintenance"] += 1
-
-        t = threading.Thread(target=loop, daemon=True)
-        t.start()
-        self._stop_event = stop_event
-        self._bg_thread = t
-
-    # kept: exercised by tests/test_spatial.py
-    def stop_background_tasks(self) -> None:
-        """Stop background maintenance thread if running.
-
-        Summary
-        -------
-        Idempotently signals the maintenance loop to exit and waits
-        briefly for the thread to terminate.
-        """
-
-        if self._bg_thread is None:
-            return
-        if self._stop_event is not None:
-            self._stop_event.set()
-        self._bg_thread.join(timeout=1.0)
-        self._bg_thread = None
-        self._stop_event = None
-
-    # kept: exercised by tests/test_spatial.py
-    def rollback(self, n: int = 1) -> None:
-        """Rollback the last ``n`` maintenance operations.
-
-        Summary
-        -------
-        Restore state snapshots captured before decay or prune.
-
-        Parameters
-        ----------
-        n : int, optional
-            Number of operations to undo, by default ``1``.
-        Side Effects
-        ------------
-        Alters internal structures and logs a rollback event.
-
-        Complexity
-        ----------
-        ``O(n)`` relative to number of stored snapshots.
-
-        Examples
-        --------
-        >>> g = PlaceGraph(); g.observe("a"); g.decay(0.1)
-        >>> g.rollback(1)
-
-        See Also
-        --------
-        decay
-        prune
-        """
-
-        for _ in range(n):
-            if not self._history:
-                break
-            entry = self._history.pop()
-            state = entry.get("state")
-            if state is None:
-                continue
-            self.encoder._cache = state["cache"]
-            self._context_to_id = state["c2id"]
-            self._id_to_context = state["id2c"]
-            self.graph = state["graph"]
-            self._next_id = state["next_id"]
-            self._last_obs = state["last_obs"]
-            self._step = state["step"]
-            self._position = state["position"]
-            self._last_coord = state["last_coord"]
-            self._log_event("rollback", {"op": entry.get("op")})
+        self.encoder._cache = state["cache"]
+        self._context_to_id = state["c2id"]
+        self._id_to_context = state["id2c"]
+        self.graph = state["graph"]
+        self._next_id = state["next_id"]
+        self._last_obs = state["last_obs"]
+        self._step = state["step"]
+        self._position = state["position"]
+        self._last_coord = state["last_coord"]
+        self._log_event("rollback", {"op": entry.op})
 
 
 __all__ = ["PlaceGraph", "ContextEncoder", "Edge", "Place"]
