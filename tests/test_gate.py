@@ -1,11 +1,11 @@
-"""Back-compat regression test when gates are disabled."""
+"""Tests for gate behavior."""
 
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
 
 
-def test_gate_backcompat_counts() -> None:
+def test_gate_counts() -> None:
     """Node and edge counts match pre-gate baseline when gates are off."""
     # Relational graph baseline
     kg = KnowledgeGraph(config={"schema_threshold": 0.0})
@@ -29,13 +29,12 @@ def test_gate_backcompat_counts() -> None:
     assert edge_count == 6
 
 
-def test_gate_decision_tuple_unpack() -> None:
-    """GateDecision supports tuple-unpacking for one release."""
-
+def test_gate_decision_attributes() -> None:
+    """Relational gate returns a GateDecision with accessible attributes."""
     gate = RelationalGate()
     kg = KnowledgeGraph(gate=gate)
     kg.schema_index.add_schema("likes", "likes")
     tup = ("A", "likes", "B", "ctx", None, 0.9, 0)
-    action, reason = gate.decide(tup, kg)
-    assert action == "insert"
-    assert isinstance(reason, str)
+    decision = gate.decide(tup, kg)
+    assert decision.action == "insert"
+    assert isinstance(decision.reason, str)

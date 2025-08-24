@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
-from typing import Iterator, Protocol
+from typing import Protocol
 
 
 @dataclass
@@ -24,17 +23,6 @@ class GateDecision:
     action: str
     reason: str
     score: float | None = None
-
-    def __iter__(self) -> Iterator[str]:
-        """Allow tuple-unpacking for backward compatibility."""
-
-        warnings.warn(
-            "GateDecision tuple-unpacking is deprecated; use attributes instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        yield self.action
-        yield self.reason
 
 
 GateResult = GateDecision
