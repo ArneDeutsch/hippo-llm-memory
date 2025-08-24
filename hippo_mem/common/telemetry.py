@@ -75,6 +75,12 @@ class _Registry:
 registry = _Registry()
 
 
+def record_stats(kind: str, **metrics: int | float) -> None:
+    """Update retrieval metrics for ``kind`` in the registry."""
+
+    registry.get(kind).update(**metrics)
+
+
 @dataclass
 class GateStats:
     """Counters for gate decisions."""
@@ -129,6 +135,7 @@ gate_registry = GateRegistry(["relational", "spatial"])
 __all__ = [
     "RetrievalStats",
     "registry",
+    "record_stats",
     "GateStats",
     "GateRegistry",
     "gate_registry",

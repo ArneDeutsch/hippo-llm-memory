@@ -17,7 +17,7 @@ import torch
 from torch import nn
 
 from . import MemoryTokens
-from .telemetry import registry
+from .telemetry import record_stats
 
 
 def pad_and_project(
@@ -94,7 +94,8 @@ def retrieve_and_pack_base(
     )
     meta = build_meta_fn(start=start, hits=hits_total, k=k, bsz=bsz)
 
-    registry.get(telemetry_key).update(
+    record_stats(
+        telemetry_key,
         k=k * bsz,
         hits=hits_total,
         tokens=tokens.shape[1],
