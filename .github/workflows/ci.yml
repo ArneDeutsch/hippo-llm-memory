@@ -44,3 +44,7 @@ jobs:
         run: bash scripts/smoke_8a.sh
       - name: Smoke 8
         run: bash scripts/smoke_8.sh
+      - name: Smoke eval_model baseline
+        run: >-
+          python scripts/eval_model.py preset=baselines/core +run_matrix=true
+          +suites=[episodic] +n_values=[2] +seeds=[1337] dry_run=true date=20250101

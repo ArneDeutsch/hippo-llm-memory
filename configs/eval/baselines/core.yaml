@@ -1,2 +1,2 @@
 # Core baseline without memory.
-model: mock
+model: models/tiny-gpt2
