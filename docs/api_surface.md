@@ -49,3 +49,4 @@
 - `hippo_mem.common.attn_adapter.LoraLinear`
 - `hippo_mem.consolidation.worker.ConsolidationWorker`
 - `_hippo_retrieval_cb(hidden: Tensor) -> MemoryTokens`
+- `hippo_mem.common.gates.GateDecision`

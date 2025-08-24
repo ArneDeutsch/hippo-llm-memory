@@ -215,9 +215,11 @@ class KG:
     def route_to_episodic(self, tup: Tuple) -> None:
         """Append tuple to episodic writer queue for later replay/consolidation."""
 
+from hippo_mem.common import GateDecision
+
 class RelationalGate:
-    def decide(self, tup: Tuple, kg: "KG") -> tuple[str, str]:
-        """Return (action, reason) where action ∈ {"insert","aggregate","route_to_episodic"}."""
+    def decide(self, tup: Tuple, kg: "KG") -> GateDecision:
+        """Return a :class:`GateDecision` where action ∈ {"insert","aggregate","route_to_episodic"}."""
 ```
 
 ## 8.3 Spatial
@@ -235,8 +237,8 @@ class MacroLib:
     def suggest(self, context: dict, topk: int = 3) -> list[dict]: ...
 
 class SpatialGate:
-    def decide(self, prev_ctx: dict, ctx: dict, graph: "PlaceGraph") -> tuple[str, str]:
-        """Return (action, reason) where action ∈ {"insert","aggregate","block_new_edge"}."""
+    def decide(self, prev_ctx: dict, ctx: dict, graph: "PlaceGraph") -> GateDecision:
+        """Return a :class:`GateDecision` where action ∈ {"insert","aggregate","block_new_edge"}."""
 ```
 
 # 9) Training & consolidation
