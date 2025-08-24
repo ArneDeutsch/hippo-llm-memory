@@ -27,6 +27,6 @@ def test_relational_gate_semantics() -> None:
     assert edge["conf"] == pytest.approx(2.0)
 
     low_conf = ("C", "likes", "D", "ctx", None, 0.1, 1)
-    action, _ = kg_gate.ingest(low_conf)
-    assert action == "route_to_episodic"
+    decision = kg_gate.ingest(low_conf)
+    assert decision.action == "route_to_episodic"
     assert len(kg_gate._episodic_queue) == 1

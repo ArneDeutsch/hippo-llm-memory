@@ -19,10 +19,10 @@ def test_spatial_gate_reduces_repeats() -> None:
     g1 = PlaceGraph()
     prev = None
     for ctx in trace:
-        action, _ = gate.decide(prev, ctx, g1)
-        if action == "insert":
+        decision = gate.decide(prev, ctx, g1)
+        if decision.action == "insert":
             g1.observe(ctx)
-        elif action == "aggregate" and prev is not None:
+        elif decision.action == "aggregate" and prev is not None:
             g1.aggregate_duplicate(prev, ctx)
         prev = ctx
     writes_gate = g1._log["writes"]
@@ -49,8 +49,8 @@ def test_spatial_gate_penalizes_high_degree() -> None:
     g.connect("A", "X")
     g.connect("A", "Y")
     g.connect("A", "Z")
-    action, _ = gate.decide(None, "A", g)
-    assert action == "route_to_episodic"
+    decision = gate.decide(None, "A", g)
+    assert decision.action == "route_to_episodic"
 
 
 def test_spatial_gate_threshold_and_counters() -> None:
@@ -60,8 +60,8 @@ def test_spatial_gate_threshold_and_counters() -> None:
     graph.connect("hub", "b")
     graph.connect("hub", "c")
     gate = SpatialGate(block_threshold=0.5, max_degree=2)
-    action, _ = SpatialGate(block_threshold=0.5, max_degree=2).decide(None, "hub", graph)
-    assert action == "route_to_episodic"
+    decision = SpatialGate(block_threshold=0.5, max_degree=2).decide(None, "hub", graph)
+    assert decision.action == "route_to_episodic"
     records = [{"trajectory": ["hub"]}, {"trajectory": ["new"]}]
     ingest_spatial_traces(records, graph, gate)
     stats = gate_registry.get("spatial")

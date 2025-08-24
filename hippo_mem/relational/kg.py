@@ -38,6 +38,7 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 import networkx as nx
 import numpy as np
 
+from hippo_mem.common import GateDecision
 from hippo_mem.common.telemetry import gate_registry
 
 from .backend import PersistenceStrategy, SQLiteBackend
@@ -196,8 +197,8 @@ class KnowledgeGraph:
             self._gnn_update([head, tail])
         self._log["writes"] += 1
 
-    def ingest(self, tup: TupleType) -> tuple[str, str]:
-        """Route ``tup`` and return the chosen action and reason.
+    def ingest(self, tup: TupleType) -> GateDecision:
+        """Route ``tup`` and return the chosen :class:`GateDecision`.
 
         Summary
         -------
@@ -211,7 +212,7 @@ class KnowledgeGraph:
 
         Returns
         -------
-        tuple[str, str]
+        GateDecision
             Action and gate reason.
         Side Effects
         ------------
@@ -225,7 +226,7 @@ class KnowledgeGraph:
         --------
         >>> kg = KnowledgeGraph()
         >>> kg.schema_index.add_schema('likes', 'likes')
-        >>> kg.ingest(('A', 'likes', 'B', 'ctx', None, 0.9, 0))[0]
+        >>> kg.ingest(('A', 'likes', 'B', 'ctx', None, 0.9, 0)).action
         'insert'
 
         See Also
@@ -234,21 +235,20 @@ class KnowledgeGraph:
         """
         stats = gate_registry.get("relational")
         stats.attempts += 1
-        action = "insert"
-        reason = "no_gate"
+        decision = GateDecision("insert", "no_gate")
         if self.gate:
-            action, reason = self.gate.decide(tup, self)
+            decision = self.gate.decide(tup, self)
 
-        if action == "insert":
+        if decision.action == "insert":
             stats.inserted += 1
             self.schema_index.fast_track(tup, self)
-        elif action == "aggregate":
+        elif decision.action == "aggregate":
             stats.aggregated += 1
             self.aggregate_duplicate(tup)
-        elif action == "route_to_episodic":
+        elif decision.action == "route_to_episodic":
             stats.routed_to_episodic += 1
             self.route_to_episodic(tup)
-        return action, reason
+        return decision
 
     def aggregate_duplicate(self, tup: TupleType) -> None:
         """Increase edge evidence for an existing tuple."""

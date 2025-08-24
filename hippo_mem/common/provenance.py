@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict
 
+from .gates import GateDecision
+
 
 class ProvenanceLogger:
     """Append gate decisions to a line-delimited JSON file."""
@@ -17,7 +19,15 @@ class ProvenanceLogger:
         self.path = Path(outdir) / "provenance.ndjson"
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    def log(self, *, mem: str, action: str, reason: str, payload: Dict[str, Any]) -> None:
+    def log(
+        self,
+        *,
+        mem: str,
+        action: str,
+        reason: str,
+        payload: Dict[str, Any] | None = None,
+        score: float | None = None,
+    ) -> None:
         """Append a record with ``payload`` and metadata."""
 
         rec = {
@@ -25,7 +35,27 @@ class ProvenanceLogger:
             "memory": mem,
             "action": action,
             "reason": reason,
-            **payload,
+            "score": score,
+            "payload": payload or {},
         }
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(rec) + "\n")
+
+
+def log_gate(
+    logger: "ProvenanceLogger | None",
+    mem: str,
+    decision: GateDecision,
+    payload: Dict[str, Any],
+) -> None:
+    """Log ``decision`` to ``logger`` if provided."""
+
+    if logger is None:
+        return
+    logger.log(
+        mem=mem,
+        action=decision.action,
+        reason=decision.reason,
+        score=decision.score,
+        payload=payload,
+    )

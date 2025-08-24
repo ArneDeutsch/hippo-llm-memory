@@ -525,9 +525,9 @@ def _enqueue_allowed_writes(context: TrainerContext, probs, queries, keys) -> No
 
     decisions, _ = gate_batch(context.gate, probs, queries, keys)
     context.gate_attempts += len(decisions)
-    context.gate_accepts += sum(d.allow for d in decisions)
+    context.gate_accepts += sum(d.action == "insert" for d in decisions)
     for dec, q in zip(decisions, queries):
-        if dec.allow:
+        if dec.action == "insert":
             context.writer.enqueue(q, TraceValue(provenance="train"))
     context.store_size = keys.shape[0]
     context.writer_queue_depth = context.writer.queue.qsize()
@@ -620,14 +620,14 @@ def process_coordinate(
         graph.observe(ctx)
     else:
         stats.attempts += 1
-        action, _reason = gate.decide(prev, ctx, graph)
-        if action == "insert":
+        decision = gate.decide(prev, ctx, graph)
+        if decision.action == "insert":
             stats.inserted += 1
             graph.observe(ctx)
-        elif action == "aggregate" and prev is not None:
+        elif decision.action == "aggregate" and prev is not None:
             stats.aggregated += 1
             graph.aggregate_duplicate(prev, ctx)
-        elif action == "route_to_episodic":
+        elif decision.action == "route_to_episodic":
             stats.blocked_new_edges += 1
     return ctx
 
@@ -1110,9 +1110,9 @@ class TrainingSession:
         keys = np.zeros((0, hidden), dtype=np.float32)
         decisions, _ = gate_batch(self.context.gate, probs, queries, keys)
         self.context.gate_attempts += len(decisions)
-        self.context.gate_accepts += sum(d.allow for d in decisions)
+        self.context.gate_accepts += sum(d.action == "insert" for d in decisions)
         for dec, q in zip(decisions, queries):
-            if dec.allow and self.context.writer is not None:
+            if dec.action == "insert" and self.context.writer is not None:
                 self.context.writer.enqueue(q, TraceValue(provenance="dry_run"))
 
     def _ingest_training_artifacts(self) -> None:
