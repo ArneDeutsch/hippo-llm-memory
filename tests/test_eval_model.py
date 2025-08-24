@@ -6,7 +6,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.slow
 def test_eval_model_dry_run(tmp_path: Path) -> None:
     """Run the evaluation harness and verify outputs and metadata."""
 

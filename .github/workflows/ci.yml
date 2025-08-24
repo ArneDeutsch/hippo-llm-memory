@@ -34,6 +34,9 @@ jobs:
       - name: Tests
         run: make test
 
+      - name: Slow tests
+        run: make slow-test
+
       - name: Smoke 7b
         run: bash scripts/smoke_7b.sh
 

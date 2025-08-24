@@ -13,7 +13,14 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "scripts"))
 from scripts import eval_bench
 
 
-@pytest.mark.parametrize("suite", ["episodic", "semantic", "spatial"])
+@pytest.mark.parametrize(
+    "suite",
+    [
+        "episodic",
+        pytest.param("semantic", marks=pytest.mark.slow),
+        pytest.param("spatial", marks=pytest.mark.slow),
+    ],
+)
 def test_eval_bench(tmp_path: Path, suite: str) -> None:
     """The evaluation harness writes expected metrics for each suite."""
 
@@ -48,6 +55,7 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     assert meta.get("n") == 3
 
 
+@pytest.mark.slow
 def test_ablate_disables_hopfield(tmp_path: Path) -> None:
     """Ablation flags propagate to module configs and metadata."""
 

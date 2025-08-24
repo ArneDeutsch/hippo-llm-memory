@@ -3,7 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.slow
 def test_eval_model_run_matrix(tmp_path: Path) -> None:
     """Matrix run writes metrics for each combination."""
 

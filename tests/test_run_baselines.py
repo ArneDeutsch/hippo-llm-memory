@@ -5,15 +5,21 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
-def test_run_baselines_accepts_date() -> None:
+CASES = [
+    (["baselines/core"], [1337]),
+    pytest.param(["baselines/core", "baselines/rag"], [1337, 2025], marks=pytest.mark.slow),
+]
+
+
+@pytest.mark.parametrize("presets,seeds", CASES)
+def test_run_baselines_accepts_date(presets: list[str], seeds: list[int]) -> None:
     """``run_baselines.py`` emits metrics/meta for all combinations."""
 
     repo_root = Path(__file__).resolve().parents[1]
     script = repo_root / "scripts" / "run_baselines.py"
     date = "20250101"
-    presets = ["baselines/core", "baselines/rag"]
-    seeds = [1337, 2025]
     cmd = [
         sys.executable,
         str(script),
