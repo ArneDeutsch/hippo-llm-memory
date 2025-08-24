@@ -414,6 +414,7 @@ def test_train_respects_mqa_gqa_flag(monkeypatch) -> None:
     assert captured == {"episodic": 1, "spatial": 1}
 
 
+@pytest.mark.slow
 def test_cli_respects_ablation_flags(monkeypatch) -> None:
     """Running the script with ablation flags disables components."""
 

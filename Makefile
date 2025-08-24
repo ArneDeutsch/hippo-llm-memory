@@ -1,4 +1,4 @@
-.PHONY: format lint test type fix install-dev datasets
+.PHONY: format lint test slow-test type fix install-dev datasets
 
 install-dev:
 	python -m pip install -U pip
@@ -13,7 +13,11 @@ lint:
 	black --check .
 
 test:
-	pytest -q
+	pytest -q -m "not slow"
+
+slow-test:
+	pytest -q -m slow
+
 
 type:
 	@echo "typing checks are optional for now"

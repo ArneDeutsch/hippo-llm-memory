@@ -5,15 +5,24 @@ from pathlib import Path
 
 import pytest
 
-# Exercise every baseline preset across all suites in dry‑run mode.
-# Each run evaluates a single example to keep runtime reasonable while
-# confirming that the harness loads the corresponding configuration.
-PRESETS = ["baselines/core", "baselines/rag", "baselines/longctx"]
-SUITES = ["episodic", "semantic", "spatial"]
+# Exercise baseline presets across suites in dry‑run mode. Only one
+# representative combination runs in the default suite; the rest are
+# marked as slow to keep CI fast while preserving coverage when the
+# ``slow`` suite is executed.
+CASES = [
+    ("baselines/core", "episodic"),
+    pytest.param("baselines/rag", "episodic", marks=pytest.mark.slow),
+    pytest.param("baselines/longctx", "episodic", marks=pytest.mark.slow),
+    pytest.param("baselines/core", "semantic", marks=pytest.mark.slow),
+    pytest.param("baselines/core", "spatial", marks=pytest.mark.slow),
+    pytest.param("baselines/rag", "semantic", marks=pytest.mark.slow),
+    pytest.param("baselines/rag", "spatial", marks=pytest.mark.slow),
+    pytest.param("baselines/longctx", "semantic", marks=pytest.mark.slow),
+    pytest.param("baselines/longctx", "spatial", marks=pytest.mark.slow),
+]
 
 
-@pytest.mark.parametrize("preset", PRESETS)
-@pytest.mark.parametrize("suite", SUITES)
+@pytest.mark.parametrize("preset,suite", CASES)
 def test_dry_run_smoke(tmp_path: Path, preset: str, suite: str) -> None:
     """Dry run the harness for a single preset/suite combination."""
 

@@ -33,6 +33,7 @@ testpaths = [
   "tests"
 ]
 python_files = ["test_*.py"]
+markers = ["slow: mark tests as slow and excluded from default runs"]
 
 [tool.setuptools]
 package-dir = {"" = "."}
