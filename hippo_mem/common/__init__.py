@@ -1,5 +1,6 @@
 """Common data structures and specifications for memory modules."""
 
+from .attn_adapter import CrossAttnAdapter, CrossAttnConfig, LoraLinear
 from .gates import GateDecision, GateResult, MemoryGate
 from .history import HistoryEntry, RollbackMixin
 from .lifecycle import StoreLifecycleMixin
@@ -19,4 +20,7 @@ __all__ = [
     "StoreLifecycleMixin",
     "HistoryEntry",
     "RollbackMixin",
+    "CrossAttnAdapter",
+    "CrossAttnConfig",
+    "LoraLinear",
 ]
