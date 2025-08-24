@@ -506,7 +506,7 @@ def main(cfg: DictConfig) -> None:
         if outdir_cfg is not None:
             root_outdir = Path(to_absolute_path(str(outdir_cfg)))
         else:
-            date = cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d")
+            date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
             preset_path = Path(str(cfg.preset))
             if preset_path.parts and preset_path.parts[0] == "baselines":
                 root_outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name
@@ -517,7 +517,7 @@ def main(cfg: DictConfig) -> None:
         if outdir_cfg is not None:
             outdir = Path(to_absolute_path(str(outdir_cfg)))
         else:
-            date = cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d")
+            date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
             preset_path = Path(str(cfg.preset))
             if preset_path.parts and preset_path.parts[0] == "baselines":
                 outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
