@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import time
-
-import torch
+import numpy as np
 from torch import nn
 
 from hippo_mem.common import MemoryTokens, TraceSpec
-from hippo_mem.common.telemetry import registry
+from hippo_mem.common.retrieval import build_meta, retrieve_and_pack_base
 
 from .place_graph import PlaceGraph
 
@@ -52,44 +50,45 @@ def spatial_retrieve_and_pack(
     device = next(proj.parameters()).device
     dtype = next(proj.parameters()).dtype
 
-    start_t = time.perf_counter()
     nodes, edges = graph.local(center, radius)
     nodes = nodes[:max_nodes]
     edges = edges[:max_edges]
 
-    tokens = torch.zeros(1, total, proj.out_features, device=device, dtype=dtype)
-    mask = torch.zeros(1, total, dtype=torch.bool, device=device)
+    def iter_retrieve():
+        feats = []
+        for n in nodes:
+            ctx = graph._id_to_context[n]
+            p = graph.encoder.encode(ctx)
+            feats.append(
+                np.array([p.coord[0], p.coord[1], float(p.last_seen), 1.0], dtype=np.float32)
+            )
+        for u, v in edges:
+            e = graph.graph[u][v]
+            feats.append(np.array([e.cost, e.success, float(e.last_seen), 0.0], dtype=np.float32))
+        arr = np.stack(feats) if feats else np.zeros((0, 4), dtype=np.float32)
+        yield arr, len(feats)
 
-    idx = 0
-    for n in nodes:
-        ctx = graph._id_to_context[n]
-        p = graph.encoder.encode(ctx)
-        feat = torch.tensor(
-            [p.coord[0], p.coord[1], float(p.last_seen), 1.0], device=device, dtype=dtype
+    def meta_fn(start: float, hits: int, k: int, bsz: int) -> dict[str, float]:
+        return build_meta(
+            "spatial",
+            start,
+            hits,
+            k,
+            bsz=bsz,
+            radius=radius,
+            num_nodes=len(nodes),
+            num_edges=len(edges),
         )
-        tokens[0, idx] = proj(feat.unsqueeze(0)).squeeze(0)
-        mask[0, idx] = True
-        idx += 1
-    for u, v in edges:
-        e = graph.graph[u][v]
-        feat = torch.tensor(
-            [e.cost, e.success, float(e.last_seen), 0.0], device=device, dtype=dtype
-        )
-        tokens[0, idx] = proj(feat.unsqueeze(0)).squeeze(0)
-        mask[0, idx] = True
-        idx += 1
 
-    latency_ms = (time.perf_counter() - start_t) * 1000
-    meta = {
-        "radius": radius,
-        "num_nodes": len(nodes),
-        "num_edges": len(edges),
-        "latency_ms": latency_ms,
-    }
-    k_req = total
-    hits_actual = len(nodes) + len(edges)
-    registry.get("spatial").update(k=k_req, hits=hits_actual, tokens=total, latency_ms=latency_ms)
-    return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
+    return retrieve_and_pack_base(
+        iter_retrieve,
+        k=total,
+        device=device,
+        dtype=dtype,
+        proj=proj,
+        build_meta_fn=meta_fn,
+        telemetry_key="spatial",
+    )
 
 
 __all__ = ["spatial_retrieve_and_pack"]

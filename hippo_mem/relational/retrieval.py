@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 
 import networkx as nx
@@ -11,7 +10,7 @@ import torch
 from torch import nn
 
 from hippo_mem.common import MemoryTokens, TraceSpec
-from hippo_mem.common.telemetry import registry
+from hippo_mem.common.retrieval import build_meta, retrieve_and_pack_base
 
 from .kg import KnowledgeGraph
 
@@ -60,53 +59,6 @@ def _retrieve_subgraph(
     return sub, nodes
 
 
-def _pack_vectors(
-    nodes: list[str],
-    sub: nx.MultiDiGraph,
-    kg: KnowledgeGraph,
-    pooler: NodePooler,
-    base_dim: int,
-    limit: int,
-    device: torch.device,
-    dtype: torch.dtype,
-    proj: nn.Module,
-) -> tuple[torch.Tensor, torch.BoolTensor, int]:
-    """Pool, pad and project node vectors."""
-
-    hits = len(nodes)
-    vecs = [pooler(kg, sub, n, base_dim) for n in nodes]
-    if hits < limit:
-        vecs.extend([np.zeros(base_dim, dtype=np.float32) for _ in range(limit - hits)])
-    arr = np.stack(vecs) if vecs else np.zeros((limit, base_dim), dtype=np.float32)
-    vec_t = torch.from_numpy(arr).to(device=device, dtype=dtype)
-    vec_t = proj(vec_t)
-    mask_row = torch.zeros(limit, dtype=torch.bool, device=device)
-    mask_row[:hits] = True
-    return vec_t, mask_row, hits
-
-
-def build_meta(
-    limit: int,
-    hops: int,
-    seeds: int,
-    hit_total: int,
-    bsz: int,
-    start: float,
-) -> dict[str, float]:
-    """Assemble metadata for ``MemoryTokens``."""
-
-    latency_ms = (time.perf_counter() - start) * 1000
-    hit_rate = hit_total / (bsz * limit) if limit > 0 and bsz > 0 else 0.0
-    return {
-        "source": "relational",
-        "k": limit,
-        "hops": hops,
-        "seeds": seeds,
-        "latency_ms": latency_ms,
-        "hit_rate": hit_rate,
-    }
-
-
 def relational_retrieve_and_pack(
     batch_hidden: torch.FloatTensor,
     spec: TraceSpec,
@@ -143,33 +95,29 @@ def relational_retrieve_and_pack(
     bsz = batch_hidden.size(0)
     device = batch_hidden.device
     dtype = batch_hidden.dtype
-    d_model = getattr(proj, "out_features", batch_hidden.size(-1))
     pooler = pooler or NodePooler()
-    start = time.perf_counter()
-
     base_dim = kg.dim or batch_hidden.size(-1)
-    packed: list[torch.Tensor] = []
-    mask = torch.zeros(bsz, limit, dtype=torch.bool, device=device)
-    hit_total = 0
 
-    for i in range(bsz):
-        query = batch_hidden[i, -1].detach().cpu().numpy()
-        sub, nodes = _retrieve_subgraph(kg, query, seeds, hops, limit)
-        vec_t, mask_row, hits = _pack_vectors(
-            nodes, sub, kg, pooler, base_dim, limit, device, dtype, proj
-        )
-        packed.append(vec_t)
-        mask[i] = mask_row
-        hit_total += hits
+    def iter_retrieve():
+        for i in range(bsz):
+            query = batch_hidden[i, -1].detach().cpu().numpy()
+            sub, nodes = _retrieve_subgraph(kg, query, seeds, hops, limit)
+            vecs = [pooler(kg, sub, n, base_dim) for n in nodes]
+            arr = np.stack(vecs) if vecs else np.zeros((0, base_dim), dtype=np.float32)
+            yield arr, len(nodes)
 
-    tokens = torch.stack(packed) if packed else torch.zeros(0, limit, d_model, device=device)
-    meta = build_meta(limit, hops, seeds, hit_total, bsz, start)
+    def meta_fn(start: float, hits: int, k: int, bsz: int) -> dict[str, float]:
+        return build_meta("relational", start, hits, k, bsz=bsz, hops=hops, seeds=seeds)
 
-    k_req = limit * bsz
-    latency_ms = meta.get("latency_ms", 0.0)
-    registry.get("relational").update(k=k_req, hits=hit_total, tokens=limit, latency_ms=latency_ms)
-
-    return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
+    return retrieve_and_pack_base(
+        iter_retrieve,
+        k=limit,
+        device=device,
+        dtype=dtype,
+        proj=proj,
+        build_meta_fn=meta_fn,
+        telemetry_key="relational",
+    )
 
 
 __all__ = ["NodePooler", "relational_retrieve_and_pack"]
