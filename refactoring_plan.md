@@ -2,7 +2,7 @@
 
 _Date:_ 2025-08-24
 
-**Goal.** Fuse the strongest ideas from three prior refactoring proposals into a single, **consistent, low‑risk plan** that aligns with `research/experiment-synthesis.md` (ground truth) and `DESIGN.md`, and matches the current code layout under `hippo_mem/*`. The plan emphasizes **deduplication**, **API coherence**, **observability**, and **safe, incremental rollout** with strict test parity and performance guardrails.
+A **consistent, low‑risk plan** that aligns with `research/experiment-synthesis.md` (ground truth) and `DESIGN.md`, and matches the current code layout under `hippo_mem/*`. The plan emphasizes **deduplication**, **API coherence**, **observability**, and **safe, incremental rollout** with strict test parity and performance guardrails.
 
 **Scope.** Applies to the three memory systems (HEI‑NW / episodic, SGC‑RSS / relational, SMPD / spatial), their gates, retrieval/packing, adapters, maintenance threads, provenance & telemetry, and rollback semantics.
 
