@@ -5,8 +5,6 @@ Supports optional Hopfield completion of cues before FAISS lookup.
 
 from __future__ import annotations
 
-import logging
-import time
 from typing import List
 
 import numpy as np
@@ -14,11 +12,9 @@ import torch
 from torch import nn
 
 from hippo_mem.common import MemoryTokens, TraceSpec
-from hippo_mem.common.telemetry import registry
+from hippo_mem.common.retrieval import build_meta, retrieve_and_pack_base
 
 from .store import EpisodicStore
-
-logger = logging.getLogger(__name__)
 
 
 def _extract_vectors(store: EpisodicStore, traces: List, dim: int) -> np.ndarray:
@@ -84,25 +80,6 @@ def _apply_hopfield(
     return vecs, hits
 
 
-def _pad_and_pack(
-    vecs: np.ndarray,
-    hits: int,
-    k: int,
-    store_dim: int,
-    proj: nn.Module,
-    device: torch.device,
-    dtype: torch.dtype,
-) -> tuple[torch.Tensor, torch.BoolTensor]:
-    """Pad ``vecs`` to ``k`` and project to model dimension."""
-
-    if hits < k:
-        pad = np.zeros((k - hits, vecs.shape[1] if hits else store_dim), dtype="float32")
-        vecs = np.vstack([vecs, pad]) if hits else pad
-    mask = torch.zeros(k, dtype=torch.bool, device=device)
-    mask[:hits] = True
-    vec_t = torch.from_numpy(vecs).to(device=device, dtype=dtype)
-    vec_t = proj(vec_t)
-    return vec_t, mask
 
 
 def episodic_retrieve_and_pack(
@@ -114,38 +91,27 @@ def episodic_retrieve_and_pack(
     """Recall episodic traces and package them as ``MemoryTokens``."""
 
     k = spec.k or 0
-    bsz = batch_hidden.size(0)
     device = batch_hidden.device
     dtype = batch_hidden.dtype
-    d_model = getattr(proj, "out_features", batch_hidden.size(-1))
-    start = time.perf_counter()
+    bsz = batch_hidden.size(0)
 
-    if k == 0:
-        tokens = torch.zeros(bsz, 0, d_model, device=device)
-        mask = torch.zeros(bsz, 0, dtype=torch.bool, device=device)
-    else:
-        packed = []
-        mask_rows = []
+    def iterator():
         for i in range(bsz):
             cue = batch_hidden[i, -1].detach().cpu().numpy()
             cue, vecs, hits = _recall_traces(store, cue, k)
             vecs, hits = _apply_hopfield(store, vecs, cue, hits, k, spec)
-            vec_t, mask_row = _pad_and_pack(vecs, hits, k, store.dim, proj, device, dtype)
-            packed.append(vec_t)
-            mask_rows.append(mask_row)
-        tokens = torch.stack(packed)
-        mask = torch.stack(mask_rows)
+            yield vecs, hits, store.dim
 
-    latency_ms = (time.perf_counter() - start) * 1000
-    hit_rate = mask.sum().item() / (bsz * k) if k > 0 else 0.0
-    meta = {"k": k, "latency_ms": latency_ms, "hit_rate": hit_rate}
+    def meta_fn(**kw):
+        return build_meta("episodic", **kw)
 
-    k_req = int(k) * bsz
-    hits_actual = int(mask.sum().item())
-    tokens_returned = int(tokens.shape[1])
-    registry.get("episodic").update(
-        k=k_req, hits=hits_actual, tokens=tokens_returned, latency_ms=latency_ms
+    tokens = retrieve_and_pack_base(
+        iterator,
+        k=k,
+        device=device,
+        dtype=dtype,
+        proj=proj,
+        build_meta_fn=meta_fn,
+        telemetry_key="episodic",
     )
-
-    logger.info("episodic_retrieval_k=%d episodic_latency_ms=%.2f", k, latency_ms)
-    return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
+    return tokens
