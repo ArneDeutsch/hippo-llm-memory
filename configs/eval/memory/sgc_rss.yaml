@@ -1,2 +1,9 @@
-# Semantic/relational memory preset using SGC-RSS store.
-memory: sgc_rss
+# Semantic/relational memory preset using SGC-RSS store with replay and gating.
+memory:
+  relational:
+    gate:
+      enabled: true
+replay:
+  cycles: 1
+retrieval:
+  enabled: true

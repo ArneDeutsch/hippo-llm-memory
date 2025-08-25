@@ -1,2 +1,10 @@
 # Retrieval-augmented baseline preset.
-retrieval: true
+# Enables retrieval but no replay or long-context concatenation.
+memory: null
+replay:
+  cycles: 0
+retrieval:
+  enabled: true
+long_context:
+  enabled: false
+gating_enabled: false  # no gating in baselines

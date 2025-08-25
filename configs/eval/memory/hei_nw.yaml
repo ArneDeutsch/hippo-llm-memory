@@ -1,2 +1,9 @@
-# Episodic memory preset using HEI-NW store.
-memory: hei_nw
+# Episodic memory preset using HEI-NW store with replay and gating.
+memory:
+  episodic:
+    gate:
+      enabled: true
+replay:
+  cycles: 1
+retrieval:
+  enabled: true
