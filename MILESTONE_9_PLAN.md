@@ -4,6 +4,8 @@ _Generated: 2025-08-25 08:34_
 ## 0) Goal (what we ship)
 Establish reliable **baselines** and **memory-enabled** evaluations for the three hippocampus-inspired algorithms, producing final, reproducible datasets & metrics. The plan fixes known issues (prompt echo, incorrect timing) and ensures **chat-template correctness**, **expanded run matrix**, and **clear pre/post** deltas for memory runs.
 
+Cross-session persistence and delayed recall experiments are scheduled for **Milestone 9.5**.
+
 **Algorithms under test (ground truth from `research/experiment-synthesis.md`):**
 - **HEI‑NW** (Hippocampal Episodic Indexing — Neural Weighting)
 - **SGC‑RSS** (Sparse Gated Consolidation — Rehearsal/Replay)
@@ -19,13 +21,13 @@ We declare Milestone 9 *done* only if **all** the following are true:
   - `metrics.json.compute` includes `input_tokens` and `generated_tokens`.
 
 - **Baselines complete**
-  - Presets: `baselines/core`, `baselines/rag`, `baselines/longctx` executed across tasks `episodic`, `semantic`, `spatial` with `n ∈ {50,200,1000}` and seeds `{1337,2025,4242}`.
+  - Presets: `baselines/core`, `baselines/rag`, `baselines/longctx`, `baselines/span_short` executed across tasks `episodic`, `semantic`, `spatial` with `n ∈ {50,200,1000}` and seeds `{1337,2025,4242}`.
   - Episodic@50 dev-smoke run (seed=1337) achieves **EM > 0** or **F1 ≥ 0.20** (sanity threshold).
 
 - **Memory runs complete**
   - Presets: `memory/hei_nw`, `memory/sgc_rss`, `memory/smpd` executed with `replay.cycles ∈ {1,3}`, `gating_enabled=true`, retrieval on.
   - `metrics.json` contains **pre** and **post** metrics and a populated **Δ** (delta) section.
-  - Retrieval (`requests`, `hits`, `r@k`) and gating stats are **non‑zero** for memory runs.
+  - Retrieval (`requests`, `hits`, `r@k`) and gating stats are **non‑zero** for memory runs and refusal rate ≤0.5.
 
 - **Docs & reproducibility**
   - `README.md`, `MILESTONE_9_PLAN.md`, `PROJECT_PLAN.md`, `EVAL_PLAN.md` updated to reflect model selection, presets, run matrix, and acceptance checks.

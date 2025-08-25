@@ -197,7 +197,7 @@
 
 # Milestone 9 – Memory‑augmented training, evaluation & ablations
 
-**Objective**: train models with each memory module, evaluate them, perform ablations and compare against baselines.
+**Objective**: train models with each memory module, evaluate them, perform ablations and compare against baselines. Cross-session persistence is addressed separately in Milestone 9.5.
 
 **Work packages**
 
@@ -215,6 +215,24 @@
 - [ ] Improvements over real baselines are demonstrated on n=200 (episodic EM +10 points suggested; others suite‑specific).
 - [ ] Ablation effects are clear (directional, non‑noisy).
 - [ ] `reports/<date>/index.md` is present with tables/plots and links to per‑suite summaries.
+
+# Milestone 9.5 – Cross‑session consolidation
+
+**Objective**: demonstrate that memory stores persist across runs and improve delayed recall via replay.
+
+**Work packages**
+
+1. [ ] Persistence API for episodic, relational and spatial stores with CLI flags `--store_dir`, `--session_id` and `--persist`.
+2. [ ] Two‑phase harness supporting `mode=teach|replay|test` and an explicit replay scheduler with policies (`uniform`, `priority`, `spaced`).
+3. [ ] Gate telemetry (write attempts, accept/reject, retrieval requests) and refusal‑rate guard with post‑run assertions.
+4. [ ] Minimal relational and spatial suites (`n=50`) and baseline presets (`longctx`, `rag`, `span_short`) running through the protocol.
+5. [ ] Documentation updates describing persistence, replay policy knobs and acceptance checks.
+
+**Gate**
+
+- [ ] Teach→test cycle yields delayed EM improvement ≥ +0.20 on `episodic@50` vs `baselines/core`.
+- [ ] Saved stores reload correctly; `metrics.json` records replay counts and gate stats; `retrieval.requests > 0` for memory runs.
+- [ ] CI smoke fails if refusal rate > 0.5 or required telemetry fields are zero.
 
 # Milestone 10 – Research paper & public release
 
