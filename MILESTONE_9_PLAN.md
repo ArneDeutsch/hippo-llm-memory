@@ -17,6 +17,8 @@ commit the resulting artifacts.
 * **Sizes:** 50 / 200 / 1000 (ablations use **200**)
 * **Seeds:** 1337 / 2025 / 4242
 * **Baselines:** `baselines/core` (no memory)
+* **Baselines:** `baselines/core` (no memory)
+* `baselines/rag` and `baselines/longctx` **deferred** – current datasets fit in prompt so retrieval/long context not required yet
 * **Memories:** `memory/hei_nw`, `memory/sgc_rss`, `memory/smpd`, `memory/all`
 * **Ablations:** per‑memory toggles of key knobs
 
@@ -51,19 +53,19 @@ After Codex's patches are merged, the human executes the prepared scripts and co
    - `make install-dev`
    - optional: `make datasets DATE=<DATE>` (ensures `data/MANIFEST.json` is updated)
 2. **Real baselines**
-   - `python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE>`
+   - `python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/baselines/core/<MODEL_SLUG>`
    - commit: `runs/<DATE>/baselines/core/**/metrics.{json,csv}`, matching `meta.json`, and
      updated `reports/<DATE>/*`
 3. **Memory variants**
-   - `python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE>`
-   - `python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE>`
-   - `python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE>`
-   - `python scripts/eval_model.py preset=memory/all suite=all n=200 seeds='[1337,2025,4242]' date=<DATE>`
+   - `python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/hei_nw/<MODEL_SLUG>`
+   - `python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/sgc_rss/<MODEL_SLUG>`
+   - `python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/smpd/<MODEL_SLUG>`
+   - `python scripts/eval_model.py preset=memory/all suite=all n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/all/<MODEL_SLUG>`
    - commit run directories and reports as above
 4. **Ablations (n=200, 3 seeds)**
-   - `python scripts/eval_model.py preset=memory/hei_nw n=200 seeds='[1337,2025,4242]' date=<DATE> gate.enabled=false hopfield.enabled=false`
-   - `python scripts/eval_model.py preset=memory/sgc_rss n=200 seeds='[1337,2025,4242]' date=<DATE> schema.fast_track=false`
-   - `python scripts/eval_model.py preset=memory/smpd n=200 seeds='[1337,2025,4242]' date=<DATE> macro.distill=false`
+   - `python scripts/eval_model.py preset=memory/hei_nw n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/hei_nw/<MODEL_SLUG> gate.enabled=false hopfield.enabled=false`
+   - `python scripts/eval_model.py preset=memory/sgc_rss n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/sgc_rss/<MODEL_SLUG> schema.fast_track=false`
+   - `python scripts/eval_model.py preset=memory/smpd n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/smpd/<MODEL_SLUG> macro.distill=false`
    - commit ablation run directories and resulting summaries
 5. **Reporting**
    - `python scripts/report.py --date <DATE>`
@@ -82,22 +84,34 @@ make install-dev
 make datasets DATE=<DATE>
 
 # core baseline
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE>
+python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/baselines/core/meta-llama_Llama-3.2-3B
+python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/baselines/core/microsoft_Phi-3-mini-4k-instruct
+python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/baselines/core/Qwen_Qwen2-1.5B
 
 # memory variants
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE>
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE>
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE>
-python scripts/eval_model.py preset=memory/all suite=all n=200 seeds='[1337,2025,4242]' date=<DATE>
+python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/hei_nw/meta-llama_Llama-3.2-3B
+python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/memory/hei_nw/microsoft_Phi-3-mini-4k-instruct
+python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/memory/hei_nw/Qwen_Qwen2-1.5B
+python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/sgc_rss/meta-llama_Llama-3.2-3B
+python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/memory/sgc_rss/microsoft_Phi-3-mini-4k-instruct
+python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/memory/sgc_rss/Qwen_Qwen2-1.5B
+python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/smpd/meta-llama_Llama-3.2-3B
+python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/memory/smpd/microsoft_Phi-3-mini-4k-instruct
+python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/memory/smpd/Qwen_Qwen2-1.5B
+python scripts/eval_model.py preset=memory/all suite=all n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/all/meta-llama_Llama-3.2-3B
 
 # ablations (n=200)
-python scripts/eval_model.py preset=memory/hei_nw n=200 seeds='[1337,2025,4242]' date=<DATE> gate.enabled=false hopfield.enabled=false
-python scripts/eval_model.py preset=memory/sgc_rss n=200 seeds='[1337,2025,4242]' date=<DATE> schema.fast_track=false
-python scripts/eval_model.py preset=memory/smpd n=200 seeds='[1337,2025,4242]' date=<DATE> macro.distill=false
+python scripts/eval_model.py preset=memory/hei_nw n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/hei_nw/meta-llama_Llama-3.2-3B gate.enabled=false hopfield.enabled=false
+python scripts/eval_model.py preset=memory/sgc_rss n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/sgc_rss/meta-llama_Llama-3.2-3B schema.fast_track=false
+python scripts/eval_model.py preset=memory/smpd n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/smpd/meta-llama_Llama-3.2-3B macro.distill=false
 
 # aggregate reports
 python scripts/report.py --date <DATE>
 ```
+
+**Model selection:** With Option B, set the base model via `model=...`. Presets no longer fix the model.
+
+**Output layout:** Use `outdir=.../<model_slug>` to run several models on the same `<DATE>` without overwriting.
 
 ## 5) Artifacts & layout
 
