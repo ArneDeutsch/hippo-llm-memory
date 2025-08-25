@@ -1,1 +1,0 @@
-{"suite": "episodic", "n": 200, "seed": 1337, "preset": "memory/hei_nw", "metrics": {"episodic": {"pre_em": 1.0, "pre_f1": 1.0}}}
