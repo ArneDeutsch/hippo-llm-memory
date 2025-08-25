@@ -44,6 +44,7 @@ from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
+from src.eval.encode import encode_prompt
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -194,9 +195,15 @@ def _evaluate(
                     if adapter is not None:
                         adapter(hidden, memory=mem)
 
-        enc = tokenizer(item.prompt, return_tensors="pt").to(model.device)
-        out = model.generate(**enc, max_new_tokens=max_new_tokens)
-        pred = tokenizer.decode(out[0], skip_special_tokens=True)
+        inputs = encode_prompt(tokenizer, item.prompt, model.device)
+        out = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            pad_token_id=tokenizer.pad_token_id,
+            eos_token_id=tokenizer.eos_token_id,
+        )
+        gen = out[:, inputs["input_ids"].shape[-1] :]
+        pred = tokenizer.decode(gen[0], skip_special_tokens=True).strip()
         is_correct = int(pred.strip() == item.answer)
         correct += is_correct
         f1_total += _f1(pred, item.answer)
