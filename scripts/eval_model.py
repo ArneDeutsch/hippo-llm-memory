@@ -65,6 +65,10 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
     cfg.seed = cfg.get("seed", 0)
     cfg.model = cfg.get("model", "models/tiny-gpt2")
     cfg.max_new_tokens = cfg.get("max_new_tokens")
+    cfg.mode = cfg.get("mode", "test")
+    cfg.store_dir = cfg.get("store_dir")
+    cfg.session_id = cfg.get("session_id")
+    cfg.persist = cfg.get("persist", False)
     model_cfg = load_model_config(str(cfg.model))
     if cfg.get("use_chat_template") is None:
         cfg.use_chat_template = model_cfg.get("use_chat_template", False)
@@ -514,6 +518,10 @@ def _write_outputs(
         "seed": cfg.seed,
         "replay_cycles": cfg.get("replay", {}).get("cycles", 0),
         "gating_enabled": gating_enabled,
+        "mode": cfg.get("mode"),
+        "store_dir": cfg.get("store_dir"),
+        "session_id": cfg.get("session_id"),
+        "persist": cfg.get("persist"),
     }
     config_meta: Dict[str, Dict[str, object]] = {}
     if epi_gate is not None:

@@ -19,6 +19,10 @@ pad_token_id: null
 eos_token_id: null
 force_chat: null
 force_no_chat: null
+mode: test
+store_dir: null
+session_id: null
+persist: false
 
 # Report macro averaged scores in addition to micro scores.
 macro_scoring: true
