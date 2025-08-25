@@ -258,7 +258,8 @@ def _eval_tasks(
 
     rows: List[Dict[str, object]] = []
     correct = 0
-    total_tokens = 0
+    input_tokens = 0
+    gen_tokens = 0
     t0 = time.perf_counter()
     latencies: List[float] = []
     for off, item in enumerate(tasks):
@@ -291,7 +292,8 @@ def _eval_tasks(
 
         is_correct = int(pred.strip().lower() == answer.strip().lower())
         correct += is_correct
-        total_tokens += len(prompt.split()) + len(answer.split())
+        input_tokens += len(prompt.split())
+        gen_tokens += len(answer.split())
         item_t1 = time.perf_counter()
         latency_ms = (item_t1 - item_t0) * 1000.0
         latencies.append(latency_ms)
@@ -315,7 +317,7 @@ def _eval_tasks(
         latencies = [fallback] * len(rows)
     em = correct / len(tasks) if tasks else 0.0
     avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
-    return rows, em, total_tokens, t1 - t0, avg_latency
+    return rows, em, input_tokens, gen_tokens, t1 - t0, avg_latency
 
 
 class _BatchMix(SimpleNamespace):
@@ -371,11 +373,13 @@ def run_suite(
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
-    rows, em, total_tokens, elapsed, lat_mean = _eval_tasks(
+    rows, em, in_tokens, gen_tokens, elapsed, lat_mean = _eval_tasks(
         tasks, modules, flag="pre_replay", start_idx=0
     )
     total_time = elapsed
     lat_sum = lat_mean * len(tasks)
+    total_in_tokens = in_tokens
+    total_gen_tokens = gen_tokens
 
     post_cycles = int(cfg.get("post_replay_cycles", 0))
     post_metrics: Dict[str, Dict[str, object]] = {}
@@ -383,20 +387,29 @@ def run_suite(
         start = len(tasks)
         for cycle in range(1, post_cycles + 1):
             _run_replay_once(modules)
-            cycle_rows, cycle_em, cycle_tokens, cycle_time, cycle_lat = _eval_tasks(
-                tasks, modules, flag=f"post_replay_{cycle}", start_idx=start
-            )
+            (
+                cycle_rows,
+                cycle_em,
+                cycle_in_tokens,
+                cycle_gen_tokens,
+                cycle_time,
+                cycle_lat,
+            ) = _eval_tasks(tasks, modules, flag=f"post_replay_{cycle}", start_idx=start)
             rows.extend(cycle_rows)
+            post_tokens = cycle_in_tokens + cycle_gen_tokens
             post_metrics[str(cycle)] = {
                 cfg.suite: {"em": cycle_em},
                 "compute": {
-                    "tokens": cycle_tokens,
-                    "time_ms_per_100": 100000 * cycle_time / max(1, len(tasks)),
+                    "input_tokens": cycle_in_tokens,
+                    "generated_tokens": cycle_gen_tokens,
+                    "total_tokens": post_tokens,
+                    "time_ms_per_100": 100 * cycle_time * 1000 / max(1, post_tokens),
                     "rss_mb": _rss_mb(),
                     "latency_ms_mean": cycle_lat,
                 },
             }
-            total_tokens += cycle_tokens
+            total_in_tokens += cycle_in_tokens
+            total_gen_tokens += cycle_gen_tokens
             total_time += cycle_time
             lat_sum += cycle_lat * len(tasks)
             start += len(tasks)
@@ -404,6 +417,7 @@ def run_suite(
     mem_usage = _memory_usage(modules)
     total_items = len(rows)
     avg_latency = lat_sum / max(1, total_items)
+    total_tokens = total_in_tokens + total_gen_tokens
     metrics = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -412,8 +426,10 @@ def run_suite(
         "metrics": {
             cfg.suite: {"em": em},
             "compute": {
-                "tokens": total_tokens,
-                "time_ms_per_100": 100000 * total_time / max(1, total_items),
+                "input_tokens": total_in_tokens,
+                "generated_tokens": total_gen_tokens,
+                "total_tokens": total_tokens,
+                "time_ms_per_100": 100 * total_time * 1000 / max(1, total_tokens),
                 "rss_mb": _rss_mb(),
                 "latency_ms_mean": avg_latency,
             },

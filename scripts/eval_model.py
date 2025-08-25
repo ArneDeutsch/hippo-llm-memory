@@ -144,14 +144,15 @@ def _evaluate(
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, float]:
     """Generate predictions and compute metrics for ``tasks``.
 
-    Returns the per-item rows, metric averages, total token count and elapsed
-    seconds.
+    Returns the per-item rows, metric averages, input and generated token
+    counts, and elapsed seconds.
     """
 
     rows: List[Dict[str, object]] = []
     correct = 0
     f1_total = 0.0
-    total_tokens = 0
+    input_tokens = 0
+    gen_tokens = 0
     latencies: List[float] = []
     task_list = list(tasks)
     total = len(task_list)
@@ -207,7 +208,8 @@ def _evaluate(
         is_correct = int(pred.strip() == item.answer)
         correct += is_correct
         f1_total += _f1(pred, item.answer)
-        total_tokens += len(item.prompt.split()) + len(item.answer.split())
+        input_tokens += inputs["input_ids"].shape[-1]
+        gen_tokens += gen.shape[-1]
         item_t1 = time.perf_counter()
         latency_ms = (item_t1 - item_t0) * 1000.0
         latencies.append(latency_ms)
@@ -232,7 +234,7 @@ def _evaluate(
         latencies = [fallback] * len(rows)
     elapsed = t1 - t0
     metrics = {"em": correct / n if n else 0.0, "f1": f1_total / n if n else 0.0}
-    return rows, metrics, total_tokens, elapsed
+    return rows, metrics, input_tokens, gen_tokens, elapsed
 
 
 def _run_replay(modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]) -> None:
@@ -281,7 +283,7 @@ def run_suite(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    rows, metrics, total_tokens, elapsed = _evaluate(
+    rows, metrics, in_tokens, gen_tokens, elapsed = _evaluate(
         tasks, modules, tokenizer, model, int(base_cfg.max_new_tokens)
     )
     lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
@@ -289,6 +291,7 @@ def run_suite(
     for _ in range(int(cfg.replay_cycles)):
         _run_replay(modules, tasks)
 
+    total_tokens = in_tokens + gen_tokens
     metrics_dict = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -297,8 +300,10 @@ def run_suite(
         "metrics": {
             cfg.suite: metrics,
             "compute": {
-                "tokens": total_tokens,
-                "time_ms_per_100": 100000 * elapsed / max(1, len(rows)),
+                "input_tokens": in_tokens,
+                "generated_tokens": gen_tokens,
+                "total_tokens": total_tokens,
+                "time_ms_per_100": 100 * elapsed * 1000 / max(1, total_tokens),
                 "rss_mb": _rss_mb(),
                 "latency_ms_mean": lat_mean,
             },
@@ -404,6 +409,21 @@ def _write_outputs(
         for row in csv_rows:
             writer.writerow(row)
 
+    # Small audit sample
+    sample = []
+    for row in pre_rows[:10]:
+        sample.append(
+            {
+                "id": row["idx"],
+                "prompt": str(row["prompt"])[:2000],
+                "answer": str(row["answer"])[:2000],
+                "pred": str(row["pred"])[:2000],
+            }
+        )
+    with (outdir / "audit_sample.jsonl").open("w", encoding="utf-8") as f:
+        for rec in sample:
+            f.write(json.dumps(rec) + "\n")
+
     # Metadata JSON
     meta = {
         "suite": cfg.suite,
@@ -464,28 +484,33 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    pre_rows, pre_metrics, pre_tokens, pre_time = _evaluate(
+    pre_rows, pre_metrics, pre_in_tokens, pre_gen_tokens, pre_time = _evaluate(
         tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
     )
     latencies = [row["latency_ms"] for row in pre_rows]
     post_rows = post_metrics = None
     total_items = len(pre_rows)
-    total_tokens = pre_tokens
+    total_in_tokens = pre_in_tokens
+    total_gen_tokens = pre_gen_tokens
     total_time = pre_time
 
     for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
         _run_replay(modules, tasks)
-        post_rows, post_metrics, post_tokens, post_time = _evaluate(
+        post_rows, post_metrics, post_in_tokens, post_gen_tokens, post_time = _evaluate(
             tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
         )
         latencies.extend(row["latency_ms"] for row in post_rows)
         total_items += len(post_rows)
-        total_tokens += post_tokens
+        total_in_tokens += post_in_tokens
+        total_gen_tokens += post_gen_tokens
         total_time += post_time
 
+    total_tokens = total_in_tokens + total_gen_tokens
     compute = {
-        "tokens": total_tokens,
-        "time_ms_per_100": 100000 * total_time / max(1, total_items),
+        "input_tokens": total_in_tokens,
+        "generated_tokens": total_gen_tokens,
+        "total_tokens": total_tokens,
+        "time_ms_per_100": 100 * total_time * 1000 / max(1, total_tokens),
         "rss_mb": _rss_mb(),
         "latency_ms_mean": sum(latencies) / max(1, len(latencies)),
     }
