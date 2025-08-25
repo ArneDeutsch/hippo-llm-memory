@@ -216,23 +216,28 @@
 - [ ] Ablation effects are clear (directional, non‑noisy).
 - [ ] `reports/<date>/index.md` is present with tables/plots and links to per‑suite summaries.
 
-# Milestone 9.5 – Cross‑session consolidation
+### Milestone 9.5 — Cross‑Session Consolidation (Hippocampal → Cortical)
 
-**Objective**: demonstrate that memory stores persist across runs and improve delayed recall via replay.
+**Objective:** Demonstrate **systems consolidation** across sessions by training **LoRA/adapters** from replayed stores and validating improved recall **with memory OFF**.
 
-**Work packages**
+**Deliverables**
+1. [ ] Store `save/load` (JSONL/Parquet), CLI: `--mode {teach,replay,test}`, `--store_dir`, `--session_id`, `--persist`.
+2. [ ] `ReplayDataset` + prioritized sampler (salience/novelty/usage).
+3. [ ] `scripts/replay_consolidate.py` (PEFT/LoRA), `configs/consolidation/lora_small.yaml`.
+4. [ ] `scripts/test_consolidation.py` for pre/post with memory OFF.
+5. [ ] Baselines: `baselines/span_short.yaml`, `baselines/longctx.yaml`, `baselines/rag.yaml`.
+6. [ ] Telemetry & CI assertions: `retrieval.requests>0` for memory runs; post‑LoRA **EM uplift ≥ +0.20**.
 
-1. [ ] Persistence API for episodic, relational and spatial stores with CLI flags `--store_dir`, `--session_id` and `--persist`.
-2. [ ] Two‑phase harness supporting `mode=teach|replay|test` and an explicit replay scheduler with policies (`uniform`, `priority`, `spaced`).
-3. [ ] Gate telemetry (write attempts, accept/reject, retrieval requests) and refusal‑rate guard with post‑run assertions.
-4. [ ] Minimal relational and spatial suites (`n=50`) and baseline presets (`longctx`, `rag`, `span_short`) running through the protocol.
-5. [ ] Documentation updates describing persistence, replay policy knobs and acceptance checks.
+**Human tasks**
+- [ ] H2: Teach session to create stores.
+- [ ] H3: Pre‑consolidation baseline (memory OFF).
+- [ ] H4: LoRA consolidation via replay.
+- [ ] H5: Post‑consolidation test (memory OFF).
+- [ ] H6: Run ablations; verify attribution.
 
-**Gate**
-
-- [ ] Teach→test cycle yields delayed EM improvement ≥ +0.20 on `episodic@50` vs `baselines/core`.
-- [ ] Saved stores reload correctly; `metrics.json` records replay counts and gate stats; `retrieval.requests > 0` for memory runs.
-- [ ] CI smoke fails if refusal rate > 0.5 or required telemetry fields are zero.
+**Risks & mitigations**
+- Overfitting/forgetting → small LoRA ranks, low LR, mixed replay; sanity suite within −1%.
+- Data drift → schema versioning, config hashing in metrics.
 
 # Milestone 10 – Research paper & public release
 
