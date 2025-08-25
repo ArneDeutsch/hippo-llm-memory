@@ -430,7 +430,7 @@ def _load_preset(cfg: DictConfig) -> DictConfig:
     if preset_path.exists():
         preset_cfg = OmegaConf.load(preset_path)
         with open_dict(cfg):
-            cfg = OmegaConf.merge(cfg, preset_cfg)
+            cfg = OmegaConf.merge(preset_cfg, cfg)  # CLI overrides preset
     return cfg
 
 

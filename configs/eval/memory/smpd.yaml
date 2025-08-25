@@ -1,3 +1,2 @@
 # Spatial/procedural memory preset using SMPD store.
-model: models/tiny-gpt2
 memory: smpd
