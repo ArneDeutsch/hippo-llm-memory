@@ -48,7 +48,7 @@ def test_run_baselines_accepts_date(presets: list[str], seeds: list[int]) -> Non
             assert metrics["n"] == 50
             assert metrics["seed"] == seed
             compute = metrics["metrics"]["compute"]
-            assert isinstance(compute["tokens"], int)
+            assert isinstance(compute["total_tokens"], int)
 
             # meta.json required fields
             assert meta["suite"] == "episodic"

@@ -47,7 +47,9 @@ def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
     assert data["suite"] == "episodic"
     assert isinstance(data["metrics"]["episodic"]["em"], float)
     compute = data["metrics"]["compute"]
-    assert isinstance(compute["tokens"], int)
+    assert isinstance(compute["total_tokens"], int)
+    assert isinstance(compute["input_tokens"], int)
+    assert isinstance(compute["generated_tokens"], int)
     assert isinstance(compute["time_ms_per_100"], float)
     assert isinstance(compute["rss_mb"], float)
     assert compute["latency_ms_mean"] > 0
