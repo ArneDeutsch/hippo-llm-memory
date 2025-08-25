@@ -53,6 +53,13 @@ log = logging.getLogger(__name__)
 
 def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
     """Populate model-related fields on ``cfg`` if missing."""
+    # Allow ``task`` as a CLI alias for ``suite``.
+    task = cfg.get("task")
+    suite = cfg.get("suite")
+    if task and not suite:
+        cfg.suite = task
+    elif suite and not task:
+        cfg.task = suite
 
     cfg.n = cfg.get("n", 5)
     cfg.seed = cfg.get("seed", 0)

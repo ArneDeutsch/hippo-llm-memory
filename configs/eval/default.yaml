@@ -2,7 +2,9 @@
 tasks: []
 
 # Basic run parameters with reasonable defaults.
-suite: null
+# ``task`` is kept for CLI convenience and maps to ``suite`` internally.
+task: null
+suite: ${task}
 preset: baselines/core
 n: 5
 seed: 0
