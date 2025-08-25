@@ -45,6 +45,7 @@ from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from src.eval.encode import encode_prompt
+from src.eval.models import load_model_config
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -69,6 +70,10 @@ class EvalConfig:
     model: str = "models/tiny-gpt2"
     max_new_tokens: int = 32
     replay_cycles: int = 0
+    use_chat_template: bool = False
+    system_prompt: str | None = None
+    pad_token_id: int | None = None
+    eos_token_id: int | None = None
 
 
 def _dataset_path(suite: str, n: int, seed: int) -> Path:
@@ -141,6 +146,9 @@ def _evaluate(
     tokenizer,
     model,
     max_new_tokens: int,
+    *,
+    use_chat_template: bool,
+    system_prompt: str | None,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, float]:
     """Generate predictions and compute metrics for ``tasks``.
 
@@ -196,7 +204,13 @@ def _evaluate(
                     if adapter is not None:
                         adapter(hidden, memory=mem)
 
-        inputs = encode_prompt(tokenizer, item.prompt, model.device)
+        inputs = encode_prompt(
+            tokenizer,
+            item.prompt,
+            model.device,
+            use_chat_template=use_chat_template,
+            system_prompt=system_prompt or "You are a helpful assistant.",
+        )
         out = model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
@@ -263,6 +277,8 @@ def run_suite(
             "seed": cfg.seed,
             "model": cfg.model,
             "max_new_tokens": cfg.max_new_tokens,
+            "use_chat_template": cfg.use_chat_template,
+            "system_prompt": cfg.system_prompt,
         }
     )
     if cfg.preset:
@@ -275,16 +291,28 @@ def run_suite(
 
     model_path = to_absolute_path(str(base_cfg.model))
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    if tokenizer.pad_token is None:
+    if cfg.pad_token_id is not None:
+        tokenizer.pad_token_id = cfg.pad_token_id
+    elif tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    if cfg.eos_token_id is not None:
+        tokenizer.eos_token_id = cfg.eos_token_id
     model = AutoModelForCausalLM.from_pretrained(model_path)
     model.config.pad_token_id = tokenizer.pad_token_id
     model.generation_config.pad_token_id = tokenizer.pad_token_id
+    if cfg.eos_token_id is not None:
+        model.generation_config.eos_token_id = cfg.eos_token_id
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     rows, metrics, in_tokens, gen_tokens, elapsed = _evaluate(
-        tasks, modules, tokenizer, model, int(base_cfg.max_new_tokens)
+        tasks,
+        modules,
+        tokenizer,
+        model,
+        int(base_cfg.max_new_tokens),
+        use_chat_template=cfg.use_chat_template,
+        system_prompt=cfg.system_prompt,
     )
     lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
 
@@ -425,12 +453,21 @@ def _write_outputs(
             f.write(json.dumps(rec) + "\n")
 
     # Metadata JSON
+    model_meta = {
+        "id": cfg.get("model", "mock"),
+        "chat_template_used": bool(cfg.get("use_chat_template", False)),
+    }
+    if cfg.get("force_chat"):
+        model_meta["force_chat"] = True
+    if cfg.get("force_no_chat"):
+        model_meta["force_no_chat"] = True
+
     meta = {
         "suite": cfg.suite,
         "preset": cfg.preset,
         "n": cfg.n,
         "git_sha": _git_sha(),
-        "model": cfg.get("model", "mock"),
+        "model": model_meta,
         "config_hash": _config_hash(cfg),
         "ablate": flat_ablate,
         "seed": cfg.seed,
@@ -476,16 +513,28 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     abs_model_path = Path(to_absolute_path(model_id))
     model_path = abs_model_path if abs_model_path.exists() else model_id
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    if tokenizer.pad_token is None:
+    if cfg.pad_token_id is not None:
+        tokenizer.pad_token_id = cfg.pad_token_id
+    elif tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    if cfg.eos_token_id is not None:
+        tokenizer.eos_token_id = cfg.eos_token_id
     model = AutoModelForCausalLM.from_pretrained(model_path)
     model.config.pad_token_id = tokenizer.pad_token_id
     model.generation_config.pad_token_id = tokenizer.pad_token_id
+    if cfg.eos_token_id is not None:
+        model.generation_config.eos_token_id = cfg.eos_token_id
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     pre_rows, pre_metrics, pre_in_tokens, pre_gen_tokens, pre_time = _evaluate(
-        tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
+        tasks,
+        modules,
+        tokenizer,
+        model,
+        int(cfg.max_new_tokens),
+        use_chat_template=cfg.use_chat_template,
+        system_prompt=cfg.system_prompt,
     )
     latencies = [row["latency_ms"] for row in pre_rows]
     post_rows = post_metrics = None
@@ -497,7 +546,13 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
         _run_replay(modules, tasks)
         post_rows, post_metrics, post_in_tokens, post_gen_tokens, post_time = _evaluate(
-            tasks, modules, tokenizer, model, int(cfg.max_new_tokens)
+            tasks,
+            modules,
+            tokenizer,
+            model,
+            int(cfg.max_new_tokens),
+            use_chat_template=cfg.use_chat_template,
+            system_prompt=cfg.system_prompt,
         )
         latencies.extend(row["latency_ms"] for row in post_rows)
         total_items += len(post_rows)
@@ -546,7 +601,23 @@ def main(cfg: DictConfig) -> None:
     cfg.n = cfg.get("n", 5)
     cfg.seed = cfg.get("seed", 0)
     cfg.model = cfg.get("model", "models/tiny-gpt2")
-    cfg.max_new_tokens = cfg.get("max_new_tokens", 32)
+    cfg.max_new_tokens = cfg.get("max_new_tokens")
+    model_cfg = load_model_config(str(cfg.model))
+    cfg.use_chat_template = model_cfg.get("use_chat_template", False)
+    cfg.system_prompt = model_cfg.get("system_prompt")
+    cfg.pad_token_id = model_cfg.get("pad_token_id")
+    cfg.eos_token_id = model_cfg.get("eos_token_id")
+    if cfg.max_new_tokens is None:
+        cfg.max_new_tokens = model_cfg.get("max_new_tokens", 32)
+
+    force_chat = cfg.get("force_chat")
+    force_no_chat = cfg.get("force_no_chat")
+    if force_chat and force_no_chat:
+        raise ValueError("force_chat and force_no_chat are mutually exclusive")
+    if force_chat:
+        cfg.use_chat_template = True
+    elif force_no_chat:
+        cfg.use_chat_template = False
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
 

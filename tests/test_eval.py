@@ -56,7 +56,12 @@ def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
 
     assert meta_path.exists()
     meta = json.loads(meta_path.read_text())
-    assert isinstance(meta.get("model"), str)
+    model_meta = meta.get("model")
+    if isinstance(model_meta, dict):
+        assert isinstance(model_meta["id"], str)
+        assert isinstance(model_meta["chat_template_used"], bool)
+    else:
+        assert isinstance(model_meta, str)
     assert meta.get("seed") == 0
     assert meta.get("suite") == "episodic"
     assert meta.get("preset") == preset

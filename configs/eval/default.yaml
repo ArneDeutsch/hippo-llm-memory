@@ -10,7 +10,13 @@ date: null
 outdir: null
 dry_run: false
 model: models/tiny-gpt2
-max_new_tokens: 32
+max_new_tokens: null
+use_chat_template: null
+system_prompt: null
+pad_token_id: null
+eos_token_id: null
+force_chat: null
+force_no_chat: null
 
 # Report macro averaged scores in addition to micro scores.
 macro_scoring: true

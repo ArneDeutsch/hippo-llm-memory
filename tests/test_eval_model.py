@@ -38,6 +38,8 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     assert meta["replay_cycles"] == 1
     assert meta["ablate"]["memory.episodic.hopfield"] is False
     assert len(meta["config_hash"]) == 64
+    assert isinstance(meta["model"], dict)
+    assert isinstance(meta["model"]["chat_template_used"], bool)
 
     metrics = json.loads((outdir / "metrics.json").read_text())
     compute = metrics["metrics"]["compute"]
