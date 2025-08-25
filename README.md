@@ -70,19 +70,19 @@ hippo-llm-memory/
    python scripts/eval_model.py --help
    ```
 
-4. Choose a small base model (e.g., `llama32-3b`, `phi3-mini`, or `qwen2-1_5b`).
+4. Choose a small base model and pass it via `model=<HF repo>` (e.g., `meta-llama/Llama-3.2-3B-Instruct`, `microsoft/Phi-3.5-mini-instruct`, or `Qwen/Qwen2.5-1.5B-Instruct`).
 
 5. Dry‑run the trainer (no GPU training in CI):
 
    ```bash
-   python scripts/train_lora.py model=llama32-3b train/qlora train.dry_run=true
+   python scripts/train_lora.py model=meta-llama/Llama-3.2-3B-Instruct train/qlora train.dry_run=true
    ```
 
 6. Train with QLoRA locally:
 
    ```bash
    python scripts/train_lora.py \
-     model=llama32-3b train/qlora \
+     model=meta-llama/Llama-3.2-3B-Instruct train/qlora \
      train.micro_batch=1 train.grad_accum=8 train.seq_len=1024
    ```
 
@@ -92,10 +92,16 @@ hippo-llm-memory/
    python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=50 seed=1337
    ```
 
-## Models known to fit in 12 GB with QLoRA (guidance)
+### Recommended base models (updated)
 
-- Llama‑3.2‑3B (text‑only), Qwen2‑1.5B, Phi‑3‑Mini (~3.8B). Use 4‑bit NF4,
-  gradient checkpointing, sequence length ≤1024.
+| Family  | HF repo                                  | Params | Context (input/output) | License | Notes |
+|---------|-------------------------------------------|--------|-------------------------|---------|-------|
+| Qwen    | Qwen/Qwen2.5-1.5B-Instruct               | 1.5B   | 32k in (128k capable) / 8k gen | Apache-2.0 | Latest small Qwen, strong math/coding |
+| Phi     | microsoft/Phi-3.5-mini-instruct          | ~3.8B  | 128k / 8k               | MIT     | Strong small SLM; good long‑ctx |
+| Llama   | meta-llama/Llama-3.2-3B-Instruct         | 3.2B   | up to 128k / 8k         | Llama 3.2 Community | Stable 3B baseline |
+| Gemma   | google/gemma-3-1b-it                     | 1B     | 32k / 8k                | Gemma   | Optional extra‑small; text‑only |
+
+**Note:** With Option B, presets no longer hardcode a model; pass `model=...` on the CLI.
 
 ## Key artifacts
 
@@ -113,4 +119,14 @@ hippo-llm-memory/
 - [docs/TRACE_SPEC.md](docs/TRACE_SPEC.md) – schema for memory traces exchanged
   with adapters.
 - [docs/api_surface.md](docs/api_surface.md) – current public APIs.
+
+## Suggested shell aliases
+
+```bash
+alias M_LLAMA3S="meta-llama/Llama-3.2-3B-Instruct"
+alias M_QWEN25S="Qwen/Qwen2.5-1.5B-Instruct"
+alias M_PHI35S="microsoft/Phi-3.5-mini-instruct"
+alias M_GEMMA3S="google/gemma-3-1b-it"
+```
+Use them like: `model=$M_QWEN25S`.
 

@@ -1,3 +1,17 @@
+# Model stack
+
+| HF repo | Params | License |
+|---------|--------|---------|
+| Qwen/Qwen2.5-1.5B-Instruct | 1.5B | Apache-2.0¹ |
+| microsoft/Phi-3.5-mini-instruct | ~3.8B | MIT² |
+| meta-llama/Llama-3.2-3B-Instruct | 3.2B | Llama 3.2 Community³ |
+| google/gemma-3-1b-it (optional) | 1B | Gemma⁴ |
+
+[1]: https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct
+[2]: https://huggingface.co/microsoft/Phi-3.5-mini-instruct
+[3]: https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
+[4]: https://huggingface.co/google/gemma-3-1b-it
+
 # Milestone 1 – Research consolidation & design blueprint
 
 **Objective**: establish a shared theoretical foundation, map hippocampal mechanisms to LLM gaps, and produce design and evaluation documents.
