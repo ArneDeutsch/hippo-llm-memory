@@ -1,169 +1,241 @@
-# Milestone 9 — Execution Plan (Reworked)
+# Milestone 9 — Baselines, Memory Validation & Data Generation
+_Generated: 2025-08-25 08:34_
 
-Status target: **Start of Milestone 9** (Milestone 8 complete).  
-Goal: run **memory‑augmented evaluations** (HEI‑NW, SGC‑RSS, SMPD, and ALL) with ablations, record
-compute and memory telemetry, and produce an aggregate report that compares against **real**
-baselines.
+## 0) Goal (what we ship)
+Establish reliable **baselines** and **memory-enabled** evaluations for the three hippocampus-inspired algorithms, producing final, reproducible datasets & metrics. The plan fixes known issues (prompt echo, incorrect timing) and ensures **chat-template correctness**, **expanded run matrix**, and **clear pre/post** deltas for memory runs.
 
-## 1) Summary
+**Algorithms under test (ground truth from `research/experiment-synthesis.md`):**
+- **HEI‑NW** (Hippocampal Episodic Indexing — Neural Weighting)
+- **SGC‑RSS** (Sparse Gated Consolidation — Rehearsal/Replay)
+- **SMPD** (Semantic Memory Pattern Distillation)
 
-Milestone 9 contains work for both Codex (code‑writing agent) and the human collaborator. Codex
-prepares scripts, configs and docs so the human only needs to execute deterministic commands and
-commit the resulting artifacts.
+## 1) Gate (exit criteria)
+We declare Milestone 9 *done* only if **all** the following are true:
 
-## 2) Matrix and configs
+- **Harness correctness**
+  - No prompt echo: decoded `pred` is **only the generated continuation** (input is sliced off).
+  - **Chat templates** are applied for chat-tuned models (e.g., Qwen‑Instruct) and disabled for base models.
+  - `metrics.json.compute.time_ms_per_100` is correctly computed as `100 * total_time_ms / total_tokens`.
+  - `metrics.json.compute` includes `input_tokens` and `generated_tokens`.
 
-* **Suites:** `episodic`, `semantic`, `spatial`
-* **Sizes:** 50 / 200 / 1000 (ablations use **200**)
-* **Seeds:** 1337 / 2025 / 4242
-* **Baselines:** `baselines/core` (no memory)
-* **Baselines:** `baselines/core` (no memory)
-* `baselines/rag` and `baselines/longctx` **deferred** – current datasets fit in prompt so retrieval/long context not required yet
-* **Memories:** `memory/hei_nw`, `memory/sgc_rss`, `memory/smpd`, `memory/all`
-* **Ablations:** per‑memory toggles of key knobs
+- **Baselines complete**
+  - Presets: `baselines/core`, `baselines/rag`, `baselines/longctx` executed across tasks `episodic`, `semantic`, `spatial` with `n ∈ {50,200,1000}` and seeds `{1337,2025,4242}`.
+  - Episodic@50 dev-smoke run (seed=1337) achieves **EM > 0** or **F1 ≥ 0.20** (sanity threshold).
 
-Configs live in `configs/eval/{baselines,memory}/*.yaml`.
+- **Memory runs complete**
+  - Presets: `memory/hei_nw`, `memory/sgc_rss`, `memory/smpd` executed with `replay.cycles ∈ {1,3}`, `gating_enabled=true`, retrieval on.
+  - `metrics.json` contains **pre** and **post** metrics and a populated **Δ** (delta) section.
+  - Retrieval (`requests`, `hits`, `r@k`) and gating stats are **non‑zero** for memory runs.
 
-## 3) Task breakdown
+- **Docs & reproducibility**
+  - `README.md`, `MILESTONE_9_PLAN.md`, `PROJECT_PLAN.md`, `EVAL_PLAN.md` updated to reflect model selection, presets, run matrix, and acceptance checks.
+  - CI/Smoke: a script or target runs `episodic@50` seed=1337 and fails fast if the sanity threshold is not met.
 
-### 3.1 Codex tasks
+- **Artifacts**
+  - For each run: `meta.json`, `metrics.json`, `metrics.csv`, and a `config_snapshot.yaml` are written under `runs/<DATE>/<preset>/<task>/<model>/`.
+  - A consolidated CSV/JSON summary per preset is generated in `runs/<DATE>/summaries/`.
 
-Codex performs all code and documentation changes:
+---
 
-1. **Readiness patches** – guided by `CODEX_PROMPTS_M9_READINESS.md` (Prompts 1‑6):
-   - add compute telemetry (`time_ms_per_100`, `rss_mb`, `latency_ms_mean`, `tokens`) to evaluation outputs,
-   - enrich `meta.json` with commit hash, Python/OS info and config hash,
-   - emit `data/MANIFEST.json` after dataset generation,
-   - generate `reports/<DATE>/index.md` and `reports/<DATE>/smoke.md`,
-   - ensure scripts support `+run_matrix=true` and write telemetry fields.
-2. **Documentation updates**
-   - update `EVAL_PLAN.md` with the telemetry fields and reference the roll‑up index,
-   - update `DESIGN.md` to describe telemetry exposure and the ablation knobs.
-3. **CLI examples and instructions**
-   - provide in this plan a tested CLI cheat‑sheet for the human,
-   - document which files are expected after each command.
+## 2) Work Packages Overview
+- **WP1** — Fix eval harness (decoding + chat templates)
+- **WP2** — Metrics correctness & richer compute section
+- **WP3** — Model registry & generation config
+- **WP4** — Presets & run matrix expansion (baselines + memory)
+- **WP5** — QA (smoke tests, unit tests) & CI fast‑fail
+- **WP6** — Full execution & artifact consolidation
+- **WP7** — Documentation updates
 
-Codex commits all modified scripts and docs. No large run artifacts are committed by Codex.
+Each WP below contains **Codex tasks** (ready-to-use prompts) and **Human tasks**.
 
-### 3.2 Human tasks
+---
 
-After Codex's patches are merged, the human executes the prepared scripts and commits artifacts.
+## WP1 — Fix eval harness (decoding + chat templates)
 
-1. **Setup**
-   - `make install-dev`
-   - optional: `make datasets DATE=<DATE>` (ensures `data/MANIFEST.json` is updated)
-2. **Real baselines**
-   - `python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/baselines/core/<MODEL_SLUG>`
-   - commit: `runs/<DATE>/baselines/core/**/metrics.{json,csv}`, matching `meta.json`, and
-     updated `reports/<DATE>/*`
-3. **Memory variants**
-   - `python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/hei_nw/<MODEL_SLUG>`
-   - `python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/sgc_rss/<MODEL_SLUG>`
-   - `python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/smpd/<MODEL_SLUG>`
-   - `python scripts/eval_model.py preset=memory/all suite=all n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/all/<MODEL_SLUG>`
-   - commit run directories and reports as above
-4. **Ablations (n=200, 3 seeds)**
-   - `python scripts/eval_model.py preset=memory/hei_nw n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/hei_nw/<MODEL_SLUG> gate.enabled=false hopfield.enabled=false`
-   - `python scripts/eval_model.py preset=memory/sgc_rss n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/sgc_rss/<MODEL_SLUG> schema.fast_track=false`
-   - `python scripts/eval_model.py preset=memory/smpd n=200 seeds='[1337,2025,4242]' date=<DATE> model=<MODEL_NAME> outdir=runs/<DATE>/memory/smpd/<MODEL_SLUG> macro.distill=false`
-   - commit ablation run directories and resulting summaries
-5. **Reporting**
-   - `python scripts/report.py --date <DATE>`
-   - commit: `reports/<DATE>/index.md`, `reports/<DATE>/smoke.md`, and
-     `reports/<DATE>/<suite>/summary.md`
+### Codex Task C1 — Slice decoding to remove prompt echo
+**Files:** `scripts/eval_model.py`  
+**Change:** Decode only generated continuation.  
+**Acceptance:** In `metrics.csv`, `pred` no longer starts with the full `prompt`.
 
-Human commits only the small JSON/CSV/MD artifacts; large models or caches remain untracked.
+**Prompt for Codex:**
+> Update `scripts/eval_model.py` so that decoding excludes the input tokens. After calling `model.generate(**inputs, ...)`, slice the output tensor with `out[:, inputs["input_ids"].shape[-1]:]` before decoding. Use `pad_token_id=tokenizer.pad_token_id` and `eos_token_id=tokenizer.eos_token_id` in `generate(...)`. Trim whitespace from final `pred`.
 
-## 4) CLI cheat‑sheet
+### Codex Task C2 — Add chat-aware encoding with fallback
+**Files:** `scripts/eval_model.py`, new helper `src/eval/encode.py`  
+**Change:** Implement `encode_prompt(tokenizer, prompt, device)` that uses `tokenizer.apply_chat_template` if available; otherwise falls back to plain `.encode`. Default system message: “You are a helpful assistant.”  
+**Acceptance:** For Qwen‑Instruct models, `tokenizer.chat_template` path is taken and completions are well-formed.
 
+**Prompt for Codex:**
+> Create `src/eval/encode.py` exposing `encode_prompt(tokenizer, prompt, device)` which uses `apply_chat_template` when available with:
+> ```python
+> messages=[{"role":"system","content":"You are a helpful assistant."}, {"role":"user","content":prompt}]
+> input_ids = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt")
+> ```
+> Else: `input_ids = tokenizer(prompt, return_tensors="pt")["input_ids"]`. Import and use this in `scripts/eval_model.py`.
+
+---
+
+## WP2 — Metrics correctness & richer compute
+
+### Codex Task C3 — Fix `time_ms_per_100` and add token counters
+**Files:** `scripts/eval_model.py` (metrics assembly)  
+**Change:** Compute `time_ms_per_100 = (100 * total_time_ms) / max(1, total_tokens)`. Add `compute.input_tokens`, `compute.generated_tokens`, and `compute.total_tokens`.  
+**Acceptance:** Values match a manual recomputation from `metrics.csv` latencies and tokenizer counts.
+
+**Prompt for Codex:**
+> In compute metrics, add fields: `input_tokens`, `generated_tokens`, `total_tokens`. Compute `time_ms_per_100` using total wall time divided by total token count times 100. Ensure `latency_ms_mean` remains per-item average.
+
+### Codex Task C4 — Add small audit sample
+**Files:** `scripts/eval_model.py`  
+**Change:** Log first 10 items (prompt, answer, pred) to `audit_sample.jsonl` per run.  
+**Acceptance:** File exists and is human-readable JSONL.
+
+**Prompt for Codex:**
+> Write the first 10 (or all if <10) records as JSONL to `<run_dir>/audit_sample.jsonl` with keys: `id`, `prompt`, `answer`, `pred` (truncated to 2k chars).
+
+---
+
+## WP3 — Model registry & generation config
+
+### Codex Task C5 — Introduce `configs/models.yaml` and a loader
+**Files:** `configs/models.yaml`, `src/eval/models.py`  
+**Change:** A small registry keyed by model id with flags: `use_chat_template`, optional `system_prompt`, `eos_token_id`, `pad_token_id`, and default `max_new_tokens`. Provide sane defaults; override per model.  
+**Acceptance:** Qwen2.5‑Instruct is marked `use_chat_template=true`.
+
+**Prompt for Codex:**
+> Add `configs/models.yaml` with entries like:
+> ```yaml
+> Qwen/Qwen2.5-1.5B-Instruct:
+>   use_chat_template: true
+>   system_prompt: "You are a helpful assistant."
+>   max_new_tokens: 256
+> ```
+> Create `src/eval/models.py` to load this file and expose `ModelConfig get(model_id)` returning a dataclass. Use it inside `eval_model.py` to configure encoding and generation.
+
+### Codex Task C6 — CLI flag to override chat template
+**Files:** `scripts/eval_model.py` (arg parsing)  
+**Change:** Flags `+force_chat=true/false` and `+force_no_chat=true/false` (mutually exclusive) to override registry behavior.  
+**Acceptance:** Flags take precedence in runs and are logged to `meta.json`.
+
+**Prompt for Codex:**
+> Add optional overrides `force_chat` and `force_no_chat` (default None). If set, they override `use_chat_template`. Persist the resolved value in `meta.json` under `model.chat_template_used`.
+
+---
+
+## WP4 — Presets & run matrix expansion
+
+### Codex Task C7 — Add baseline presets
+**Files:** `configs/presets/baselines/core.yaml`, `configs/presets/baselines/rag.yaml`, `configs/presets/baselines/longctx.yaml`  
+**Change:** Ensure three baseline presets exist with appropriate toggles:
+- `core`: memory off, replay=0
+- `rag`: retrieval on, no memory consolidation
+- `longctx`: concatenate supporting context into prompt (no retrieval at inference)
+**Acceptance:** Running each preset switches the flags in `meta.json` accordingly.
+
+**Prompt for Codex:**
+> Create/verify the three baseline preset YAMLs with explicit flags: `gating_enabled`, `replay.cycles`, `retrieval.enabled`, `long_context.enabled`, etc. Include comments describing each preset’s intent.
+
+### Codex Task C8 — Add memory presets
+**Files:** `configs/presets/memory/hei_nw.yaml`, `sgc_rss.yaml`, `smpd.yaml`  
+**Change:** Enable replay (`cycles: 1` default), `gating_enabled: true`, and retrieval on.  
+**Acceptance:** `metrics.json` includes **pre** and **post** sections and a **delta** block; retrieval/gating metrics are populated.
+
+**Prompt for Codex:**
+> Add three memory presets enabling replay and gating. Ensure the evaluation loop runs a **pre** pass, applies replay per preset, then runs a **post** pass, and finally computes deltas. Persist counters: retrieval.requests, retrieval.hits, r@5, r@10; gates.open_rate, gates.mean_score.
+
+### Codex Task C9 — Matrix sweeping & summaries
+**Files:** `scripts/run_matrix.py` or augment `eval_model.py` sweep; `scripts/summarize_runs.py`  
+**Change:** Support `+run_matrix=true` to sweep over tasks `{episodic,semantic,spatial}`, `n`, `seeds`, `presets`, and produce per‑preset summary CSV/JSON under `runs/<DATE>/summaries/`.  
+**Acceptance:** One command launches the full grid; summary files are produced.
+
+**Prompt for Codex:**
+> Add a matrix driver that iterates over configured lists (`tasks`, `n_values`, `seeds`, `presets`) and dispatches `eval_model.py` subprocesses with proper `outdir`. After completion, aggregate `metrics.json` files into `summaries/<preset>_summary.csv` with columns: task, model, n, seed, EM, F1, tokens, time_ms_per_100.
+
+---
+
+## WP5 — QA & CI
+
+### Codex Task C10 — Unit tests
+**Files:** `tests/test_encoding.py`, `tests/test_metrics.py`  
+**Change:** Tests for (a) chat-template encoding vs. plain encoding; (b) decode slicing correctness; (c) `time_ms_per_100` calculation.  
+**Acceptance:** Tests pass locally.
+
+**Prompt for Codex:**
+> Add unit tests that mock tokenizer/model to verify (1) `encode_prompt` uses chat template when available, (2) generated slice excludes input ids, (3) metrics math is correct for a toy batch.
+
+### Codex Task C11 — Smoke target with fast-fail
+**Files:** `scripts/smoke_eval.sh`, `Makefile` or `tox.ini`  
+**Change:** A target that runs `episodic` with `n=50`, `seed=1337`, `preset=baselines/core` and fails if EM==0 and F1<0.20.  
+**Acceptance:** CI fails on regressions.
+
+**Prompt for Codex:**
+> Create a shell script or Make target `smoke` that runs a small eval and checks the thresholds; exit non‑zero if unmet. Integrate into CI config if present.
+
+---
+
+## WP6 — Full execution & artifact consolidation
+
+### Human Task H1 — Dev smoke after WP1–WP2
+Run (replace `$DATE`):
+```bash
+DATE=$(date +%Y%m%d_%H%M)
+python scripts/eval_model.py preset=baselines/core task=episodic n=50 seed=1337 \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/baselines/core/Qwen2.5-1.5B
 ```
-# install deps
-make install-dev
+**Verify:** `pred` is not echoing; `EM>0` or `F1≥0.20`; `audit_sample.jsonl` exists; `time_ms_per_100` matches manual recompute.
 
-# (optional) dataset regeneration
-make datasets DATE=<DATE>
-
-DATE=<YYYYMMDD>
-
-# Qwen 2.5 — 1.5B
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/baselines/core/Qwen_Qwen2.5-1.5B-Instruct
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/memory/hei_nw/Qwen_Qwen2.5-1.5B-Instruct
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/memory/sgc_rss/Qwen_Qwen2.5-1.5B-Instruct
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/memory/smpd/Qwen_Qwen2.5-1.5B-Instruct
-
-# Phi‑3.5 Mini
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/baselines/core/microsoft_Phi-3.5-mini-instruct
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/memory/hei_nw/microsoft_Phi-3.5-mini-instruct
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/memory/sgc_rss/microsoft_Phi-3.5-mini-instruct
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/memory/smpd/microsoft_Phi-3.5-mini-instruct
-
-# Llama‑3.2 3B
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/baselines/core/meta-llama_Llama-3.2-3B-Instruct
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/memory/hei_nw/meta-llama_Llama-3.2-3B-Instruct
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/memory/sgc_rss/meta-llama_Llama-3.2-3B-Instruct
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/memory/smpd/meta-llama_Llama-3.2-3B-Instruct
-
-# (Optional) Gemma‑3 1B
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/baselines/core/google_gemma-3-1b-it
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/memory/hei_nw/google_gemma-3-1b-it
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/memory/sgc_rss/google_gemma-3-1b-it
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/memory/smpd/google_gemma-3-1b-it
-
-python scripts/eval_model.py preset=memory/all suite=all n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/all/meta-llama_Llama-3.2-3B
-
-# ablations (n=200)
-python scripts/eval_model.py preset=memory/hei_nw n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/hei_nw/meta-llama_Llama-3.2-3B gate.enabled=false hopfield.enabled=false
-python scripts/eval_model.py preset=memory/sgc_rss n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/sgc_rss/meta-llama_Llama-3.2-3B schema.fast_track=false
-python scripts/eval_model.py preset=memory/smpd n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/smpd/meta-llama_Llama-3.2-3B macro.distill=false
-
-# aggregate reports
-python scripts/report.py --date <DATE>
+### Human Task H2 — Baseline grid
+```bash
+DATE=$(date +%Y%m%d_%H%M)
+python scripts/eval_model.py +run_matrix=true date=$DATE \
+  presets="[baselines/core,baselines/rag,baselines/longctx]" \
+  tasks="[episodic,semantic,spatial]" n_values="[50,200,1000]" \
+  seeds="[1337,2025,4242]" \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE
 ```
 
-## Notes
-
-- **Model selection:** pass `model=...` (CLI overrides presets).
-- **No overwrite:** always use a model‑scoped `outdir` when running multiple models per date.
-
-## 5) Artifacts & layout
-
+### Human Task H3 — Memory grid
+```bash
+python scripts/eval_model.py +run_matrix=true date=$DATE \
+  presets="[memory/hei_nw,memory/sgc_rss,memory/smpd]" \
+  tasks="[episodic,semantic,spatial]" n_values="[50,200,1000]" \
+  seeds="[1337,2025,4242]" \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE
 ```
-runs/<DATE>/
-  baselines/core/<suite>/<size>_<seed>/
-    metrics.json, metrics.csv, meta.json
-  memory/<preset>/<suite>/<size>_<seed>/
-    metrics.json, metrics.csv, meta.json
-reports/<DATE>/
-  index.md
-  smoke.md
-  episodic/summary.md
-  semantic/summary.md
-  spatial/summary.md
-  assets/*.png   # optional plots
-data/MANIFEST.json
+**Verify:** `metrics.json` has `pre`, `post`, `delta`; retrieval/gating metrics are non‑zero.
+
+### Human Task H4 — Summaries
+After any matrix run:
+```bash
+python scripts/summarize_runs.py runs/$DATE --out runs/$DATE/summaries
 ```
+**Verify:** Summary CSV/JSON exist; spot-check deltas for memory runs.
 
-## 6) Gate (Definition of Done)
+---
 
-- **Codex:** telemetry and documentation patches merged; scripts generate `MANIFEST.json` and roll‑up
-  reports.
-- **Human:** run matrix complete for baselines and each memory (sizes 50 & 200, all seeds), combined
-  run at n=200, ablations at n=200, and all metrics/reports committed.
-- `reports/<DATE>/index.md` summarises baselines vs memories and links per‑suite summaries and
-  `smoke.md`.
-- `data/MANIFEST.json` present and tracked.
+## WP7 — Documentation updates
 
-## 7) Risks & mitigations
+### Codex Task C12 — Update docs
+**Files:** `README.md`, `MILESTONE_9_PLAN.md`, `PROJECT_PLAN.md`, `EVAL_PLAN.md`  
+**Change:** Reflect new presets, model registry, seeds policy (dev=1, final=3), sanity thresholds, and how to run matrices & summaries.  
+**Acceptance:** Documents include copy‑pasteable commands (from H2–H4) and link to CI smoke target.
 
-- **Runtime variance on CPU:** pin `OMP_NUM_THREADS=1` and fix seeds; collect time per 100 items.
-- **Memory growth unbounded:** enforce max store sizes in configs and log prunes.
-- **Plotting deps missing:** roll‑up works without matplotlib; plots are optional.
+**Prompt for Codex:**
+> Update the four docs with: (1) explanation of presets, (2) model registry and chat templates, (3) seeds policy, (4) matrix commands, (5) acceptance/gate criteria, (6) artifact layout. Keep examples aligned with Hydra/CLI style used here.
 
-## 8) Impact on DESIGN.md / EVAL_PLAN.md
+---
 
-Codex updates these documents so telemetry fields and ablation knobs are described.
+## Final checklist before closing M9
+- [ ] WP1 implemented and verified (no echo; chat template applied)
+- [ ] WP2 metrics corrected with token counters
+- [ ] WP3 model registry wired and overridable
+- [ ] WP4 presets present (core/rag/longctx + hei_nw/sgc_rss/smpd)
+- [ ] WP5 tests & smoke target green
+- [ ] WP6 baselines + memory grids executed; summaries generated
+- [ ] WP7 docs updated; gate met
 
-## 9) Rollback
+---
 
-If a memory run fails, proceed with the others and still generate the roll‑up. The gate requires the
-real baseline plus at least two memory variants at 50/200; file an issue for missing runs.
+## Notes on seeds
+- Use **one seed (1337)** for dev/smoke to save ~66% time.
+- Use **three seeds (1337, 2025, 4242)** for reported results and milestone gates to stabilize metrics via macro‑averaging.
