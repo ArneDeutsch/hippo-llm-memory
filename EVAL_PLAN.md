@@ -397,3 +397,25 @@ python scripts/eval_model.py suite=spatial  preset=memory/smpd    n=200 seed=133
 **Command examples:**
 python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=200 seed=1337 traces=off
 python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=200 seed=1337 traces=episodic
+
+## Consolidation Evaluation Protocol (Milestone 9.5)
+
+**Goal:** Prove **systems consolidation**: after replay‑driven LoRA training, the model answers **without memory**.
+
+**Protocol**
+1. **Teach** — run with memory ON and writes enabled; save stores to `--store_dir`/`--session_id` (no grading).
+2. **Pre** — evaluate the same suite with **memory OFF**; record EM/F1.
+3. **Consolidate** — train LoRA via `scripts/replay_consolidate.py` from saved stores (optionally distill from a teacher-with-memory).
+4. **Post** — evaluate with **memory OFF** again; report deltas.
+5. **Ablations** — run `span_short`, `longctx`, `rag` to isolate gains.
+
+**Metrics & assertions**
+- `post.EM - pre.EM ≥ +0.20` on `episodic@50` (seed=1337).
+- Memory runs show `retrieval.requests > 0`, `replay.samples > 0` in `metrics.json`.
+- Refusal‑rate ≤ 0.5 on span suites.
+- Sanity suite ≤ 1% degradation post‑LoRA.
+
+**Decoding for span suites**
+- Chat template: **ON**.
+- System prompt: “Answer with the **exact shortest span** from the prompt. No explanations.”
+- `max_new_tokens`: 8–16.
