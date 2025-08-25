@@ -41,9 +41,12 @@ Writes persist to SQLite and FAISS; duplicate writes with same id are idempotent
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
+from dataclasses import asdict
+from pathlib import Path
 from typing import List, Optional, Union
 
 import numpy as np
@@ -579,6 +582,106 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         self.logger.log_event("prune", {"min_salience": min_salience, "max_age": max_age})
 
     # ------------------------------------------------------------------
+    # Persistence
+    def save(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
+        """Save all traces under ``directory/session_id``.
+
+        Parameters
+        ----------
+        directory : str
+            Output directory.
+        session_id : str
+            Subdirectory name for this session.
+        fmt : str, optional
+            ``"jsonl"`` (default) or ``"parquet"``.
+        """
+
+        path = Path(directory) / session_id
+        path.mkdir(parents=True, exist_ok=True)
+        records = []
+        for idx, value, key_vec, ts, salience in self.persistence.all():
+            records.append(
+                {
+                    "schema": "episodic.v1",
+                    "id": idx,
+                    "key": key_vec.tolist(),
+                    "value": asdict(value),
+                    "ts": ts,
+                    "salience": salience,
+                }
+            )
+        file = path / f"episodic.{fmt}"
+        if fmt == "jsonl":
+            with open(file, "w", encoding="utf-8") as fh:
+                for rec in records:
+                    fh.write(json.dumps(rec) + "\n")
+        elif fmt == "parquet":
+            try:
+                import pandas as pd
+            except Exception as exc:  # pragma: no cover - optional
+                raise RuntimeError("Parquet support requires pandas") from exc
+            pd.DataFrame(records).to_parquet(file, index=False)
+        else:  # pragma: no cover - defensive
+            raise ValueError(f"Unsupported format: {fmt}")
+
+    def load(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
+        """Load traces from ``directory/session_id``.
+
+        Existing content is replaced; use on a new store instance.
+
+        Parameters
+        ----------
+        directory : str
+            Input directory.
+        session_id : str
+            Session identifier.
+        fmt : str, optional
+            ``"jsonl"`` (default) or ``"parquet"``.
+        """
+
+        path = Path(directory) / session_id / f"episodic.{fmt}"
+        rows: list[tuple[int, str, bytes, float, float]] = []
+        if fmt == "jsonl":
+            with open(path, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    rec = json.loads(line)
+                    key_arr = np.asarray(rec["key"], dtype="float32")
+                    rows.append(
+                        (
+                            int(rec["id"]),
+                            json.dumps(rec["value"]),
+                            key_arr.tobytes(),
+                            float(rec["ts"]),
+                            float(rec["salience"]),
+                        )
+                    )
+                    key_vec = key_arr.reshape(1, -1)
+                    faiss.normalize_L2(key_vec)
+                    self.index.add(key_vec, int(rec["id"]))
+        elif fmt == "parquet":
+            try:
+                import pandas as pd
+            except Exception as exc:  # pragma: no cover - optional
+                raise RuntimeError("Parquet support requires pandas") from exc
+            df = pd.read_parquet(path)
+            for rec in df.to_dict(orient="records"):
+                key_arr = np.asarray(rec["key"], dtype="float32")
+                rows.append(
+                    (
+                        int(rec["id"]),
+                        json.dumps(rec["value"]),
+                        key_arr.tobytes(),
+                        float(rec["ts"]),
+                        float(rec["salience"]),
+                    )
+                )
+                key_vec = key_arr.reshape(1, -1)
+                faiss.normalize_L2(key_vec)
+                self.index.add(key_vec, int(rec["id"]))
+        else:  # pragma: no cover - defensive
+            raise ValueError(f"Unsupported format: {fmt}")
+        self.persistence.restore_rows(rows)
+
     # Logging and maintenance
     def log_status(self) -> dict:
         """Return a snapshot of usage counters.
