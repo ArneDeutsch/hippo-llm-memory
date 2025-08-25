@@ -39,6 +39,7 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 import networkx as nx
 import numpy as np
 
+import hippo_mem.common.io as io
 from hippo_mem.common import GateDecision
 from hippo_mem.common.history import HistoryEntry, RollbackMixin
 from hippo_mem.common.lifecycle import StoreLifecycleMixin
@@ -562,40 +563,44 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         path.mkdir(parents=True, exist_ok=True)
         if fmt == "jsonl":
             file = path / "relational.jsonl"
-            with open(file, "w", encoding="utf-8") as fh:
-                for name in self.graph.nodes:
-                    emb = self.node_embeddings.get(name)
-                    fh.write(
-                        json.dumps(
-                            {
-                                "schema": "relational.v1",
-                                "type": "node",
-                                "name": name,
-                                "embedding": emb.tolist() if emb is not None else None,
-                            }
+
+            def _write(tmp_path: Path) -> None:
+                with open(tmp_path, "w", encoding="utf-8") as fh:
+                    for name in self.graph.nodes:
+                        emb = self.node_embeddings.get(name)
+                        fh.write(
+                            json.dumps(
+                                {
+                                    "schema": "relational.v1",
+                                    "type": "node",
+                                    "name": name,
+                                    "embedding": emb.tolist() if emb is not None else None,
+                                }
+                            )
+                            + "\n"
                         )
-                        + "\n"
-                    )
-                for src, dst, key, data in self.graph.edges(data=True, keys=True):
-                    emb = data.get("embedding")
-                    fh.write(
-                        json.dumps(
-                            {
-                                "schema": "relational.v1",
-                                "type": "edge",
-                                "id": key,
-                                "src": src,
-                                "relation": data.get("relation"),
-                                "dst": dst,
-                                "context": data.get("context"),
-                                "time": data.get("time"),
-                                "conf": data.get("conf"),
-                                "provenance": data.get("provenance"),
-                                "embedding": emb.tolist() if emb is not None else None,
-                            }
+                    for src, dst, key, data in self.graph.edges(data=True, keys=True):
+                        emb = data.get("embedding")
+                        fh.write(
+                            json.dumps(
+                                {
+                                    "schema": "relational.v1",
+                                    "type": "edge",
+                                    "id": key,
+                                    "src": src,
+                                    "relation": data.get("relation"),
+                                    "dst": dst,
+                                    "context": data.get("context"),
+                                    "time": data.get("time"),
+                                    "conf": data.get("conf"),
+                                    "provenance": data.get("provenance"),
+                                    "embedding": emb.tolist() if emb is not None else None,
+                                }
+                            )
+                            + "\n"
                         )
-                        + "\n"
-                    )
+
+            io.atomic_write_file(file, _write)
         elif fmt == "parquet":
             try:
                 import pandas as pd
@@ -621,8 +626,14 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
                         "embedding": emb.tolist() if emb is not None else None,
                     }
                 )
-            pd.DataFrame(nodes).to_parquet(path / "relational_nodes.parquet", index=False)
-            pd.DataFrame(edges).to_parquet(path / "relational_edges.parquet", index=False)
+            io.atomic_write_file(
+                path / "relational_nodes.parquet",
+                lambda tmp: pd.DataFrame(nodes).to_parquet(tmp, index=False),
+            )
+            io.atomic_write_file(
+                path / "relational_edges.parquet",
+                lambda tmp: pd.DataFrame(edges).to_parquet(tmp, index=False),
+            )
         else:  # pragma: no cover - defensive
             raise ValueError(f"Unsupported format: {fmt}")
 
@@ -632,42 +643,36 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         path = Path(directory) / session_id
         if fmt == "jsonl":
             file = path / "relational.jsonl"
-            with open(file, "r", encoding="utf-8") as fh:
-                for line in fh:
-                    rec = json.loads(line)
-                    if rec.get("type") == "node":
-                        emb = (
-                            np.asarray(rec.get("embedding"), dtype=float)
-                            if rec.get("embedding") is not None
-                            else None
+            for rec in io.read_jsonl(file):
+                if rec.get("type") == "node":
+                    emb = (
+                        np.asarray(rec.get("embedding"), dtype=float)
+                        if rec.get("embedding") is not None
+                        else None
+                    )
+                    self._restore_node((rec["name"], emb))
+                elif rec.get("type") == "edge":
+                    emb_json = (
+                        json.dumps(rec.get("embedding"))
+                        if rec.get("embedding") is not None
+                        else None
+                    )
+                    self._restore_edge(
+                        (
+                            rec["id"],
+                            rec["src"],
+                            rec["relation"],
+                            rec["dst"],
+                            rec.get("context"),
+                            rec.get("time"),
+                            rec.get("conf"),
+                            rec.get("provenance"),
+                            emb_json,
                         )
-                        self._restore_node((rec["name"], emb))
-                    elif rec.get("type") == "edge":
-                        emb_json = (
-                            json.dumps(rec.get("embedding"))
-                            if rec.get("embedding") is not None
-                            else None
-                        )
-                        self._restore_edge(
-                            (
-                                rec["id"],
-                                rec["src"],
-                                rec["relation"],
-                                rec["dst"],
-                                rec.get("context"),
-                                rec.get("time"),
-                                rec.get("conf"),
-                                rec.get("provenance"),
-                                emb_json,
-                            )
-                        )
+                    )
         elif fmt == "parquet":
-            try:
-                import pandas as pd
-            except Exception as exc:  # pragma: no cover - optional
-                raise RuntimeError("Parquet support requires pandas") from exc
-            nodes_df = pd.read_parquet(path / "relational_nodes.parquet")
-            edges_df = pd.read_parquet(path / "relational_edges.parquet")
+            nodes_df = io.read_parquet(path / "relational_nodes.parquet")
+            edges_df = io.read_parquet(path / "relational_edges.parquet")
             for rec in nodes_df.to_dict(orient="records"):
                 emb = (
                     np.asarray(rec.get("embedding"), dtype=float)
