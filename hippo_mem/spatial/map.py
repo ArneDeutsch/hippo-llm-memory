@@ -40,6 +40,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import hippo_mem.common.io as io
 from hippo_mem.common.history import HistoryEntry, RollbackMixin
 from hippo_mem.common.lifecycle import StoreLifecycleMixin
 
@@ -614,48 +615,52 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         path.mkdir(parents=True, exist_ok=True)
         if fmt == "jsonl":
             file = path / "spatial.jsonl"
-            with open(file, "w", encoding="utf-8") as fh:
-                meta = {
-                    "schema": "spatial.v1",
-                    "type": "meta",
-                    "next_id": self._next_id,
-                    "last_obs": self._last_obs,
-                    "step": self._step,
-                    "position": self._position,
-                    "last_coord": self._last_coord,
-                }
-                fh.write(json.dumps(meta) + "\n")
-                for context, place in self.encoder._cache.items():
-                    fh.write(
-                        json.dumps(
-                            {
-                                "schema": "spatial.v1",
-                                "type": "node",
-                                "id": self._context_to_id[context],
-                                "context": context,
-                                "coord": list(place.coord),
-                                "last_seen": place.last_seen,
-                            }
-                        )
-                        + "\n"
-                    )
-                for src, nbrs in self.graph.items():
-                    for dst, edge in nbrs.items():
+
+            def _write(tmp_path: Path) -> None:
+                with open(tmp_path, "w", encoding="utf-8") as fh:
+                    meta = {
+                        "schema": "spatial.v1",
+                        "type": "meta",
+                        "next_id": self._next_id,
+                        "last_obs": self._last_obs,
+                        "step": self._step,
+                        "position": self._position,
+                        "last_coord": self._last_coord,
+                    }
+                    fh.write(json.dumps(meta) + "\n")
+                    for context, place in self.encoder._cache.items():
                         fh.write(
                             json.dumps(
                                 {
                                     "schema": "spatial.v1",
-                                    "type": "edge",
-                                    "src": src,
-                                    "dst": dst,
-                                    "cost": edge.cost,
-                                    "success": edge.success,
-                                    "last_seen": edge.last_seen,
-                                    "weight": edge.weight,
+                                    "type": "node",
+                                    "id": self._context_to_id[context],
+                                    "context": context,
+                                    "coord": list(place.coord),
+                                    "last_seen": place.last_seen,
                                 }
                             )
                             + "\n"
                         )
+                    for src, nbrs in self.graph.items():
+                        for dst, edge in nbrs.items():
+                            fh.write(
+                                json.dumps(
+                                    {
+                                        "schema": "spatial.v1",
+                                        "type": "edge",
+                                        "src": src,
+                                        "dst": dst,
+                                        "cost": edge.cost,
+                                        "success": edge.success,
+                                        "last_seen": edge.last_seen,
+                                        "weight": edge.weight,
+                                    }
+                                )
+                                + "\n"
+                            )
+
+            io.atomic_write_file(file, _write)
         elif fmt == "parquet":
             try:
                 import pandas as pd
@@ -684,8 +689,14 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                             "weight": edge.weight,
                         }
                     )
-            pd.DataFrame(nodes).to_parquet(path / "spatial_nodes.parquet", index=False)
-            pd.DataFrame(edges).to_parquet(path / "spatial_edges.parquet", index=False)
+            io.atomic_write_file(
+                path / "spatial_nodes.parquet",
+                lambda tmp: pd.DataFrame(nodes).to_parquet(tmp, index=False),
+            )
+            io.atomic_write_file(
+                path / "spatial_edges.parquet",
+                lambda tmp: pd.DataFrame(edges).to_parquet(tmp, index=False),
+            )
             meta = {
                 "next_id": self._next_id,
                 "last_obs": self._last_obs,
@@ -693,8 +704,7 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                 "position": self._position,
                 "last_coord": self._last_coord,
             }
-            with open(path / "spatial_meta.json", "w", encoding="utf-8") as fh:
-                json.dump(meta, fh)
+            io.atomic_write_json(path / "spatial_meta.json", meta)
         else:  # pragma: no cover - defensive
             raise ValueError(f"Unsupported format: {fmt}")
 
@@ -708,42 +718,35 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         self._id_to_context.clear()
         if fmt == "jsonl":
             file = path / "spatial.jsonl"
-            with open(file, "r", encoding="utf-8") as fh:
-                for line in fh:
-                    rec = json.loads(line)
-                    typ = rec.get("type")
-                    if typ == "meta":
-                        self._next_id = rec.get("next_id", 0)
-                        self._last_obs = rec.get("last_obs", 0)
-                        self._step = rec.get("step", 0)
-                        self._position = tuple(rec.get("position", (0.0, 0.0)))
-                        lc = rec.get("last_coord")
-                        self._last_coord = tuple(lc) if lc is not None else None
-                    elif typ == "node":
-                        pid = int(rec["id"])
-                        context = rec["context"]
-                        place = Place(context, tuple(rec["coord"]), int(rec["last_seen"]))
-                        self.encoder._cache[context] = place
-                        self._context_to_id[context] = pid
-                        self._id_to_context[pid] = context
-                        self.graph[pid] = {}
-                    elif typ == "edge":
-                        edge = Edge(
-                            cost=float(rec["cost"]),
-                            success=float(rec["success"]),
-                            last_seen=int(rec["last_seen"]),
-                            weight=float(rec["weight"]),
-                        )
-                        self.graph.setdefault(int(rec["src"]), {})[int(rec["dst"])] = edge
+            for rec in io.read_jsonl(file):
+                typ = rec.get("type")
+                if typ == "meta":
+                    self._next_id = rec.get("next_id", 0)
+                    self._last_obs = rec.get("last_obs", 0)
+                    self._step = rec.get("step", 0)
+                    self._position = tuple(rec.get("position", (0.0, 0.0)))
+                    lc = rec.get("last_coord")
+                    self._last_coord = tuple(lc) if lc is not None else None
+                elif typ == "node":
+                    pid = int(rec["id"])
+                    context = rec["context"]
+                    place = Place(context, tuple(rec["coord"]), int(rec["last_seen"]))
+                    self.encoder._cache[context] = place
+                    self._context_to_id[context] = pid
+                    self._id_to_context[pid] = context
+                    self.graph[pid] = {}
+                elif typ == "edge":
+                    edge = Edge(
+                        cost=float(rec["cost"]),
+                        success=float(rec["success"]),
+                        last_seen=int(rec["last_seen"]),
+                        weight=float(rec["weight"]),
+                    )
+                    self.graph.setdefault(int(rec["src"]), {})[int(rec["dst"])] = edge
         elif fmt == "parquet":
-            try:
-                import pandas as pd
-            except Exception as exc:  # pragma: no cover - optional
-                raise RuntimeError("Parquet support requires pandas") from exc
-            nodes_df = pd.read_parquet(path / "spatial_nodes.parquet")
-            edges_df = pd.read_parquet(path / "spatial_edges.parquet")
-            with open(path / "spatial_meta.json", "r", encoding="utf-8") as fh:
-                meta = json.load(fh)
+            nodes_df = io.read_parquet(path / "spatial_nodes.parquet")
+            edges_df = io.read_parquet(path / "spatial_edges.parquet")
+            meta = io.read_json(path / "spatial_meta.json")
             for rec in nodes_df.to_dict(orient="records"):
                 pid = int(rec["id"])
                 context = rec["context"]

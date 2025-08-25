@@ -51,6 +51,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 
+import hippo_mem.common.io as io
 from hippo_mem._faiss import faiss
 from hippo_mem.common.history import HistoryEntry, RollbackMixin
 from hippo_mem.common.lifecycle import StoreLifecycleMixin
@@ -612,15 +613,15 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
             )
         file = path / f"episodic.{fmt}"
         if fmt == "jsonl":
-            with open(file, "w", encoding="utf-8") as fh:
-                for rec in records:
-                    fh.write(json.dumps(rec) + "\n")
+            io.atomic_write_jsonl(file, records)
         elif fmt == "parquet":
             try:
                 import pandas as pd
             except Exception as exc:  # pragma: no cover - optional
                 raise RuntimeError("Parquet support requires pandas") from exc
-            pd.DataFrame(records).to_parquet(file, index=False)
+            io.atomic_write_file(
+                file, lambda tmp: pd.DataFrame(records).to_parquet(tmp, index=False)
+            )
         else:  # pragma: no cover - defensive
             raise ValueError(f"Unsupported format: {fmt}")
 
@@ -642,28 +643,22 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         path = Path(directory) / session_id / f"episodic.{fmt}"
         rows: list[tuple[int, str, bytes, float, float]] = []
         if fmt == "jsonl":
-            with open(path, "r", encoding="utf-8") as fh:
-                for line in fh:
-                    rec = json.loads(line)
-                    key_arr = np.asarray(rec["key"], dtype="float32")
-                    rows.append(
-                        (
-                            int(rec["id"]),
-                            json.dumps(rec["value"]),
-                            key_arr.tobytes(),
-                            float(rec["ts"]),
-                            float(rec["salience"]),
-                        )
+            for rec in io.read_jsonl(path):
+                key_arr = np.asarray(rec["key"], dtype="float32")
+                rows.append(
+                    (
+                        int(rec["id"]),
+                        json.dumps(rec["value"]),
+                        key_arr.tobytes(),
+                        float(rec["ts"]),
+                        float(rec["salience"]),
                     )
-                    key_vec = key_arr.reshape(1, -1)
-                    faiss.normalize_L2(key_vec)
-                    self.index.add(key_vec, int(rec["id"]))
+                )
+                key_vec = key_arr.reshape(1, -1)
+                faiss.normalize_L2(key_vec)
+                self.index.add(key_vec, int(rec["id"]))
         elif fmt == "parquet":
-            try:
-                import pandas as pd
-            except Exception as exc:  # pragma: no cover - optional
-                raise RuntimeError("Parquet support requires pandas") from exc
-            df = pd.read_parquet(path)
+            df = io.read_parquet(path)
             for rec in df.to_dict(orient="records"):
                 key_arr = np.asarray(rec["key"], dtype="float32")
                 rows.append(

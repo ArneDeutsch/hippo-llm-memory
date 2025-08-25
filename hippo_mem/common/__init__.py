@@ -3,6 +3,14 @@
 from .attn_adapter import CrossAttnAdapter, CrossAttnConfig, LoraLinear
 from .gates import GateDecision, GateResult, MemoryGate
 from .history import HistoryEntry, RollbackMixin
+from .io import (
+    atomic_write_file,
+    atomic_write_json,
+    atomic_write_jsonl,
+    read_json,
+    read_jsonl,
+    read_parquet,
+)
 from .lifecycle import StoreLifecycleMixin
 from .maintenance import BackgroundTaskManager
 from .provenance import ProvenanceLogger, log_gate
@@ -23,4 +31,10 @@ __all__ = [
     "CrossAttnAdapter",
     "CrossAttnConfig",
     "LoraLinear",
+    "atomic_write_file",
+    "atomic_write_json",
+    "atomic_write_jsonl",
+    "read_json",
+    "read_jsonl",
+    "read_parquet",
 ]
