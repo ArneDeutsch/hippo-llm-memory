@@ -18,6 +18,16 @@ Define three presets under `configs/eval/baselines/`:
 - `rag.yaml` — vector DB over the same corpus used by stores (FAISS‑CPU), retrieved text concatenated to inputs.
 - `longctx.yaml` — same base model with the longest feasible context (no memory modules).
 
+Baseline runs target small instruction-tuned models:
+
+- `Qwen/Qwen2.5-1.5B-Instruct`
+- `microsoft/Phi-3.5-mini-instruct` *(128k context)*
+- `meta-llama/Llama-3.2-3B-Instruct` *(128k context)*
+
+Phi‑3.5‑mini and Llama‑3.2‑3B support large contexts for future long‑context evaluations.
+
+RAG and long‑context baselines are **deferred for Milestone 9**; configs remain as placeholders.
+
 **Milestone 8 run matrix**
 
 - **Presets:** `baselines/core`, `baselines/rag`, `baselines/longctx`.

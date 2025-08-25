@@ -63,7 +63,7 @@ python scripts/eval_bench.py +run_matrix=true preset=memory/all
 **Training (short)**
 
 python scripts/train_lora.py
-model_name=Qwen/Qwen2-1.5B-Instruct
+model_name=Qwen/Qwen2.5-1.5B-Instruct
 data_format=jsonl train_files='["data/semantic_200_1337.jsonl"]' val_files='["data/semantic_50_2025.jsonl"]'
 lora_r=16 lora_alpha=32
 target_modules='["q_proj","k_proj","v_proj","o_proj"]'

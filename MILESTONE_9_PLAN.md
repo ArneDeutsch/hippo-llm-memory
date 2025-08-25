@@ -83,21 +83,32 @@ make install-dev
 # (optional) dataset regeneration
 make datasets DATE=<DATE>
 
-# core baseline
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/baselines/core/meta-llama_Llama-3.2-3B
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/baselines/core/microsoft_Phi-3-mini-4k-instruct
-python scripts/eval_model.py preset=baselines/core +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/baselines/core/Qwen_Qwen2-1.5B
+DATE=<YYYYMMDD>
 
-# memory variants
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/hei_nw/meta-llama_Llama-3.2-3B
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/memory/hei_nw/microsoft_Phi-3-mini-4k-instruct
-python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/memory/hei_nw/Qwen_Qwen2-1.5B
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/sgc_rss/meta-llama_Llama-3.2-3B
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/memory/sgc_rss/microsoft_Phi-3-mini-4k-instruct
-python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/memory/sgc_rss/Qwen_Qwen2-1.5B
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/smpd/meta-llama_Llama-3.2-3B
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=microsoft/Phi-3-mini-4k-instruct outdir=runs/<DATE>/memory/smpd/microsoft_Phi-3-mini-4k-instruct
-python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=<DATE> model=Qwen/Qwen2-1.5B outdir=runs/<DATE>/memory/smpd/Qwen_Qwen2-1.5B
+# Qwen 2.5 — 1.5B
+python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/baselines/core/Qwen_Qwen2.5-1.5B-Instruct
+python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/memory/hei_nw/Qwen_Qwen2.5-1.5B-Instruct
+python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/memory/sgc_rss/Qwen_Qwen2.5-1.5B-Instruct
+python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=Qwen/Qwen2.5-1.5B-Instruct   outdir=runs/$DATE/memory/smpd/Qwen_Qwen2.5-1.5B-Instruct
+
+# Phi‑3.5 Mini
+python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/baselines/core/microsoft_Phi-3.5-mini-instruct
+python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/memory/hei_nw/microsoft_Phi-3.5-mini-instruct
+python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/memory/sgc_rss/microsoft_Phi-3.5-mini-instruct
+python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=microsoft/Phi-3.5-mini-instruct   outdir=runs/$DATE/memory/smpd/microsoft_Phi-3.5-mini-instruct
+
+# Llama‑3.2 3B
+python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/baselines/core/meta-llama_Llama-3.2-3B-Instruct
+python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/memory/hei_nw/meta-llama_Llama-3.2-3B-Instruct
+python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/memory/sgc_rss/meta-llama_Llama-3.2-3B-Instruct
+python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=meta-llama/Llama-3.2-3B-Instruct   outdir=runs/$DATE/memory/smpd/meta-llama_Llama-3.2-3B-Instruct
+
+# (Optional) Gemma‑3 1B
+python scripts/eval_model.py preset=baselines/core +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/baselines/core/google_gemma-3-1b-it
+python scripts/eval_model.py preset=memory/hei_nw +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/memory/hei_nw/google_gemma-3-1b-it
+python scripts/eval_model.py preset=memory/sgc_rss +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/memory/sgc_rss/google_gemma-3-1b-it
+python scripts/eval_model.py preset=memory/smpd +run_matrix=true date=$DATE   model=google/gemma-3-1b-it   outdir=runs/$DATE/memory/smpd/google_gemma-3-1b-it
+
 python scripts/eval_model.py preset=memory/all suite=all n=200 seeds='[1337,2025,4242]' date=<DATE> model=meta-llama/Llama-3.2-3B outdir=runs/<DATE>/memory/all/meta-llama_Llama-3.2-3B
 
 # ablations (n=200)
@@ -109,9 +120,10 @@ python scripts/eval_model.py preset=memory/smpd n=200 seeds='[1337,2025,4242]' d
 python scripts/report.py --date <DATE>
 ```
 
-**Model selection:** With Option B, set the base model via `model=...`. Presets no longer fix the model.
+## Notes
 
-**Output layout:** Use `outdir=.../<model_slug>` to run several models on the same `<DATE>` without overwriting.
+- **Model selection:** pass `model=...` (CLI overrides presets).
+- **No overwrite:** always use a model‑scoped `outdir` when running multiple models per date.
 
 ## 5) Artifacts & layout
 

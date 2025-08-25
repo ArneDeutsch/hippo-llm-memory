@@ -9,7 +9,7 @@ This document specifies a production-ready design for hippocampus-inspired memor
 # 2) Assumptions & constraints
 
 * **Hardware:** 1× NVIDIA GPU (12 GB), Ubuntu Linux.
-* **Base models:** small causal LMs (e.g., Llama-3.2-3B / Phi-3-Mini / Qwen2-1.5B).
+* **Base models:** small causal LMs (e.g., Llama-3.2-3B / Phi-3.5-Mini / Qwen2.5-1.5B).
 * **Efficiency:** **QLoRA (NF4)** + gradient checkpointing; **FlashAttention** kernels when supported; **MQA/GQA** for KV memory reduction in both core and adapters; context length ≤1024 by default.
 * **Frameworks:** PyTorch, HF Transformers, TRL, PEFT, bitsandbytes, FAISS-CPU (+PQ), Hydra, NetworkX (or DGL), pytest.
 * **Non-goals:** Full pretraining; multi-GPU; online RL.
