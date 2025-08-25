@@ -112,16 +112,22 @@ Presets live under `configs/eval/baselines/`:
 - `longctx` – longest feasible context window without retrieval.
 - `span_short` – chat templates on with a short-span decoding profile for exact-match metrics.
 
-### Quickstart
+**Quickstart**
 
 ```bash
-DATE=$(date +%Y%m%d_%H%M)
-python scripts/eval_model.py preset=baselines/span_short task=episodic n=50 seed=1337 \
-  model=Qwen/Qwen2.5-1.5B-Instruct \
-  outdir=runs/$DATE/baselines/span_short/Qwen2.5-1.5B
-```
+# 1) Teach: write experiences to stores (persist across runs)
+DATE=$(date +%Y%m%d_%H%M); SID=seed1337
+python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337   --mode teach --persist true --store_dir runs/$DATE/stores --session_id $SID   model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
 
-The `span_short` preset keeps chat templates on while forcing short span-only answers to reduce refusal-style responses in span-extraction tasks.
+# 2) Pre-consolidation baseline (memory OFF)
+python scripts/test_consolidation.py --phase pre   --suite episodic --n 50 --seed 1337 --memory_off true   --model Qwen/Qwen2.5-1.5B-Instruct   --outdir runs/$DATE/consolidation/pre
+
+# 3) Consolidate via replay → LoRA
+python scripts/replay_consolidate.py   --store_dir runs/$DATE/stores --session_id $SID   --config configs/consolidation/lora_small.yaml   --outdir runs/$DATE/consolidation/lora
+
+# 4) Post-consolidation test (memory OFF)
+python scripts/test_consolidation.py --phase post   --suite episodic --n 50 --seed 1337 --memory_off true   --model Qwen/Qwen2.5-1.5B-Instruct   --lora runs/$DATE/consolidation/lora   --outdir runs/$DATE/consolidation/post
+```
 
 ## Cross-session runs
 
