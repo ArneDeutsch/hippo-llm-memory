@@ -51,6 +51,37 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
+def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
+    """Populate model-related fields on ``cfg`` if missing."""
+
+    cfg.n = cfg.get("n", 5)
+    cfg.seed = cfg.get("seed", 0)
+    cfg.model = cfg.get("model", "models/tiny-gpt2")
+    cfg.max_new_tokens = cfg.get("max_new_tokens")
+    model_cfg = load_model_config(str(cfg.model))
+    if cfg.get("use_chat_template") is None:
+        cfg.use_chat_template = model_cfg.get("use_chat_template", False)
+    if cfg.get("system_prompt") is None:
+        cfg.system_prompt = model_cfg.get("system_prompt")
+    if cfg.get("pad_token_id") is None:
+        cfg.pad_token_id = model_cfg.get("pad_token_id")
+    if cfg.get("eos_token_id") is None:
+        cfg.eos_token_id = model_cfg.get("eos_token_id")
+    if cfg.max_new_tokens is None:
+        cfg.max_new_tokens = model_cfg.get("max_new_tokens", 32)
+    force_chat = cfg.get("force_chat")
+    force_no_chat = cfg.get("force_no_chat")
+    if force_chat and force_no_chat:
+        raise ValueError("force_chat and force_no_chat are mutually exclusive")
+    if force_chat:
+        cfg.use_chat_template = True
+    elif force_no_chat:
+        cfg.use_chat_template = False
+    if cfg.get("dry_run"):
+        cfg.n = min(cfg.n, 5)
+    return cfg
+
+
 @dataclass
 class Task:
     """Simple container for evaluation items."""
@@ -398,10 +429,13 @@ def _write_outputs(
     mem_dict = (
         OmegaConf.to_container(mem_obj, resolve=True) if isinstance(mem_obj, DictConfig) else {}
     )
+    epi_gate = mem_dict.get("episodic", {}).get("gate")
     rel_gate = mem_dict.get("relational", {}).get("gate")
     spat_gate = mem_dict.get("spatial", {}).get("gate")
     gating_enabled = bool(
-        (rel_gate or {}).get("enabled", False) or (spat_gate or {}).get("enabled", False)
+        (epi_gate or {}).get("enabled", False)
+        or (rel_gate or {}).get("enabled", False)
+        or (spat_gate or {}).get("enabled", False)
     )
     retrieval_fields = {
         f"retrieval.{m}.{k}": v
@@ -475,6 +509,8 @@ def _write_outputs(
         "gating_enabled": gating_enabled,
     }
     config_meta: Dict[str, Dict[str, object]] = {}
+    if epi_gate is not None:
+        config_meta.setdefault("episodic", {})["gate"] = epi_gate
     if rel_gate is not None:
         config_meta.setdefault("relational", {})["gate"] = rel_gate
     if spat_gate is not None:
@@ -575,21 +611,23 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
 
 
 def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
-    """Run evaluation over a grid of suites, sizes and seeds."""
+    """Run evaluation over a grid of tasks, sizes and seeds."""
 
-    suites = cfg.get("suites", ["episodic", "semantic", "spatial"])
+    tasks = cfg.get("tasks")
+    if not tasks:
+        tasks = cfg.get("suites", ["episodic", "semantic", "spatial"])
     n_values = cfg.get("n_values", [50, 200, 1000])
     seeds = cfg.get("seeds", [1337, 2025, 4242])
-    combos = list(itertools.product(suites, n_values, seeds))
+    combos = list(itertools.product(tasks, n_values, seeds))
     total = len(combos)
     base_cfg = OmegaConf.to_container(cfg, resolve=True)
-    for idx, (suite, n, seed) in enumerate(combos, 1):
-        log.info("run %d/%d: suite=%s n=%d seed=%d", idx, total, suite, n, seed)
+    for idx, (task, n, seed) in enumerate(combos, 1):
+        log.info("run %d/%d: task=%s n=%d seed=%d", idx, total, task, n, seed)
         run_cfg = OmegaConf.create(base_cfg)
-        run_cfg.suite = suite
+        run_cfg.suite = task
         run_cfg.n = int(n)
         run_cfg.seed = int(seed)
-        outdir = root_outdir / suite / f"{n}_{seed}"
+        outdir = root_outdir / task / f"{n}_{seed}"
         evaluate(run_cfg, outdir)
 
 
@@ -597,43 +635,38 @@ def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
 def main(cfg: DictConfig) -> None:
     """CLI entry point for the evaluation harness."""
 
-    cfg = _load_preset(cfg)
-    cfg.n = cfg.get("n", 5)
-    cfg.seed = cfg.get("seed", 0)
-    cfg.model = cfg.get("model", "models/tiny-gpt2")
-    cfg.max_new_tokens = cfg.get("max_new_tokens")
-    model_cfg = load_model_config(str(cfg.model))
-    cfg.use_chat_template = model_cfg.get("use_chat_template", False)
-    cfg.system_prompt = model_cfg.get("system_prompt")
-    cfg.pad_token_id = model_cfg.get("pad_token_id")
-    cfg.eos_token_id = model_cfg.get("eos_token_id")
-    if cfg.max_new_tokens is None:
-        cfg.max_new_tokens = model_cfg.get("max_new_tokens", 32)
-
-    force_chat = cfg.get("force_chat")
-    force_no_chat = cfg.get("force_no_chat")
-    if force_chat and force_no_chat:
-        raise ValueError("force_chat and force_no_chat are mutually exclusive")
-    if force_chat:
-        cfg.use_chat_template = True
-    elif force_no_chat:
-        cfg.use_chat_template = False
-    if cfg.get("dry_run"):
-        cfg.n = min(cfg.n, 5)
-
+    base_cfg = cfg
     outdir_cfg = cfg.get("outdir")
     if cfg.get("run_matrix"):
-        if outdir_cfg is not None:
-            root_outdir = Path(to_absolute_path(str(outdir_cfg)))
-        else:
-            date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
-            preset_path = Path(str(cfg.preset))
-            if preset_path.parts and preset_path.parts[0] == "baselines":
-                root_outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name
+        presets = cfg.get("presets")
+        if presets:
+            if outdir_cfg is not None:
+                base_outdir = Path(to_absolute_path(str(outdir_cfg)))
             else:
-                root_outdir = Path("runs") / date / preset_path.name
-        evaluate_matrix(cfg, root_outdir)
+                date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
+                base_outdir = Path("runs") / date
+            for preset in presets:
+                run_cfg = OmegaConf.merge(base_cfg, {"preset": preset})
+                run_cfg = _load_preset(run_cfg)
+                run_cfg = _apply_model_defaults(run_cfg)
+                preset_outdir = base_outdir / Path(preset)
+                evaluate_matrix(run_cfg, preset_outdir)
+        else:
+            cfg = _load_preset(cfg)
+            cfg = _apply_model_defaults(cfg)
+            if outdir_cfg is not None:
+                root_outdir = Path(to_absolute_path(str(outdir_cfg)))
+            else:
+                date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
+                preset_path = Path(str(cfg.preset))
+                if preset_path.parts and preset_path.parts[0] == "baselines":
+                    root_outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name
+                else:
+                    root_outdir = Path("runs") / date / preset_path.name
+            evaluate_matrix(cfg, root_outdir)
     else:
+        cfg = _load_preset(cfg)
+        cfg = _apply_model_defaults(cfg)
         if outdir_cfg is not None:
             outdir = Path(to_absolute_path(str(outdir_cfg)))
         else:

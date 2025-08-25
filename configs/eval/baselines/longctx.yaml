@@ -1,2 +1,9 @@
-# Long-context baseline preset.
-context: long
+# Long-context baseline preset. Concatenates supporting context into prompt, no retrieval.
+memory: null
+replay:
+  cycles: 0
+retrieval:
+  enabled: false
+long_context:
+  enabled: true
+gating_enabled: false  # no gating in baselines

@@ -1,2 +1,9 @@
-# Spatial/procedural memory preset using SMPD store.
-memory: smpd
+# Spatial/procedural memory preset using SMPD store with replay and gating.
+memory:
+  spatial:
+    gate:
+      enabled: true
+replay:
+  cycles: 1
+retrieval:
+  enabled: true
