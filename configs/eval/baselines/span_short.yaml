@@ -1,0 +1,14 @@
+# Span-style baseline: chat template ON + short exact answers. (Option B)
+memory: null
+replay:
+  cycles: 0
+retrieval:
+  enabled: false
+long_context:
+  enabled: false
+gating_enabled: false
+
+# Generation/encoding tweaks (consumed by scripts/eval_model.py)
+use_chat_template: true
+system_prompt: "Answer with the exact shortest span from the prompt. No explanations."
+max_new_tokens: 8
