@@ -40,3 +40,6 @@ datasets:
 eval-baselines:
 	python scripts/run_baselines.py --date $(DATE)
 
+smoke:
+	bash scripts/smoke_eval.sh
+
