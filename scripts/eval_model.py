@@ -191,11 +191,12 @@ def _evaluate(
     *,
     use_chat_template: bool,
     system_prompt: str | None,
+    compute_metrics: bool = True,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, float]:
-    """Generate predictions and compute metrics for ``tasks``.
+    """Generate predictions and optionally compute metrics for ``tasks``.
 
-    Returns the per-item rows, metric averages, input and generated token
-    counts, and elapsed seconds.
+    Returns the per-item rows, metric averages (empty if ``compute_metrics`` is
+    ``False``), input and generated token counts, and elapsed seconds.
     """
 
     rows: List[Dict[str, object]] = []
@@ -262,8 +263,11 @@ def _evaluate(
         gen = out[:, inputs["input_ids"].shape[-1] :]
         pred = tokenizer.decode(gen[0], skip_special_tokens=True).strip()
         is_correct = int(pred.strip() == item.answer)
-        correct += is_correct
-        f1_total += _f1(pred, item.answer)
+        if compute_metrics:
+            correct += is_correct
+            f1_total += _f1(pred, item.answer)
+        else:
+            is_correct = None  # type: ignore[assignment]
         input_tokens += inputs["input_ids"].shape[-1]
         gen_tokens += gen.shape[-1]
         item_t1 = time.perf_counter()
@@ -289,7 +293,11 @@ def _evaluate(
             row["latency_ms"] = fallback
         latencies = [fallback] * len(rows)
     elapsed = t1 - t0
-    metrics = {"em": correct / n if n else 0.0, "f1": f1_total / n if n else 0.0}
+    metrics = (
+        {"em": correct / n if n else 0.0, "f1": f1_total / n if n else 0.0}
+        if compute_metrics
+        else {}
+    )
     return rows, metrics, input_tokens, gen_tokens, elapsed
 
 
@@ -586,6 +594,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         int(cfg.max_new_tokens),
         use_chat_template=cfg.use_chat_template,
         system_prompt=cfg.system_prompt,
+        compute_metrics=cfg.mode != "teach",
     )
     latencies = [row["latency_ms"] for row in pre_rows]
     post_rows = post_metrics = None
@@ -594,22 +603,33 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     total_gen_tokens = pre_gen_tokens
     total_time = pre_time
 
-    for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
+    if cfg.mode == "teach":
         _run_replay(modules, tasks)
-        post_rows, post_metrics, post_in_tokens, post_gen_tokens, post_time = _evaluate(
-            tasks,
-            modules,
-            tokenizer,
-            model,
-            int(cfg.max_new_tokens),
-            use_chat_template=cfg.use_chat_template,
-            system_prompt=cfg.system_prompt,
-        )
-        latencies.extend(row["latency_ms"] for row in post_rows)
-        total_items += len(post_rows)
-        total_in_tokens += post_in_tokens
-        total_gen_tokens += post_gen_tokens
-        total_time += post_time
+        if cfg.persist and cfg.store_dir and cfg.session_id:
+            session_dir = Path(to_absolute_path(str(cfg.store_dir)))
+            if "episodic" in modules:
+                modules["episodic"]["store"].save(str(session_dir), str(cfg.session_id))
+            if "relational" in modules:
+                modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
+            if "spatial" in modules:
+                modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
+    else:
+        for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
+            _run_replay(modules, tasks)
+            post_rows, post_metrics, post_in_tokens, post_gen_tokens, post_time = _evaluate(
+                tasks,
+                modules,
+                tokenizer,
+                model,
+                int(cfg.max_new_tokens),
+                use_chat_template=cfg.use_chat_template,
+                system_prompt=cfg.system_prompt,
+            )
+            latencies.extend(row["latency_ms"] for row in post_rows)
+            total_items += len(post_rows)
+            total_in_tokens += post_in_tokens
+            total_gen_tokens += post_gen_tokens
+            total_time += post_time
 
     total_tokens = total_in_tokens + total_gen_tokens
     compute = {

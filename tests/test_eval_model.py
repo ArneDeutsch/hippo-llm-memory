@@ -78,3 +78,31 @@ def test_eval_model_cli_flags(tmp_path: Path) -> None:
     assert meta["store_dir"] == str(store_dir)
     assert meta["session_id"] == "abc"
     assert meta["persist"] is True
+
+
+def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
+    outdir = tmp_path / "run"
+    store_dir = tmp_path / "stores"
+    cmd = [
+        sys.executable,
+        "scripts/eval_model.py",
+        "suite=episodic",
+        "preset=memory/hei_nw",
+        "n=2",
+        "seed=1337",
+        f"outdir={outdir}",
+        f"store_dir={store_dir}",
+        "session_id=s1",
+        "mode=teach",
+        "persist=true",
+        "dry_run=true",
+    ]
+    subprocess.run(cmd, check=True)
+
+    # store persisted
+    assert (store_dir / "s1" / "episodic.jsonl").exists()
+
+    # metrics should not include correctness
+    with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    assert rows and all(row["correct"] == "" for row in rows)
