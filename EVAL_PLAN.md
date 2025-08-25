@@ -12,11 +12,14 @@ A concrete, repeatable plan to **validate** HEI‑NW, SGC‑RSS, and SMPD on a s
 
 # 2) Baselines
 
-Define three presets under `configs/eval/baselines/`:
+Define four presets under `configs/eval/baselines/`:
 
-- `core.yaml` — base model without memory or RAG.
-- `rag.yaml` — vector DB over the same corpus used by stores (FAISS‑CPU), retrieved text concatenated to inputs.
+- `core.yaml` — base model without memory or retrieval.
+- `rag.yaml` — nearest‑neighbour text retrieval concatenated to the prompt.
 - `longctx.yaml` — same base model with the longest feasible context (no memory modules).
+- `span_short.yaml` — chat template ON with `max_new_tokens≤8` for exact‑match decoding.
+
+Memory presets mirror this `span_short` decoding profile when EM/Span metrics are reported.
 
 Baseline runs target small instruction-tuned models:
 
@@ -26,11 +29,9 @@ Baseline runs target small instruction-tuned models:
 
 Phi‑3.5‑mini and Llama‑3.2‑3B support large contexts for future long‑context evaluations.
 
-RAG and long‑context baselines are **deferred for Milestone 9**; configs remain as placeholders.
-
 **Milestone 8 run matrix**
 
-- **Presets:** `baselines/core`, `baselines/rag`, `baselines/longctx`.
+- **Presets:** `baselines/core`, `baselines/rag`, `baselines/longctx`, `baselines/span_short`.
 - **Suites:** `episodic`, `semantic`, `spatial`.
 - **Sizes:** `50`, `200`, `1000` items.
 - **Seeds:** `1337`, `2025`, `4242`.
@@ -52,6 +53,8 @@ Memory variants under `configs/eval/memory/`:
 # 3) Suites & generators
 
 Implemented by `scripts/build_datasets.py`. All generators are **deterministic** with `seed`.
+
+Each suite provides a minimal `n=50` split for smoke and cross‑session experiments.
 
 ## 3.1 Episodic suite (HEI‑NW)
 
@@ -85,13 +88,27 @@ coverage for the validation matrix below.
 
 For each **suite**:
 
-- Presets: `baselines/{core,rag,longctx}` and `memory/{hei_nw,sgc_rss,smpd}` (or `all` for combined).
+- Presets: `baselines/{core,rag,longctx,span_short}` and `memory/{hei_nw,sgc_rss,smpd}` (or `all` for combined).
 - Sizes: {small: 50, medium: 200, large: 1,000} per suite.
 - Seeds: {1337, 2025, 4242}.
 - Replay: evaluate **pre‑replay** and **post‑replay** (1–3 cycles).
 
 For relational and spatial suites, execute **paired runs** with gates `enabled=true` and `enabled=false` per (size, seed). Report ON→OFF deltas for duplicate rate and map growth alongside primary accuracy metrics.
 
+# 4.1 Cross-session protocol & persistence
+
+Memory stores implement `save(dir, session_id)` / `load(dir, session_id)` and the harness
+exposes CLI flags `--store_dir`, `--session_id`, `--persist`, and `--mode={teach,replay,test}`.
+A typical experiment:
+
+1. **Teach** – present facts with gates enabled; metrics are not graded; stores are saved.
+2. **Replay** – optional background rehearsal using a scheduler policy.
+3. **Test** – new process loads stores and answers queries without re-presenting facts.
+
+Replay policies are configurable via `replay.policy={uniform,priority,spaced}`,
+`replay.rate`, `replay.noise_level`, and `replay.max_items`.
+
+# 5) Metrics
 # 5) Metrics
 
 ## 5.1 Primary
@@ -119,11 +136,15 @@ For relational and spatial suites, execute **paired runs** with gates `enabled=t
 ## 5.4 Gate telemetry & KPIs
 
 * **Raw counters** (by memory): `attempts, inserted, aggregated, routed_to_episodic (relational), blocked_new_edges (spatial)`.
+* **Retrieval counters:** `requests`, `hits`, `r@5`, `r@10`.
 * **Derived:**
   * **Duplicate rate (relational):** `aggregated / attempts`.
   * **Map growth per 1k obs (spatial):** `nodes_added/1k`, `edges_added/1k`.
   * **Gating overhead:** Δ runtime/100 queries (gates ON vs OFF).
-* **Integrity checks:** gates ON must not reduce **accuracy** by >1pp vs OFF at matched seeds/sizes.
+  * **Refusal rate:** fraction of predictions matching refusal regexes.
+* **Integrity checks:**
+  * gates ON must not reduce **accuracy** by >1pp vs OFF at matched seeds/sizes.
+  * `retrieval.requests > 0` and `refusal_rate ≤ 0.5` for memory presets.
 
 # 6) Ablations (toggles)
 
@@ -224,6 +245,7 @@ disambiguates.
 python scripts/eval_bench.py suite=episodic preset=baselines/core   n_trials=200 seed=1337
 python scripts/eval_bench.py suite=semantic preset=baselines/rag    n_trials=200 seed=1337
 python scripts/eval_bench.py suite=spatial  preset=baselines/longctx n_trials=200 seed=1337
+python scripts/eval_bench.py suite=episodic preset=baselines/span_short n_trials=200 seed=1337
 ```
 
 ## 9.3 Run memory variants
@@ -268,11 +290,14 @@ python scripts/eval_bench.py suite=episodic preset=memory/hei_nw eval.post_repla
 - **SMPD:** ≥90% path success on 5×5; ≥20% steps reduction with macros.
 * **Relational:** duplicate rate reduced by ≥30% (ON vs OFF) with multi‑hop accuracy change within ±1pp.
 * **Spatial:** edges/1k reduced by ≥25% with success rate within ±1pp and suboptimality unchanged (±0.02 absolute).
+* **Delayed recall:** teach→test cycle with persisted stores yields ≥+20pp EM on `episodic@50` vs `baselines/core`.
 * **Overhead:** gating overhead ≤10% runtime/100 queries.
 
 # 12) CI & Codex scope
 
 - CI runs `make lint` and a **dry_run** of the harness on 5 tasks per suite across all presets (ensures plumbing only).
+- Preflight: dump resolved config (`config_snapshot.yaml`) at run start.
+- Post-run assertions: fail if `retrieval.requests==0`, `refusal_rate>0.5`, or replay cycles < configured.
 - Codex PRs should include updated fixtures/tests and leave heavy training/eval to local GPU runs.
 
 # 13) Reproducibility
@@ -325,6 +350,7 @@ reports/
 
 ```bash
 python scripts/eval_bench.py suite=episodic preset=baselines/core n=5 seed=1337 dry_run=true
+python scripts/eval_bench.py suite=episodic preset=baselines/span_short n=5 seed=1337 dry_run=true
 ```
 
 **Real-model smoke runs (n=50 per suite):**

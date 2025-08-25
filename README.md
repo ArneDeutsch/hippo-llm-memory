@@ -105,6 +105,13 @@ hippo-llm-memory/
 
 ## Baselines
 
+Presets live under `configs/eval/baselines/`:
+
+- `core` – base model only.
+- `rag` – nearest-neighbour retrieval with concatenated context.
+- `longctx` – longest feasible context window without retrieval.
+- `span_short` – chat templates on with a short-span decoding profile for exact-match metrics.
+
 ### Quickstart
 
 ```bash
@@ -114,7 +121,14 @@ python scripts/eval_model.py preset=baselines/span_short task=episodic n=50 seed
   outdir=runs/$DATE/baselines/span_short/Qwen2.5-1.5B
 ```
 
-This preset keeps chat templates on while forcing short span-only answers to reduce refusal-style responses in span-extraction tasks.
+The `span_short` preset keeps chat templates on while forcing short span-only answers to reduce refusal-style responses in span-extraction tasks.
+
+## Cross-session runs
+
+Memory stores can persist across processes. `scripts/eval_model.py` accepts `--store_dir`,
+`--session_id`, `--persist`, and `--mode={teach,replay,test}` so a first run can **teach** facts,
+an optional second run can **replay**, and a fresh process can **test** delayed recall. See
+`MILESTONE_9_5_PLAN.md` for the protocol.
 
 ## Key artifacts
 
@@ -129,6 +143,8 @@ This preset keeps chat templates on while forcing short span-only answers to red
   development.
 - [EVAL_PLAN.md](EVAL_PLAN.md) – datasets, baselines, metrics and ablations for
   validation.
+- [MILESTONE_9_PLAN.md](MILESTONE_9_PLAN.md) and
+  [MILESTONE_9_5_PLAN.md](MILESTONE_9_5_PLAN.md) – current milestone scopes.
 - [docs/TRACE_SPEC.md](docs/TRACE_SPEC.md) – schema for memory traces exchanged
   with adapters.
 - [docs/api_surface.md](docs/api_surface.md) – current public APIs.
