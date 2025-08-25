@@ -69,6 +69,7 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
     cfg.store_dir = cfg.get("store_dir")
     cfg.session_id = cfg.get("session_id")
     cfg.persist = cfg.get("persist", False)
+    cfg.memory_off = cfg.get("memory_off", False)
     model_cfg = load_model_config(str(cfg.model))
     if cfg.get("use_chat_template") is None:
         cfg.use_chat_template = model_cfg.get("use_chat_template", False)
@@ -530,6 +531,7 @@ def _write_outputs(
         "store_dir": cfg.get("store_dir"),
         "session_id": cfg.get("session_id"),
         "persist": cfg.get("persist"),
+        "memory_off": cfg.get("memory_off"),
     }
     config_meta: Dict[str, Dict[str, object]] = {}
     if epi_gate is not None:
@@ -567,6 +569,23 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     tasks = _load_tasks(dataset, cfg.n)
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
+    if cfg.memory_off:
+        modules = {}
+    elif cfg.mode == "test" and cfg.store_dir and cfg.session_id:
+        session_dir = Path(to_absolute_path(str(cfg.store_dir)))
+        sid = str(cfg.session_id)
+        if "episodic" in modules:
+            epi_file = session_dir / sid / "episodic.jsonl"
+            if epi_file.exists():
+                modules["episodic"]["store"].load(str(session_dir), sid)
+        if "relational" in modules:
+            rel_file = session_dir / sid / "relational.jsonl"
+            if rel_file.exists():
+                modules["relational"]["kg"].load(str(session_dir), sid)
+        if "spatial" in modules:
+            spat_file = session_dir / sid / "spatial.jsonl"
+            if spat_file.exists():
+                modules["spatial"]["map"].load(str(session_dir), sid)
 
     model_id = str(cfg.model)
     abs_model_path = Path(to_absolute_path(model_id))

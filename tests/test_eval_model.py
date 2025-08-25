@@ -106,3 +106,62 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
     with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     assert rows and all(row["correct"] == "" for row in rows)
+
+
+def test_load_store_and_memory_off(tmp_path: Path) -> None:
+    outdir_teach = tmp_path / "teach"
+    store_dir = tmp_path / "stores"
+    cmd_teach = [
+        sys.executable,
+        "scripts/eval_model.py",
+        "suite=episodic",
+        "preset=memory/hei_nw",
+        "n=2",
+        "seed=1337",
+        f"outdir={outdir_teach}",
+        f"store_dir={store_dir}",
+        "session_id=s1",
+        "mode=teach",
+        "persist=true",
+        "dry_run=true",
+    ]
+    subprocess.run(cmd_teach, check=True)
+
+    # memory on, store loaded
+    outdir_test = tmp_path / "test_on"
+    cmd_test = [
+        sys.executable,
+        "scripts/eval_model.py",
+        "suite=episodic",
+        "preset=memory/hei_nw",
+        "n=2",
+        "seed=1337",
+        f"outdir={outdir_test}",
+        f"store_dir={store_dir}",
+        "session_id=s1",
+        "mode=test",
+        "dry_run=true",
+    ]
+    subprocess.run(cmd_test, check=True)
+    metrics = json.loads((outdir_test / "metrics.json").read_text())
+    assert metrics["retrieval"]["episodic"]["requests"] >= 1
+
+    # memory explicitly off
+    outdir_off = tmp_path / "test_off"
+    cmd_off = [
+        sys.executable,
+        "scripts/eval_model.py",
+        "suite=episodic",
+        "preset=memory/hei_nw",
+        "n=2",
+        "seed=1337",
+        f"outdir={outdir_off}",
+        f"store_dir={store_dir}",
+        "session_id=s1",
+        "mode=test",
+        "dry_run=true",
+        "memory_off=true",
+    ]
+    subprocess.run(cmd_off, check=True)
+    metrics_off = json.loads((outdir_off / "metrics.json").read_text())
+    assert metrics_off["retrieval"]["episodic"]["requests"] == 0
