@@ -11,18 +11,29 @@ from typing import Dict
 import torch
 
 
-def encode_prompt(tokenizer, prompt: str, device: torch.device) -> Dict[str, torch.Tensor]:
+def encode_prompt(
+    tokenizer,
+    prompt: str,
+    device: torch.device,
+    *,
+    use_chat_template: bool = True,
+    system_prompt: str = "You are a helpful assistant.",
+) -> Dict[str, torch.Tensor]:
     """Return ``input_ids`` for ``prompt`` on ``device``.
 
-    If ``tokenizer`` supports :func:`~transformers.PreTrainedTokenizer.apply_chat_template`
-    and has a ``chat_template`` defined, the prompt is wrapped in a default
-    system/user conversation and encoded via ``apply_chat_template``.  Otherwise
-    the prompt is tokenized directly.
+    If ``use_chat_template`` is ``True`` and ``tokenizer`` supports
+    :func:`~transformers.PreTrainedTokenizer.apply_chat_template` with a defined
+    ``chat_template``, the prompt is wrapped in a simple system/user dialogue and
+    encoded via ``apply_chat_template``. Otherwise the prompt is tokenized
+    directly.
     """
 
-    if hasattr(tokenizer, "apply_chat_template") and getattr(tokenizer, "chat_template", None):
+    has_chat = hasattr(tokenizer, "apply_chat_template") and getattr(
+        tokenizer, "chat_template", None
+    )
+    if use_chat_template and has_chat:
         messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ]
         input_ids = tokenizer.apply_chat_template(

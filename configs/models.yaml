@@ -1,0 +1,13 @@
+# Model registry with chat template and generation settings.
+# Defaults apply to all models unless overridden.
+
+defaults:
+  use_chat_template: false
+  system_prompt: "You are a helpful assistant."
+  eos_token_id: null
+  pad_token_id: null
+  max_new_tokens: 32
+
+Qwen/Qwen2.5-1.5B-Instruct:
+  use_chat_template: true
+  max_new_tokens: 256
