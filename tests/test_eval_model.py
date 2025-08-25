@@ -36,6 +36,8 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     assert meta["preset"] == "memory/hei_nw"
     assert meta["n"] == 2
     assert meta["replay_cycles"] == 1
+    assert meta["mode"] == "test"
+    assert meta["persist"] is False
     assert meta["ablate"]["memory.episodic.hopfield"] is False
     assert len(meta["config_hash"]) == 64
     assert isinstance(meta["model"], dict)
@@ -51,3 +53,28 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
         reader = csv.DictReader(f)
         rows = list(reader)
     assert rows and float(rows[0]["latency_ms"]) > 0
+
+
+def test_eval_model_cli_flags(tmp_path: Path) -> None:
+    outdir = tmp_path / "run"
+    store_dir = tmp_path / "stores"
+    cmd = [
+        sys.executable,
+        "scripts/eval_model.py",
+        "suite=episodic",
+        "preset=memory/hei_nw",
+        "n=2",
+        "seed=1337",
+        f"outdir={outdir}",
+        f"store_dir={store_dir}",
+        "session_id=abc",
+        "mode=teach",
+        "persist=true",
+        "dry_run=true",
+    ]
+    subprocess.run(cmd, check=True)
+    meta = json.loads((outdir / "meta.json").read_text())
+    assert meta["mode"] == "teach"
+    assert meta["store_dir"] == str(store_dir)
+    assert meta["session_id"] == "abc"
+    assert meta["persist"] is True
