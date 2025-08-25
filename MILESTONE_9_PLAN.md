@@ -184,6 +184,17 @@ python scripts/eval_model.py preset=baselines/core task=episodic n=50 seed=1337 
 ```
 **Verify:** `pred` is not echoing; `EM>0` or `F1≥0.20`; `audit_sample.jsonl` exists; `time_ms_per_100` matches manual recompute.
 
+### Human Task H1b — Span-short sanity
+Run:
+```bash
+DATE=$(date +%Y%m%d_%H%M)
+python scripts/eval_model.py preset=baselines/span_short task=episodic n=50 seed=1337 \
+  model=Qwen/Qwen2.5-1.5B-Instruct \
+  outdir=runs/$DATE/baselines/span_short/Qwen2.5-1.5B
+```
+**Verify:** `EM>0` or `F1≥0.20`.
+**Acceptance:** `meta.json` shows `use_chat_template=true`, `system_prompt` contains "shortest span", and `max_new_tokens=8`.
+
 ### Human Task H2 — Baseline grid
 ```bash
 DATE=$(date +%Y%m%d_%H%M)

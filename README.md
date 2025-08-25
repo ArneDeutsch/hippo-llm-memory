@@ -103,6 +103,19 @@ hippo-llm-memory/
 
 **Note:** With Option B, presets no longer hardcode a model; pass `model=...` on the CLI.
 
+## Baselines
+
+### Quickstart
+
+```bash
+DATE=$(date +%Y%m%d_%H%M)
+python scripts/eval_model.py preset=baselines/span_short task=episodic n=50 seed=1337 \
+  model=Qwen/Qwen2.5-1.5B-Instruct \
+  outdir=runs/$DATE/baselines/span_short/Qwen2.5-1.5B
+```
+
+This preset keeps chat templates on while forcing short span-only answers to reduce refusal-style responses in span-extraction tasks.
+
 ## Key artifacts
 
 - [research/experiment-synthesis.md](research/experiment-synthesis.md) –

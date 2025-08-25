@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
-PRESETS = ["baselines/core", "baselines/rag", "baselines/longctx"]
+PRESETS = ["baselines/core", "baselines/span_short", "baselines/rag", "baselines/longctx"]
 SUITES = ["episodic", "semantic", "spatial"]
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
