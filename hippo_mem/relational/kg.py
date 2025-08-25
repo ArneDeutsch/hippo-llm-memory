@@ -33,6 +33,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence
 
 import networkx as nx
@@ -551,6 +552,148 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
             "INSERT INTO edges(id, src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
             (edge_id, src, rel, dst, ctx, t_, conf, prov, emb),
         )
+
+    # ------------------------------------------------------------------
+    # Persistence
+    def save(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
+        """Save graph to ``directory/session_id``."""
+
+        path = Path(directory) / session_id
+        path.mkdir(parents=True, exist_ok=True)
+        if fmt == "jsonl":
+            file = path / "relational.jsonl"
+            with open(file, "w", encoding="utf-8") as fh:
+                for name in self.graph.nodes:
+                    emb = self.node_embeddings.get(name)
+                    fh.write(
+                        json.dumps(
+                            {
+                                "schema": "relational.v1",
+                                "type": "node",
+                                "name": name,
+                                "embedding": emb.tolist() if emb is not None else None,
+                            }
+                        )
+                        + "\n"
+                    )
+                for src, dst, key, data in self.graph.edges(data=True, keys=True):
+                    emb = data.get("embedding")
+                    fh.write(
+                        json.dumps(
+                            {
+                                "schema": "relational.v1",
+                                "type": "edge",
+                                "id": key,
+                                "src": src,
+                                "relation": data.get("relation"),
+                                "dst": dst,
+                                "context": data.get("context"),
+                                "time": data.get("time"),
+                                "conf": data.get("conf"),
+                                "provenance": data.get("provenance"),
+                                "embedding": emb.tolist() if emb is not None else None,
+                            }
+                        )
+                        + "\n"
+                    )
+        elif fmt == "parquet":
+            try:
+                import pandas as pd
+            except Exception as exc:  # pragma: no cover - optional
+                raise RuntimeError("Parquet support requires pandas") from exc
+            nodes = []
+            for name in self.graph.nodes:
+                emb = self.node_embeddings.get(name)
+                nodes.append({"name": name, "embedding": emb.tolist() if emb is not None else None})
+            edges = []
+            for src, dst, key, data in self.graph.edges(data=True, keys=True):
+                emb = data.get("embedding")
+                edges.append(
+                    {
+                        "id": key,
+                        "src": src,
+                        "relation": data.get("relation"),
+                        "dst": dst,
+                        "context": data.get("context"),
+                        "time": data.get("time"),
+                        "conf": data.get("conf"),
+                        "provenance": data.get("provenance"),
+                        "embedding": emb.tolist() if emb is not None else None,
+                    }
+                )
+            pd.DataFrame(nodes).to_parquet(path / "relational_nodes.parquet", index=False)
+            pd.DataFrame(edges).to_parquet(path / "relational_edges.parquet", index=False)
+        else:  # pragma: no cover - defensive
+            raise ValueError(f"Unsupported format: {fmt}")
+
+    def load(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
+        """Load graph from ``directory/session_id``."""
+
+        path = Path(directory) / session_id
+        if fmt == "jsonl":
+            file = path / "relational.jsonl"
+            with open(file, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    rec = json.loads(line)
+                    if rec.get("type") == "node":
+                        emb = (
+                            np.asarray(rec.get("embedding"), dtype=float)
+                            if rec.get("embedding") is not None
+                            else None
+                        )
+                        self._restore_node((rec["name"], emb))
+                    elif rec.get("type") == "edge":
+                        emb_json = (
+                            json.dumps(rec.get("embedding"))
+                            if rec.get("embedding") is not None
+                            else None
+                        )
+                        self._restore_edge(
+                            (
+                                rec["id"],
+                                rec["src"],
+                                rec["relation"],
+                                rec["dst"],
+                                rec.get("context"),
+                                rec.get("time"),
+                                rec.get("conf"),
+                                rec.get("provenance"),
+                                emb_json,
+                            )
+                        )
+        elif fmt == "parquet":
+            try:
+                import pandas as pd
+            except Exception as exc:  # pragma: no cover - optional
+                raise RuntimeError("Parquet support requires pandas") from exc
+            nodes_df = pd.read_parquet(path / "relational_nodes.parquet")
+            edges_df = pd.read_parquet(path / "relational_edges.parquet")
+            for rec in nodes_df.to_dict(orient="records"):
+                emb = (
+                    np.asarray(rec.get("embedding"), dtype=float)
+                    if rec.get("embedding") is not None
+                    else None
+                )
+                self._restore_node((rec["name"], emb))
+            for rec in edges_df.to_dict(orient="records"):
+                emb_json = (
+                    json.dumps(rec.get("embedding")) if rec.get("embedding") is not None else None
+                )
+                self._restore_edge(
+                    (
+                        rec["id"],
+                        rec["src"],
+                        rec["relation"],
+                        rec["dst"],
+                        rec.get("context"),
+                        rec.get("time"),
+                        rec.get("conf"),
+                        rec.get("provenance"),
+                        emb_json,
+                    )
+                )
+        else:  # pragma: no cover - defensive
+            raise ValueError(f"Unsupported format: {fmt}")
 
 
 __all__ = ["KnowledgeGraph"]

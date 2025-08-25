@@ -41,6 +41,24 @@ class TracePersistence:
     def keys(self, dim: int) -> np.ndarray:
         return self.db.keys(dim)
 
+    def all(self) -> List[Tuple[int, TraceValue, np.ndarray, float, float]]:
+        """Return all persisted traces.
+
+        Returns
+        -------
+        list[tuple[int, TraceValue, np.ndarray, float, float]]
+            Tuples of ``(id, value, key, ts, salience)``.
+        """
+
+        cur = self.db.conn.cursor()
+        cur.execute("SELECT id, value, key, ts, salience FROM traces")
+        rows = []
+        for idx, value_json, key_blob, ts, salience in cur.fetchall():
+            value = TraceValue(**json.loads(value_json))
+            key = np.frombuffer(key_blob, dtype="float32")
+            rows.append((int(idx), value, key, float(ts), float(salience)))
+        return rows
+
     # Maintenance helpers -------------------------------------------------
     def decay(self, factor: float) -> List[Tuple[int, float]]:
         return self.db.decay(factor)
