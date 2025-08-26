@@ -49,6 +49,12 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     assert isinstance(compute["time_ms_per_100"], float)
     assert isinstance(compute["rss_mb"], float)
     assert compute["latency_ms_mean"] > 0
+    assert metrics["replay"]["samples"] == 2
+    assert metrics["store"]["size"] >= 1
+    suite_metrics = metrics["metrics"]["episodic"]
+    assert "pre_refusal_rate" in suite_metrics
+    assert metrics["gates"]["relational"]["attempts"] == 0
+    assert "accepts" in metrics["gates"]["relational"]
 
     with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)

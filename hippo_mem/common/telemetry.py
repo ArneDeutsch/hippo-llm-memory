@@ -94,8 +94,10 @@ class GateStats:
     def snapshot(self) -> Dict[str, int]:
         """Return raw gate counters."""
 
+        accepts = self.inserted + self.aggregated
         return {
             "attempts": self.attempts,
+            "accepts": accepts,
             "inserted": self.inserted,
             "aggregated": self.aggregated,
             "routed_to_episodic": self.routed_to_episodic,
