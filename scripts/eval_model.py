@@ -20,6 +20,7 @@ import itertools
 import json
 import logging
 import os
+import re
 import sys
 import time
 from collections import Counter
@@ -49,6 +50,12 @@ from src.eval.models import load_model_config
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+REFUSAL_RE = re.compile(
+    r"(i\s+can't|i\s+cannot|i\s+won't|i\s+will\s+not|as\s+an\s+ai|"
+    r"as\s+an\s+language\s+model|i\s+am\s+unable|i\s+do\s+not\s+have)",
+    re.IGNORECASE,
+)
 
 
 def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
@@ -294,23 +301,52 @@ def _evaluate(
             row["latency_ms"] = fallback
         latencies = [fallback] * len(rows)
     elapsed = t1 - t0
+    refusal_count = sum(1 for r in rows if REFUSAL_RE.search(r["pred"]))
     metrics = (
-        {"em": correct / n if n else 0.0, "f1": f1_total / n if n else 0.0}
+        {
+            "em": correct / n if n else 0.0,
+            "f1": f1_total / n if n else 0.0,
+            "refusal_rate": refusal_count / n if n else 0.0,
+        }
         if compute_metrics
         else {}
     )
     return rows, metrics, input_tokens, gen_tokens, elapsed
 
 
-def _run_replay(modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]) -> None:
+def _run_replay(modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]) -> int:
     """Dummy replay loop that writes answers to the episodic store."""
 
     if "episodic" not in modules:
-        return
+        return 0
     store = modules["episodic"]["store"]
+    count = 0
     for task in tasks:
         key = np.ones(8, dtype="float32")
         store.write(key, task.answer)
+        count += 1
+    return count
+
+
+def _store_sizes(modules: Dict[str, Dict[str, object]]) -> Dict[str, int]:
+    """Return the number of items per memory store."""
+
+    sizes: Dict[str, int] = {}
+    if "episodic" in modules:
+        store = modules["episodic"]["store"]
+        try:
+            cur = store.persistence.db.conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM traces")
+            sizes["episodic"] = int(cur.fetchone()[0])
+        except Exception:
+            sizes["episodic"] = 0
+    if "relational" in modules:
+        kg = modules["relational"]["kg"]
+        sizes["relational"] = int(kg.graph.number_of_edges())
+    if "spatial" in modules:
+        g = modules["spatial"].get("map")
+        sizes["spatial"] = int(g.log_status().get("writes", 0))
+    return sizes
 
 
 def run_suite(
@@ -367,10 +403,12 @@ def run_suite(
     )
     lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
 
+    replay_samples = 0
     for _ in range(int(cfg.replay_cycles)):
-        _run_replay(modules, tasks)
+        replay_samples += _run_replay(modules, tasks)
 
     total_tokens = in_tokens + gen_tokens
+    store_sizes = _store_sizes(modules)
     metrics_dict = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -389,6 +427,11 @@ def run_suite(
         },
         "retrieval": registry.all_snapshots(),
         "gates": gate_registry.all_snapshots(),
+        "replay": {"samples": replay_samples},
+        "store": {
+            "size": sum(store_sizes.values()),
+            "per_memory": store_sizes,
+        },
     }
     return rows, metrics_dict, flat_ablate
 
@@ -402,6 +445,9 @@ def _write_outputs(
     cfg: DictConfig,
     flat_ablate: Dict[str, object],
     compute: Dict[str, float] | None = None,
+    *,
+    replay_samples: int = 0,
+    store_sizes: Dict[str, int] | None = None,
 ) -> None:
     """Persist metrics and metadata."""
 
@@ -411,12 +457,14 @@ def _write_outputs(
     suite_metrics: Dict[str, float] = {
         "pre_em": pre_metrics.get("em", 0.0),
         "pre_f1": pre_metrics.get("f1", 0.0),
+        "pre_refusal_rate": pre_metrics.get("refusal_rate", 0.0),
     }
     if post_metrics is not None:
         suite_metrics.update(
             {
                 "post_em": post_metrics.get("em", 0.0),
                 "post_f1": post_metrics.get("f1", 0.0),
+                "post_refusal_rate": post_metrics.get("refusal_rate", 0.0),
                 "delta_em": post_metrics.get("em", 0.0) - pre_metrics.get("em", 0.0),
             }
         )
@@ -428,6 +476,11 @@ def _write_outputs(
         "metrics": {cfg.suite: suite_metrics},
         "retrieval": registry.all_snapshots(),
         "gates": gate_registry.all_snapshots(),
+        "replay": {"samples": replay_samples},
+        "store": {
+            "size": sum((store_sizes or {}).values()),
+            "per_memory": store_sizes or {},
+        },
     }
     if compute:
         metrics["metrics"]["compute"] = compute
@@ -621,9 +674,10 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     total_in_tokens = pre_in_tokens
     total_gen_tokens = pre_gen_tokens
     total_time = pre_time
+    replay_samples = 0
 
     if cfg.mode == "teach":
-        _run_replay(modules, tasks)
+        replay_samples += _run_replay(modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
             if "episodic" in modules:
@@ -634,7 +688,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                 modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
     else:
         for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
-            _run_replay(modules, tasks)
+            replay_samples += _run_replay(modules, tasks)
             post_rows, post_metrics, post_in_tokens, post_gen_tokens, post_time = _evaluate(
                 tasks,
                 modules,
@@ -659,8 +713,18 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         "rss_mb": _rss_mb(),
         "latency_ms_mean": sum(latencies) / max(1, len(latencies)),
     }
+    store_sizes = _store_sizes(modules)
     _write_outputs(
-        outdir, pre_rows, pre_metrics, post_rows, post_metrics, cfg, flat_ablate, compute
+        outdir,
+        pre_rows,
+        pre_metrics,
+        post_rows,
+        post_metrics,
+        cfg,
+        flat_ablate,
+        compute,
+        replay_samples=replay_samples,
+        store_sizes=store_sizes,
     )
 
 

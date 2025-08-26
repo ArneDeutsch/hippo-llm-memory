@@ -55,3 +55,32 @@ def test_time_ms_per_100_calculation(monkeypatch):
     total_tokens = in_tok + gen_tok
     expected = 100 * elapsed * 1000 / max(1, total_tokens)
     assert expected == 750.0
+
+
+def test_refusal_rate_detection(monkeypatch):
+    class DummyModel:
+        device = torch.device("cpu")
+
+        def generate(self, **inputs):
+            inp = inputs["input_ids"]
+            gen = torch.tensor([[5, 6]])
+            return torch.cat([inp, gen], dim=1)
+
+    tasks = [Task(prompt="p", answer="x")]
+
+    def fake_decode(ids, skip_special_tokens=True):
+        return "I cannot help with that"
+
+    tok = DummyTokenizer()
+    monkeypatch.setattr(tok, "decode", fake_decode)
+    rows, metrics, *_ = _evaluate(
+        tasks,
+        modules={},
+        tokenizer=tok,
+        model=DummyModel(),
+        max_new_tokens=2,
+        use_chat_template=False,
+        system_prompt=None,
+    )
+    assert rows
+    assert metrics["refusal_rate"] == 1.0

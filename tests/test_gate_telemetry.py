@@ -52,3 +52,4 @@ def test_gate_metrics_propagate(tmp_path: Path) -> None:
     gates = metrics.get("gates")
     assert gates is not None
     assert "relational" in gates and "spatial" in gates
+    assert "accepts" in gates["relational"]
