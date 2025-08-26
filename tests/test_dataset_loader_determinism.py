@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
-from scripts import jsonl_dataset
+from hippo_mem.training import jsonl_dataset
 
 
 def _collect_batches(ds, seed: int) -> list[list[str]]:

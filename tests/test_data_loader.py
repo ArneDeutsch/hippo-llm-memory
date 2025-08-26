@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts import jsonl_dataset
+from hippo_mem.training import jsonl_dataset
 
 
 def test_load_jsonl_files_builds_text(tmp_path: Path) -> None:

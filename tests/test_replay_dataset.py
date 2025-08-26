@@ -5,7 +5,7 @@ import itertools
 from hypothesis import given
 from hypothesis import strategies as st
 
-from scripts.replay_dataset import ReplayIterableDataset
+from hippo_mem.training.replay_dataset import ReplayIterableDataset
 
 
 def test_replay_dataset_interleaves_samples() -> None:

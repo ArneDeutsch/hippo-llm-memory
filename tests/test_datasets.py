@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from hippo_mem.eval import datasets as build_datasets
-from scripts import jsonl_dataset
+from hippo_mem.training import jsonl_dataset
 
 SUITES = ["episodic", "semantic", "spatial"]
 
