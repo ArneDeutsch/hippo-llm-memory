@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 import torch
+from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from hippo_mem.common import CrossAttnAdapter, CrossAttnConfig, MemoryTokens
 
@@ -60,17 +61,13 @@ def test_forward_pass_shapes() -> None:
     # Without FlashAttention
     cfg = CrossAttnConfig(hidden_size=8, num_heads=2, flash_attention=False)
     adapter = CrossAttnAdapter(cfg)
-    with torch.backends.cuda.sdp_kernel(
-        enable_flash=False, enable_math=True, enable_mem_efficient=True
-    ):
+    with sdpa_kernel([SDPBackend.MATH, SDPBackend.EFFICIENT_ATTENTION]):
         out = adapter(hidden, memory)
     assert out.shape == (1, 3, 8)
 
     # With FlashAttention
     cfg_flash = CrossAttnConfig(hidden_size=8, num_heads=2, flash_attention=True)
     adapter_flash = CrossAttnAdapter(cfg_flash)
-    with torch.backends.cuda.sdp_kernel(
-        enable_flash=True, enable_math=False, enable_mem_efficient=False
-    ):
+    with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
         out_flash = adapter_flash(hidden, memory)
     assert out_flash.shape == (1, 3, 8)
