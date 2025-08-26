@@ -6,13 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-try:  # pragma: no cover - import fallback for script execution
-    from .build_datasets import sha256_file
-except ImportError:  # pragma: no cover
-    import sys
-
-    sys.path.append(str(Path(__file__).resolve().parent.parent))
-    from scripts.build_datasets import sha256_file
+from hippo_mem.eval.datasets import sha256_file
 
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]

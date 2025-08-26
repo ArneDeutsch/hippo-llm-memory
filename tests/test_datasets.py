@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from scripts import build_datasets
+from hippo_mem.eval import datasets as build_datasets
 
 SUITES = ["episodic", "semantic", "spatial"]
 
