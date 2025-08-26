@@ -17,9 +17,7 @@ from hippo_mem.retrieval.faiss_index import FaissIndex
     ),
     data=st.data(),
 )
-def test_vector_index_roundtrip(
-    vectors: list[np.ndarray], data: st.DataObject
-) -> None:
+def test_vector_index_roundtrip(vectors: list[np.ndarray], data: st.DataObject) -> None:
     """Round-trip add → update → remove maintains search rankings."""
 
     index = FaissIndex(dim=4)
@@ -28,9 +26,7 @@ def test_vector_index_roundtrip(
         index.add(vec.tolist())
         expected.append(vec)
 
-    query = data.draw(
-        hnp.arrays(np.float32, 4, elements=st.floats(-1.0, 1.0))
-    )
+    query = data.draw(hnp.arrays(np.float32, 4, elements=st.floats(-1.0, 1.0)))
 
     def expected_ranking() -> list[int]:
         if not expected:
@@ -50,9 +46,7 @@ def test_vector_index_roundtrip(
         reverse=True,
     )
     for idx in update_indices:
-        new_vec = data.draw(
-            hnp.arrays(np.float32, 4, elements=st.floats(-1.0, 1.0))
-        )
+        new_vec = data.draw(hnp.arrays(np.float32, 4, elements=st.floats(-1.0, 1.0)))
         index.remove(idx)
         index.add(new_vec.tolist())
         expected.pop(idx)
