@@ -11,7 +11,7 @@ def test_load_jsonl_files_builds_text(tmp_path: Path) -> None:
 
     file = tmp_path / "sample.jsonl"
     items = [
-        {"prompt": "p1", "answer": "a1"},
+        {"prompt": "p1", "answer": "a1", "trajectory": ["s1", "s2"]},
         {"prompt": "p2", "answer": "a2"},
         {"prompt": "p3", "answer": "a3"},
     ]
@@ -22,6 +22,8 @@ def test_load_jsonl_files_builds_text(tmp_path: Path) -> None:
     assert ds.num_rows == 3
     assert ds[0]["text"] == "p1\nAnswer: a1"
     assert all("text" in row for row in ds)
+    assert "trajectory" in ds.column_names
+    assert ds[0]["trajectory"] == ["s1", "s2"]
 
 
 def test_load_jsonl_files_skips_blank_lines(tmp_path: Path) -> None:
