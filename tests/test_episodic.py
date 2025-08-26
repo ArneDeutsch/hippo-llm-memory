@@ -470,8 +470,19 @@ def test_stop_background_tasks_idempotent() -> None:
     store.start_background_tasks(interval=0.01)
     store.write(np.ones(2, dtype="float32"), TraceValue(provenance="x"))
     time.sleep(0.02)
+    assert store._task_manager is not None
+    assert store._task_manager._thread is not None
+    maintenance_before = store.log_status()["maintenance"]
+    assert maintenance_before > 0
     store.stop_background_tasks()
+    assert store._task_manager._thread is None
+    maintenance_after = store.log_status()["maintenance"]
+    time.sleep(0.02)
+    assert store.log_status()["maintenance"] == maintenance_after
     store.stop_background_tasks()
+    time.sleep(0.02)
+    assert store.log_status()["maintenance"] == maintenance_after
+    assert store._task_manager._thread is None
 
 
 def test_sparse_query_retrieves_correct_trace() -> None:

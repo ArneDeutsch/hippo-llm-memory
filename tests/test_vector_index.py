@@ -70,8 +70,12 @@ def test_pq_train_requires_data() -> None:
     """Training a PQ index on empty data raises an error."""
     index = VectorIndex(dim=4, index_str="PQ2", train_threshold=1)
     empty = np.empty((0, 4), dtype="float32")
-    with pytest.raises(RuntimeError):
+    assert not index.is_trained
+    assert index.ntotal == 0
+    with pytest.raises(RuntimeError, match="Number of training points"):
         index.index.train(empty)
+    assert not index.is_trained
+    assert index.ntotal == 0
 
 
 def test_add_raises_on_dimension_mismatch() -> None:
