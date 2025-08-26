@@ -27,7 +27,10 @@ class DummyPlainTokenizer:
 
     def __call__(self, prompt, return_tensors):
         assert return_tensors == "pt"
-        return {"input_ids": torch.tensor([[4, 5]])}
+        return {
+            "input_ids": torch.tensor([[4, 5]]),
+            "attention_mask": torch.tensor([[1, 1]]),
+        }
 
     def decode(self, ids, skip_special_tokens=True):  # pragma: no cover - simple helper
         return " ".join(str(x.item()) for x in ids)
@@ -46,12 +49,14 @@ def test_encode_prompt_uses_chat_template():
     tok = DummyChatTokenizer()
     out = encode_prompt(tok, "hi", torch.device("cpu"))
     assert torch.equal(out["input_ids"], torch.tensor([[1, 2, 3]]))
+    assert torch.equal(out["attention_mask"], torch.ones(1, 3, dtype=torch.long))
 
 
 def test_encode_prompt_falls_back_to_plain_tokenizer():
     tok = DummyPlainTokenizer()
     out = encode_prompt(tok, "hi", torch.device("cpu"))
     assert torch.equal(out["input_ids"], torch.tensor([[4, 5]]))
+    assert torch.equal(out["attention_mask"], torch.tensor([[1, 1]]))
 
 
 def test_generated_slice_excludes_input():
