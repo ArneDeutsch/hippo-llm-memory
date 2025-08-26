@@ -33,7 +33,7 @@ def test_time_ms_per_100_calculation(monkeypatch):
     # Sequence of perf_counter calls: t0, item_t0, item_t1, t1
     times = iter([0.0, 0.0, 0.02, 0.03])
     monkeypatch.setattr(time, "perf_counter", lambda: next(times))
-    _, _, in_tok, gen_tok, elapsed = _evaluate(
+    rows, metrics, in_tok, gen_tok, elapsed = _evaluate(
         tasks,
         modules={},
         tokenizer=DummyTokenizer(),
@@ -42,6 +42,13 @@ def test_time_ms_per_100_calculation(monkeypatch):
         use_chat_template=False,
         system_prompt=None,
     )
+
+    assert in_tok == 2
+    assert gen_tok == 2
+    assert elapsed == 0.03
+    assert rows[0]["pred"] == "3 4"
+    assert metrics["em"] == 1.0
+
     total_tokens = in_tok + gen_tok
     expected = 100 * elapsed * 1000 / max(1, total_tokens)
     assert expected == 750.0
