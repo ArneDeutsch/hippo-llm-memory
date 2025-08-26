@@ -1,7 +1,12 @@
 import json
 from pathlib import Path
 
+import pytest
+import torch
+from torch.utils.data import DataLoader
+
 from hippo_mem.eval import datasets as build_datasets
+from scripts import jsonl_dataset
 
 SUITES = ["episodic", "semantic", "spatial"]
 
@@ -67,3 +72,34 @@ def test_spatial_trajectory() -> None:
     items = build_datasets.generate_spatial(3, seed=0)
     traj_items = [t for t in items if "trajectory" in t]
     assert traj_items and traj_items[0]["trajectory"][-1] == traj_items[0]["answer"]
+
+
+def test_loader_rejects_corrupted_json(tmp_path: Path) -> None:
+    """Corrupted JSON lines raise :class:`JSONDecodeError`."""
+
+    file = tmp_path / "bad.jsonl"
+    file.write_text('{"prompt": "p1", "answer": "a1"}\n{bad line}\n')
+    with pytest.raises(json.JSONDecodeError):
+        jsonl_dataset.load_jsonl_files([str(file)])
+
+
+def _collect_batches(ds, seed: int) -> list[list[str]]:
+    generator = torch.Generator().manual_seed(seed)
+    loader = DataLoader(ds, batch_size=2, shuffle=True, generator=generator)
+    return [batch["text"] for batch in loader]
+
+
+def test_data_loader_seed_determinism(tmp_path: Path) -> None:
+    """DataLoader shuffling is deterministic for a given seed."""
+
+    file = tmp_path / "data.jsonl"
+    items = [{"prompt": f"p{i}", "answer": f"a{i}"} for i in range(6)]
+    with file.open("w", encoding="utf-8") as fh:
+        for item in items:
+            fh.write(json.dumps(item) + "\n")
+    ds = jsonl_dataset.load_jsonl_files([str(file)])
+    run1 = _collect_batches(ds, 1337)
+    run2 = _collect_batches(ds, 1337)
+    run3 = _collect_batches(ds, 4242)
+    assert run1 == run2
+    assert run1 != run3
