@@ -40,7 +40,8 @@ def _targets_gpt2(model: PreTrainedModel) -> List[str]:
 def _targets_llama(_: PreTrainedModel) -> List[str]:
     """Targets for LLaMA/Mistral style architectures."""
 
-    return ["q_proj", "k_proj", "v_proj", "o_proj"]
+    # q,v,o from attention and up/down from MLP as default LoRA hooks
+    return ["q_proj", "v_proj", "o_proj", "up_proj", "down_proj"]
 
 
 TARGET_MODULE_STRATEGIES: Dict[str, TargetModuleStrategy] = {
@@ -119,7 +120,17 @@ def inspect_first_block(model: PreTrainedModel) -> List[str]:
 
     names: set[str] = set()
     for name, _ in block.named_modules():
-        for target in ("q_proj", "k_proj", "v_proj", "o_proj", "qkv", "c_attn", "c_proj"):
+        for target in (
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "up_proj",
+            "down_proj",
+            "qkv",
+            "c_attn",
+            "c_proj",
+        ):
             if name.endswith(target):
                 names.add(target)
     return sorted(names)

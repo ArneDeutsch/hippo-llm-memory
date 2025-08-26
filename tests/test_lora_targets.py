@@ -56,6 +56,17 @@ def test_strategy_registration(monkeypatch) -> None:
         TARGET_MODULE_STRATEGIES.update(original)
 
 
+def test_llama_targets_include_mlp(monkeypatch) -> None:
+    """LLaMA-style configs hook attention and MLP projections."""
+
+    monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    model = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    model.config.model_type = "llama"
+    targets = default_target_modules(model)
+    assert set(targets) == {"q_proj", "v_proj", "o_proj", "up_proj", "down_proj"}
+
+
 def test_fallback_decoder_layers() -> None:
     """Models without ``model_type`` use ``decoder.layers`` to infer targets."""
 
