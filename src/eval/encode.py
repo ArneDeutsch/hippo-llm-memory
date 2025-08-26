@@ -19,13 +19,12 @@ def encode_prompt(
     use_chat_template: bool = True,
     system_prompt: str = "You are a helpful assistant.",
 ) -> Dict[str, torch.Tensor]:
-    """Return ``input_ids`` for ``prompt`` on ``device``.
+    """Return tokenized ``prompt`` for ``device``.
 
-    If ``use_chat_template`` is ``True`` and ``tokenizer`` supports
-    :func:`~transformers.PreTrainedTokenizer.apply_chat_template` with a defined
-    ``chat_template``, the prompt is wrapped in a simple system/user dialogue and
-    encoded via ``apply_chat_template``. Otherwise the prompt is tokenized
-    directly.
+    The returned mapping contains both ``input_ids`` and ``attention_mask`` so
+    downstream calls can pass an explicit mask to ``model.generate``.  This
+    avoids warnings from Transformers when ``pad_token_id`` matches
+    ``eos_token_id``.
     """
 
     has_chat = hasattr(tokenizer, "apply_chat_template") and getattr(
@@ -36,9 +35,20 @@ def encode_prompt(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ]
-        input_ids = tokenizer.apply_chat_template(
+        encoded = tokenizer.apply_chat_template(
             messages, add_generation_prompt=True, return_tensors="pt"
         )
+        if isinstance(encoded, torch.Tensor):
+            input_ids = encoded
+            attention_mask = torch.ones_like(input_ids)
+        else:  # pragma: no cover - future-proof for BatchEncoding
+            input_ids = encoded["input_ids"]
+            attention_mask = encoded.get("attention_mask", torch.ones_like(input_ids))
     else:
-        input_ids = tokenizer(prompt, return_tensors="pt")["input_ids"]
-    return {"input_ids": input_ids.to(device)}
+        encoded = tokenizer(prompt, return_tensors="pt")
+        input_ids = encoded["input_ids"]
+        attention_mask = encoded["attention_mask"]
+    return {
+        "input_ids": input_ids.to(device),
+        "attention_mask": attention_mask.to(device),
+    }

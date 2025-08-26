@@ -14,7 +14,10 @@ class DummyTokenizer:
     eos_token_id = 0
 
     def __call__(self, prompt, return_tensors):
-        return {"input_ids": torch.tensor([[1, 2]])}
+        return {
+            "input_ids": torch.tensor([[1, 2]]),
+            "attention_mask": torch.tensor([[1, 1]]),
+        }
 
     def decode(self, ids, skip_special_tokens=True):  # pragma: no cover - simple helper
         return " ".join(str(x.item()) for x in ids)
