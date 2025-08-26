@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts import eval_model, test_consolidation
+from hippo_mem.eval import harness as eval_model
+from scripts import test_consolidation
 
 
 def test_retrieval_requests_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
