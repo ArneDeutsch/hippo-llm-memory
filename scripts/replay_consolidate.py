@@ -28,6 +28,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from hippo_mem.adapters.lora import export_adapter, merge_adapter
 from hippo_mem.common import io
 from hippo_mem.consolidation import ReplayDataset
 
@@ -43,6 +44,7 @@ class Args:
     config: Optional[str]
     seed: int = 0
     kl_weight: float = 0.0
+    merge: bool = False
 
 
 def _parse_args(argv: Optional[List[str]] = None) -> Args:
@@ -54,6 +56,9 @@ def _parse_args(argv: Optional[List[str]] = None) -> Args:
     parser.add_argument("--config", default=None, help="YAML file with training and LoRA settings")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--kl_weight", type=float, default=0.0)
+    parser.add_argument(
+        "--merge", action="store_true", help="Merge adapter weights into the base model"
+    )
     ns = parser.parse_args(argv)
     return Args(
         store_dir=ns.store_dir,
@@ -63,6 +68,7 @@ def _parse_args(argv: Optional[List[str]] = None) -> Args:
         config=ns.config,
         seed=ns.seed,
         kl_weight=ns.kl_weight,
+        merge=ns.merge,
     )
 
 
@@ -185,13 +191,18 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
         replay_count += len(batch)
         logging.info("step=%d lr=%.2e loss=%.4f", step, cfg["train"]["lr"], float(loss))
     Path(args.outdir).mkdir(parents=True, exist_ok=True)
-    model.save_pretrained(args.outdir)
+    if args.merge:
+        merged = merge_adapter(model)
+        merged.save_pretrained(args.outdir)
+    else:
+        export_adapter(model, args.outdir)
     tokenizer.save_pretrained(args.outdir)
     meta = {
         "steps": step,
         "lr": cfg["train"]["lr"],
         "replay_samples": replay_count,
         "lora_config_hash": lora_hash,
+        "merged": args.merge,
     }
     io.atomic_write_json(Path(args.outdir) / "meta.json", meta)
     return meta
