@@ -32,6 +32,13 @@ class ReplayDataset(torch.utils.data.IterableDataset):
         by default ``{"episodic": 0.6, "relational": 0.3, "spatial": 0.1}``.
     seed : int, optional
         Random seed, by default ``0``.
+    teacher : callable, optional
+        Function called as ``teacher(record)`` returning a mapping with
+        optional ``{"text", "logits"}`` fields. When provided and a
+        sampled record lacks a ``"teacher"`` entry, the function is invoked
+        with the record and the returned value is stored under
+        ``record["teacher"]``. This enables optional distillation from a
+        teacher model run with memory enabled.
     """
 
     def __init__(
@@ -41,6 +48,7 @@ class ReplayDataset(torch.utils.data.IterableDataset):
         *,
         ratios: Optional[Dict[str, float]] = None,
         seed: int = 0,
+        teacher: Optional[Callable[[Dict[str, Any]], Optional[Dict[str, Any]]]] = None,
     ) -> None:
         super().__init__()
         self.store_dir = store_dir
@@ -51,6 +59,7 @@ class ReplayDataset(torch.utils.data.IterableDataset):
             "spatial": 0.1,
         }
         self.seed = seed
+        self.teacher = teacher
         self._stores: Dict[str, _StoreData] = {}
         self._load()
 
@@ -114,7 +123,14 @@ class ReplayDataset(torch.utils.data.IterableDataset):
             kind = rng.choice(kinds, p=probs)
             data = stores[kind]
             idx = int(rng.choice(len(data.records), p=data.weights))
-            rec = dict(data.records[idx])
+            base_rec = data.records[idx]
+
+            if self.teacher is not None and "teacher" not in base_rec:
+                teacher_out = self.teacher(base_rec)
+                if teacher_out is not None:
+                    base_rec["teacher"] = teacher_out
+
+            rec = dict(base_rec)
             rec["kind"] = kind
             yield rec
 
