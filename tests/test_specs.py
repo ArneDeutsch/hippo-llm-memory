@@ -11,9 +11,11 @@ def test_memory_tokens_shape_validation(monkeypatch):
     mod = importlib.reload(importlib.import_module("hippo_mem.common.specs"))
     tokens = torch.zeros(2, 3, 4)
     mask = torch.ones(2, 3, dtype=torch.bool)
-    mod.MemoryTokens(tokens=tokens, mask=mask)
+    mem = mod.MemoryTokens(tokens=tokens, mask=mask)
+    assert mem.tokens.shape == tokens.shape
+    assert mem.mask.shape == mask.shape
     bad_mask = torch.ones(2, 4, dtype=torch.bool)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="dimensions must align"):
         mod.MemoryTokens(tokens=tokens, mask=bad_mask)
 
 
