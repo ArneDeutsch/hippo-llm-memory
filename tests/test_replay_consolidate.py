@@ -73,3 +73,40 @@ def test_replay_consolidate_runs(tmp_path: Path) -> None:
     meta = json.loads((outdir / "meta.json").read_text())
     assert meta["replay_samples"] >= 1
     assert len(meta["lora_config_hash"]) > 10
+
+
+def test_replay_consolidate_merge(tmp_path: Path) -> None:
+    store_dir = _write_store(tmp_path / "stores")
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text(
+        "peft:\n  rank: 2\n  alpha: 2\n  dropout: 0.0\n  targets: [c_attn]\n"
+        "train:\n  lr: 1.0e-4\n  steps: 1\n  batch_size: 1\n"
+    )
+    outdir = tmp_path / "out"
+    env = os.environ.copy()
+    env.update(
+        {
+            "TRANSFORMERS_OFFLINE": "1",
+            "HF_HUB_OFFLINE": "1",
+            "HF_MODEL_PATH": "models/tiny-gpt2",
+        }
+    )
+    cmd = [
+        sys.executable,
+        "scripts/replay_consolidate.py",
+        "--store_dir",
+        str(store_dir),
+        "--session_id",
+        "s",
+        "--config",
+        str(cfg),
+        "--outdir",
+        str(outdir),
+        "--model",
+        "models/tiny-gpt2",
+        "--merge",
+    ]
+    subprocess.run(cmd, check=True, env=env)
+    has_bin = (outdir / "pytorch_model.bin").exists() or (outdir / "model.safetensors").exists()
+    assert has_bin
+    assert not (outdir / "adapter_model.bin").exists()

@@ -1,0 +1,16 @@
+peft:
+  method: lora
+  rank: 8
+  alpha: 16
+  dropout: 0.05
+  targets: [q_proj, v_proj, o_proj, up_proj, down_proj]
+train:
+  lr: 2.0e-4
+  steps: 4000
+  warmup_steps: 200
+  grad_accum: 2
+  batch_size: 16
+replay:
+  policy: priority
+  cycles: 1
+  mix: { episodic: 0.6, relational: 0.3, spatial: 0.1 }
