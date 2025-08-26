@@ -31,6 +31,7 @@ def test_eval_model_run_matrix(tmp_path: Path) -> None:
     assert metrics["seed"] == 1337
 
 
+@pytest.mark.slow
 def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
     """Matrix run handles numeric date without explicit outdir."""
 

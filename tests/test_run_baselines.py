@@ -7,9 +7,11 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.slow
+
 CASES = [
     (["baselines/core"], [1337]),
-    pytest.param(["baselines/core", "baselines/rag"], [1337, 2025], marks=pytest.mark.slow),
+    (["baselines/core", "baselines/rag"], [1337, 2025]),
 ]
 
 

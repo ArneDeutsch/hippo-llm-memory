@@ -3,14 +3,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
-def test_run_matrix_generates_outputs(tmp_path: Path) -> None:
+
+@pytest.mark.parametrize(
+    "n_values,seeds",
+    [
+        ([2], [123]),
+        pytest.param([2, 3], [123, 456], marks=pytest.mark.slow),
+    ],
+)
+def test_run_matrix_generates_outputs(
+    tmp_path: Path, n_values: list[int], seeds: list[int]
+) -> None:
     """Matrix run writes metrics for each combination."""
 
     script = Path(__file__).resolve().parents[1] / "scripts" / "eval_bench.py"
     outdir = tmp_path / "matrix_runs"
-    n_values = [2, 3]
-    seeds = [123, 456]
     cmd = [
         sys.executable,
         str(script),
