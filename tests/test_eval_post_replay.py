@@ -20,6 +20,30 @@ def test_post_replay_cycle_generates_metrics(tmp_path: Path) -> None:
     csv_path = outdir / "metrics.csv"
     assert csv_path.exists()
     with csv_path.open() as f:
-        flags = [row["flags"] for row in csv.DictReader(f)]
+        reader = csv.DictReader(f)
+        headers = reader.fieldnames or []
+        expected_headers = {
+            "idx",
+            "prompt",
+            "answer",
+            "pred",
+            "correct",
+            "latency_ms",
+            "time_ms_per_100",
+            "rss_mb",
+            "flags",
+            "gating_enabled",
+        }
+        assert expected_headers.issubset(headers)
+        rows = list(reader)
+
+    flags = {row["flags"] for row in rows}
     assert "pre_replay" in flags
-    assert "post_replay_1" in flags
+    assert any(flag.startswith("post_replay") for flag in flags)
+
+    pre = {row["prompt"]: row for row in rows if row["flags"] == "pre_replay"}
+    post = {row["prompt"]: row for row in rows if row["flags"].startswith("post_replay")}
+    assert pre and post
+    for prompt, pre_row in pre.items():
+        post_row = post[prompt]
+        assert float(pre_row["latency_ms"]) != float(post_row["latency_ms"])
