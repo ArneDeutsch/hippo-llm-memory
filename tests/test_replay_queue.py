@@ -46,6 +46,19 @@ def test_replay_queue_weighting() -> None:
     assert q.sample(3)[0] == "c"
 
 
+def test_replay_queue_maxlen_trimming() -> None:
+    """Oldest trace is dropped once maxlen is exceeded."""
+
+    key1 = np.array([1.0, 0.0], dtype="float32")
+    key2 = np.array([0.0, 1.0], dtype="float32")
+    key3 = np.array([1.0, 1.0], dtype="float32")
+    q = ReplayQueue(maxlen=2)
+    q.add("a", key1, score=0.1)
+    q.add("b", key2, score=0.2)
+    q.add("c", key3, score=0.3)
+    assert [item.trace_id for item in q.items] == ["b", "c"]
+
+
 @settings(max_examples=25, deadline=None)
 @given(
     base=hnp.arrays(np.float32, 2, elements=st.floats(-1.0, 1.0)),
