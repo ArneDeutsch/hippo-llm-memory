@@ -141,6 +141,13 @@ def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
         delta = _compute_delta(pre_metrics, data)
         data["delta"] = delta
         io.atomic_write_json(result_path, data)
+        if (
+            args.suite == "episodic"
+            and args.n == 50
+            and args.seed == 1337
+            and delta.get("em", 0.0) < 0.20
+        ):
+            raise RuntimeError("EM uplift < +0.20 on episodic@50 seed=1337")
     if tmp_dir is not None:
         tmp_dir.cleanup()
     return data

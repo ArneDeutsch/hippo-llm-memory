@@ -349,6 +349,29 @@ def _store_sizes(modules: Dict[str, Dict[str, object]]) -> Dict[str, int]:
     return sizes
 
 
+def _enforce_guardrails(
+    cfg: DictConfig,
+    pre_metrics: Dict[str, float],
+    post_metrics: Optional[Dict[str, float]],
+    retrieval_snaps: Dict[str, Dict[str, float]],
+    *,
+    has_memory: bool,
+) -> None:
+    """Raise errors when CI guardrails are violated."""
+
+    if has_memory and not cfg.get("memory_off"):
+        total = sum(int(snap.get("requests", 0)) for snap in retrieval_snaps.values())
+        if total == 0:
+            raise RuntimeError("retrieval.requests == 0 for memory run")
+
+    if cfg.get("use_chat_template") and int(cfg.get("max_new_tokens", 0)) <= 16:
+        rates = [pre_metrics.get("refusal_rate", 0.0)]
+        if post_metrics is not None:
+            rates.append(post_metrics.get("refusal_rate", 0.0))
+        if any(rate > 0.5 for rate in rates):
+            raise RuntimeError("refusal rate > 0.5 on span suite")
+
+
 def run_suite(
     cfg: EvalConfig,
 ) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
@@ -409,6 +432,7 @@ def run_suite(
 
     total_tokens = in_tokens + gen_tokens
     store_sizes = _store_sizes(modules)
+    retrieval_snaps = registry.all_snapshots()
     metrics_dict = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -425,7 +449,7 @@ def run_suite(
                 "latency_ms_mean": lat_mean,
             },
         },
-        "retrieval": registry.all_snapshots(),
+        "retrieval": retrieval_snaps,
         "gates": gate_registry.all_snapshots(),
         "replay": {"samples": replay_samples},
         "store": {
@@ -433,6 +457,7 @@ def run_suite(
             "per_memory": store_sizes,
         },
     }
+    _enforce_guardrails(base_cfg, metrics, None, retrieval_snaps, has_memory=bool(modules))
     return rows, metrics_dict, flat_ablate
 
 
@@ -726,6 +751,9 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         replay_samples=replay_samples,
         store_sizes=store_sizes,
     )
+
+    retrieval_snaps = registry.all_snapshots()
+    _enforce_guardrails(cfg, pre_metrics, post_metrics, retrieval_snaps, has_memory=bool(modules))
 
 
 def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
