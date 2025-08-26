@@ -54,3 +54,17 @@ def test_persistence_roundtrip(tmp_path) -> None:
     store.delete(tid)
     store = _reload_store(str(path), dim=4, ids=[tid])
     assert store.recall(vec, k=1) == []
+
+
+def test_collision_rollback() -> None:
+    """Colliding keys pruned then restored by rollback."""
+    store = EpisodicStore(dim=4, k_wta=1)
+    a = np.array([1.0, 0.2, 0.0, 0.0], dtype="float32")
+    b = np.array([0.9, 0.3, 0.0, 0.0], dtype="float32")
+    id_a = store.write(a, TraceValue(provenance="a"))
+    id_b = store.write(b, TraceValue(provenance="b"))
+    store.prune(min_salience=1.1)
+    assert store.recall(a, k=2) == []
+    store.rollback()
+    res = store.recall(np.array([1.0, 0.0, 0.0, 0.0], dtype="float32"), k=2)
+    assert {r.id for r in res} == {id_a, id_b}
