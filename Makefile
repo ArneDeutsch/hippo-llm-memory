@@ -13,10 +13,10 @@ lint:
 	black --check .
 
 test:
-	pytest -q -m "not slow"
+	pytest -q
 
 slow-test:
-	pytest -q -m slow
+	pytest -q -m slow --runslow
 
 
 type:
