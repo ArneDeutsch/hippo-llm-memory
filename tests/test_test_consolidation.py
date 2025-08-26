@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def _write_store(base: Path) -> Path:
     session = base / "sid"
@@ -15,6 +17,7 @@ def _write_store(base: Path) -> Path:
     return base
 
 
+@pytest.mark.slow
 def test_test_consolidation_pre_post(tmp_path: Path) -> None:
     repo = Path(__file__).resolve().parents[1]
     env = os.environ.copy()

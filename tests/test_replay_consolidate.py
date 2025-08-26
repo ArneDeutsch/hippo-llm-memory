@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from scripts.replay_consolidate import parse_args
 
 
@@ -39,6 +41,7 @@ def test_parse_args(tmp_path: Path) -> None:
     assert args.config == str(cfg)
 
 
+@pytest.mark.slow
 def test_replay_consolidate_runs(tmp_path: Path) -> None:
     store_dir = _write_store(tmp_path / "stores")
     cfg = tmp_path / "cfg.yaml"
@@ -75,6 +78,7 @@ def test_replay_consolidate_runs(tmp_path: Path) -> None:
     assert len(meta["lora_config_hash"]) > 10
 
 
+@pytest.mark.slow
 def test_replay_consolidate_merge(tmp_path: Path) -> None:
     store_dir = _write_store(tmp_path / "stores")
     cfg = tmp_path / "cfg.yaml"
