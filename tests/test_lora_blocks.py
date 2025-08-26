@@ -15,7 +15,13 @@ from hippo_mem.adapters.lora import (
 def test_targets_llama_returns_projection_names() -> None:
     """_targets_llama returns the canonical projection modules."""
 
-    assert _targets_llama(object()) == ["q_proj", "k_proj", "v_proj", "o_proj"]
+    assert _targets_llama(object()) == [
+        "q_proj",
+        "v_proj",
+        "o_proj",
+        "up_proj",
+        "down_proj",
+    ]
 
 
 def test_block_gpt2_missing_layers_returns_none() -> None:
