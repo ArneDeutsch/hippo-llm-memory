@@ -37,6 +37,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Dict, List, Optional
 
+import hydra
 import numpy as np
 import torch
 import yaml
@@ -609,3 +610,14 @@ def main(cfg: DictConfig) -> None:
             else:
                 outdir_path = Path("runs") / date / preset_path.name / cfg.suite
         evaluate(cfg, outdir_path)
+
+
+@hydra.main(version_base=None, config_path="../../configs/eval", config_name="default")
+def cli(cfg: DictConfig) -> None:  # pragma: no cover - CLI entry point
+    """Hydra entry point forwarding to :func:`main`."""
+
+    main(cfg)
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    cli()
