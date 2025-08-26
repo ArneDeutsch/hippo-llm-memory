@@ -1,3 +1,4 @@
+import json
 import sys
 import threading
 import types
@@ -7,7 +8,6 @@ from hippo_mem.common.io import (
     atomic_write_json,
     atomic_write_jsonl,
     read_json,
-    read_jsonl,
     read_parquet,
 )
 
@@ -45,7 +45,23 @@ def test_atomic_write_jsonl_no_interleaving(tmp_path):
     t1.join()
     t2.join()
 
-    assert list(read_jsonl(file)) in (records_a, records_b)
+    # File must exist after concurrent writes
+    assert file.exists()
+
+    # File size should match one of the complete record sets
+    size_a = sum(len(json.dumps(rec)) + 1 for rec in records_a)
+    size_b = sum(len(json.dumps(rec)) + 1 for rec in records_b)
+    assert file.stat().st_size in (size_a, size_b)
+
+    # Reload the file and ensure no partial lines are present
+    content = file.read_text()
+    assert content.endswith("\n")
+    lines = content.splitlines()
+    assert len(lines) in (len(records_a), len(records_b))
+
+    # Only one complete record set should exist
+    parsed = [json.loads(line) for line in lines]
+    assert parsed in (records_a, records_b)
 
 
 def test_read_parquet_mock(monkeypatch, tmp_path):
