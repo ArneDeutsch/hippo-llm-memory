@@ -5,7 +5,7 @@ import pytest
 from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.map import PlaceGraph
-from scripts.train_lora import ingest_spatial_traces
+from hippo_mem.training.lora import ingest_spatial_traces
 
 
 def test_spatial_gate_reduces_repeats() -> None:

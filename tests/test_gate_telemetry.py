@@ -6,7 +6,7 @@ from hippo_mem.eval.harness import EvalConfig, run_suite
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
-from scripts.train_lora import build_spatial_gate, ingest_spatial_traces
+from hippo_mem.training.lora import build_spatial_gate, ingest_spatial_traces
 
 
 def test_gate_counters_increment() -> None:

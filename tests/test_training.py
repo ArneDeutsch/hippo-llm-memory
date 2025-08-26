@@ -11,7 +11,7 @@ import torch
 
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
 from hippo_mem.common import MemoryTokens
-from scripts.train_lora import (
+from hippo_mem.training.lora import (
     TrainConfig,
     _init_sft_trainer,
     _load_model_and_tokenizer,
@@ -45,12 +45,14 @@ def test_train_sets_seeds(monkeypatch) -> None:
 
     calls: dict[str, int] = {}
 
-    monkeypatch.setattr("scripts.train_lora.random.seed", lambda v: calls.setdefault("py", v))
-    monkeypatch.setattr("scripts.train_lora.np.random.seed", lambda v: calls.setdefault("np", v))
+    monkeypatch.setattr("hippo_mem.training.lora.random.seed", lambda v: calls.setdefault("py", v))
     monkeypatch.setattr(
-        "scripts.train_lora.torch.manual_seed", lambda v: calls.setdefault("torch", v)
+        "hippo_mem.training.lora.np.random.seed", lambda v: calls.setdefault("np", v)
     )
-    monkeypatch.setattr("scripts.train_lora.torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr(
+        "hippo_mem.training.lora.torch.manual_seed", lambda v: calls.setdefault("torch", v)
+    )
+    monkeypatch.setattr("hippo_mem.training.lora.torch.cuda.is_available", lambda: False)
 
     def fake_loader(_cfg: TrainConfig):
         model = SimpleNamespace(config=SimpleNamespace(use_cache=False, hidden_size=8))
@@ -59,9 +61,9 @@ def test_train_sets_seeds(monkeypatch) -> None:
         tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
         return model, tokenizer
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters",
+        "hippo_mem.training.lora.attach_adapters",
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
 
@@ -85,10 +87,10 @@ def test_train_dry_run_skips_dataset(monkeypatch) -> None:
     def _raise(*_args, **_kwargs):  # pragma: no cover - should not be called
         raise AssertionError("dataset should not be loaded during dry run")
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
-    monkeypatch.setattr("scripts.train_lora.load_dataset", _raise)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora.load_dataset", _raise)
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters",
+        "hippo_mem.training.lora.attach_adapters",
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
 
@@ -163,24 +165,24 @@ def test_adapter_ablation_flags(monkeypatch) -> None:
         created.append("spatial")
         return SimpleNamespace()
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
-    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
-    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
-    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
-    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("hippo_mem.training.lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("hippo_mem.training.lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("hippo_mem.training.lora.log_memory_status", lambda *a, **k: None)
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters",
+        "hippo_mem.training.lora.attach_adapters",
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters",
+        "hippo_mem.training.lora.attach_adapters",
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
-    monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", fake_epi)
-    monkeypatch.setattr("scripts.train_lora.RelationalMemoryAdapter", fake_rel)
-    monkeypatch.setattr("scripts.train_lora.SpatialAdapter", fake_spat)
+    monkeypatch.setattr("hippo_mem.training.lora.EpisodicAdapter", fake_epi)
+    monkeypatch.setattr("hippo_mem.training.lora.RelationalMemoryAdapter", fake_rel)
+    monkeypatch.setattr("hippo_mem.training.lora.SpatialAdapter", fake_spat)
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters",
+        "hippo_mem.training.lora.attach_adapters",
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
 
@@ -268,18 +270,20 @@ def test_replay_flag_controls_scheduler(monkeypatch) -> None:
 
         return Dummy()
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
-    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
-    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
-    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
-    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
-    monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", lambda cfg: SimpleNamespace())
-    monkeypatch.setattr("scripts.train_lora.RelationalMemoryAdapter", lambda: SimpleNamespace())
-    monkeypatch.setattr("scripts.train_lora.SpatialAdapter", lambda cfg: SimpleNamespace())
-    monkeypatch.setattr("scripts.train_lora.ReplayScheduler", fake_scheduler)
-    monkeypatch.setattr("scripts.train_lora.ConsolidationWorker", fake_worker)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("hippo_mem.training.lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("hippo_mem.training.lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("hippo_mem.training.lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("hippo_mem.training.lora.EpisodicAdapter", lambda cfg: SimpleNamespace())
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters",
+        "hippo_mem.training.lora.RelationalMemoryAdapter", lambda: SimpleNamespace()
+    )
+    monkeypatch.setattr("hippo_mem.training.lora.SpatialAdapter", lambda cfg: SimpleNamespace())
+    monkeypatch.setattr("hippo_mem.training.lora.ReplayScheduler", fake_scheduler)
+    monkeypatch.setattr("hippo_mem.training.lora.ConsolidationWorker", fake_worker)
+    monkeypatch.setattr(
+        "hippo_mem.training.lora.attach_adapters",
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
 
@@ -307,11 +311,11 @@ def test_flash_attention_toggle(monkeypatch) -> None:
             called["impl"] = name
 
     monkeypatch.setattr(
-        "scripts.train_lora.AutoModelForCausalLM.from_pretrained",
+        "hippo_mem.training.lora.AutoModelForCausalLM.from_pretrained",
         lambda *a, **k: DummyModel(),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.AutoTokenizer.from_pretrained",
+        "hippo_mem.training.lora.AutoTokenizer.from_pretrained",
         lambda *a, **k: SimpleNamespace(pad_token=None, eos_token="<eos>"),
     )
 
@@ -361,11 +365,11 @@ def test_train_respects_mqa_gqa_flag(monkeypatch) -> None:
         def log_status(self) -> str:
             return "map"
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
-    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
-    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
-    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
-    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("hippo_mem.training.lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("hippo_mem.training.lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("hippo_mem.training.lora.log_memory_status", lambda *a, **k: None)
 
     captured: dict[str, int] = {}
 
@@ -377,10 +381,10 @@ def test_train_respects_mqa_gqa_flag(monkeypatch) -> None:
         captured["spatial"] = cfg.num_kv_heads
         return SimpleNamespace()
 
-    monkeypatch.setattr("scripts.train_lora.EpisodicAdapter", capture_epi)
-    monkeypatch.setattr("scripts.train_lora.SpatialAdapter", capture_spat)
+    monkeypatch.setattr("hippo_mem.training.lora.EpisodicAdapter", capture_epi)
+    monkeypatch.setattr("hippo_mem.training.lora.SpatialAdapter", capture_spat)
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters",
+        "hippo_mem.training.lora.attach_adapters",
         lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
 
@@ -483,11 +487,11 @@ def test_train_respects_hopfield_flag(monkeypatch) -> None:
         tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
         return model, tokenizer
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
-    monkeypatch.setattr("scripts.train_lora.EpisodicStore", DummyStore)
-    monkeypatch.setattr("scripts.train_lora.KnowledgeGraph", DummyKG)
-    monkeypatch.setattr("scripts.train_lora.PlaceGraph", DummyMap)
-    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora.EpisodicStore", DummyStore)
+    monkeypatch.setattr("hippo_mem.training.lora.KnowledgeGraph", DummyKG)
+    monkeypatch.setattr("hippo_mem.training.lora.PlaceGraph", DummyMap)
+    monkeypatch.setattr("hippo_mem.training.lora.log_memory_status", lambda *a, **k: None)
 
     cfg = parse_args(["dry_run=true", "episodic.hopfield=false", "replay.enabled=false"])
     train(cfg)
@@ -521,7 +525,7 @@ class DummyTrainer:
     )
 
     DummyTrainer = namespace["DummyTrainer"]
-    monkeypatch.setattr("scripts.train_lora.SFTTrainer", DummyTrainer)
+    monkeypatch.setattr("hippo_mem.training.lora.SFTTrainer", DummyTrainer)
 
     _init_sft_trainer("m", "d", "a", "tok", "p")
 
@@ -550,23 +554,23 @@ def test_train_skips_retrieval_when_disabled(monkeypatch) -> None:
     def raise_call(*_a, **_k):  # pragma: no cover - should not run
         raise AssertionError("retrieval should be disabled")
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr(
-        "scripts.train_lora.EpisodicStore",
+        "hippo_mem.training.lora.EpisodicStore",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.KnowledgeGraph",
+        "hippo_mem.training.lora.KnowledgeGraph",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.PlaceGraph",
+        "hippo_mem.training.lora.PlaceGraph",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
-    monkeypatch.setattr("scripts.train_lora.episodic_retrieve_and_pack", raise_call)
-    monkeypatch.setattr("scripts.train_lora.relational_retrieve_and_pack", raise_call)
-    monkeypatch.setattr("scripts.train_lora.spatial_retrieve_and_pack", raise_call)
-    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("hippo_mem.training.lora.episodic_retrieve_and_pack", raise_call)
+    monkeypatch.setattr("hippo_mem.training.lora.relational_retrieve_and_pack", raise_call)
+    monkeypatch.setattr("hippo_mem.training.lora.spatial_retrieve_and_pack", raise_call)
+    monkeypatch.setattr("hippo_mem.training.lora.log_memory_status", lambda *a, **k: None)
 
     cfg = parse_args(["dry_run=true", "replay.enabled=false"])
     train(cfg)
@@ -599,33 +603,33 @@ def test_train_logs_episodic_retrieval(monkeypatch, caplog) -> None:
         meta = {"latency_ms": 1.0, "hit_rate": 1.0}
         return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr(
-        "scripts.train_lora.EpisodicStore",
+        "hippo_mem.training.lora.EpisodicStore",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.KnowledgeGraph",
+        "hippo_mem.training.lora.KnowledgeGraph",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.PlaceGraph",
+        "hippo_mem.training.lora.PlaceGraph",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
-    monkeypatch.setattr("scripts.train_lora.episodic_retrieve_and_pack", fake_retrieve)
+    monkeypatch.setattr("hippo_mem.training.lora.episodic_retrieve_and_pack", fake_retrieve)
     monkeypatch.setattr(
-        "scripts.train_lora.relational_retrieve_and_pack",
+        "hippo_mem.training.lora.relational_retrieve_and_pack",
         lambda *a, **k: MemoryTokens(
             tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
         ),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.spatial_retrieve_and_pack",
+        "hippo_mem.training.lora.spatial_retrieve_and_pack",
         lambda *a, **k: MemoryTokens(
             tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
         ),
     )
-    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("hippo_mem.training.lora.log_memory_status", lambda *a, **k: None)
 
     cfg = parse_args(
         [
@@ -672,13 +676,13 @@ def test_train_relational_retrieval(monkeypatch) -> None:
         meta = {"latency_ms": 1.0, "hit_rate": 1.0}
         return MemoryTokens(tokens=tokens, mask=mask, meta=meta)
 
-    monkeypatch.setattr("scripts.train_lora._load_model_and_tokenizer", fake_loader)
+    monkeypatch.setattr("hippo_mem.training.lora._load_model_and_tokenizer", fake_loader)
     monkeypatch.setattr(
-        "scripts.train_lora.EpisodicStore",
+        "hippo_mem.training.lora.EpisodicStore",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.KnowledgeGraph",
+        "hippo_mem.training.lora.KnowledgeGraph",
         lambda *a, **k: SimpleNamespace(
             start_background_tasks=lambda *_: None,
             dim=4,
@@ -686,23 +690,23 @@ def test_train_relational_retrieval(monkeypatch) -> None:
         ),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.PlaceGraph",
+        "hippo_mem.training.lora.PlaceGraph",
         lambda *a, **k: SimpleNamespace(start_background_tasks=lambda *_: None),
     )
-    monkeypatch.setattr("scripts.train_lora.relational_retrieve_and_pack", fake_retrieve)
+    monkeypatch.setattr("hippo_mem.training.lora.relational_retrieve_and_pack", fake_retrieve)
     monkeypatch.setattr(
-        "scripts.train_lora.episodic_retrieve_and_pack",
+        "hippo_mem.training.lora.episodic_retrieve_and_pack",
         lambda *a, **k: MemoryTokens(
             tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
         ),
     )
     monkeypatch.setattr(
-        "scripts.train_lora.spatial_retrieve_and_pack",
+        "hippo_mem.training.lora.spatial_retrieve_and_pack",
         lambda *a, **k: MemoryTokens(
             tokens=torch.zeros(0, 0, 0), mask=torch.zeros(0, 0, dtype=torch.bool)
         ),
     )
-    monkeypatch.setattr("scripts.train_lora.log_memory_status", lambda *a, **k: None)
+    monkeypatch.setattr("hippo_mem.training.lora.log_memory_status", lambda *a, **k: None)
 
     cfg = parse_args(
         [
@@ -779,19 +783,20 @@ def _run_training(monkeypatch, overrides: list[str]) -> dict[str, object]:
 
     tokenizer = SimpleNamespace(pad_token=None, eos_token="<eos>")
 
-    monkeypatch.setattr("scripts.train_lora.AsyncStoreWriter", DummyWriter)
+    monkeypatch.setattr("hippo_mem.training.lora.AsyncStoreWriter", DummyWriter)
     monkeypatch.setattr(
-        "scripts.train_lora._load_model_and_tokenizer", lambda cfg: (DummyModel(), tokenizer)
+        "hippo_mem.training.lora._load_model_and_tokenizer", lambda cfg: (DummyModel(), tokenizer)
     )
     monkeypatch.setattr(
-        "scripts.train_lora.attach_adapters", lambda *a, **k: {"target_block": 0, "num_blocks": 1}
+        "hippo_mem.training.lora.attach_adapters",
+        lambda *a, **k: {"target_block": 0, "num_blocks": 1},
     )
-    monkeypatch.setattr("scripts.train_lora._init_sft_trainer", FakeTrainer)
+    monkeypatch.setattr("hippo_mem.training.lora._init_sft_trainer", FakeTrainer)
     monkeypatch.setattr(
-        "scripts.train_lora.prepare_datasets", lambda cfg: ([{"text": "hi"}], [{"text": "hi"}])
+        "hippo_mem.training.lora.prepare_datasets", lambda cfg: ([{"text": "hi"}], [{"text": "hi"}])
     )
-    monkeypatch.setattr("scripts.train_lora.count_trainable_parameters", lambda _m: 1)
-    monkeypatch.setattr("scripts.train_lora.SFTConfig", lambda **kw: SimpleNamespace(**kw))
+    monkeypatch.setattr("hippo_mem.training.lora.count_trainable_parameters", lambda _m: 1)
+    monkeypatch.setattr("hippo_mem.training.lora.SFTConfig", lambda **kw: SimpleNamespace(**kw))
 
     cfg = parse_args(["max_steps=1", "write_threshold=0.0", *overrides])
     train(cfg)
