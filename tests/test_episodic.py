@@ -14,7 +14,7 @@ from hypothesis import strategies as st
 
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.episodic.adapter import AdapterConfig, EpisodicAdapter
-from hippo_mem.episodic.gating import WriteGate, k_wta, surprise
+from hippo_mem.episodic.gating import WriteGate, densify, k_wta, surprise
 from hippo_mem.episodic.replay import ReplayQueue, ReplayScheduler
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.episodic.store import EpisodicStore
@@ -493,3 +493,20 @@ def test_sparse_query_retrieves_correct_trace() -> None:
     cue = sparse.to_dense(sparse.sparse_encode(query, sparse.k_wta))
     sparse_res = sparse.recall(cue, k=1)
     assert sparse_res and sparse_res[0].value.provenance == "target"
+
+
+def test_densify_reconstructs_winner_values() -> None:
+    """k-WTA followed by densify restores winner values and zeros elsewhere."""
+
+    rng = np.random.default_rng(0)
+    vec = rng.normal(size=8).astype("float32")
+    key = k_wta(vec, k=3)
+    dense = densify(key)
+
+    # Winner positions match the original vector
+    assert np.allclose(dense[key.indices], vec[key.indices])
+
+    # Non-winner positions are zero
+    mask = np.ones(vec.size, dtype=bool)
+    mask[key.indices] = False
+    assert np.allclose(dense[mask], 0.0)
