@@ -1,0 +1,10 @@
+{"id": 0, "prompt": "Alice went to the Mall. --- FLUSH --- Where did Alice go?", "answer": "the Mall", "pred": "Mall."}
+{"id": 1, "prompt": "Bob went to the Cafe. --- FLUSH --- Where did Bob go?", "answer": "the Cafe", "pred": "Cafe"}
+{"id": 2, "prompt": "Carol went to the Mall. --- FLUSH --- Where did Carol go?", "answer": "the Mall", "pred": "Mall"}
+{"id": 3, "prompt": "Bob went to the Cafe. --- FLUSH --- Where did Bob go?", "answer": "the Cafe", "pred": "Cafe"}
+{"id": 4, "prompt": "Dave went to the Mall. --- FLUSH --- Where did Dave go?", "answer": "the Mall", "pred": "Mall."}
+{"id": 5, "prompt": "Alice went to the Cafe. --- FLUSH --- Where did Alice go?", "answer": "the Cafe", "pred": "Cafe"}
+{"id": 6, "prompt": "Alice went to the Library. --- FLUSH --- Where did Alice go?", "answer": "the Library", "pred": "Library."}
+{"id": 7, "prompt": "Dave went to the Cafe. --- FLUSH --- Where did Dave go?", "answer": "the Cafe", "pred": "Cafe"}
+{"id": 8, "prompt": "Dave went to the Cafe. --- FLUSH --- Where did Dave go?", "answer": "the Cafe", "pred": "Cafe"}
+{"id": 9, "prompt": "Alice went to the Cafe. --- FLUSH --- Where did Alice go?", "answer": "the Cafe", "pred": "Cafe."}
