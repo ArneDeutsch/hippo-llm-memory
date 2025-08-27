@@ -144,3 +144,26 @@ python scripts/test_consolidation.py --phase post   --suite episodic --n 50 --se
 ## 7) Why this is enough
 
 These edits align the milestone runbooks with the **actual harness behavior** and the **evaluation plan** so that executing the steps produces **auditable** evidence of: (a) baseline parity on span decoding, (b) targeted effects of each algorithm on its intended suite, and (c) systems consolidation gains with memory disabled post‑LoRA.
+
+Short version: treat **DATE as a “cohort” identifier**. For Milestone 9 you should use **one single DATE for the entire batch (H0→H4)** so baselines and memory runs land under the **same** `runs/<DATE>/…` tree and your summaries/reports cover them together.
+
+## 8) How to handle DATE
+
+Why this is the *intended* way in this repo:
+
+* The harness writes outputs under `runs/<date>/<preset>/<suite>/<size>_<seed>/…` (see `hippo_mem/eval/harness.py`). `scripts/report.py` and `scripts/summarize_runs.py` both **scan a single `runs/<date>` root** to build cohort-level summaries and the top-level report in `reports/<date>/…`. If baselines and memory runs use different dates, the default report won’t show them side-by-side.
+* The EVAL plan validates each algorithm *relative to baselines* (HEI-NW→episodic, SGC-RSS→semantic, SMPD→spatial). That comparison is clearest when the runs are under the **same date** so the report scripts collect both sets in one pass.
+* M9’s acceptance gates include baseline completeness **and** memory-preset telemetry; they’re designed to be checked together.
+
+So:
+
+* **Milestone 9 (baselines + memory grid):** pick `DATE=…` **once** at the start and reuse it for all steps H0–H4. Then run `scripts/summarize_runs.py runs/$DATE …` or `scripts/report.py --date $DATE` to get a single, coherent report.
+
+* **Milestone 9.5 (consolidation):** you have two reasonable options:
+
+  * **Same DATE** if it’s the *continuation* of the same experiment (makes `--pre_dir runs/$DATE/consolidation/pre` trivial and puts the 9.5 report alongside the M9 results under `reports/<DATE>`).
+  * **New DATE** only if you intentionally start a *new* experiment (different model/config/data). In that case keep **pre/post of 9.5 under the same new DATE**, and pass `--pre_dir` accordingly.
+
+* **When would “memory grid alone” with its own DATE be OK?** Only if you explicitly want to *isolate* a memory-preset tweak and **you are not producing a combined report**. If you still need baseline comparison in the same report, re-run (or copy in) the baselines under that same DATE.
+
+Rule of thumb: **one DATE per auditable experiment** (fixed commit, model list, dataset build, seed set). If any of those change, start a new DATE; otherwise keep them together.
