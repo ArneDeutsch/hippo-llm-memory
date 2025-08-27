@@ -1,1 +1,0 @@
-{"suite": "semantic", "n": 1000, "seed": 4242, "preset": "baselines/longctx", "metrics": {"semantic": {"em": 1.0}, "compute": {"tokens": 19000}}, "memory": {}}
