@@ -88,6 +88,76 @@ def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[s
     return tasks
 
 
+def generate_episodic_multi(
+    size: int,
+    seed: int,
+    distractors: int = 8,
+    corrections: bool = True,
+) -> List[Dict[str, object]]:
+    """Multi-turn episodes with distractors and optional corrections."""
+
+    rng = random.Random(seed)
+    people = ["Alice", "Bob", "Carol", "Dave"]
+    colors = ["red", "blue", "green", "yellow"]
+    tasks: List[Dict[str, object]] = []
+    for _ in range(size):
+        who = rng.choice(people)
+        first_color = rng.choice(colors)
+        distractor_sents = [
+            f"Distractor: {rng.choice(people)} likes {rng.choice(colors)}."
+            for _ in range(distractors)
+        ]
+        sents = distractor_sents + [f"{who} likes {first_color}."]
+        if corrections:
+            new_color = rng.choice([c for c in colors if c != first_color])
+            sents.append(f"Actually, {who} likes {new_color}.")
+            answer = new_color
+        else:
+            answer = first_color
+        question = f"What color does {who} like?"
+        prompt = " ".join(sents + [question])
+        tasks.append({"prompt": prompt, "answer": answer})
+    return tasks
+
+
+def generate_episodic_cross(size: int, seed: int) -> List[Dict[str, object]]:
+    """Cross-episode recall after a flush marker."""
+
+    rng = random.Random(seed)
+    people = ["Alice", "Bob", "Carol", "Dave"]
+    places = ["Cafe", "Library", "Park", "Mall"]
+    tasks: List[Dict[str, object]] = []
+    for _ in range(size):
+        who = rng.choice(people)
+        where = rng.choice(places)
+        fact = f"{who} went to the {where}."
+        prompt = f"{fact} --- FLUSH --- Where did {who} go?"
+        tasks.append({"prompt": prompt, "answer": f"the {where}"})
+    return tasks
+
+
+def generate_episodic_capacity(
+    size: int,
+    seed: int,
+    context_budget: int = 256,
+) -> List[Dict[str, object]]:
+    """Episodes exceeding the decoding context budget."""
+
+    rng = random.Random(seed)
+    people = ["Alice", "Bob", "Carol", "Dave"]
+    places = ["Cafe", "Library", "Park", "Mall"]
+    tasks: List[Dict[str, object]] = []
+    for _ in range(size):
+        who = rng.choice(people)
+        where = rng.choice(places)
+        fact = f"{who} went to the {where}."
+        filler = " ".join("filler" for _ in range(context_budget + 10))
+        question = f"Where did {who} go?"
+        prompt = f"{fact} {filler} {question}"
+        tasks.append({"prompt": prompt, "answer": f"the {where}"})
+    return tasks
+
+
 def generate_semantic(
     size: int,
     seed: int,
@@ -283,6 +353,9 @@ SUITE_TO_GENERATOR = {
     "episodic": generate_episodic,
     "semantic": generate_semantic,
     "spatial": generate_spatial,
+    "episodic_multi": generate_episodic_multi,
+    "episodic_cross": generate_episodic_cross,
+    "episodic_capacity": generate_episodic_capacity,
 }
 
 
