@@ -28,13 +28,13 @@ DATE ?= $(shell date +%Y%m%d)
 
 datasets:
 	@echo "Generating datasets for $(DATE)"
-	@for suite in episodic semantic spatial; do \
+	@for suite in episodic semantic spatial episodic_multi episodic_cross episodic_capacity; do \
 	  for size in 50 200 1000; do \
 	    for seed in 1337 2025 4242; do \
 	      python scripts/build_datasets.py --suite $$suite --size $$size --seed $$seed --out data/$$suite/$$size\_$$seed.jsonl; \
 	    done; \
 	  done; \
-         done
+	done
 	python scripts/audit_datasets.py
 
 eval-baselines:
@@ -42,4 +42,3 @@ eval-baselines:
 
 smoke:
 	bash scripts/smoke_eval.sh
-
