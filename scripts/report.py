@@ -29,7 +29,13 @@ from typing import Dict, Iterable, Tuple
 log = logging.getLogger(__name__)
 
 MetricDict = Dict[str, float]
-DISPLAY_NAMES = {"em_norm": "EM (norm)", "em_raw": "EM (raw)", "em": "EM"}
+DISPLAY_NAMES = {
+    "em_norm": "EM (norm)",
+    "em_raw": "EM (raw)",
+    "em": "EM",
+    "overlong": "overlong",
+    "format_violation": "format_violation",
+}
 MetricStats = Dict[str, tuple[float, float]]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
 
@@ -76,12 +82,26 @@ def collect_metrics(
             log.warning("failed to parse %s: %s", metrics_path, exc)
             continue
         metrics = record.get("metrics", {})
+        diagnostics = record.get("diagnostics", {})
         if suite not in metrics:
             log.warning("suite %s missing in %s", suite, metrics_path)
             continue
         suite_metrics = metrics[suite]
+        # normalise pre_/post_ keys and merge diagnostics
+        cleaned: Dict[str, float] = {}
+        for key, val in suite_metrics.items():
+            tgt = key[4:] if key.startswith("pre_") else key
+            cleaned[tgt] = val
+        diag = diagnostics.get(suite, {})
+        n_items = record.get("n", 0) or 0
+        for key, val in diag.items():
+            k = key[4:] if key.startswith("pre_") else key
+            if n_items:
+                cleaned[k] = float(val) / n_items
+            else:
+                cleaned[k] = float(val)
         compute_metrics = metrics.get("compute", {})
-        data[(suite, preset, size)].append({**suite_metrics, **compute_metrics})
+        data[(suite, preset, size)].append({**cleaned, **compute_metrics})
     return data
 
 
@@ -283,16 +303,27 @@ def _render_markdown_suite(
                 for key in size_stats
             }
         )
-        display = [DISPLAY_NAMES.get(k, k) for k in metric_keys]
+        preferred = [
+            "em_raw",
+            "em_norm",
+            "em",
+            "f1",
+            "overlong",
+            "format_violation",
+        ]
+        ordered = [k for k in preferred if k in metric_keys] + [
+            k for k in metric_keys if k not in preferred
+        ]
+        display = [DISPLAY_NAMES.get(k, k) for k in ordered]
         header = "| Preset | Size | " + " | ".join(display) + " |"
-        sep = "|---" * (len(metric_keys) + 2) + "|"
+        sep = "|---" * (len(ordered) + 2) + "|"
         lines.extend([header, sep])
         for preset in sorted(presets):
             sizes = presets[preset]
             for size in sorted(sizes):
                 metrics = sizes[size]
                 vals: list[str] = []
-                for key in metric_keys:
+                for key in ordered:
                     stat = metrics.get(key)
                     if stat is None:
                         vals.append("–")
@@ -438,16 +469,25 @@ def _write_index(summary: Summary, suite_paths: Dict[str, Path], out_dir: Path) 
                 em_by_preset[preset].append(agg[em_key])
 
     metric_keys = sorted(metric_keys)
-    display = [DISPLAY_NAMES.get(k, k) for k in metric_keys]
+    preferred = [
+        "em_raw",
+        "em_norm",
+        "em",
+        "f1",
+        "overlong",
+        "format_violation",
+    ]
+    ordered = [k for k in preferred if k in metric_keys] + [
+        k for k in metric_keys if k not in preferred
+    ]
+    display = [DISPLAY_NAMES.get(k, k) for k in ordered]
     lines: list[str] = ["# Overall Summary", ""]
-    if metric_keys:
+    if ordered:
         header = "| Suite | Preset | " + " | ".join(display) + " |"
-        sep = "|---" * (len(metric_keys) + 2) + "|"
+        sep = "|---" * (len(ordered) + 2) + "|"
         lines.extend([header, sep])
         for suite, preset, metrics in rollup:
-            vals = [
-                f"{metrics.get(k, float('nan')):.3f}" if k in metrics else "–" for k in metric_keys
-            ]
+            vals = [f"{metrics.get(k, float('nan')):.3f}" if k in metrics else "–" for k in ordered]
             lines.append(f"| {suite} | {preset} | " + " | ".join(vals) + " |")
         lines.append("")
 

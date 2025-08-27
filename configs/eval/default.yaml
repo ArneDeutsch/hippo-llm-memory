@@ -28,6 +28,7 @@ store_dir: null
 session_id: null
 persist: false
 memory_off: false
+primary_em: norm
 
 # Report macro averaged scores in addition to micro scores.
 macro_scoring: true
