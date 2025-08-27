@@ -9,7 +9,17 @@ from hippo_mem.eval import harness as eval_model
 from scripts import test_consolidation
 
 
-def test_retrieval_requests_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    "preset",
+    [
+        "configs/eval/memory/hei_nw.yaml",
+        "configs/eval/memory/sgc_rss.yaml",
+        "configs/eval/memory/smpd.yaml",
+    ],
+)
+def test_retrieval_requests_guard(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, preset: str
+) -> None:
     """Memory runs must perform at least one retrieval."""
 
     data_file = tmp_path / "data.jsonl"
@@ -19,7 +29,7 @@ def test_retrieval_requests_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
         suite="episodic",
         n=0,
         seed=0,
-        preset="configs/eval/memory/hei_nw.yaml",
+        preset=preset,
     )
 
     monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed: data_file)
