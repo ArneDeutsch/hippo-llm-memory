@@ -7,14 +7,28 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.slow
-
 CASES = [
     (["baselines/core"], [1337]),
     (["baselines/core", "baselines/rag"], [1337, 2025]),
 ]
 
 
+def test_baselines_matrix_includes_new_suites() -> None:
+    """SUITES constant lists all episodic variants."""
+
+    from hippo_mem.eval import baselines
+
+    assert baselines.SUITES == [
+        "episodic",
+        "semantic",
+        "spatial",
+        "episodic_multi",
+        "episodic_cross",
+        "episodic_capacity",
+    ]
+
+
+@pytest.mark.slow
 @pytest.mark.parametrize("presets,seeds", CASES)
 def test_run_baselines_accepts_date(presets: list[str], seeds: list[int]) -> None:
     """``run_baselines.py`` emits metrics/meta for all combinations."""
