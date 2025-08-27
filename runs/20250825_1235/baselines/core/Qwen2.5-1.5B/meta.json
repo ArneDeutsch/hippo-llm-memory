@@ -1,0 +1,1 @@
+{"suite": "episodic", "preset": "baselines/core", "n": 50, "git_sha": "835068ef96836570dfc2075e3dd01310523967ce", "model": {"id": "Qwen/Qwen2.5-1.5B-Instruct", "chat_template_used": true}, "config_hash": "1c7052baa55bd4eddc3b09f9f36bc96762e252b34836a52131f125911e912918", "ablate": {}, "seed": 1337, "replay_cycles": 0, "gating_enabled": false}
