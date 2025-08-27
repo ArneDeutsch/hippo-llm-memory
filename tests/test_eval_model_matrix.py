@@ -86,3 +86,24 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
         / "metrics.json"
     )
     assert expected.exists()
+
+
+@pytest.mark.slow
+def test_eval_model_run_matrix_presets(tmp_path: Path) -> None:
+    """Matrix run with multiple presets writes outputs for each preset."""
+
+    cmd = [
+        sys.executable,
+        "scripts/eval_model.py",
+        "+run_matrix=true",
+        "presets=[baselines/core,baselines/longctx]",
+        "tasks=[episodic]",
+        "n_values=[2]",
+        "seeds=[1337]",
+        f"outdir={tmp_path}",
+        "dry_run=true",
+    ]
+    subprocess.run(cmd, check=True)
+    for preset in ("baselines/core", "baselines/longctx"):
+        metrics = tmp_path / preset / "episodic" / "2_1337" / "metrics.json"
+        assert metrics.exists()

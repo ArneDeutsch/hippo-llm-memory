@@ -1,5 +1,9 @@
 # Default evaluation configuration.
 tasks: []
+suites: []
+presets: []
+n_values: [50, 200, 1000]
+seeds: [1337, 2025, 4242]
 
 # Basic run parameters with reasonable defaults.
 # ``task`` is kept for CLI convenience and maps to ``suite`` internally.
