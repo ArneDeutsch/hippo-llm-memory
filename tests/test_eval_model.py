@@ -109,10 +109,10 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
     # store persisted
     assert (store_dir / "s1" / "episodic.jsonl").exists()
 
-    # metrics should not include correctness
+    # metrics should not include scores
     with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    assert rows and all(row["correct"] == "" for row in rows)
+    assert rows and all(row["em_raw"] == "" for row in rows)
 
 
 def test_load_store_and_memory_off(tmp_path: Path) -> None:

@@ -50,7 +50,7 @@ def test_time_ms_per_100_calculation(monkeypatch):
     assert gen_tok == 2
     assert elapsed == 0.03
     assert rows[0]["pred"] == "3 4"
-    assert metrics["em"] == 1.0
+    assert metrics["em_raw"] == 1.0
 
     total_tokens = in_tok + gen_tok
     expected = 100 * elapsed * 1000 / max(1, total_tokens)

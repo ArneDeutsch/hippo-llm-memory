@@ -111,13 +111,13 @@ def _compute_delta(pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]) ->
     pre_suite = pre_metrics.get("metrics", {}).get(suite, {})
     post_suite = post_metrics.get("metrics", {}).get(suite, {})
     delta: Dict[str, float] = {}
-    for key, val in post_suite.items():
-        if key.startswith("pre_"):
-            base_key = key[4:]
-        else:
-            base_key = key
-        if isinstance(val, (int, float)) and key in pre_suite:
-            delta[base_key] = float(val) - float(pre_suite[key])
+    for key, val in pre_suite.items():
+        if not key.startswith("pre_"):
+            continue
+        base = key[4:]
+        post_val = post_suite.get(f"post_{base}")
+        if isinstance(val, (int, float)) and isinstance(post_val, (int, float)):
+            delta[base] = float(post_val) - float(val)
     return delta
 
 
@@ -145,7 +145,7 @@ def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
             args.suite == "episodic"
             and args.n == 50
             and args.seed == 1337
-            and delta.get("em", 0.0) < 0.20
+            and delta.get("em_raw", 0.0) < 0.20
         ):
             raise RuntimeError("EM uplift < +0.20 on episodic@50 seed=1337")
     if tmp_dir is not None:

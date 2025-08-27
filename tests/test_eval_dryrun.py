@@ -49,7 +49,7 @@ def test_dry_run_smoke(tmp_path: Path, preset: str, suite: str) -> None:
     compute = metrics["metrics"]["compute"]
     assert compute["time_ms_per_100"] > 0
     assert compute["latency_ms_mean"] > 0
-    assert "em" in metrics["metrics"][suite]
+    assert "em_raw" in metrics["metrics"][suite]
 
     assert meta["preset"] == preset
     assert meta["suite"] == suite

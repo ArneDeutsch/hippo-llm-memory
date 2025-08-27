@@ -42,7 +42,7 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     assert data["suite"] == suite
     assert data["n"] == 3
     # Echo model should achieve perfect exact match.
-    assert data["metrics"][suite]["em"] == 1.0
+    assert data["metrics"][suite]["em_raw"] == 1.0
 
     csv_path = outdir / "metrics.csv"
     meta_path = outdir / "meta.json"

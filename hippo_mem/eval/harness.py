@@ -23,7 +23,6 @@ import os
 import re
 import sys
 import time
-from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,6 +38,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
+from hippo_mem.eval.score import em_norm, em_raw, f1
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 
@@ -54,6 +54,8 @@ REFUSAL_RE = re.compile(
     r"as\s+an\s+language\s+model|i\s+am\s+unable|i\s+do\s+not\s+have)",
     re.IGNORECASE,
 )
+
+FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
 
 def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
@@ -156,22 +158,6 @@ def _load_tasks(path: Path, n: int) -> List[Task]:
     return tasks
 
 
-def _f1(pred: str, truth: str) -> float:
-    """Token-level F1 used for episodic and semantic suites."""
-
-    pred_tokens = pred.split()
-    truth_tokens = truth.split()
-    if not pred_tokens or not truth_tokens:
-        return 0.0
-    common = Counter(pred_tokens) & Counter(truth_tokens)
-    overlap = sum(common.values())
-    if overlap == 0:
-        return 0.0
-    precision = overlap / len(pred_tokens)
-    recall = overlap / len(truth_tokens)
-    return 2 * precision * recall / (precision + recall)
-
-
 def _rss_mb() -> float:
     """Return resident set size of current process in megabytes."""
 
@@ -199,17 +185,12 @@ def _evaluate(
     system_prompt: str | None,
     compute_metrics: bool = True,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, float]:
-    """Generate predictions and optionally compute metrics for ``tasks``.
-
-    Returns the per-item rows, metric averages (empty if ``compute_metrics`` is
-    ``False``), input and generated token counts, and elapsed seconds.
-    """
+    """Generate predictions and diagnostics for ``tasks``."""
 
     rows: List[Dict[str, object]] = []
-    correct = 0
-    f1_total = 0.0
-    input_tokens = 0
-    gen_tokens = 0
+    emr_total = emn_total = f1_total = 0.0
+    overlong_total = fmt_total = refusal_total = 0
+    input_tokens = gen_tokens = 0
     latencies: List[float] = []
     task_list = list(tasks)
     total = len(task_list)
@@ -217,7 +198,6 @@ def _evaluate(
     t0 = time.perf_counter()
     for idx, item in enumerate(task_list, 1):
         item_t0 = time.perf_counter()
-        # Optional memory retrieval and adapter calls for plumbing coverage.
         if modules:
             hidden = torch.zeros(1, 1, 8)
             mems: List[MemoryTokens] = []
@@ -271,12 +251,20 @@ def _evaluate(
         )
         gen = out[:, inputs["input_ids"].shape[-1] :]
         pred = tokenizer.decode(gen[0], skip_special_tokens=True).strip()
-        is_correct = int(pred.strip() == item.answer)
+        pred_len = len(pred.split())
+        gold_len = len(item.answer.split())
+        overlong = int(pred_len > gold_len)
+        fmt = int(bool(FORMAT_VIOL_RE.search(pred)))
+        em_r = em_raw(pred, item.answer) if compute_metrics else None
+        em_n = em_norm(pred, item.answer) if compute_metrics else None
+        f1_val = f1(pred, item.answer) if compute_metrics else None
         if compute_metrics:
-            correct += is_correct
-            f1_total += _f1(pred, item.answer)
-        else:
-            is_correct = None  # type: ignore[assignment]
+            emr_total += em_r or 0
+            emn_total += em_n or 0
+            f1_total += f1_val or 0.0
+            overlong_total += overlong
+            fmt_total += fmt
+            refusal_total += int(bool(REFUSAL_RE.search(pred)))
         input_tokens += inputs["input_ids"].shape[-1]
         gen_tokens += gen.shape[-1]
         item_t1 = time.perf_counter()
@@ -288,7 +276,13 @@ def _evaluate(
                 "prompt": item.prompt,
                 "answer": item.answer,
                 "pred": pred,
-                "correct": is_correct,
+                "em_raw": em_r,
+                "em_norm": em_n,
+                "f1": f1_val,
+                "pred_len": pred_len,
+                "gold_len": gold_len,
+                "overlong": overlong,
+                "format_violation": fmt,
                 "latency_ms": latency_ms,
             }
         )
@@ -302,12 +296,14 @@ def _evaluate(
             row["latency_ms"] = fallback
         latencies = [fallback] * len(rows)
     elapsed = t1 - t0
-    refusal_count = sum(1 for r in rows if REFUSAL_RE.search(r["pred"]))
     metrics = (
         {
-            "em": correct / n if n else 0.0,
+            "em_raw": emr_total / n if n else 0.0,
+            "em_norm": emn_total / n if n else 0.0,
             "f1": f1_total / n if n else 0.0,
-            "refusal_rate": refusal_count / n if n else 0.0,
+            "refusal_rate": refusal_total / n if n else 0.0,
+            "overlong": overlong_total,
+            "format_violation": fmt_total,
         }
         if compute_metrics
         else {}
@@ -481,17 +477,22 @@ def _write_outputs(
 
     # Metrics JSON - follow schema used by report.py
     suite_metrics: Dict[str, float] = {
-        "pre_em": pre_metrics.get("em", 0.0),
+        "pre_em_raw": pre_metrics.get("em_raw", 0.0),
+        "pre_em_norm": pre_metrics.get("em_norm", 0.0),
         "pre_f1": pre_metrics.get("f1", 0.0),
         "pre_refusal_rate": pre_metrics.get("refusal_rate", 0.0),
+        "pre_overlong": pre_metrics.get("overlong", 0),
+        "pre_format_violation": pre_metrics.get("format_violation", 0),
     }
     if post_metrics is not None:
         suite_metrics.update(
             {
-                "post_em": post_metrics.get("em", 0.0),
+                "post_em_raw": post_metrics.get("em_raw", 0.0),
+                "post_em_norm": post_metrics.get("em_norm", 0.0),
                 "post_f1": post_metrics.get("f1", 0.0),
                 "post_refusal_rate": post_metrics.get("refusal_rate", 0.0),
-                "delta_em": post_metrics.get("em", 0.0) - pre_metrics.get("em", 0.0),
+                "post_overlong": post_metrics.get("overlong", 0),
+                "post_format_violation": post_metrics.get("format_violation", 0),
             }
         )
     metrics: Dict[str, object] = {
@@ -556,7 +557,13 @@ def _write_outputs(
         "prompt",
         "answer",
         "pred",
-        "correct",
+        "em_raw",
+        "em_norm",
+        "f1",
+        "pred_len",
+        "gold_len",
+        "overlong",
+        "format_violation",
         "latency_ms",
         *compute_cols,
         "flags",

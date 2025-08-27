@@ -45,7 +45,7 @@ def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
     data = json.loads(metrics_path.read_text())
     assert data["preset"] == preset
     assert data["suite"] == "episodic"
-    assert isinstance(data["metrics"]["episodic"]["em"], float)
+    assert isinstance(data["metrics"]["episodic"]["em_raw"], float)
     compute = data["metrics"]["compute"]
     assert isinstance(compute["total_tokens"], int)
     assert isinstance(compute["input_tokens"], int)

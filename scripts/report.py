@@ -29,6 +29,7 @@ from typing import Dict, Iterable, Tuple
 log = logging.getLogger(__name__)
 
 MetricDict = Dict[str, float]
+DISPLAY_NAMES = {"em_norm": "EM (norm)", "em_raw": "EM (raw)", "em": "EM"}
 MetricStats = Dict[str, tuple[float, float]]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
 
@@ -282,7 +283,8 @@ def _render_markdown_suite(
                 for key in size_stats
             }
         )
-        header = "| Preset | Size | " + " | ".join(metric_keys) + " |"
+        display = [DISPLAY_NAMES.get(k, k) for k in metric_keys]
+        header = "| Preset | Size | " + " | ".join(display) + " |"
         sep = "|---" * (len(metric_keys) + 2) + "|"
         lines.extend([header, sep])
         for preset in sorted(presets):
@@ -427,13 +429,19 @@ def _write_index(summary: Summary, suite_paths: Dict[str, Path], out_dir: Path) 
                 agg[key] = sum(vals) / len(vals)
             rollup.append((suite, preset, agg))
             metric_keys.update(agg.keys())
-            if "em" in agg:
-                em_by_preset[preset].append(agg["em"])
+            em_key = (
+                "em_norm"
+                if "em_norm" in agg
+                else ("em" if "em" in agg else ("em_raw" if "em_raw" in agg else None))
+            )
+            if em_key:
+                em_by_preset[preset].append(agg[em_key])
 
     metric_keys = sorted(metric_keys)
+    display = [DISPLAY_NAMES.get(k, k) for k in metric_keys]
     lines: list[str] = ["# Overall Summary", ""]
     if metric_keys:
-        header = "| Suite | Preset | " + " | ".join(metric_keys) + " |"
+        header = "| Suite | Preset | " + " | ".join(display) + " |"
         sep = "|---" * (len(metric_keys) + 2) + "|"
         lines.extend([header, sep])
         for suite, preset, metrics in rollup:
