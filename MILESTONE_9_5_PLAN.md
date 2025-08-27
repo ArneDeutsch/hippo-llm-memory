@@ -110,8 +110,10 @@ The research frames the hippocampus as a **fast, labile, sparse store** (episodi
     --suite episodic --n 50 --seed 1337 --memory_off true \
     --model Qwen/Qwen2.5-1.5B-Instruct \
     --lora runs/$DATE/consolidation/lora \
+    --pre_dir runs/$DATE/consolidation/pre \
     --outdir runs/$DATE/consolidation/post
   ```
+  `scripts/test_consolidation.py` writes `metrics.json` with a `delta` object derived from `--pre_dir` and fails if the EM uplift on `episodic@50` (seed=1337) is below +0.20.
 - **H6.** Run **ablations** for attribution:\
   ```bash
   # Span-short baseline
