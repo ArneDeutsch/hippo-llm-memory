@@ -84,13 +84,22 @@ Each suite provides a minimal `n=50` split for smoke and cross‑session experim
 temporal schema-fit labels and sequential trajectories – providing full
 coverage for the validation matrix below.
 
+### 3.1 Episodic variants (memory-dependent)
+
+We add three episodic variants to force memory usage beyond trivial one-shot extraction:
+- **`episodic_multi`** — multi-turn episodes with distractors and last-mention-wins corrections.
+- **`episodic_cross`** — cross-episode recall after session flush; facts only available via store replay.
+- **`episodic_capacity`** — episodes longer than the decoding context budget; retrieval required.
+Generators live in `hippo_mem/eval/datasets.py` and are addressable via the CLI (`scripts/build_datasets.py`).
+
 # 4) Run matrix
 
 For each **suite**:
 
 - Presets: `baselines/{core,rag,longctx,span_short}` and `memory/{hei_nw,sgc_rss,smpd}` (or `all` for combined).
-- Sizes: {small: 50, medium: 200, large: 1,000} per suite.
-- Seeds: {1337, 2025, 4242}.
+- Episodic variants (`episodic_multi`, `episodic_cross`, `episodic_capacity`) run under `baselines/span_short` and all `memory/*` presets.
+- Sizes: `n ∈ {50, 200, 1000}` per suite.
+- Seeds: `{1337, 2025, 4242}`.
 - Replay: evaluate **pre‑replay** and **post‑replay** (1–3 cycles).
 
 For relational and spatial suites, execute **paired runs** with gates `enabled=true` and `enabled=false` per (size, seed). Report ON→OFF deltas for duplicate rate and map growth alongside primary accuracy metrics.
@@ -108,7 +117,6 @@ A typical experiment:
 Replay policies are configurable via `replay.policy={uniform,priority,spaced}`,
 `replay.rate`, `replay.noise_level`, and `replay.max_items`.
 
-# 5) Metrics
 # 5) Metrics
 
 ## 5.1 Primary
@@ -133,7 +141,16 @@ Replay policies are configurable via `replay.policy={uniform,priority,spaced}`,
 | **SMPD**: path integration | Robust localization over long trajectories | Spatial suite with sequential trajectories; ablate path integration | localization error, path success |
 | **SMPD**: macro distillation | Reuse learned procedures | Spatial macro tasks; ablate `spatial.macros` | steps reduction %, success rate |
 
-## 5.4 Gate telemetry & KPIs
+## 5.4 Answer format & normalization policy
+All suites using span extraction MUST follow a short‑answer policy.
+**Model instruction:** “Answer with the exact shortest span; no punctuation; no extra words.”
+**Metrics:** We report three scores side‑by‑side:
+- **EM (raw):** `pred.strip() == gold` (exact string match).
+- **EM (normalized):** lower‑case, strip punctuation and articles (`a|an|the`) from both sides before comparison. Normalizer defined in `hippo_mem/eval/score.py`.
+- **Token‑F1:** whitespace token F1.
+Diagnostics we also log: `pred_len`, `gold_len`, `overlong` (pred_len > gold_len), and `format_violation` (any terminal punctuation or contains a period).
+
+## 5.5 Gate telemetry & KPIs
 
 * **Raw counters** (by memory): `attempts, inserted, aggregated, routed_to_episodic (relational), blocked_new_edges (spatial)`.
 * **Retrieval counters:** `requests`, `hits`, `r@5`, `r@10`.
@@ -184,7 +201,7 @@ When gates are disabled, ingestion reverts to pre‑gate behavior (no aggregatio
 - Supports `dry_run=true` for CI smoke tests (e.g., 5 tasks).
 - Milestone 8a adds hooks logging retrieval hit rates, memory token shapes,
   and gate decisions; exercised via `scripts/smoke_8a.sh`.
-- Include `metrics["gates"]` and `meta["config"].{relational.gate, spatial.gate}` in outputs. When present, `scripts/report.py` renders §5.4 tables; otherwise it skips.
+- Include `metrics["gates"]` and `meta["config"].{relational.gate, spatial.gate}` in outputs. When present, `scripts/report.py` renders §5.5 tables; otherwise it skips.
 
 ## 7.1 File schemas
 
@@ -264,6 +281,13 @@ python scripts/eval_bench.py suite=episodic preset=memory/hei_nw +ablate=replay.
 python scripts/eval_bench.py suite=episodic preset=memory/hei_nw eval.post_replay_cycles=1
 ```
 
+## 9.5 Short-span decoding parity
+
+```bash
+python scripts/eval_model.py suite=episodic preset=baselines/span_short n=50 seed=1337 use_chat_template=true max_new_tokens=8
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw   n=50 seed=1337 use_chat_template=true max_new_tokens=8
+```
+
 # 10) Reporting (`scripts/report.py`)
 
 - Aggregates all `metrics.json`/`metrics.csv` under `runs/**`.
@@ -285,6 +309,7 @@ python scripts/eval_bench.py suite=episodic preset=memory/hei_nw eval.post_repla
 
 # 11) Success criteria (v0 targets)
 
+- Baselines **must not be saturated**: target EM(raw) < 60% on H2-like episodic; we expect **+8–12pp EM(norm)** from memory on `episodic_multi` at n=200.
 - **HEI‑NW:** +15pp EM over **core** on partial‑cue; +5pp over **RAG**; positive Δ after replay ≥ +3pp.
 - **SGC‑RSS:** ≥10pp multi‑hop accuracy over **core**; contradiction rate ≤50% of **core**.
 - **SMPD:** ≥90% path success on 5×5; ≥20% steps reduction with macros.
