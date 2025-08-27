@@ -2,7 +2,7 @@
 _Generated: 2025-08-25 08:34_
 
 ## 0) Goal (what we ship)
-Establish reliable **baselines** and **memory-enabled** evaluations for the three hippocampus-inspired algorithms, producing final, reproducible datasets & metrics. The plan fixes known issues (prompt echo, incorrect timing) and ensures **chat-template correctness**, **expanded run matrix**, and **clear pre/post** deltas for memory runs.
+Establish reliable **baselines** and **memory-enabled** evaluations for the three hippocampus-inspired algorithms, producing final, reproducible datasets & metrics. The plan fixes known issues (prompt echo, incorrect timing) and ensures **chat-template correctness**, **expanded run matrix**, and **clear pre/post** metrics for memory runs.
 
 Cross-session persistence and delayed recall experiments are scheduled for **Milestone 9.5**.
 
@@ -21,12 +21,12 @@ We declare Milestone 9 *done* only if **all** the following are true:
   - `metrics.json.compute` includes `input_tokens` and `generated_tokens`.
 
 - **Baselines complete**
-  - Presets: `baselines/core`, `baselines/rag`, `baselines/longctx`, `baselines/span_short` executed across tasks `episodic`, `semantic`, `spatial` with `n ∈ {50,200,1000}` and seeds `{1337,2025,4242}`.
+  - Presets: `baselines/core`, `baselines/rag`, `baselines/longctx`, `baselines/span_short` executed across suites `episodic`, `semantic`, `spatial` with `n ∈ {50,200,1000}` and seeds `{1337,2025,4242}`.
   - Episodic@50 dev-smoke run (seed=1337) achieves **EM > 0** or **F1 ≥ 0.20** (sanity threshold).
 
 - **Memory runs complete**
   - Presets: `memory/hei_nw`, `memory/sgc_rss`, `memory/smpd` executed with `replay.cycles ∈ {1,3}`, `gating_enabled=true`, retrieval on.
-  - `metrics.json` contains **pre** and **post** metrics and a populated **Δ** (delta) section.
+  - `metrics.json` contains `pre_*` and `post_*` metrics; compute deltas as `post_* − pre_*` (no dedicated Δ section).
   - Retrieval (`requests`, `hits`, `r@k`) and gating stats are **non‑zero** for memory runs and refusal rate ≤0.5.
 
 - **Docs & reproducibility**
@@ -34,7 +34,7 @@ We declare Milestone 9 *done* only if **all** the following are true:
   - CI/Smoke: a script or target runs `episodic@50` seed=1337 and fails fast if the sanity threshold is not met.
 
 - **Artifacts**
-  - For each run: `meta.json`, `metrics.json`, `metrics.csv`, and a `config_snapshot.yaml` are written under `runs/<DATE>/<preset>/<task>/<model>/`.
+  - For each run: `meta.json`, `metrics.json`, `metrics.csv`, and a `config_snapshot.yaml` are written under `runs/<DATE>/<preset>/<suite>/<model>/`.
   - A consolidated CSV/JSON summary per preset is generated in `runs/<DATE>/summaries/`.
 
 ---
@@ -127,7 +127,7 @@ Each WP below contains **Codex tasks** (ready-to-use prompts) and **Human tasks*
 ## WP4 — Presets & run matrix expansion
 
 ### Codex Task C7 — Add baseline presets
-**Files:** `configs/presets/baselines/core.yaml`, `configs/presets/baselines/rag.yaml`, `configs/presets/baselines/longctx.yaml`  
+**Files:** `configs/eval/baselines/core.yaml`, `configs/eval/baselines/rag.yaml`, `configs/eval/baselines/longctx.yaml`
 **Change:** Ensure three baseline presets exist with appropriate toggles:
 - `core`: memory off, replay=0
 - `rag`: retrieval on, no memory consolidation
@@ -138,9 +138,9 @@ Each WP below contains **Codex tasks** (ready-to-use prompts) and **Human tasks*
 > Create/verify the three baseline preset YAMLs with explicit flags: `gating_enabled`, `replay.cycles`, `retrieval.enabled`, `long_context.enabled`, etc. Include comments describing each preset’s intent.
 
 ### Codex Task C8 — Add memory presets
-**Files:** `configs/presets/memory/hei_nw.yaml`, `sgc_rss.yaml`, `smpd.yaml`  
+**Files:** `configs/eval/memory/hei_nw.yaml`, `configs/eval/memory/sgc_rss.yaml`, `configs/eval/memory/smpd.yaml`
 **Change:** Enable replay (`cycles: 1` default), `gating_enabled: true`, and retrieval on.  
-**Acceptance:** `metrics.json` includes **pre** and **post** sections and a **delta** block; retrieval/gating metrics are populated.
+**Acceptance:** `metrics.json` includes `pre_*` and `post_*` sections; retrieval/gating metrics are populated. Deltas are computed externally from these fields.
 
 **Prompt for Codex:**
 > Add three memory presets enabling replay and gating. Ensure the evaluation loop runs a **pre** pass, applies replay per preset, then runs a **post** pass, and finally computes deltas. Persist counters: retrieval.requests, retrieval.hits, r@5, r@10; gates.open_rate, gates.mean_score.
@@ -177,11 +177,16 @@ Each WP below contains **Codex tasks** (ready-to-use prompts) and **Human tasks*
 
 ## WP6 — Full execution & artifact consolidation
 
+### Human Task H0 — Build datasets (once)
+```bash
+make datasets
+```
+
 ### Human Task H1 — Dev smoke after WP1–WP2
 Run (replace `$DATE`):
 ```bash
 DATE=$(date +%Y%m%d_%H%M)
-python scripts/eval_model.py preset=baselines/core task=episodic n=50 seed=1337 \
+python scripts/eval_model.py preset=baselines/core suite=episodic n=50 seed=1337 \
   model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/baselines/core/Qwen2.5-1.5B
 ```
 **Verify:** `pred` is not echoing; `EM>0` or `F1≥0.20`; `audit_sample.jsonl` exists; `time_ms_per_100` matches manual recompute.
@@ -190,7 +195,7 @@ python scripts/eval_model.py preset=baselines/core task=episodic n=50 seed=1337 
 Run:
 ```bash
 DATE=$(date +%Y%m%d_%H%M)
-python scripts/eval_model.py preset=baselines/span_short task=episodic n=50 seed=1337 \
+python scripts/eval_model.py preset=baselines/span_short suite=episodic n=50 seed=1337 \
   model=Qwen/Qwen2.5-1.5B-Instruct \
   outdir=runs/$DATE/baselines/span_short/Qwen2.5-1.5B
 ```
@@ -201,7 +206,7 @@ python scripts/eval_model.py preset=baselines/span_short task=episodic n=50 seed
 ```bash
 DATE=$(date +%Y%m%d_%H%M)
 python scripts/eval_model.py +run_matrix=true date=$DATE \
-  presets="[baselines/core,baselines/rag,baselines/longctx]" \
+  presets="[baselines/core,baselines/span_short,baselines/rag,baselines/longctx]" \
   tasks="[episodic,semantic,spatial]" n_values="[50,200,1000]" \
   seeds="[1337,2025,4242]" \
   model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE
@@ -209,20 +214,35 @@ python scripts/eval_model.py +run_matrix=true date=$DATE \
 
 ### Human Task H3 — Memory grid
 ```bash
+DATE=$(date +%Y%m%d_%H%M)
+
+# HEI‑NW on episodic + memory‑dependent variants
 python scripts/eval_model.py +run_matrix=true date=$DATE \
-  presets="[memory/hei_nw,memory/sgc_rss,memory/smpd]" \
-  tasks="[episodic,semantic,spatial]" n_values="[50,200,1000]" \
-  seeds="[1337,2025,4242]" \
+  presets="[memory/hei_nw]" \
+  tasks="[episodic,episodic_multi,episodic_cross,episodic_capacity]" \
+  n_values="[50,200,1000]" seeds="[1337,2025,4242]" \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE
+
+# SGC‑RSS on semantic only
+python scripts/eval_model.py +run_matrix=true date=$DATE \
+  presets="[memory/sgc_rss]" tasks="[semantic]" \
+  n_values="[50,200,1000]" seeds="[1337,2025,4242]" \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE
+
+# SMPD on spatial only
+python scripts/eval_model.py +run_matrix=true date=$DATE \
+  presets="[memory/smpd]" tasks="[spatial]" \
+  n_values="[50,200,1000]" seeds="[1337,2025,4242]" \
   model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE
 ```
-**Verify:** `metrics.json` has `pre`, `post`, `delta`; retrieval/gating metrics are non‑zero.
+**Verify:** `metrics.json` has `pre_*` and `post_*` keys; compute deltas as `post_* - pre_*`; retrieval/gating metrics are non‑zero.
 
 ### Human Task H4 — Summaries
 After any matrix run:
 ```bash
 python scripts/summarize_runs.py runs/$DATE --out runs/$DATE/summaries
 ```
-**Verify:** Summary CSV/JSON exist; spot-check deltas for memory runs.
+**Verify:** Summary CSV/JSON exist; spot-check pre/post differences for memory runs.
 
 ---
 
