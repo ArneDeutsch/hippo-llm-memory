@@ -25,4 +25,3 @@ __all__ = ["Args", "load_config", "main", "parse_args", "train"]
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
     main()
-

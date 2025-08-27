@@ -98,7 +98,7 @@ For relational and spatial suites, execute **paired runs** with gates `enabled=t
 # 4.1 Cross-session protocol & persistence
 
 Memory stores implement `save(dir, session_id)` / `load(dir, session_id)` and the harness
-exposes CLI flags `--store_dir`, `--session_id`, `--persist`, and `--mode={teach,replay,test}`.
+exposes overrides `store_dir=…`, `session_id=…`, `persist=true`, and `mode={teach,replay,test}`.
 A typical experiment:
 
 1. **Teach** – present facts with gates enabled; metrics are not graded; stores are saved.
@@ -213,7 +213,7 @@ idx,prompt,answer,pred,correct,latency_ms,flags
 `meta.json`:
 
 ```json
-{"git_sha":"...","model":"llama32-3b","config_hash":"...","ablate":{"episodic.use_gate":false}}
+{"git_sha":"...","model":"gpt2","config_hash":"...","ablate":{"episodic.use_gate":false}}
 ```
 
 # 8) Replay protocol (post‑replay measurement)

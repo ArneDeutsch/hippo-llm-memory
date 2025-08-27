@@ -142,7 +142,7 @@ This document specifies a production-ready design for hippocampus-inspired memor
 
 ```yaml
 model:
-  name: llama32-3b
+  name: gpt2
   dtype: bfloat16
 efficiency:
   flash_attention: true
