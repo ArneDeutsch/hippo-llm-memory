@@ -71,21 +71,21 @@ def test_report_aggregation(tmp_path: Path) -> None:
     _make_metrics(
         runs_on / "50_1337",
         "episodic",
-        {"em": 0.5, "r": 0.7},
+        {"em_raw": 0.5, "r": 0.7},
         {"total_tokens": 10, "rss_mb": 1.0, "time_ms_per_100": 2.0},
         gates_on,
     )
     _make_metrics(
         runs_on / "50_2025",
         "episodic",
-        {"em": 0.7, "r": 0.9},
+        {"em_raw": 0.7, "r": 0.9},
         {"total_tokens": 30, "rss_mb": 1.5, "time_ms_per_100": 4.0},
         gates_on,
     )
     _make_metrics(
         runs_off / "50_4242",
         "episodic",
-        {"em": 0.6, "r": 0.8},
+        {"em_raw": 0.6, "r": 0.8},
         {"total_tokens": 20, "rss_mb": 2.0, "time_ms_per_100": 3.0},
         gates_off,
     )
@@ -104,7 +104,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
 
-    em_stats = summary["episodic"]["baselines/core/gate_on"][50]["em"]
+    em_stats = summary["episodic"]["baselines/core/gate_on"][50]["em_raw"]
     assert em_stats[0] == 0.6
     assert round(em_stats[1], 3) == 0.141
 
@@ -115,7 +115,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     md_path = paths["episodic"]
     text = md_path.read_text()
     # table header contains all fields
-    assert "| Preset | Size | em | r | rss_mb | time_ms_per_100 | total_tokens |" in text
+    assert "| Preset | Size | EM (raw) | r | rss_mb | time_ms_per_100 | total_tokens |" in text
     # both presets appear as rows
     assert "| baselines/core/gate_on | 50 |" in text
     assert "| baselines/core/gate_off | 50 |" in text
@@ -130,7 +130,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     assert idx.exists()
     idx_text = idx.read_text()
     header = next(line for line in idx_text.splitlines() if line.startswith("| Suite"))
-    for col in ["em", "r", "rss_mb", "time_ms_per_100", "total_tokens"]:
+    for col in ["EM (raw)", "r", "rss_mb", "time_ms_per_100", "total_tokens"]:
         assert col in header
     assert "[episodic](episodic/summary.md)" in idx_text
     assert "[semantic](semantic/summary.md)" in idx_text

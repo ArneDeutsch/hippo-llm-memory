@@ -29,6 +29,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -53,11 +54,14 @@ from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
+from hippo_mem.eval.score import em_norm, em_raw, f1
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.place_graph import PlaceGraph
 
 from .datasets import SUITE_TO_GENERATOR
+
+FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
 
 def _git_sha() -> str:
@@ -238,25 +242,13 @@ def _eval_tasks(
     *,
     flag: str,
     start_idx: int,
-) -> tuple[List[Dict[str, object]], float, int, float]:
-    """Evaluate ``tasks`` returning rows, EM, token count and elapsed seconds.
-
-    Parameters
-    ----------
-    tasks:
-        List of task dictionaries.
-    modules:
-        Active memory modules for smoke coverage.
-    flag:
-        Value for the ``flags`` column in ``metrics.csv``.
-    start_idx:
-        Starting index for row numbering.
-    """
+) -> tuple[List[Dict[str, object]], Dict[str, float], int, float, float, float]:
+    """Evaluate ``tasks`` returning rows, metrics and token stats."""
 
     rows: List[Dict[str, object]] = []
-    correct = 0
-    input_tokens = 0
-    gen_tokens = 0
+    emr_total = emn_total = f1_total = 0.0
+    overlong_total = fmt_total = 0
+    input_tokens = gen_tokens = 0
     t0 = time.perf_counter()
     latencies: List[float] = []
     for off, item in enumerate(tasks):
@@ -287,8 +279,18 @@ def _eval_tasks(
         answer = str(item["answer"])
         pred = str(item.get("pred", answer))
 
-        is_correct = int(pred.strip().lower() == answer.strip().lower())
-        correct += is_correct
+        pred_len = len(pred.split())
+        gold_len = len(answer.split())
+        overlong = int(pred_len > gold_len)
+        fmt = int(bool(FORMAT_VIOL_RE.search(pred)))
+        em_r = em_raw(pred, answer)
+        em_n = em_norm(pred, answer)
+        f1_val = f1(pred, answer)
+        emr_total += em_r
+        emn_total += em_n
+        f1_total += f1_val
+        overlong_total += overlong
+        fmt_total += fmt
         input_tokens += len(prompt.split())
         gen_tokens += len(answer.split())
         item_t1 = time.perf_counter()
@@ -300,21 +302,33 @@ def _eval_tasks(
                 "prompt": prompt,
                 "answer": answer,
                 "pred": pred,
-                "correct": is_correct,
+                "em_raw": em_r,
+                "em_norm": em_n,
+                "f1": f1_val,
+                "pred_len": pred_len,
+                "gold_len": gold_len,
+                "overlong": overlong,
+                "format_violation": fmt,
                 "latency_ms": latency_ms,
                 "flags": flag,
             }
         )
-
     t1 = time.perf_counter()
     if all(lat == 0.0 for lat in latencies) and latencies:
         fallback = (t1 - t0) * 1000.0 / len(latencies)
         for row in rows:
             row["latency_ms"] = fallback
         latencies = [fallback] * len(rows)
-    em = correct / len(tasks) if tasks else 0.0
     avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
-    return rows, em, input_tokens, gen_tokens, t1 - t0, avg_latency
+    n = len(tasks)
+    metrics = {
+        "em_raw": emr_total / n if n else 0.0,
+        "em_norm": emn_total / n if n else 0.0,
+        "f1": f1_total / n if n else 0.0,
+        "overlong": overlong_total,
+        "format_violation": fmt_total,
+    }
+    return rows, metrics, input_tokens, gen_tokens, t1 - t0, avg_latency
 
 
 class _BatchMix(SimpleNamespace):
@@ -370,7 +384,7 @@ def run_suite(
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
-    rows, em, in_tokens, gen_tokens, elapsed, lat_mean = _eval_tasks(
+    rows, metrics_pre, in_tokens, gen_tokens, elapsed, lat_mean = _eval_tasks(
         tasks, modules, flag="pre_replay", start_idx=0
     )
     total_time = elapsed
@@ -386,7 +400,7 @@ def run_suite(
             _run_replay_once(modules)
             (
                 cycle_rows,
-                cycle_em,
+                cycle_metrics,
                 cycle_in_tokens,
                 cycle_gen_tokens,
                 cycle_time,
@@ -395,7 +409,7 @@ def run_suite(
             rows.extend(cycle_rows)
             post_tokens = cycle_in_tokens + cycle_gen_tokens
             post_metrics[str(cycle)] = {
-                cfg.suite: {"em": cycle_em},
+                cfg.suite: cycle_metrics,
                 "compute": {
                     "input_tokens": cycle_in_tokens,
                     "generated_tokens": cycle_gen_tokens,
@@ -421,7 +435,7 @@ def run_suite(
         "seed": cfg.seed,
         "preset": cfg.preset,
         "metrics": {
-            cfg.suite: {"em": em},
+            cfg.suite: metrics_pre,
             "compute": {
                 "input_tokens": total_in_tokens,
                 "generated_tokens": total_gen_tokens,
@@ -469,7 +483,13 @@ def write_outputs(
             "prompt",
             "answer",
             "pred",
-            "correct",
+            "em_raw",
+            "em_norm",
+            "f1",
+            "pred_len",
+            "gold_len",
+            "overlong",
+            "format_violation",
             "latency_ms",
             *compute_cols,
             "flags",
