@@ -481,6 +481,8 @@ def _write_outputs(
         "pre_em_norm": pre_metrics.get("em_norm", 0.0),
         "pre_f1": pre_metrics.get("f1", 0.0),
         "pre_refusal_rate": pre_metrics.get("refusal_rate", 0.0),
+    }
+    diagnostics: Dict[str, int] = {
         "pre_overlong": pre_metrics.get("overlong", 0),
         "pre_format_violation": pre_metrics.get("format_violation", 0),
     }
@@ -491,6 +493,10 @@ def _write_outputs(
                 "post_em_norm": post_metrics.get("em_norm", 0.0),
                 "post_f1": post_metrics.get("f1", 0.0),
                 "post_refusal_rate": post_metrics.get("refusal_rate", 0.0),
+            }
+        )
+        diagnostics.update(
+            {
                 "post_overlong": post_metrics.get("overlong", 0),
                 "post_format_violation": post_metrics.get("format_violation", 0),
             }
@@ -501,6 +507,7 @@ def _write_outputs(
         "seed": cfg.seed,
         "preset": cfg.preset,
         "metrics": {cfg.suite: suite_metrics},
+        "diagnostics": {cfg.suite: diagnostics},
         "retrieval": registry.all_snapshots(),
         "gates": gate_registry.all_snapshots(),
         "replay": {"samples": replay_samples},
