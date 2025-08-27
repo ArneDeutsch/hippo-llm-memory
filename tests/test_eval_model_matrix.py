@@ -32,6 +32,27 @@ def test_eval_model_run_matrix(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
+def test_eval_model_run_matrix_episodic_multi(tmp_path: Path) -> None:
+    """Matrix run resolves datasets in subdirectories."""
+
+    outdir = tmp_path / "matrix"
+    cmd = [
+        sys.executable,
+        "scripts/eval_model.py",
+        "+run_matrix=true",
+        "preset=memory/hei_nw",
+        "tasks=[episodic_multi]",
+        "n_values=[2]",
+        "seeds=[1337]",
+        f"outdir={outdir}",
+        "dry_run=true",
+    ]
+    subprocess.run(cmd, check=True)
+    expected = outdir / "episodic_multi" / "2_1337" / "metrics.json"
+    assert expected.exists()
+
+
+@pytest.mark.slow
 def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
     """Matrix run handles numeric date without explicit outdir."""
 
