@@ -84,6 +84,7 @@ def _build_cfg(model_path: str, args: Args) -> Any:
             "model": model_path,
             "memory_off": True,
             "mode": "test",
+            "primary_em": "norm",
         }
     )
     cfg = eval_model._load_preset(cfg)

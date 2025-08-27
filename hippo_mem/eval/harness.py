@@ -124,6 +124,7 @@ class EvalConfig:
     system_prompt: str | None = None
     pad_token_id: int | None = None
     eos_token_id: int | None = None
+    primary_em: str = "norm"
 
 
 def _dataset_path(suite: str, n: int, seed: int) -> Path:
@@ -421,6 +422,9 @@ def run_suite(
         use_chat_template=cfg.use_chat_template,
         system_prompt=cfg.system_prompt,
     )
+    metrics["em"] = (
+        metrics.get("em_norm", 0.0) if cfg.primary_em == "norm" else metrics.get("em_raw", 0.0)
+    )
     lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
 
     replay_samples = 0
@@ -477,6 +481,7 @@ def _write_outputs(
 
     # Metrics JSON - follow schema used by report.py
     suite_metrics: Dict[str, float] = {
+        "pre_em": pre_metrics.get("em", 0.0),
         "pre_em_raw": pre_metrics.get("em_raw", 0.0),
         "pre_em_norm": pre_metrics.get("em_norm", 0.0),
         "pre_f1": pre_metrics.get("f1", 0.0),
@@ -489,6 +494,7 @@ def _write_outputs(
     if post_metrics is not None:
         suite_metrics.update(
             {
+                "post_em": post_metrics.get("em", 0.0),
                 "post_em_raw": post_metrics.get("em_raw", 0.0),
                 "post_em_norm": post_metrics.get("em_norm", 0.0),
                 "post_f1": post_metrics.get("f1", 0.0),
@@ -708,6 +714,11 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         system_prompt=cfg.system_prompt,
         compute_metrics=cfg.mode != "teach",
     )
+    pre_metrics["em"] = (
+        pre_metrics.get("em_norm", 0.0)
+        if cfg.primary_em == "norm"
+        else pre_metrics.get("em_raw", 0.0)
+    )
     latencies = [row["latency_ms"] for row in pre_rows]
     post_rows = post_metrics = None
     total_items = len(pre_rows)
@@ -738,6 +749,12 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                 use_chat_template=cfg.use_chat_template,
                 system_prompt=cfg.system_prompt,
             )
+            if post_metrics is not None:
+                post_metrics["em"] = (
+                    post_metrics.get("em_norm", 0.0)
+                    if cfg.primary_em == "norm"
+                    else post_metrics.get("em_raw", 0.0)
+                )
             latencies.extend(row["latency_ms"] for row in post_rows)
             total_items += len(post_rows)
             total_in_tokens += post_in_tokens
