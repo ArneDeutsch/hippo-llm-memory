@@ -14,7 +14,7 @@ import yaml
 
 _DEFAULTS: Dict[str, Any] = {
     "use_chat_template": False,
-    "system_prompt": "You are a helpful assistant.",
+    "system_prompt": "Answer with the exact shortest span from the prompt. No explanations.",
     "eos_token_id": None,
     "pad_token_id": None,
     "max_new_tokens": 32,

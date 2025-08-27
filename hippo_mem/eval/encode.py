@@ -17,7 +17,7 @@ def encode_prompt(
     device: torch.device,
     *,
     use_chat_template: bool = True,
-    system_prompt: str = "You are a helpful assistant.",
+    system_prompt: str = "Answer with the exact shortest span from the prompt. No explanations.",
 ) -> Dict[str, torch.Tensor]:
     """Return tokenized ``prompt`` for ``device``.
 
