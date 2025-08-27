@@ -221,7 +221,7 @@
 **Objective:** Demonstrate **systems consolidation** across sessions by training **LoRA/adapters** from replayed stores and validating improved recall **with memory OFF**.
 
 **Deliverables**
-1. [ ] Store `save/load` (JSONL/Parquet), CLI: `--mode {teach,replay,test}`, `--store_dir`, `--session_id`, `--persist`.
+1. [ ] Store `save/load` (JSONL/Parquet), CLI: `mode={teach,replay,test}`, `store_dir`, `session_id`, `persist`.
 2. [ ] `ReplayDataset` + prioritized sampler (salience/novelty/usage).
 3. [ ] `scripts/replay_consolidate.py` (PEFT/LoRA), `configs/consolidation/lora_small.yaml`.
 4. [ ] `scripts/test_consolidation.py` for pre/post with memory OFF.

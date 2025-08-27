@@ -48,8 +48,8 @@ The research frames the hippocampus as a **fast, labile, sparse store** (episodi
 - **C12.** Implement `save/load` for all stores (episodic/relational/spatial). Format: JSONL (default) with schema version; support Parquet optionally.
 - **C13.** Thread-safe I/O utilities; atomic writes with temp files + rename.
 - **C14.** Extend `eval_model.py` (or factor new `scripts/teach.py`) with CLI:
-  - `--mode {teach,replay,test}`
-  - `--store_dir`, `--session_id`, `--persist {true,false}`
+  - `mode={teach,replay,test}`
+  - `store_dir`, `session_id`, `persist={true,false}`
 - **C15.** On `mode=teach`: enable writes & gates; **do not** compute EM; save stores to `store_dir/session_id`.
 - **C16.** On `mode=test`: load stores if present (for memory‑on runs); allow flag `--memory_off` to explicitly disable retrieval for consolidation tests.
 
@@ -85,10 +85,10 @@ The research frames the hippocampus as a **fast, labile, sparse store** (episodi
 
 - **H2.** Run **teach** session to create stores:\
   ```bash
-  DATE=$(date +%Y%m%d_%H%M); SID=seed1337
-  python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337 \
-    --mode teach --persist true --store_dir runs/$DATE/stores --session_id $SID \
-    model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
+    DATE=$(date +%Y%m%d_%H%M); SID=seed1337
+    python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337 \
+      mode=teach persist=true store_dir=runs/$DATE/stores session_id=$SID \
+      model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
   ```
 - **H3.** Pre‑consolidation baseline (memory OFF):\
   ```bash

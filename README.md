@@ -127,7 +127,9 @@ Presets live under `configs/eval/baselines/`:
 ```bash
 # 1) Teach: write experiences to stores (persist across runs)
 DATE=$(date +%Y%m%d_%H%M); SID=seed1337
-python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337   --mode teach --persist true --store_dir runs/$DATE/stores --session_id $SID   model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
+python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337 \
+  mode=teach persist=true store_dir=runs/$DATE/stores session_id=$SID \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
 
 # 2) Pre-consolidation baseline (memory OFF)
 python scripts/test_consolidation.py --phase pre   --suite episodic --n 50 --seed 1337 --memory_off true   --model Qwen/Qwen2.5-1.5B-Instruct   --outdir runs/$DATE/consolidation/pre
@@ -141,10 +143,12 @@ python scripts/test_consolidation.py --phase post   --suite episodic --n 50 --se
 
 ## Cross-session runs
 
-Memory stores can persist across processes. `scripts/eval_model.py` accepts `--store_dir`,
-`--session_id`, `--persist`, and `--mode={teach,replay,test}` so a first run can **teach** facts,
+Memory stores can persist across processes. `scripts/eval_model.py` accepts overrides
+`store_dir=…`, `session_id=…`, `persist=true`, and `mode={teach,replay,test}` so a first run can **teach** facts,
 an optional second run can **replay**, and a fresh process can **test** delayed recall. See
 `MILESTONE_9_5_PLAN.md` for the protocol.
+
+For convenience, `scripts/eval_cli.py` translates legacy `--mode`-style flags into these overrides.
 
 ## Key artifacts
 

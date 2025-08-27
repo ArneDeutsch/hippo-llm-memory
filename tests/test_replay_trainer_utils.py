@@ -27,4 +27,3 @@ def test_load_config_overrides(tmp_path) -> None:
     assert cfg["train"]["batch_size"] == 2
     # ensure defaults preserved
     assert "rank" in cfg["peft"]
-

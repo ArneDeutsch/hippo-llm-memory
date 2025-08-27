@@ -46,12 +46,8 @@ def _parse_args(argv: Optional[List[str]] = None) -> Args:
     parser.add_argument("--store_dir", required=True)
     parser.add_argument("--session_id", required=True)
     parser.add_argument("--outdir", required=True)
-    parser.add_argument(
-        "--model", default=os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2")
-    )
-    parser.add_argument(
-        "--config", default=None, help="YAML file with training and LoRA settings"
-    )
+    parser.add_argument("--model", default=os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2"))
+    parser.add_argument("--config", default=None, help="YAML file with training and LoRA settings")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--kl_weight", type=float, default=0.0)
     parser.add_argument(
@@ -123,9 +119,7 @@ def _compute_kl(student: torch.Tensor, teacher: torch.Tensor) -> torch.Tensor:
 
     s_log = torch.log_softmax(student, dim=-1)
     t_log = torch.log_softmax(teacher, dim=-1)
-    return torch.nn.functional.kl_div(
-        s_log, t_log, log_target=True, reduction="batchmean"
-    )
+    return torch.nn.functional.kl_div(s_log, t_log, log_target=True, reduction="batchmean")
 
 
 def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
@@ -184,9 +178,7 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
             for i, rec in enumerate(batch):
                 teacher = rec.get("teacher")
                 if teacher and "logits" in teacher:
-                    t_logits = torch.tensor(
-                        teacher["logits"], dtype=out.logits.dtype
-                    )
+                    t_logits = torch.tensor(teacher["logits"], dtype=out.logits.dtype)
                     s_logits = out.logits[i, -t_logits.size(0) :]
                     kls.append(_compute_kl(s_logits, t_logits))
             if kls:
@@ -195,9 +187,7 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
         opt.step()
         opt.zero_grad()
         replay_count += len(batch)
-        logging.info(
-            "step=%d lr=%.2e loss=%.4f", step, cfg["train"]["lr"], float(loss)
-        )
+        logging.info("step=%d lr=%.2e loss=%.4f", step, cfg["train"]["lr"], float(loss))
     Path(args.outdir).mkdir(parents=True, exist_ok=True)
     if args.merge:
         merged = merge_adapter(model)
@@ -229,4 +219,3 @@ __all__ = [
     "parse_args",
     "train",
 ]
-
