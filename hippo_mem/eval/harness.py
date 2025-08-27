@@ -140,7 +140,14 @@ def _dataset_path(suite: str, n: int, seed: int) -> Path:
     base = Path("data") / f"{suite}_{size}_{seed}.jsonl"
     if base.exists():
         return base
+    alt = Path("data") / suite / f"{size}_{seed}.jsonl"
+    if alt.exists():
+        return alt
     candidates = sorted(Path("data").glob(f"{suite}_*_{size}_{seed}.jsonl"))
+    if not candidates:
+        subdir = Path("data") / suite
+        if subdir.exists():
+            candidates = sorted(subdir.glob(f"*_{size}_{seed}.jsonl"))
     if candidates:
         return candidates[0]
     raise FileNotFoundError("Dataset not found; run scripts/build_datasets.py or check suite name")
