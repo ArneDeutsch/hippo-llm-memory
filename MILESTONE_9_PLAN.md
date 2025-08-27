@@ -64,13 +64,13 @@ Each WP below contains **Codex tasks** (ready-to-use prompts) and **Human tasks*
 
 ### Codex Task C2 — Add chat-aware encoding with fallback
 **Files:** `scripts/eval_model.py`, new helper `src/eval/encode.py`  
-**Change:** Implement `encode_prompt(tokenizer, prompt, device)` that uses `tokenizer.apply_chat_template` if available; otherwise falls back to plain `.encode`. Default system message: “You are a helpful assistant.”  
+**Change:** Implement `encode_prompt(tokenizer, prompt, device)` that uses `tokenizer.apply_chat_template` if available; otherwise falls back to plain `.encode`. Default system message: “Answer with the exact shortest span from the prompt. No explanations.”
 **Acceptance:** For Qwen‑Instruct models, `tokenizer.chat_template` path is taken and completions are well-formed.
 
 **Prompt for Codex:**
 > Create `src/eval/encode.py` exposing `encode_prompt(tokenizer, prompt, device)` which uses `apply_chat_template` when available with:
 > ```python
-> messages=[{"role":"system","content":"You are a helpful assistant."}, {"role":"user","content":prompt}]
+> messages=[{"role":"system","content":"Answer with the exact shortest span from the prompt. No explanations."}, {"role":"user","content":prompt}]
 > input_ids = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt")
 > ```
 > Else: `input_ids = tokenizer(prompt, return_tensors="pt")["input_ids"]`. Import and use this in `scripts/eval_model.py`.
@@ -109,7 +109,7 @@ Each WP below contains **Codex tasks** (ready-to-use prompts) and **Human tasks*
 > ```yaml
 > Qwen/Qwen2.5-1.5B-Instruct:
 >   use_chat_template: true
->   system_prompt: "You are a helpful assistant."
+>   system_prompt: "Answer with the exact shortest span from the prompt. No explanations."
 >   max_new_tokens: 256
 > ```
 > Create `src/eval/models.py` to load this file and expose `ModelConfig get(model_id)` returning a dataclass. Use it inside `eval_model.py` to configure encoding and generation.

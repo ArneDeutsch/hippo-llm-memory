@@ -258,7 +258,10 @@ def _evaluate(
             item.prompt,
             model.device,
             use_chat_template=use_chat_template,
-            system_prompt=system_prompt or "You are a helpful assistant.",
+            system_prompt=(
+                system_prompt
+                or "Answer with the exact shortest span from the prompt. No explanations."
+            ),
         )
         out = model.generate(
             **inputs,

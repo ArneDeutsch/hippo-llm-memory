@@ -57,7 +57,10 @@ def encode_prompt(tokenizer, model, prompt: str, device):
     # Prefer chat templates when available
     if hasattr(tokenizer, "apply_chat_template") and getattr(tokenizer, "chat_template", None):
         messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
+            {
+                "role": "system",
+                "content": "Answer with the exact shortest span from the prompt. No explanations.",
+            },
             {"role": "user", "content": prompt},
         ]
         input_ids = tokenizer.apply_chat_template(

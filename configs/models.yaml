@@ -3,7 +3,7 @@
 
 defaults:
   use_chat_template: false
-  system_prompt: "You are a helpful assistant."
+  system_prompt: "Answer with the exact shortest span from the prompt. No explanations."
   eos_token_id: null
   pad_token_id: null
   max_new_tokens: 32
