@@ -38,7 +38,8 @@ datasets:
 	python scripts/audit_datasets.py
 
 eval-baselines:
-	python scripts/run_baselines.py --date $(DATE)
+	python scripts/run_baselines.py --date $(DATE) \
+	  --suites episodic semantic spatial episodic_multi episodic_cross episodic_capacity
 
 smoke:
 	bash scripts/smoke_eval.sh
