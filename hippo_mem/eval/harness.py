@@ -37,6 +37,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.telemetry import gate_registry, registry
+from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.eval.score import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
@@ -331,17 +332,24 @@ def _evaluate(
     return rows, metrics, input_tokens, gen_tokens, elapsed
 
 
-def _run_replay(modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]) -> int:
-    """Dummy replay loop that writes answers to the episodic store."""
+def _run_replay(
+    cfg: DictConfig, modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]
+) -> int:
+    """Replay loop that writes answers to the episodic store using a gate."""
 
     if "episodic" not in modules:
         return 0
     store = modules["episodic"]["store"]
+    gate_cfg = (cfg.get("memory") or {}).get("episodic", {}).get("gate", {})
+    tau = float(gate_cfg.get("tau", 0.5))
+    wgate = WriteGate(tau=tau)
     count = 0
     for task in tasks:
         key = np.ones(8, dtype="float32")
-        store.write(key, task.answer)
-        count += 1
+        sal = (hash(task.answer) % 100) / 100.0
+        if wgate.action(prob=sal, query=key, keys=store.index.keys()) == "insert":
+            store.write(key, task.answer)
+            count += 1
     return count
 
 
@@ -449,7 +457,7 @@ def run_suite(
 
     replay_samples = 0
     for _ in range(int(cfg.replay_cycles)):
-        replay_samples += _run_replay(modules, tasks)
+        replay_samples += _run_replay(base_cfg, modules, tasks)
 
     total_tokens = in_tokens + gen_tokens
     store_sizes = _store_sizes(modules)
@@ -801,7 +809,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
 
     if cfg.mode == "replay":
         for _ in range(int(cfg.replay_cycles)):
-            replay_samples += _run_replay(modules, tasks)
+            replay_samples += _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
             if "episodic" in modules:
@@ -856,7 +864,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         "latency_ms_mean": sum(latencies) / max(1, len(latencies)),
     }
     for _ in range(int(cfg.replay_cycles)):
-        replay_samples += _run_replay(modules, tasks)
+        replay_samples += _run_replay(cfg, modules, tasks)
     store_sizes = _store_sizes(modules)
     _write_outputs(
         outdir,
