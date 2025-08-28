@@ -1,0 +1,1 @@
+{"suite": "semantic", "n": 50, "seed": 2025, "preset": "baselines/core", "metrics": {"semantic": {"em_raw": 1.0, "em_norm": 1.0, "f1": 1.0, "overlong": 0, "format_violation": 0}, "compute": {"input_tokens": 900, "generated_tokens": 50, "total_tokens": 950, "time_ms_per_100": 0.049338210517721325, "rss_mb": 633.31640625, "latency_ms_mean": 0.008817460029604263}}, "memory": {}}

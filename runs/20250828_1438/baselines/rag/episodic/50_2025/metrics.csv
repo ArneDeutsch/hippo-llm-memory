@@ -1,0 +1,51 @@
+idx,prompt,answer,pred,em_raw,em_norm,f1,pred_len,gold_len,overlong,format_violation,latency_ms,time_ms_per_100,rss_mb,flags,gating_enabled
+0,Alice found at the Library on Monday. Where was Alice?,the Library,the Library,1,1,1.0,2,2,0,0,0.12389999983497546,0.07780503939267057,633.59375,pre_replay,False
+1,Alice found at the Mall on Monday. Who was at the Mall?,Alice,Alice,1,1,1.0,1,1,0,0,0.010140000085812062,0.07780503939267057,633.59375,pre_replay,False
+2,Dave met at the Mall on Monday. Who was at the Mall?,Dave,Dave,1,1,1.0,1,1,0,0,0.007550000191258732,0.07780503939267057,633.59375,pre_replay,False
+3,Bob saw at the Cafe on Tuesday. When was Bob at the Cafe?,Tuesday,Tuesday,1,1,1.0,1,1,0,0,0.007330999778787373,0.07780503939267057,633.59375,pre_replay,False
+4,Alice met at the Library on Tuesday. Who was at the Library?,Alice,Alice,1,1,1.0,1,1,0,0,0.006689999736408936,0.07780503939267057,633.59375,pre_replay,False
+5,Bob helped at the Cafe on Thursday. Where was Bob?,the Cafe,the Cafe,1,1,1.0,2,2,0,0,0.008099999831756577,0.07780503939267057,633.59375,pre_replay,False
+6,Bob helped at the Mall on Thursday. When was Bob at the Mall?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.00976999990598415,0.07780503939267057,633.59375,pre_replay,False
+7,Dave met at the Park on Tuesday. Where was Dave?,the Park,the Park,1,1,1.0,2,2,0,0,0.007419999747071415,0.07780503939267057,633.59375,pre_replay,False
+8,Carol saw at the Park on Wednesday. Where was Carol?,the Park,the Park,1,1,1.0,2,2,0,0,0.007050000021990854,0.07780503939267057,633.59375,pre_replay,False
+9,Carol helped at the Library on Monday. Where was Carol?,the Library,the Library,1,1,1.0,2,2,0,0,0.007509999704780057,0.07780503939267057,633.59375,pre_replay,False
+10,Bob found at the Park on Tuesday. Where was Bob?,the Park,the Park,1,1,1.0,2,2,0,0,0.007139999979699496,0.07780503939267057,633.59375,pre_replay,False
+11,Dave met at the Library on Tuesday. What did Dave do?,met,met,1,1,1.0,1,1,0,0,0.0066200000219396316,0.07780503939267057,633.59375,pre_replay,False
+12,Bob helped at the Cafe on Monday. When was Bob at the Cafe?,Monday,Monday,1,1,1.0,1,1,0,0,0.006920000032550888,0.07780503939267057,633.59375,pre_replay,False
+13,Bob saw at the Park on Wednesday. What did Bob do?,saw,saw,1,1,1.0,1,1,0,0,0.006420000318030361,0.07780503939267057,633.59375,pre_replay,False
+14,Carol saw at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,1,1.0,1,1,0,0,0.006740000117133604,0.07780503939267057,633.59375,pre_replay,False
+15,Bob saw at the Mall on Wednesday. What did Bob do?,saw,saw,1,1,1.0,1,1,0,0,0.006270000085351057,0.07780503939267057,633.59375,pre_replay,False
+16,Carol helped at the Mall on Wednesday. Where was Carol?,the Mall,the Mall,1,1,1.0,2,2,0,0,0.007299999651877442,0.07780503939267057,633.59375,pre_replay,False
+17,Bob helped at the Mall on Thursday. When was Bob at the Mall?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.006699999630654929,0.07780503939267057,633.59375,pre_replay,False
+18,Bob saw at the Park on Monday. Where was Bob?,the Park,the Park,1,1,1.0,2,2,0,0,0.007289999757631449,0.07780503939267057,633.59375,pre_replay,False
+19,Bob met at the Cafe on Tuesday. Where was Bob?,the Cafe,the Cafe,1,1,1.0,2,2,0,0,0.007099999947968172,0.07780503939267057,633.59375,pre_replay,False
+20,Alice met at the Cafe on Wednesday. Where was Alice?,the Cafe,the Cafe,1,1,1.0,2,2,0,0,0.0069299999267968815,0.07780503939267057,633.59375,pre_replay,False
+21,Carol saw at the Cafe on Thursday. When was Carol at the Cafe?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.006589999884454301,0.07780503939267057,633.59375,pre_replay,False
+22,Carol helped at the Library on Wednesday. When was Carol at the Library?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.007019999884505523,0.07780503939267057,633.59375,pre_replay,False
+23,Alice helped at the Cafe on Thursday. What did Alice do?,helped,helped,1,1,1.0,1,1,0,0,0.012389999938022811,0.07780503939267057,633.59375,pre_replay,False
+24,Alice found at the Mall on Wednesday. When was Alice at the Mall?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.006799999937356915,0.07780503939267057,633.59375,pre_replay,False
+25,Carol met at the Cafe on Thursday. When was Carol at the Cafe?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.0067099999796482734,0.07780503939267057,633.59375,pre_replay,False
+26,Carol met at the Park on Wednesday. Who was at the Park?,Carol,Carol,1,1,1.0,1,1,0,0,0.00655999974696897,0.07780503939267057,633.59375,pre_replay,False
+27,Dave helped at the Cafe on Wednesday. Where was Dave?,the Cafe,the Cafe,1,1,1.0,2,2,0,0,0.0070900000537221786,0.07780503939267057,633.59375,pre_replay,False
+28,Alice helped at the Park on Wednesday. Who was at the Park?,Alice,Alice,1,1,1.0,1,1,0,0,0.006350000148813706,0.07780503939267057,633.59375,pre_replay,False
+29,Carol helped at the Mall on Monday. What did Carol do?,helped,helped,1,1,1.0,1,1,0,0,0.006239999947865726,0.07780503939267057,633.59375,pre_replay,False
+30,Carol helped at the Library on Tuesday. What did Carol do?,helped,helped,1,1,1.0,1,1,0,0,0.00624999984211172,0.07780503939267057,633.59375,pre_replay,False
+31,Alice found at the Mall on Thursday. What did Alice do?,found,found,1,1,1.0,1,1,0,0,0.006130000201665098,0.07780503939267057,633.59375,pre_replay,False
+32,Alice found at the Park on Tuesday. Who was at the Park?,Alice,Alice,1,1,1.0,1,1,0,0,0.006061000021873042,0.07780503939267057,633.59375,pre_replay,False
+33,Bob met at the Mall on Tuesday. When was Bob at the Mall?,Tuesday,Tuesday,1,1,1.0,1,1,0,0,0.0064599998950143345,0.07780503939267057,633.59375,pre_replay,False
+34,Bob met at the Cafe on Wednesday. When was Bob at the Cafe?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.006470000244007679,0.07780503939267057,633.59375,pre_replay,False
+35,Carol saw at the Cafe on Tuesday. Where was Carol?,the Cafe,the Cafe,1,1,1.0,2,2,0,0,0.006960000064282212,0.07780503939267057,633.59375,pre_replay,False
+36,Alice saw at the Cafe on Tuesday. Who was at the Cafe?,Alice,Alice,1,1,1.0,1,1,0,0,0.006289999873843044,0.07780503939267057,633.59375,pre_replay,False
+37,Bob met at the Cafe on Tuesday. What did Bob do?,met,met,1,1,1.0,1,1,0,0,0.006279999979597051,0.07780503939267057,633.59375,pre_replay,False
+38,Carol saw at the Park on Tuesday. Where was Carol?,the Park,the Park,1,1,1.0,2,2,0,0,0.006960000064282212,0.07780503939267057,633.59375,pre_replay,False
+39,Bob saw at the Park on Tuesday. What did Bob do?,saw,saw,1,1,1.0,1,1,0,0,0.0062099998103803955,0.07780503939267057,633.59375,pre_replay,False
+40,Carol saw at the Mall on Wednesday. When was Carol at the Mall?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.00641999986328301,0.07780503939267057,633.59375,pre_replay,False
+41,Bob met at the Library on Monday. Where was Bob?,the Library,the Library,1,1,1.0,2,2,0,0,0.007420000201818766,0.07780503939267057,633.59375,pre_replay,False
+42,Bob found at the Mall on Thursday. Who was at the Mall?,Bob,Bob,1,1,1.0,1,1,0,0,0.006479999683506321,0.07780503939267057,633.59375,pre_replay,False
+43,Dave saw at the Cafe on Wednesday. What did Dave do?,saw,saw,1,1,1.0,1,1,0,0,0.006289999873843044,0.07780503939267057,633.59375,pre_replay,False
+44,Carol met at the Cafe on Monday. Where was Carol?,the Cafe,the Cafe,1,1,1.0,2,2,0,0,0.006960000064282212,0.07780503939267057,633.59375,pre_replay,False
+45,Carol helped at the Park on Tuesday. Who was at the Park?,Carol,Carol,1,1,1.0,1,1,0,0,0.006329999905574368,0.07780503939267057,633.59375,pre_replay,False
+46,Alice saw at the Cafe on Wednesday. What did Alice do?,saw,saw,1,1,1.0,1,1,0,0,0.006179999672895065,0.07780503939267057,633.59375,pre_replay,False
+47,Carol helped at the Library on Monday. Who was at the Library?,Carol,Carol,1,1,1.0,1,1,0,0,0.0062699996306037065,0.07780503939267057,633.59375,pre_replay,False
+48,Alice helped at the Cafe on Tuesday. What did Alice do?,helped,helped,1,1,1.0,1,1,0,0,0.006100000064179767,0.07780503939267057,633.59375,pre_replay,False
+49,Dave saw at the Mall on Thursday. Who was at the Mall?,Dave,Dave,1,1,1.0,1,1,0,0,0.006210000265127746,0.07780503939267057,633.59375,pre_replay,False

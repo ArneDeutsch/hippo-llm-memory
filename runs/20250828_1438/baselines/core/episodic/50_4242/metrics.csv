@@ -1,0 +1,51 @@
+idx,prompt,answer,pred,em_raw,em_norm,f1,pred_len,gold_len,overlong,format_violation,latency_ms,time_ms_per_100,rss_mb,flags,gating_enabled
+0,Dave saw at the Cafe on Thursday. When was Dave at the Cafe?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.12557100035337498,0.07669201880337358,633.55078125,pre_replay,False
+1,Dave met at the Mall on Tuesday. What did Dave do?,met,met,1,1,1.0,1,1,0,0,0.009869999757938785,0.07669201880337358,633.55078125,pre_replay,False
+2,Alice met at the Library on Tuesday. What did Alice do?,met,met,1,1,1.0,1,1,0,0,0.0072900002123788,0.07669201880337358,633.55078125,pre_replay,False
+3,Bob saw at the Mall on Monday. Where was Bob?,the Mall,the Mall,1,1,1.0,2,2,0,0,0.009059999683813658,0.07669201880337358,633.55078125,pre_replay,False
+4,Bob helped at the Park on Thursday. When was Bob at the Park?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.007279999863385456,0.07669201880337358,633.55078125,pre_replay,False
+5,Bob helped at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.006920000032550888,0.07669201880337358,633.55078125,pre_replay,False
+6,Dave helped at the Library on Tuesday. Where was Dave?,the Library,the Library,1,1,1.0,2,2,0,0,0.007879999884607969,0.07669201880337358,633.55078125,pre_replay,False
+7,Alice found at the Mall on Thursday. When was Alice at the Mall?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.006600000233447645,0.07669201880337358,633.55078125,pre_replay,False
+8,Dave found at the Mall on Tuesday. What did Dave do?,found,found,1,1,1.0,1,1,0,0,0.006339999799820362,0.07669201880337358,633.55078125,pre_replay,False
+9,Dave met at the Park on Monday. What did Dave do?,met,met,1,1,1.0,1,1,0,0,0.006539999958476983,0.07669201880337358,633.55078125,pre_replay,False
+10,Alice found at the Library on Wednesday. When was Alice at the Library?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.0066700004026643,0.07669201880337358,633.55078125,pre_replay,False
+11,Dave helped at the Library on Tuesday. When was Dave at the Library?,Tuesday,Tuesday,1,1,1.0,1,1,0,0,0.006499999926745659,0.07669201880337358,633.55078125,pre_replay,False
+12,Dave met at the Mall on Tuesday. When was Dave at the Mall?,Tuesday,Tuesday,1,1,1.0,1,1,0,0,0.006069999926694436,0.07669201880337358,633.55078125,pre_replay,False
+13,Bob met at the Cafe on Tuesday. Who was at the Cafe?,Bob,Bob,1,1,1.0,1,1,0,0,0.006060000032448443,0.07669201880337358,633.55078125,pre_replay,False
+14,Bob helped at the Park on Tuesday. Where was Bob?,the Park,the Park,1,1,1.0,2,2,0,0,0.007430000096064759,0.07669201880337358,633.55078125,pre_replay,False
+15,Alice helped at the Park on Tuesday. Where was Alice?,the Park,the Park,1,1,1.0,2,2,0,0,0.006960000064282212,0.07669201880337358,633.55078125,pre_replay,False
+16,Bob saw at the Cafe on Tuesday. Who was at the Cafe?,Bob,Bob,1,1,1.0,1,1,0,0,0.006259999736357713,0.07669201880337358,633.55078125,pre_replay,False
+17,Alice found at the Library on Wednesday. When was Alice at the Library?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.006480000138253672,0.07669201880337358,633.55078125,pre_replay,False
+18,Bob saw at the Mall on Thursday. What did Bob do?,saw,saw,1,1,1.0,1,1,0,0,0.006190000021888409,0.07669201880337358,633.55078125,pre_replay,False
+19,Alice saw at the Park on Thursday. Who was at the Park?,Alice,Alice,1,1,1.0,1,1,0,0,0.006360000043059699,0.07669201880337358,633.55078125,pre_replay,False
+20,Dave saw at the Park on Tuesday. Who was at the Park?,Dave,Dave,1,1,1.0,1,1,0,0,0.006199999916134402,0.07669201880337358,633.55078125,pre_replay,False
+21,Alice helped at the Mall on Thursday. What did Alice do?,helped,helped,1,1,1.0,1,1,0,0,0.0062699996306037065,0.07669201880337358,633.55078125,pre_replay,False
+22,Carol found at the Library on Tuesday. Where was Carol?,the Library,the Library,1,1,1.0,2,2,0,0,0.007330000244110124,0.07669201880337358,633.55078125,pre_replay,False
+23,Bob saw at the Park on Wednesday. Who was at the Park?,Bob,Bob,1,1,1.0,1,1,0,0,0.006320000011328375,0.07669201880337358,633.55078125,pre_replay,False
+24,Alice found at the Mall on Tuesday. Where was Alice?,the Mall,the Mall,1,1,1.0,2,2,0,0,0.00676099989505019,0.07669201880337358,633.55078125,pre_replay,False
+25,Bob met at the Library on Tuesday. What did Bob do?,met,met,1,1,1.0,1,1,0,0,0.006199999916134402,0.07669201880337358,633.55078125,pre_replay,False
+26,Dave met at the Mall on Thursday. What did Dave do?,met,met,1,1,1.0,1,1,0,0,0.00622000015937374,0.07669201880337358,633.55078125,pre_replay,False
+27,Carol met at the Mall on Thursday. Who was at the Mall?,Carol,Carol,1,1,1.0,1,1,0,0,0.009389999831910245,0.07669201880337358,633.55078125,pre_replay,False
+28,Bob helped at the Park on Wednesday. What did Bob do?,helped,helped,1,1,1.0,1,1,0,0,0.006480000138253672,0.07669201880337358,633.55078125,pre_replay,False
+29,Alice saw at the Park on Thursday. Who was at the Park?,Alice,Alice,1,1,1.0,1,1,0,0,0.010680000286811264,0.07669201880337358,633.55078125,pre_replay,False
+30,Dave met at the Park on Monday. Where was Dave?,the Park,the Park,1,1,1.0,2,2,0,0,0.007239999831654131,0.07669201880337358,633.55078125,pre_replay,False
+31,Dave met at the Park on Thursday. Where was Dave?,the Park,the Park,1,1,1.0,2,2,0,0,0.007050000021990854,0.07669201880337358,633.55078125,pre_replay,False
+32,Bob met at the Park on Wednesday. When was Bob at the Park?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.006719999873894267,0.07669201880337358,633.55078125,pre_replay,False
+33,Carol met at the Mall on Monday. What did Carol do?,met,met,1,1,1.0,1,1,0,0,0.006289999873843044,0.07669201880337358,633.55078125,pre_replay,False
+34,Bob met at the Cafe on Tuesday. Where was Bob?,the Cafe,the Cafe,1,1,1.0,2,2,0,0,0.007409999852825422,0.07669201880337358,633.55078125,pre_replay,False
+35,Alice found at the Mall on Monday. Who was at the Mall?,Alice,Alice,1,1,1.0,1,1,0,0,0.006589999884454301,0.07669201880337358,633.55078125,pre_replay,False
+36,Dave helped at the Mall on Wednesday. Who was at the Mall?,Dave,Dave,1,1,1.0,1,1,0,0,0.006560000201716321,0.07669201880337358,633.55078125,pre_replay,False
+37,Alice saw at the Mall on Tuesday. What did Alice do?,saw,saw,1,1,1.0,1,1,0,0,0.006230000053619733,0.07669201880337358,633.55078125,pre_replay,False
+38,Carol met at the Park on Tuesday. What did Carol do?,met,met,1,1,1.0,1,1,0,0,0.006100000064179767,0.07669201880337358,633.55078125,pre_replay,False
+39,Carol helped at the Cafe on Tuesday. Who was at the Cafe?,Carol,Carol,1,1,1.0,1,1,0,0,0.00622000015937374,0.07669201880337358,633.55078125,pre_replay,False
+40,Alice helped at the Mall on Wednesday. Who was at the Mall?,Alice,Alice,1,1,1.0,1,1,0,0,0.006199999916134402,0.07669201880337358,633.55078125,pre_replay,False
+41,Carol helped at the Mall on Tuesday. When was Carol at the Mall?,Tuesday,Tuesday,1,1,1.0,1,1,0,0,0.00670000008540228,0.07669201880337358,633.55078125,pre_replay,False
+42,Bob helped at the Mall on Thursday. When was Bob at the Mall?,Thursday,Thursday,1,1,1.0,1,1,0,0,0.0064299997575290035,0.07669201880337358,633.55078125,pre_replay,False
+43,Dave found at the Cafe on Wednesday. Who was at the Cafe?,Dave,Dave,1,1,1.0,1,1,0,0,0.0063700003920530435,0.07669201880337358,633.55078125,pre_replay,False
+44,Dave found at the Park on Monday. Where was Dave?,the Park,the Park,1,1,1.0,2,2,0,0,0.006990000201767543,0.07669201880337358,633.55078125,pre_replay,False
+45,Carol found at the Library on Thursday. Where was Carol?,the Library,the Library,1,1,1.0,2,2,0,0,0.007029999778751517,0.07669201880337358,633.55078125,pre_replay,False
+46,Alice helped at the Cafe on Wednesday. When was Alice at the Cafe?,Wednesday,Wednesday,1,1,1.0,1,1,0,0,0.006520000169984996,0.07669201880337358,633.55078125,pre_replay,False
+47,Carol helped at the Park on Thursday. What did Carol do?,helped,helped,1,1,1.0,1,1,0,0,0.006210000265127746,0.07669201880337358,633.55078125,pre_replay,False
+48,Alice met at the Mall on Monday. Who was at the Mall?,Alice,Alice,1,1,1.0,1,1,0,0,0.006130000201665098,0.07669201880337358,633.55078125,pre_replay,False
+49,Bob helped at the Library on Tuesday. When was Bob at the Library?,Tuesday,Tuesday,1,1,1.0,1,1,0,0,0.006260000191105064,0.07669201880337358,633.55078125,pre_replay,False
