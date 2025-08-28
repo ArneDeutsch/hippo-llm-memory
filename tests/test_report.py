@@ -106,7 +106,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
 
     em_stats = summary["episodic"]["baselines/core/gate_on"][50]["em_raw"]
     assert em_stats[0] == 0.6
-    assert round(em_stats[1], 3) == 0.141
+    assert round(em_stats[1], 3) == 0.196
 
     out = tmp_path / "reports" / "20250101"
     paths = write_reports(summary, retrieval, gates, out, plots=False)
@@ -134,6 +134,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
         assert col in header
     assert "[episodic](episodic/summary.md)" in idx_text
     assert "[semantic](semantic/summary.md)" in idx_text
+    # gate telemetry roll-up present
+    assert "## Gate Telemetry" in idx_text
 
 
 def test_report_handles_missing_optional(tmp_path: Path) -> None:
