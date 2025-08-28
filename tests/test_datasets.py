@@ -51,6 +51,14 @@ def test_semantic_options() -> None:
     assert "However, others report" in contradict[0]["prompt"]
 
 
+def test_semantic_require_memory_omits_facts() -> None:
+    """When ``require_memory`` is set, prompts exclude fact sentences."""
+
+    item = build_datasets.generate_semantic(1, seed=0, require_memory=True)[0]
+    for fact in item["facts"]:
+        assert fact["text"] not in item["prompt"]
+
+
 def test_episodic_flags() -> None:
     """Episodic items expose reward and pin flags."""
 
