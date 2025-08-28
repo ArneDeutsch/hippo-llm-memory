@@ -347,7 +347,8 @@ def _run_replay(
     for task in tasks:
         key = np.ones(8, dtype="float32")
         sal = (hash(task.answer) % 100) / 100.0
-        if wgate.action(prob=sal, query=key, keys=store.index.keys()) == "insert":
+        decision = wgate(prob=sal, query=key, keys=store.keys())
+        if decision.action == "insert":
             store.write(key, task.answer)
             count += 1
     return count
