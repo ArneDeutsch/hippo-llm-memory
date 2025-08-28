@@ -3,6 +3,10 @@
 The full evaluation harness lives in :mod:`hippo_mem.eval.harness`.  This
 module re-exports the public API for backward compatibility and forwards
 to :func:`hippo_mem.eval.harness.main` when executed as a script.
+
+It exposes the ``teach``, ``replay`` and ``test`` modes as well as
+``store_dir``/``session_id`` persistence flags used by the evaluation
+protocol.
 """
 
 import sys

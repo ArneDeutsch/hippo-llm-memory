@@ -493,6 +493,7 @@ def _write_outputs(
     """Persist metrics and metadata."""
 
     outdir.mkdir(parents=True, exist_ok=True)
+    is_test = str(cfg.get("mode")) == "test"
 
     # Metrics JSON - follow schema used by report.py
     suite_metrics: Dict[str, float] = {
@@ -541,18 +542,6 @@ def _write_outputs(
         metrics["metrics"]["compute"] = compute
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f)
-
-    # Per-task CSV
-    csv_rows: List[Dict[str, object]] = []
-    for row in pre_rows:
-        row = dict(row)
-        row["flags"] = "pre_replay"
-        csv_rows.append(row)
-    if post_rows is not None:
-        for row in post_rows:
-            row = dict(row)
-            row["flags"] = "post_replay"
-            csv_rows.append(row)
     mem_obj = cfg.get("memory")
     mem_dict = (
         OmegaConf.to_container(mem_obj, resolve=True) if isinstance(mem_obj, DictConfig) else {}
@@ -565,60 +554,75 @@ def _write_outputs(
         or (rel_gate or {}).get("enabled", False)
         or (spat_gate or {}).get("enabled", False)
     )
-    retrieval_fields = {
-        f"retrieval.{m}.{k}": v
-        for m, snap in metrics.get("retrieval", {}).items()
-        for k, v in snap.items()
-    }
-    gate_fields = {
-        f"gates.{m}.{k}": v for m, snap in metrics.get("gates", {}).items() for k, v in snap.items()
-    }
-    compute_cols = [k for k in ("time_ms_per_100", "rss_mb") if compute and k in compute]
-    for row in csv_rows:
-        row.update(retrieval_fields)
-        row.update(gate_fields)
-        for col in compute_cols:
-            row[col] = compute.get(col) if compute else None
-        row["gating_enabled"] = gating_enabled
-    fieldnames = [
-        "idx",
-        "prompt",
-        "answer",
-        "pred",
-        "em_raw",
-        "em_norm",
-        "f1",
-        "pred_len",
-        "gold_len",
-        "overlong",
-        "format_violation",
-        "latency_ms",
-        *compute_cols,
-        "flags",
-        "gating_enabled",
-        *sorted(retrieval_fields),
-        *sorted(gate_fields),
-    ]
-    with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in csv_rows:
-            writer.writerow(row)
 
-    # Small audit sample
-    sample = []
-    for row in pre_rows[:10]:
-        sample.append(
-            {
-                "id": row["idx"],
-                "prompt": str(row["prompt"])[:2000],
-                "answer": str(row["answer"])[:2000],
-                "pred": str(row["pred"])[:2000],
-            }
-        )
-    with (outdir / "audit_sample.jsonl").open("w", encoding="utf-8") as f:
-        for rec in sample:
-            f.write(json.dumps(rec) + "\n")
+    if is_test:
+        # Per-task CSV
+        csv_rows: List[Dict[str, object]] = []
+        for row in pre_rows:
+            row = dict(row)
+            row["flags"] = "pre_replay"
+            csv_rows.append(row)
+        if post_rows is not None:
+            for row in post_rows:
+                row = dict(row)
+                row["flags"] = "post_replay"
+                csv_rows.append(row)
+        retrieval_fields = {
+            f"retrieval.{m}.{k}": v
+            for m, snap in metrics.get("retrieval", {}).items()
+            for k, v in snap.items()
+        }
+        gate_fields = {
+            f"gates.{m}.{k}": v
+            for m, snap in metrics.get("gates", {}).items()
+            for k, v in snap.items()
+        }
+        compute_cols = [k for k in ("time_ms_per_100", "rss_mb") if compute and k in compute]
+        for row in csv_rows:
+            row.update(retrieval_fields)
+            row.update(gate_fields)
+            for col in compute_cols:
+                row[col] = compute.get(col) if compute else None
+            row["gating_enabled"] = gating_enabled
+        fieldnames = [
+            "idx",
+            "prompt",
+            "answer",
+            "pred",
+            "em_raw",
+            "em_norm",
+            "f1",
+            "pred_len",
+            "gold_len",
+            "overlong",
+            "format_violation",
+            "latency_ms",
+            *compute_cols,
+            "flags",
+            "gating_enabled",
+            *sorted(retrieval_fields),
+            *sorted(gate_fields),
+        ]
+        with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in csv_rows:
+                writer.writerow(row)
+
+        # Small audit sample
+        sample = []
+        for row in pre_rows[:10]:
+            sample.append(
+                {
+                    "id": row["idx"],
+                    "prompt": str(row["prompt"])[:2000],
+                    "answer": str(row["answer"])[:2000],
+                    "pred": str(row["pred"])[:2000],
+                }
+            )
+        with (outdir / "audit_sample.jsonl").open("w", encoding="utf-8") as f:
+            for rec in sample:
+                f.write(json.dumps(rec) + "\n")
 
     # Metadata JSON
     model_meta = {
@@ -639,7 +643,7 @@ def _write_outputs(
         "config_hash": _config_hash(cfg),
         "ablate": flat_ablate,
         "seed": cfg.seed,
-        "replay_cycles": cfg.get("replay", {}).get("cycles", 0),
+        "replay_cycles": cfg.get("replay_cycles", cfg.get("replay", {}).get("cycles", 0)),
         "gating_enabled": gating_enabled,
         "mode": cfg.get("mode"),
         "store_dir": cfg.get("store_dir"),
@@ -685,7 +689,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     modules = _init_modules(cfg.get("memory"), flat_ablate)
     if cfg.memory_off:
         modules = {}
-    elif cfg.mode == "test" and cfg.store_dir and cfg.session_id:
+    elif cfg.mode in ("test", "replay") and cfg.store_dir and cfg.session_id:
         session_dir = Path(to_absolute_path(str(cfg.store_dir)))
         sid = str(cfg.session_id)
         if "episodic" in modules:
@@ -719,31 +723,19 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    pre_rows, pre_metrics, pre_in_tokens, pre_gen_tokens, pre_time = _evaluate(
-        tasks,
-        modules,
-        tokenizer,
-        model,
-        int(cfg.max_new_tokens),
-        use_chat_template=cfg.use_chat_template,
-        system_prompt=cfg.system_prompt,
-        compute_metrics=cfg.mode != "teach",
-    )
-    pre_metrics["em"] = (
-        pre_metrics.get("em_norm", 0.0)
-        if cfg.primary_em == "norm"
-        else pre_metrics.get("em_raw", 0.0)
-    )
-    latencies = [row["latency_ms"] for row in pre_rows]
-    post_rows = post_metrics = None
-    total_items = len(pre_rows)
-    total_in_tokens = pre_in_tokens
-    total_gen_tokens = pre_gen_tokens
-    total_time = pre_time
     replay_samples = 0
 
     if cfg.mode == "teach":
-        replay_samples += _run_replay(modules, tasks)
+        _evaluate(
+            tasks,
+            modules,
+            tokenizer,
+            model,
+            int(cfg.max_new_tokens),
+            use_chat_template=cfg.use_chat_template,
+            system_prompt=cfg.system_prompt,
+            compute_metrics=False,
+        )
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
             if "episodic" in modules:
@@ -752,29 +744,66 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                 modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
             if "spatial" in modules:
                 modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
-    else:
-        for _ in range(int(cfg.get("replay", {}).get("cycles", 0))):
+        store_sizes = _store_sizes(modules)
+        _write_outputs(
+            outdir,
+            [],
+            {},
+            None,
+            None,
+            cfg,
+            flat_ablate,
+            None,
+            replay_samples=0,
+            store_sizes=store_sizes,
+        )
+        return
+
+    if cfg.mode == "replay":
+        for _ in range(int(cfg.replay_cycles)):
             replay_samples += _run_replay(modules, tasks)
-            post_rows, post_metrics, post_in_tokens, post_gen_tokens, post_time = _evaluate(
-                tasks,
-                modules,
-                tokenizer,
-                model,
-                int(cfg.max_new_tokens),
-                use_chat_template=cfg.use_chat_template,
-                system_prompt=cfg.system_prompt,
-            )
-            if post_metrics is not None:
-                post_metrics["em"] = (
-                    post_metrics.get("em_norm", 0.0)
-                    if cfg.primary_em == "norm"
-                    else post_metrics.get("em_raw", 0.0)
-                )
-            latencies.extend(row["latency_ms"] for row in post_rows)
-            total_items += len(post_rows)
-            total_in_tokens += post_in_tokens
-            total_gen_tokens += post_gen_tokens
-            total_time += post_time
+        if cfg.persist and cfg.store_dir and cfg.session_id:
+            session_dir = Path(to_absolute_path(str(cfg.store_dir)))
+            if "episodic" in modules:
+                modules["episodic"]["store"].save(str(session_dir), str(cfg.session_id))
+            if "relational" in modules:
+                modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
+            if "spatial" in modules:
+                modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
+        store_sizes = _store_sizes(modules)
+        _write_outputs(
+            outdir,
+            [],
+            {},
+            None,
+            None,
+            cfg,
+            flat_ablate,
+            None,
+            replay_samples=replay_samples,
+            store_sizes=store_sizes,
+        )
+        return
+
+    pre_rows, pre_metrics, pre_in_tokens, pre_gen_tokens, pre_time = _evaluate(
+        tasks,
+        modules,
+        tokenizer,
+        model,
+        int(cfg.max_new_tokens),
+        use_chat_template=cfg.use_chat_template,
+        system_prompt=cfg.system_prompt,
+        compute_metrics=True,
+    )
+    pre_metrics["em"] = (
+        pre_metrics.get("em_norm", 0.0)
+        if cfg.primary_em == "norm"
+        else pre_metrics.get("em_raw", 0.0)
+    )
+    latencies = [row["latency_ms"] for row in pre_rows]
+    total_in_tokens = pre_in_tokens
+    total_gen_tokens = pre_gen_tokens
+    total_time = pre_time
 
     total_tokens = total_in_tokens + total_gen_tokens
     compute = {
@@ -790,17 +819,17 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         outdir,
         pre_rows,
         pre_metrics,
-        post_rows,
-        post_metrics,
+        None,
+        None,
         cfg,
         flat_ablate,
         compute,
-        replay_samples=replay_samples,
+        replay_samples=0,
         store_sizes=store_sizes,
     )
 
     retrieval_snaps = registry.all_snapshots()
-    _enforce_guardrails(cfg, pre_metrics, post_metrics, retrieval_snaps, has_memory=bool(modules))
+    _enforce_guardrails(cfg, pre_metrics, None, retrieval_snaps, has_memory=bool(modules))
 
 
 def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
