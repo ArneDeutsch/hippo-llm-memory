@@ -172,8 +172,8 @@ done
 ```bash
 # Choose small, symmetric ranges around the defaults in configs:
 #   - episodic tau default ≈ 0.5
-#   - relational threshold default = 0.6  (configs/memory/relational.yaml)
-#   - spatial block_threshold default = 1.0 (configs/memory/spatial.yaml)
+#   - relational threshold default = 0.6  (configs/eval/memory/sgc_rss.yaml)
+#   - spatial block_threshold default = 1.0 (configs/eval/memory/smpd.yaml)
 
 EPISODIC_TAUS=(0.3 0.5 0.7)
 RELATIONAL_THRESHOLDS=(0.4 0.6 0.8)
