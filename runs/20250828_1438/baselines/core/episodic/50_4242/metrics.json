@@ -1,1 +1,0 @@
-{"suite": "episodic", "n": 50, "seed": 4242, "preset": "baselines/core", "metrics": {"episodic": {"em_raw": 1.0, "em_norm": 1.0, "f1": 1.0, "overlong": 0, "format_violation": 0}, "compute": {"input_tokens": 578, "generated_tokens": 61, "total_tokens": 639, "time_ms_per_100": 0.07669201880337358, "rss_mb": 633.55078125, "latency_ms_mean": 0.009228640019500745}}, "memory": {}}

@@ -1,1 +1,0 @@
-{"suite": "spatial", "n": 50, "seed": 2025, "preset": "baselines/rag", "metrics": {"spatial": {"em_raw": 1.0, "em_norm": 1.0, "f1": 1.0, "overlong": 0, "format_violation": 0}, "compute": {"input_tokens": 1634, "generated_tokens": 66, "total_tokens": 1700, "time_ms_per_100": 0.031292470580143235, "rss_mb": 633.81640625, "latency_ms_mean": 0.010053220057670842}}, "memory": {}}
