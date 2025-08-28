@@ -98,6 +98,14 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
         cfg.use_chat_template = False
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
+    # Normalize replay cycles key from nested config
+    rc = cfg.get("replay_cycles")
+    if rc in (None, 0):
+        nested = cfg.get("replay") or {}
+        try:
+            cfg.replay_cycles = int(nested.get("cycles", 0))
+        except Exception:
+            cfg.replay_cycles = 0
     return cfg
 
 
