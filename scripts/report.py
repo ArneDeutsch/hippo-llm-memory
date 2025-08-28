@@ -33,6 +33,12 @@ DISPLAY_NAMES = {
     "em_norm": "EM (norm)",
     "em_raw": "EM (raw)",
     "em": "EM",
+    "pre_em": "EM (pre)",
+    "post_em": "EM (post)",
+    "delta_em": "ΔEM",
+    "pre_f1": "F1 (pre)",
+    "post_f1": "F1 (post)",
+    "delta_f1": "ΔF1",
     "overlong": "overlong",
     "format_violation": "format_violation",
 }
@@ -87,19 +93,24 @@ def collect_metrics(
             log.warning("suite %s missing in %s", suite, metrics_path)
             continue
         suite_metrics = metrics[suite]
-        # normalise pre_/post_ keys and merge diagnostics
-        cleaned: Dict[str, float] = {}
-        for key, val in suite_metrics.items():
-            tgt = key[4:] if key.startswith("pre_") else key
-            cleaned[tgt] = val
+        cleaned: Dict[str, float] = dict(suite_metrics)
         diag = diagnostics.get(suite, {})
         n_items = record.get("n", 0) or 0
         for key, val in diag.items():
-            k = key[4:] if key.startswith("pre_") else key
             if n_items:
-                cleaned[k] = float(val) / n_items
+                cleaned[key] = float(val) / n_items
             else:
-                cleaned[k] = float(val)
+                cleaned[key] = float(val)
+        # derive delta_* metrics and normalise solitary pre_* keys
+        for key in list(cleaned.keys()):
+            if key.startswith("post_"):
+                base_key = key[5:]
+                pre_key = f"pre_{base_key}"
+                if pre_key in cleaned:
+                    cleaned[f"delta_{base_key}"] = cleaned[key] - cleaned[pre_key]
+            elif key.startswith("pre_") and f"post_{key[4:]}" not in cleaned:
+                base_key = key[4:]
+                cleaned[base_key] = cleaned.pop(key)
         compute_metrics = metrics.get("compute", {})
         data[(suite, preset, size)].append({**cleaned, **compute_metrics})
     return data
@@ -157,7 +168,7 @@ def collect_gates(base: Path) -> Dict[str, Dict[str, list[dict[str, MetricDict]]
 
 
 def summarise(data: Dict[Tuple[str, str, int], Iterable[MetricDict]]) -> Summary:
-    """Average metrics for each ``(suite, preset, size)`` with standard deviation."""
+    """Average metrics for each ``(suite, preset, size)`` with 95% CI."""
 
     summary: Summary = {}
     for (suite, preset, size), metrics_list in data.items():
@@ -170,9 +181,11 @@ def summarise(data: Dict[Tuple[str, str, int], Iterable[MetricDict]]) -> Summary
         agg: Dict[str, tuple[float, float]] = {}
         for key in keys:
             vals = [m.get(key, 0.0) for m in metrics_list]
+            count = len(vals)
             mval = mean(vals)
-            sval = stdev(vals) if len(vals) > 1 else 0.0
-            agg[key] = (mval, sval)
+            sval = stdev(vals) if count > 1 else 0.0
+            ci = 1.96 * sval / (count**0.5) if count > 1 else 0.0
+            agg[key] = (mval, ci)
         summary.setdefault(suite, {}).setdefault(preset, {})[size] = agg
     return summary
 
@@ -225,6 +238,30 @@ def summarise_gates(
                     stats["edges_per_1k"] = stats.get("edges_added", 0.0) / attempts * 1000.0
             summary[suite][status] = mem_summary
     return summary
+
+
+def _aggregate_gates(
+    summary: Dict[str, Dict[str, Dict[str, MetricDict]]],
+) -> Dict[str, Dict[str, MetricDict]]:
+    """Average gate stats across suites for index reporting."""
+
+    agg: Dict[str, Dict[str, Dict[str, float]]] = {}
+    counts: Dict[str, Dict[str, int]] = {}
+    for variants in summary.values():
+        for status, mems in variants.items():
+            for mem, stats in mems.items():
+                dest = agg.setdefault(status, {}).setdefault(mem, defaultdict(float))
+                counts.setdefault(status, {}).setdefault(mem, 0)
+                for k, v in stats.items():
+                    dest[k] += v
+                counts[status][mem] += 1
+    result: Dict[str, Dict[str, MetricDict]] = {}
+    for status, mems in agg.items():
+        result[status] = {}
+        for mem, stats in mems.items():
+            cnt = counts[status][mem]
+            result[status][mem] = {k: v / cnt for k, v in stats.items()}
+    return result
 
 
 def write_smoke(data_root: Path, out_path: Path, n_rows: int = 3) -> Path:
@@ -304,9 +341,15 @@ def _render_markdown_suite(
             }
         )
         preferred = [
+            "pre_em",
+            "post_em",
+            "delta_em",
             "em_raw",
             "em_norm",
             "em",
+            "pre_f1",
+            "post_f1",
+            "delta_f1",
             "f1",
             "overlong",
             "format_violation",
@@ -328,8 +371,8 @@ def _render_markdown_suite(
                     if stat is None:
                         vals.append("–")
                     else:
-                        mval, sval = stat
-                        vals.append(f"{mval:.3f} ± {sval:.3f}")
+                        mval, ci = stat
+                        vals.append(f"{mval:.3f} ± {ci:.3f}")
                 row = f"| {preset} | {size} | " + " | ".join(vals) + " |"
                 lines.append(row)
         lines.append("")
@@ -446,7 +489,12 @@ def _render_plots_suite(
         plt.close()
 
 
-def _write_index(summary: Summary, suite_paths: Dict[str, Path], out_dir: Path) -> Path:
+def _write_index(
+    summary: Summary,
+    suite_paths: Dict[str, Path],
+    gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
+    out_dir: Path,
+) -> Path:
     """Write a top-level roll-up report and return its path."""
 
     rollup: list[tuple[str, str, Dict[str, float]]] = []
@@ -470,9 +518,15 @@ def _write_index(summary: Summary, suite_paths: Dict[str, Path], out_dir: Path) 
 
     metric_keys = sorted(metric_keys)
     preferred = [
+        "pre_em",
+        "post_em",
+        "delta_em",
         "em_raw",
         "em_norm",
         "em",
+        "pre_f1",
+        "post_f1",
+        "delta_f1",
         "f1",
         "overlong",
         "format_violation",
@@ -511,6 +565,19 @@ def _write_index(summary: Summary, suite_paths: Dict[str, Path], out_dir: Path) 
     except Exception as exc:  # pragma: no cover - matplotlib missing
         log.warning("matplotlib unavailable: %s", exc)
 
+    if gates:
+        lines.append("## Gate Telemetry")
+        agg = _aggregate_gates(gates)
+        header = "| status | mem | duplicate_rate | nodes_per_1k | edges_per_1k |"
+        lines.extend([header, "|---|---|---|---|---|"])
+        for status, mems in sorted(agg.items()):
+            for mem, stats in sorted(mems.items()):
+                dr = stats.get("duplicate_rate", float("nan"))
+                npk = stats.get("nodes_per_1k", float("nan"))
+                epk = stats.get("edges_per_1k", float("nan"))
+                lines.append(f"| {status} | {mem} | {dr:.3f} | {npk:.3f} | {epk:.3f} |")
+        lines.append("")
+
     lines.append("## Per-suite summaries")
     for suite in sorted(suite_paths):
         lines.append(f"- [{suite}]({suite}/summary.md)")
@@ -544,7 +611,7 @@ def write_reports(
         paths[suite] = md_path
         if plots:
             _render_plots_suite(suite, presets, suite_dir)
-    idx = _write_index(summary, paths, out_dir)
+    idx = _write_index(summary, paths, gates, out_dir)
     log.info("wrote %s", idx)
     return paths
 
