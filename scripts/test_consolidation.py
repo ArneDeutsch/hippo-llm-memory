@@ -117,6 +117,8 @@ def _compute_delta(pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]) ->
             continue
         base = key[4:]
         post_val = post_suite.get(f"post_{base}")
+        if post_val is None:
+            post_val = post_suite.get(f"pre_{base}")
         if isinstance(val, (int, float)) and isinstance(post_val, (int, float)):
             delta[base] = float(post_val) - float(val)
     return delta

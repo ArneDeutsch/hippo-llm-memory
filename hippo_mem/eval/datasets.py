@@ -163,6 +163,7 @@ def generate_semantic(
     seed: int,
     hop_depth: int = 2,
     inject_contradictions: bool = False,
+    require_memory: bool = False,
 ) -> List[Dict[str, object]]:
     """Generate 2–3 hop fact chains linking people, items, stores and cities.
 
@@ -179,6 +180,10 @@ def generate_semantic(
     inject_contradictions:
         If ``True``, an additional contradictory statement about the store's
         city is inserted, requiring disambiguation in the query.
+    require_memory:
+        When ``True``, the prompt omits fact sentences, forcing models to
+        retrieve them from memory.  Facts are still returned in ``facts`` for
+        ingestion during teach mode.
 
     Returns
     -------
@@ -207,30 +212,36 @@ def generate_semantic(
         facts: List[Dict[str, object]] = []
         if hop_depth == 2:
             sent = f"{who} bought a {item} at {store}."
-            parts.append(sent)
+            if not require_memory:
+                parts.append(sent)
             facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
         else:  # hop_depth == 3
             sent = f"{who} bought a {item}."
-            parts.append(sent)
+            if not require_memory:
+                parts.append(sent)
             facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
             sent = f"The {item} was sold at {store}."
-            parts.append(sent)
+            if not require_memory:
+                parts.append(sent)
             facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
         sent = f"{store} is in {city}."
-        parts.append(sent)
+        if not require_memory:
+            parts.append(sent)
         facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
 
         if inject_contradictions:
             false_city = rng.choice([c for c in cities if c != city])
             sent = f"However, others report {store} is in {false_city}."
-            parts.append(sent)
+            if not require_memory:
+                parts.append(sent)
             facts.append({"text": sent, "schema_fit": False, "time": len(facts)})
             question = f"Despite conflicting reports, in which city did {who} buy the {item}?"
         else:
             question = f"In which city did {who} buy the {item}?"
 
-        text = " ".join(parts)
-        tasks.append({"prompt": f"{text} {question}", "answer": city, "facts": facts})
+        text = " ".join(parts).strip()
+        prompt = f"{text} {question}" if text else question
+        tasks.append({"prompt": prompt, "answer": city, "facts": facts})
 
     return tasks
 
