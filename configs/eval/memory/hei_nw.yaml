@@ -1,8 +1,10 @@
 # Episodic memory preset using HEI-NW store with replay and gating.
+gating_enabled: true
 memory:
   episodic:
     gate:
       enabled: true
+    use_completion: true
 replay:
   cycles: 1
 retrieval:

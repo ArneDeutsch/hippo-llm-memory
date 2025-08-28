@@ -1,4 +1,5 @@
 # Spatial/procedural memory preset using SMPD store with replay and gating.
+gating_enabled: true
 memory:
   spatial:
     gate:
