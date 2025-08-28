@@ -7,6 +7,7 @@ retrieval:
 long_context:
   enabled: false
 gating_enabled: false
+suites: [episodic, semantic, spatial, episodic_multi, episodic_cross, episodic_capacity]
 
 # Generation/encoding tweaks (consumed by scripts/eval_model.py)
 use_chat_template: true
