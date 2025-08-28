@@ -60,52 +60,53 @@ FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
 def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
     """Populate model-related fields on ``cfg`` if missing."""
-    # Allow ``task`` as a CLI alias for ``suite``.
-    task = cfg.get("task")
-    suite = cfg.get("suite")
-    if task and not suite:
-        cfg.suite = task
-    elif suite and not task:
-        cfg.task = suite
+    with open_dict(cfg):
+        # Allow ``task`` as a CLI alias for ``suite``.
+        task = cfg.get("task")
+        suite = cfg.get("suite")
+        if task and not suite:
+            cfg.suite = task
+        elif suite and not task:
+            cfg.task = suite
 
-    cfg.n = cfg.get("n", 5)
-    cfg.seed = cfg.get("seed", 0)
-    cfg.model = cfg.get("model", "models/tiny-gpt2")
-    cfg.max_new_tokens = cfg.get("max_new_tokens")
-    cfg.mode = cfg.get("mode", "test")
-    cfg.store_dir = cfg.get("store_dir")
-    cfg.session_id = cfg.get("session_id")
-    cfg.persist = cfg.get("persist", False)
-    cfg.memory_off = cfg.get("memory_off", False)
-    model_cfg = load_model_config(str(cfg.model))
-    if cfg.get("use_chat_template") is None:
-        cfg.use_chat_template = model_cfg.get("use_chat_template", False)
-    if cfg.get("system_prompt") is None:
-        cfg.system_prompt = model_cfg.get("system_prompt")
-    if cfg.get("pad_token_id") is None:
-        cfg.pad_token_id = model_cfg.get("pad_token_id")
-    if cfg.get("eos_token_id") is None:
-        cfg.eos_token_id = model_cfg.get("eos_token_id")
-    if cfg.max_new_tokens is None:
-        cfg.max_new_tokens = model_cfg.get("max_new_tokens", 32)
-    force_chat = cfg.get("force_chat")
-    force_no_chat = cfg.get("force_no_chat")
-    if force_chat and force_no_chat:
-        raise ValueError("force_chat and force_no_chat are mutually exclusive")
-    if force_chat:
-        cfg.use_chat_template = True
-    elif force_no_chat:
-        cfg.use_chat_template = False
-    if cfg.get("dry_run"):
-        cfg.n = min(cfg.n, 5)
-    # Normalize replay cycles key from nested config
-    rc = cfg.get("replay_cycles")
-    if rc in (None, 0):
-        nested = cfg.get("replay") or {}
-        try:
-            cfg.replay_cycles = int(nested.get("cycles", 0))
-        except Exception:
-            cfg.replay_cycles = 0
+        cfg.n = cfg.get("n", 5)
+        cfg.seed = cfg.get("seed", 0)
+        cfg.model = cfg.get("model", "models/tiny-gpt2")
+        cfg.max_new_tokens = cfg.get("max_new_tokens")
+        cfg.mode = cfg.get("mode", "test")
+        cfg.store_dir = cfg.get("store_dir")
+        cfg.session_id = cfg.get("session_id")
+        cfg.persist = cfg.get("persist", False)
+        cfg.memory_off = cfg.get("memory_off", False)
+        model_cfg = load_model_config(str(cfg.model))
+        if cfg.get("use_chat_template") is None:
+            cfg.use_chat_template = model_cfg.get("use_chat_template", False)
+        if cfg.get("system_prompt") is None:
+            cfg.system_prompt = model_cfg.get("system_prompt")
+        if cfg.get("pad_token_id") is None:
+            cfg.pad_token_id = model_cfg.get("pad_token_id")
+        if cfg.get("eos_token_id") is None:
+            cfg.eos_token_id = model_cfg.get("eos_token_id")
+        if cfg.max_new_tokens is None:
+            cfg.max_new_tokens = model_cfg.get("max_new_tokens", 32)
+        force_chat = cfg.get("force_chat")
+        force_no_chat = cfg.get("force_no_chat")
+        if force_chat and force_no_chat:
+            raise ValueError("force_chat and force_no_chat are mutually exclusive")
+        if force_chat:
+            cfg.use_chat_template = True
+        elif force_no_chat:
+            cfg.use_chat_template = False
+        if cfg.get("dry_run"):
+            cfg.n = min(cfg.n, 5)
+        # Normalize replay cycles key from nested config
+        rc = cfg.get("replay_cycles")
+        if rc in (None, 0):
+            nested = cfg.get("replay") or {}
+            try:
+                cfg.replay_cycles = int(nested.get("cycles", 0))
+            except Exception:
+                cfg.replay_cycles = 0
     return cfg
 
 
@@ -493,7 +494,7 @@ def _write_outputs(
     """Persist metrics and metadata."""
 
     outdir.mkdir(parents=True, exist_ok=True)
-    is_test = str(cfg.get("mode")) == "test"
+    is_test = str(cfg.get("mode")) in ("test", "teach")
 
     # Metrics JSON - follow schema used by report.py
     suite_metrics: Dict[str, float] = {
@@ -686,7 +687,31 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed)
     tasks = _load_tasks(dataset, cfg.n)
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
-    modules = _init_modules(cfg.get("memory"), flat_ablate)
+    mem_cfg = cfg.get("memory")
+    if isinstance(mem_cfg, DictConfig):
+        with open_dict(mem_cfg):
+            epi_cfg = mem_cfg.get("episodic")
+            if isinstance(epi_cfg, DictConfig):
+                if "episodic.use_gate" in flat_ablate:
+                    gate_cfg = epi_cfg.get("gate")
+                    if isinstance(gate_cfg, DictConfig):
+                        with open_dict(gate_cfg):
+                            gate_cfg.enabled = bool(flat_ablate["episodic.use_gate"])
+                if "episodic.use_completion" in flat_ablate:
+                    epi_cfg["use_completion"] = bool(flat_ablate["episodic.use_completion"])
+            rel_cfg = mem_cfg.get("relational")
+            if isinstance(rel_cfg, DictConfig) and "relational.gate.enabled" in flat_ablate:
+                gate_cfg = rel_cfg.get("gate")
+                if isinstance(gate_cfg, DictConfig):
+                    with open_dict(gate_cfg):
+                        gate_cfg.enabled = bool(flat_ablate["relational.gate.enabled"])
+            spat_cfg = mem_cfg.get("spatial")
+            if isinstance(spat_cfg, DictConfig) and "spatial.gate.enabled" in flat_ablate:
+                gate_cfg = spat_cfg.get("gate")
+                if isinstance(gate_cfg, DictConfig):
+                    with open_dict(gate_cfg):
+                        gate_cfg.enabled = bool(flat_ablate["spatial.gate.enabled"])
+    modules = _init_modules(mem_cfg, flat_ablate)
     if cfg.memory_off:
         modules = {}
     elif cfg.mode in ("test", "replay") and cfg.store_dir and cfg.session_id:
@@ -726,7 +751,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     replay_samples = 0
 
     if cfg.mode == "teach":
-        _evaluate(
+        pre_rows, _, _, _, _ = _evaluate(
             tasks,
             modules,
             tokenizer,
@@ -747,7 +772,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         store_sizes = _store_sizes(modules)
         _write_outputs(
             outdir,
-            [],
+            pre_rows,
             {},
             None,
             None,
@@ -814,6 +839,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         "rss_mb": _rss_mb(),
         "latency_ms_mean": sum(latencies) / max(1, len(latencies)),
     }
+    for _ in range(int(cfg.replay_cycles)):
+        replay_samples += _run_replay(modules, tasks)
     store_sizes = _store_sizes(modules)
     _write_outputs(
         outdir,
@@ -824,7 +851,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         cfg,
         flat_ablate,
         compute,
-        replay_samples=0,
+        replay_samples=replay_samples,
         store_sizes=store_sizes,
     )
 

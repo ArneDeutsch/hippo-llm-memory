@@ -1,4 +1,5 @@
 # Semantic/relational memory preset using SGC-RSS store with replay and gating.
+gating_enabled: true
 memory:
   relational:
     gate:

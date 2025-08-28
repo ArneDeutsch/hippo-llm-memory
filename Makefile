@@ -42,3 +42,16 @@ eval-baselines:
 
 smoke:
 	bash scripts/smoke_eval.sh
+
+
+gate-sweep:
+	@for thr in 0.5 0.6 0.7; do \
+	  python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=5 seed=1337 \
+	    relational.gate.threshold=$$thr outdir=runs/$(DATE)/gate_sweep/rel_$$thr \
+	    dry_run=true; \
+	done; \
+	for thr in 0.8 1.0 1.2; do \
+	  python scripts/eval_model.py suite=spatial preset=memory/smpd n=5 seed=1337 \
+	    spatial.gate.block_threshold=$$thr outdir=runs/$(DATE)/gate_sweep/spat_$$thr \
+	    dry_run=true; \
+	done
