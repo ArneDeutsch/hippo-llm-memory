@@ -38,7 +38,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
-from hippo_mem.eval.score import em_norm, em_raw, f1
+from hippo_mem.eval.score import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 
@@ -201,7 +201,8 @@ def _evaluate(
     use_chat_template: bool,
     system_prompt: str | None,
     compute_metrics: bool = True,
-) -> Tuple[List[Dict[str, object]], Dict[str, float], int, float]:
+    suite: str | None = None,
+) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
     rows: List[Dict[str, object]] = []
@@ -325,6 +326,8 @@ def _evaluate(
         if compute_metrics
         else {}
     )
+    if compute_metrics and suite == "spatial":
+        metrics.update(spatial_kpis(task_list, rows))
     return rows, metrics, input_tokens, gen_tokens, elapsed
 
 
@@ -437,6 +440,7 @@ def run_suite(
         int(base_cfg.max_new_tokens),
         use_chat_template=cfg.use_chat_template,
         system_prompt=cfg.system_prompt,
+        suite=cfg.suite,
     )
     metrics["em"] = (
         metrics.get("em_norm", 0.0) if cfg.primary_em == "norm" else metrics.get("em_raw", 0.0)
@@ -504,6 +508,9 @@ def _write_outputs(
         "pre_f1": pre_metrics.get("f1", 0.0),
         "pre_refusal_rate": pre_metrics.get("refusal_rate", 0.0),
     }
+    for k in ("success_rate", "suboptimality_ratio", "steps_to_goal"):
+        if k in pre_metrics:
+            suite_metrics[f"pre_{k}"] = pre_metrics[k]
     diagnostics: Dict[str, int] = {
         "pre_overlong": pre_metrics.get("overlong", 0),
         "pre_format_violation": pre_metrics.get("format_violation", 0),
@@ -518,6 +525,9 @@ def _write_outputs(
                 "post_refusal_rate": post_metrics.get("refusal_rate", 0.0),
             }
         )
+        for k in ("success_rate", "suboptimality_ratio", "steps_to_goal"):
+            if k in post_metrics:
+                suite_metrics[f"post_{k}"] = post_metrics[k]
         diagnostics.update(
             {
                 "post_overlong": post_metrics.get("overlong", 0),
@@ -598,6 +608,10 @@ def _write_outputs(
             "overlong",
             "format_violation",
             "latency_ms",
+            "success",
+            "steps_pred",
+            "steps_opt",
+            "suboptimality",
             *compute_cols,
             "flags",
             "gating_enabled",
@@ -760,6 +774,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             use_chat_template=cfg.use_chat_template,
             system_prompt=cfg.system_prompt,
             compute_metrics=False,
+            suite=cfg.suite,
         )
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
@@ -819,6 +834,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         use_chat_template=cfg.use_chat_template,
         system_prompt=cfg.system_prompt,
         compute_metrics=True,
+        suite=cfg.suite,
     )
     pre_metrics["em"] = (
         pre_metrics.get("em_norm", 0.0)
