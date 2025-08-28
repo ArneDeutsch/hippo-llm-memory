@@ -167,19 +167,70 @@ for n in "${SIZES[@]}"; do
 done
 ```
 
-### 5.2) Gate threshold sweeps (example values)
+## 5.2) OPTIONAL — Gate threshold sweeps (set lists or skip)
 
-```bash
-for thr in 0.2 0.5 0.8; do
-  for n in 200; do  # keep runtime reasonable
-    for seed in 1337 2025; do
-      OUT="$RUNS/sweeps/epis_gate_thr_${thr}/episodic/${n}_${seed}"
-      python scripts/eval_model.py         suite=episodic preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES/hei_nw_thr_${thr}" session_id="$SESS"         memory.episodic.gate.threshold="$thr" outdir="$OUT"
-      python scripts/eval_model.py         suite=episodic preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=test store_dir="$STORES/hei_nw_thr_${thr}" session_id="$SESS"         memory.episodic.gate.threshold="$thr" outdir="$OUT"
+# Choose small, symmetric ranges around the defaults in configs:
+#   - episodic tau default ≈ 0.5
+#   - relational threshold default = 0.6  (configs/memory/relational.yaml)
+#   - spatial block_threshold default = 1.0 (configs/memory/spatial.yaml)
+EPISODIC_TAUS=(0.3 0.5 0.7)
+RELATIONAL_THRESHOLDS=(0.4 0.6 0.8)
+SPATIAL_BLOCK_THRESHOLDS=(0.5 1.0 2.0)
+
+# Keep the sweep light to control runtime; adjust if you have more compute
+SWEEP_SIZES=(200)
+SWEEP_SEEDS=(1337 2025)
+
+# --- HEI-NW (episodic) tau sweep ---
+for thr in "${EPISODIC_TAUS[@]}"; do
+  for n in "${SWEEP_SIZES[@]}"; do
+    for seed in "${SWEEP_SEEDS[@]}"; do
+      OUT="$RUNS/sweeps/epis_tau_${thr}/episodic/${n}_${seed}"
+      python scripts/eval_model.py \
+        suite=episodic preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" \
+        model="$MODEL" mode=teach persist=true store_dir="$STORES/hei_nw_tau_${thr}" session_id="$SESS" \
+        memory.episodic.gate.tau="$thr" outdir="$OUT"
+      python scripts/eval_model.py \
+        suite=episodic preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" \
+        model="$MODEL" mode=test store_dir="$STORES/hei_nw_tau_${thr}" session_id="$SESS" \
+        memory.episodic.gate.tau="$thr" outdir="$OUT"
     done
   done
 done
-```
+
+# --- SGC-RSS (relational) threshold sweep ---
+for thr in "${RELATIONAL_THRESHOLDS[@]}"; do
+  for n in "${SWEEP_SIZES[@]}"; do
+    for seed in "${SWEEP_SEEDS[@]}"; do
+      OUT="$RUNS/sweeps/rel_thr_${thr}/semantic/${n}_${seed}"
+      python scripts/eval_model.py \
+        suite=semantic preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE" \
+        model="$MODEL" mode=teach persist=true store_dir="$STORES/sgc_rss_thr_${thr}" session_id="$SESS" \
+        memory.relational.gate.threshold="$thr" outdir="$OUT"
+      python scripts/eval_model.py \
+        suite=semantic preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE" \
+        model="$MODEL" mode=test store_dir="$STORES/sgc_rss_thr_${thr}" session_id="$SESS" \
+        memory.relational.gate.threshold="$thr" outdir="$OUT"
+    done
+  done
+done
+
+# --- SMPD (spatial) block_threshold sweep ---
+for thr in "${SPATIAL_BLOCK_THRESHOLDS[@]}"; do
+  for n in "${SWEEP_SIZES[@]}"; do
+    for seed in "${SWEEP_SEEDS[@]}"; do
+      OUT="$RUNS/sweeps/spa_block_${thr}/spatial/${n}_${seed}"
+      python scripts/eval_model.py \
+        suite=spatial preset=memory/smpd n="$n" seed="$seed" date="$DATE" \
+        model="$MODEL" mode=teach persist=true store_dir="$STORES/smpd_block_${thr}" session_id="$SESS" \
+        memory.spatial.gate.block_threshold="$thr" outdir="$OUT"
+      python scripts/eval_model.py \
+        suite=spatial preset=memory/smpd n="$n" seed="$seed" date="$DATE" \
+        model="$MODEL" mode=test store_dir="$STORES/smpd_block_${thr}" session_id="$SESS" \
+        memory.spatial.gate.block_threshold="$thr" outdir="$OUT"
+    done
+  done
+done
 
 
 ---
