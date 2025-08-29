@@ -225,8 +225,6 @@ Minimal smoke for **cross‑session recall** using the same store directory.
 
 ```bash
 # §8 prelude (self-contained)
-set -euo pipefail
-
 : "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
 DATE="$RUN_ID"
 RUNS="runs/$RUN_ID"
