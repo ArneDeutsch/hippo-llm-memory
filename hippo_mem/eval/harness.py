@@ -59,6 +59,23 @@ REFUSAL_RE = re.compile(
 FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
 
+def _date_str(value: object | None) -> str:
+    """Return a normalized date string.
+
+    ``value`` may be ``None``, a numeric timestamp, or a string with an optional
+    ``_HHMM`` suffix. The function preserves underscores if provided and inserts
+    one for 12+ digit numeric values so ``202508290841`` becomes
+    ``20250829_0841``.
+    """
+
+    if value is None:
+        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    date = str(value)
+    if "_" not in date and date.isdigit() and len(date) > 8:
+        return f"{date[:8]}_{date[8:]}"
+    return date
+
+
 def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
     """Populate model-related fields on ``cfg`` if missing."""
     with open_dict(cfg):
@@ -916,7 +933,7 @@ def main(cfg: DictConfig) -> None:
             if outdir_cfg is not None:
                 base_outdir = Path(to_absolute_path(str(outdir_cfg)))
             else:
-                date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
+                date = _date_str(cfg.get("date"))
                 base_outdir = Path("runs") / date
             for preset in presets:
                 run_cfg = OmegaConf.merge(base_cfg, {"preset": preset})
@@ -930,7 +947,7 @@ def main(cfg: DictConfig) -> None:
             if outdir_cfg is not None:
                 root_outdir = Path(to_absolute_path(str(outdir_cfg)))
             else:
-                date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
+                date = _date_str(cfg.get("date"))
                 preset_path = Path(str(cfg.preset))
                 if preset_path.parts and preset_path.parts[0] == "baselines":
                     root_outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name
@@ -943,7 +960,7 @@ def main(cfg: DictConfig) -> None:
         if outdir_cfg is not None:
             outdir = Path(to_absolute_path(str(outdir_cfg)))
         else:
-            date = str(cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d"))
+            date = _date_str(cfg.get("date"))
             preset_path = Path(str(cfg.preset))
             if preset_path.parts and preset_path.parts[0] == "baselines":
                 outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite

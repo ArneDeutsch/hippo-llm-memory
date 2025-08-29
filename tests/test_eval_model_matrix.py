@@ -110,6 +110,32 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
+def test_eval_model_run_matrix_date_time(tmp_path: Path) -> None:
+    """Matrix run handles timestamped date without explicit outdir."""
+
+    repo_root = Path(__file__).resolve().parents[1]
+    (tmp_path / "data").symlink_to(repo_root / "data", target_is_directory=True)
+    (tmp_path / "models").symlink_to(repo_root / "models", target_is_directory=True)
+    env = {**os.environ, "PYTHONPATH": str(repo_root)}
+    cmd = [
+        sys.executable,
+        str(repo_root / "scripts" / "eval_model.py"),
+        "+run_matrix=true",
+        "preset=memory/hei_nw",
+        "+suites=[episodic]",
+        "+n_values=[2]",
+        "+seeds=[1337]",
+        "dry_run=true",
+        "date=20250829_0841",
+    ]
+    subprocess.run(cmd, check=True, cwd=tmp_path, env=env)
+    expected = (
+        tmp_path / "runs" / "20250829_0841" / "hei_nw" / "episodic" / "2_1337" / "metrics.json"
+    )
+    assert expected.exists()
+
+
+@pytest.mark.slow
 def test_eval_model_run_matrix_presets(tmp_path: Path) -> None:
     """Matrix run with multiple presets writes outputs for each preset."""
 

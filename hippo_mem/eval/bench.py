@@ -61,6 +61,18 @@ from hippo_mem.spatial.place_graph import PlaceGraph
 
 from .datasets import SUITE_TO_GENERATOR
 
+
+def _date_str(value: object | None) -> str:
+    """Return a normalized date string consistent with ``eval.harness``."""
+
+    if value is None:
+        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    date = str(value)
+    if "_" not in date and date.isdigit() and len(date) > 8:
+        return f"{date[:8]}_{date[8:]}"
+    return date
+
+
 FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
 
@@ -607,7 +619,7 @@ def main(cfg: DictConfig) -> None:
     cfg.n = cfg.get("n", 5)
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
-    date = cfg.get("date") or datetime.now(timezone.utc).strftime("%Y%m%d")
+    date = _date_str(cfg.get("date"))
     outdir: Optional[str] = cfg.get("outdir")
     preset_path = Path(str(cfg.preset))
     if cfg.get("run_matrix"):
