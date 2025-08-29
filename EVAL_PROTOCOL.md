@@ -226,7 +226,14 @@ python scripts/report.py --date "$DATE" --runs-dir runs --out-dir reports --data
 Minimal smoke for **cross‑session recall** using the same store directory.
 
 ```bash
-SID="hei_${DATE}"  # session id reused from HEI‑NW runs above
+SID="hei_${RUN_ID}"  # session id reused from HEI‑NW runs above
+: "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
+DATE="$RUN_ID"
+
+test -f "$STORES/hei_nw/$SID/episodic.jsonl" || {
+  echo "No persisted HEI-NW store for $SID. Run step 4.1 (teach+replay with persist=true) first."
+  exit 1
+}
 
 # 1) Pre‑consolidation baseline (memory OFF)
 python scripts/test_consolidation.py --phase pre \
