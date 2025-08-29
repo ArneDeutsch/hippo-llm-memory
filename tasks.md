@@ -141,7 +141,6 @@ def assert_store_exists(store_dir: str, session_id: str, kind: str = "episodic")
 
 ```bash
 # scripts/env_prelude.sh
-set -euo pipefail
 : "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
 DATE="$RUN_ID"
 RUNS="runs/$RUN_ID"
