@@ -1,10 +1,10 @@
 from pathlib import Path
 
-import yaml
+from omegaconf import OmegaConf
 
 
 def _assert_preset(p: Path) -> None:
-    data = yaml.safe_load(p.read_text())
+    data = OmegaConf.to_container(OmegaConf.load(p), resolve=True)
     assert data["use_chat_template"] is True
     assert "shortest span" in data["system_prompt"]
     assert int(data["max_new_tokens"]) <= 8

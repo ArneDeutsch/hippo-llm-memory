@@ -12,7 +12,7 @@ suite: ${task}
 preset: baselines/core
 n: 5
 seed: 0
-date: ${env:RUN_ID,${env:DATE,null}}
+date: ${oc.env:RUN_ID,${oc.env:DATE,null}}
 outdir: null
 dry_run: false
 model: models/tiny-gpt2
@@ -28,6 +28,7 @@ store_dir: null
 session_id: null
 persist: false
 memory_off: false
+gating_enabled: false
 primary_em: norm
 
 # Report macro averaged scores in addition to micro scores.

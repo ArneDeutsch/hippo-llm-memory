@@ -3,7 +3,7 @@ gating_enabled: true
 memory:
   relational:
     gate:
-      enabled: true
+      enabled: ${gating_enabled}
 replay:
   cycles: 1
 retrieval:

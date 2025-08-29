@@ -3,7 +3,7 @@ gating_enabled: true
 memory:
   episodic:
     gate:
-      enabled: true
+      enabled: ${gating_enabled}
     use_completion: true
 replay:
   cycles: 1
