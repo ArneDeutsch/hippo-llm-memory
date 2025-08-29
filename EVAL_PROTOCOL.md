@@ -79,7 +79,7 @@ python scripts/eval_model.py +run_matrix=true date="$DATE" \
   tasks="[episodic,semantic,spatial,episodic_multi,episodic_cross,episodic_capacity]" \
   n_values="[50,200,1000]" \
   seeds="[1337,2025,4242]" \
-  model="$MODEL" outdir="runs/$DATE/baselines"```
+  model="$MODEL" outdir="runs/$DATE"```
 
 Notes:
 - Baseline presets **disable** memory and retrieval as configured under `configs/eval/baselines/*.yaml`.
