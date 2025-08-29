@@ -183,7 +183,7 @@ source scripts/env_prelude.sh
 **Acceptance criteria**
 
 * Production runs error if `--model` is unset.
-* `pytest -q` includes a smoke that can run offline with tiny-gpt2 when explicitly enabled (e.g., `MODEL=tiny-gpt2 pytest -q -k smoke`).
+* smoke that can run offline with tiny-gpt2 when explicitly enabled
 
 ---
 
