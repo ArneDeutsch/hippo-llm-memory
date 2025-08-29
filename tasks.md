@@ -14,7 +14,6 @@
 
 ```bash
 # §8 prelude (self-contained)
-set -euo pipefail
 
 : "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
 DATE="$RUN_ID"
