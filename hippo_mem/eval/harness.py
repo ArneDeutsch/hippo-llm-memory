@@ -42,6 +42,7 @@ from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.eval.score import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
+from hippo_mem.utils.stores import assert_store_exists
 
 from .bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 from .encode import encode_prompt
@@ -796,10 +797,9 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     elif cfg.mode in ("test", "replay") and cfg.store_dir and cfg.session_id:
         session_dir = Path(to_absolute_path(str(cfg.store_dir)))
         sid = str(cfg.session_id)
+        assert_store_exists(str(session_dir.parent), sid)
         if "episodic" in modules:
-            epi_file = session_dir / sid / "episodic.jsonl"
-            if epi_file.exists():
-                modules["episodic"]["store"].load(str(session_dir), sid)
+            modules["episodic"]["store"].load(str(session_dir), sid)
         if "relational" in modules:
             rel_file = session_dir / sid / "relational.jsonl"
             if rel_file.exists():

@@ -12,8 +12,8 @@ def _write_jsonl(path, records):
 
 def test_replay_dataset_ratios_and_priority(tmp_path):
     session = "s"
-    base = tmp_path / session
-    base.mkdir()
+    base = tmp_path / "hei_nw" / session
+    base.mkdir(parents=True)
 
     # episodic store with different salience
     _write_jsonl(
@@ -69,7 +69,7 @@ def test_replay_dataset_ratios_and_priority(tmp_path):
     )
 
     ds = ReplayDataset(
-        str(tmp_path),
+        str(tmp_path / "hei_nw"),
         session,
         ratios={"episodic": 0.6, "relational": 0.3, "spatial": 0.1},
         seed=0,

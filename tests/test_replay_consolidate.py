@@ -10,7 +10,7 @@ from scripts.replay_consolidate import parse_args
 
 
 def _write_store(base: Path) -> Path:
-    session = base / "s"
+    session = base / "hei_nw" / "s"
     session.mkdir(parents=True, exist_ok=True)
     epi = session / "episodic.jsonl"
     rec = {"prompt": "p", "answer": "a", "salience": 1.0, "usage": 0, "ts": 0.0}

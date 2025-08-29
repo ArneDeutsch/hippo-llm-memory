@@ -8,7 +8,7 @@ import pytest
 
 
 def _write_store(base: Path) -> Path:
-    session = base / "sid"
+    session = base / "hei_nw" / "sid"
     session.mkdir(parents=True, exist_ok=True)
     rec = {"prompt": "p", "answer": "a", "salience": 1.0, "usage": 0, "ts": 0.0}
     (session / "episodic.jsonl").write_text(json.dumps(rec) + "\n")
