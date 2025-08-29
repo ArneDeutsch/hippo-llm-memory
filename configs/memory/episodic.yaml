@@ -22,3 +22,12 @@ prune:
   min_salience: 0.1       # drop traces below this score
   max_age: 3600           # seconds; see EVAL_PLAN §8
 
+# Write gate controlling which traces enter the store.
+gate:
+  enabled: true
+  tau: 0.5
+  alpha: 0.5
+  beta: 0.5
+  gamma: 1.0
+  delta: 1.0
+
