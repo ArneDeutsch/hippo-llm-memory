@@ -73,8 +73,12 @@ make datasets DATE="$DATE"
 **Do this instead** — run the matrix with a **real model** and the baseline presets:
 
 ```bash
-python scripts/eval_model.py +run_matrix=true date="$DATE"   presets="[baselines/core,baselines/span_short,baselines/rag,baselines/longctx]"   tasks="[episodic,semantic,spatial]" n_values="[50,200,1000]"   seeds="[1337,2025,4242]"   model="$MODEL" outdir="runs/$DATE"
-```
+python scripts/eval_model.py +run_matrix=true date="$DATE" \
+  presets="[baselines/core,baselines/span_short,baselines/rag,baselines/longctx]" \
+  tasks="[episodic,semantic,spatial,episodic_multi,episodic_cross,episodic_capacity]" \
+  n_values="[50,200,1000]" \
+  seeds="[1337,2025,4242]" \
+  model="$MODEL" outdir="runs/$DATE/baselines"```
 
 Notes:
 - Baseline presets **disable** memory and retrieval as configured under `configs/eval/baselines/*.yaml`.
