@@ -524,10 +524,14 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
     def _restore_node(self, data: tuple[str, Optional[np.ndarray]]) -> None:
         """Recreate a single node from ``rollback`` data."""
 
+        self._seen_nodes: set[str] = getattr(self, "_seen_nodes", set())
         name, emb = data
+        if name in self._seen_nodes:
+            return
+        self._seen_nodes.add(name)
         self.graph.add_node(name)
         self.backend.exec(
-            "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO nodes(name, embedding) VALUES (?, ?)",
             (name, self._to_json(emb)),
         )
         if emb is not None:
@@ -536,7 +540,11 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
     def _restore_edge(self, edge: tuple) -> None:
         """Recreate a single edge from ``rollback`` data."""
 
+        self._seen_edges: set[int] = getattr(self, "_seen_edges", set())
         edge_id, src, rel, dst, ctx, t_, conf, prov, emb = edge
+        if edge_id in self._seen_edges:
+            return
+        self._seen_edges.add(edge_id)
         self.graph.add_edge(
             src,
             dst,
@@ -550,7 +558,7 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         if emb is not None:
             self.graph[src][dst][edge_id]["embedding"] = np.asarray(json.loads(emb), dtype=float)
         self.backend.exec(
-            "INSERT INTO edges(id, src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
+            "INSERT OR IGNORE INTO edges(id, src, relation, dst, context, time, conf, provenance, embedding) VALUES (?,?,?,?,?,?,?,?,?)",
             (edge_id, src, rel, dst, ctx, t_, conf, prov, emb),
         )
 
