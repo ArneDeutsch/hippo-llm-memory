@@ -102,7 +102,7 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     pre_dir.mkdir()
     pre_data = {
         "suite": "episodic",
-        "metrics": {"episodic": {"pre_em_raw": 0.0}},
+        "metrics": {"episodic": {"pre_em": 0.0}},
     }
     (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
 
@@ -111,7 +111,7 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     def fake_eval(cfg, outdir):  # pragma: no cover - helper
         data = {
             "suite": "episodic",
-            "metrics": {"episodic": {"pre_em_raw": 0.0, "post_em_raw": 0.1}},
+            "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.1}},
         }
         Path(outdir).mkdir(parents=True, exist_ok=True)
         (Path(outdir) / "metrics.json").write_text(json.dumps(data))
