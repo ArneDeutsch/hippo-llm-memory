@@ -928,7 +928,8 @@ def main(cfg: DictConfig) -> None:
 
     # Normalise and freeze the date early so repeated accesses do not drift.
     with open_dict(cfg):
-        cfg.date = _date_str(cfg.get("date"))
+        run_date = _date_str(cfg.get("date"))
+        cfg.date = run_date
 
     base_cfg = cfg
     outdir_cfg = cfg.get("outdir")
@@ -938,36 +939,42 @@ def main(cfg: DictConfig) -> None:
             if outdir_cfg is not None:
                 base_outdir = Path(to_absolute_path(str(outdir_cfg)))
             else:
-                base_outdir = Path("runs") / cfg.date
+                base_outdir = Path("runs") / run_date
             for preset in presets:
                 run_cfg = OmegaConf.merge(base_cfg, {"preset": preset})
                 run_cfg = _load_preset(run_cfg)
                 run_cfg = _apply_model_defaults(run_cfg)
+                with open_dict(run_cfg):
+                    run_cfg.date = run_date
                 preset_outdir = base_outdir / Path(preset)
                 evaluate_matrix(run_cfg, preset_outdir)
         else:
             cfg = _load_preset(cfg)
             cfg = _apply_model_defaults(cfg)
+            with open_dict(cfg):
+                cfg.date = run_date
             if outdir_cfg is not None:
                 root_outdir = Path(to_absolute_path(str(outdir_cfg)))
             else:
                 preset_path = Path(str(cfg.preset))
                 if preset_path.parts and preset_path.parts[0] == "baselines":
-                    root_outdir = Path("runs") / cfg.date / preset_path.parts[0] / preset_path.name
+                    root_outdir = Path("runs") / run_date / preset_path.parts[0] / preset_path.name
                 else:
-                    root_outdir = Path("runs") / cfg.date / preset_path.name
+                    root_outdir = Path("runs") / run_date / preset_path.name
             evaluate_matrix(cfg, root_outdir)
     else:
         cfg = _load_preset(cfg)
         cfg = _apply_model_defaults(cfg)
+        with open_dict(cfg):
+            cfg.date = run_date
         if outdir_cfg is not None:
             outdir = Path(to_absolute_path(str(outdir_cfg)))
         else:
             preset_path = Path(str(cfg.preset))
             if preset_path.parts and preset_path.parts[0] == "baselines":
                 outdir = (
-                    Path("runs") / cfg.date / preset_path.parts[0] / preset_path.name / cfg.suite
+                    Path("runs") / run_date / preset_path.parts[0] / preset_path.name / cfg.suite
                 )
             else:
-                outdir = Path("runs") / cfg.date / preset_path.name / cfg.suite
+                outdir = Path("runs") / run_date / preset_path.name / cfg.suite
         evaluate(cfg, outdir)
