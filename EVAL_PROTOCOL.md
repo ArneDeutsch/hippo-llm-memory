@@ -226,9 +226,24 @@ python scripts/report.py --date "$DATE" --runs-dir runs --out-dir reports --data
 Minimal smoke for **cross‑session recall** using the same store directory.
 
 ```bash
-# After one run finished, do a delayed recall test (post-hoc)
-python scripts/replay_consolidate.py --date "$DATE" --store "$STORES/hei_nw" --model "$MODEL"   --out "$RUNS/consolidation/hei_nw_smoke"
-python scripts/test_consolidation.py --runs "$RUNS/consolidation/hei_nw_smoke"
+SID="hei_${DATE}"  # session id reused from HEI‑NW runs above
+
+# 1) Pre‑consolidation baseline (memory OFF)
+python scripts/test_consolidation.py --phase pre \
+  --suite episodic --n 50 --seed 1337 \
+  --model "$MODEL" --outdir "$RUNS/consolidation/pre"
+
+# 2) Replay → LoRA training
+python scripts/replay_consolidate.py \
+  --store_dir "$STORES/hei_nw" --session_id "$SID" \
+  --model "$MODEL" --config configs/consolidation/lora_small.yaml \
+  --outdir "$RUNS/consolidation/lora"
+
+# 3) Post‑consolidation test (memory OFF with adapter)
+python scripts/test_consolidation.py --phase post \
+  --suite episodic --n 50 --seed 1337 \
+  --model "$MODEL" --adapter "$RUNS/consolidation/lora" \
+  --pre_dir "$RUNS/consolidation/pre" --outdir "$RUNS/consolidation/post"
 ```
 
 ---
