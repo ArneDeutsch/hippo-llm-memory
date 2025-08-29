@@ -9,7 +9,6 @@ import csv
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -26,7 +25,6 @@ def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
     """Each baseline preset writes well-formed metrics and metadata files."""
 
     script = Path(__file__).resolve().parents[1] / "scripts" / "eval_bench.py"
-    date = datetime.now(timezone.utc).strftime("%Y%m%d")
     cmd = [
         sys.executable,
         str(script),
@@ -35,7 +33,9 @@ def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
         "dry_run=true",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path)
-    outdir = tmp_path / "runs" / date / "baselines" / Path(preset).name / "episodic"
+    # discover the date directory created by the run
+    date_dir = max((tmp_path / "runs").iterdir(), key=lambda p: p.name)
+    outdir = date_dir / "baselines" / Path(preset).name / "episodic"
 
     metrics_path = outdir / "metrics.json"
     meta_path = outdir / "meta.json"
