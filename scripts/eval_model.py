@@ -33,6 +33,7 @@ from hippo_mem.eval.harness import (
 from hippo_mem.eval.harness import (
     main as harness_main,
 )
+from hippo_mem.utils.stores import assert_store_exists
 
 __all__ = [
     "AutoModelForCausalLM",
@@ -53,6 +54,13 @@ __all__ = [
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
 def main(cfg: DictConfig) -> None:
     """Hydra entry point forwarding to :mod:`hippo_mem.eval.harness`."""
+
+    store_dir = getattr(cfg, "store_dir", None)
+    if store_dir:
+        root = Path(str(store_dir))
+        if cfg.mode in ("replay", "test") and getattr(cfg, "session_id", None):
+            assert_store_exists(str(root), str(cfg.session_id), kind="episodic")
+        cfg.store_dir = str(root / "hei_nw")
 
     harness_main(cfg)
 

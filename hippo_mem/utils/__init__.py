@@ -1,3 +1,5 @@
+"""Utility helpers for memory modules."""
+
 import logging
 from typing import Optional
 
@@ -6,6 +8,8 @@ from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
+
+from .stores import assert_store_exists
 
 log = logging.getLogger(__name__)
 
@@ -27,3 +31,6 @@ def log_memory_status(
         scheduler.log_status() if scheduler else "disabled",
         worker.log_status() if worker else "disabled",
     )
+
+
+__all__ = ["assert_store_exists", "log_memory_status"]

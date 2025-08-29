@@ -11,8 +11,8 @@ def _write_jsonl(path, records):
 
 def test_teacher_outputs_added_once(tmp_path):
     session = "s"
-    base = tmp_path / session
-    base.mkdir()
+    base = tmp_path / "hei_nw" / session
+    base.mkdir(parents=True)
 
     _write_jsonl(
         base / "episodic.jsonl",
@@ -28,7 +28,7 @@ def test_teacher_outputs_added_once(tmp_path):
         return {"text": f"T{rec['id']}", "logits": [1.0]}
 
     ds = ReplayDataset(
-        str(tmp_path),
+        str(tmp_path / "hei_nw"),
         session,
         ratios={"episodic": 1.0},
         seed=0,
