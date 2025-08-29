@@ -41,6 +41,40 @@ def test_parse_args(tmp_path: Path) -> None:
     assert args.config == str(cfg)
 
 
+def test_replay_consolidate_auto_targets(tmp_path: Path) -> None:
+    store_dir = _write_store(tmp_path / "stores")
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text(
+        "peft:\n  rank: 2\n  alpha: 2\n  dropout: 0.0\n  targets: auto\n"
+        "train:\n  lr: 1.0e-4\n  steps: 1\n  batch_size: 1\n"
+    )
+    outdir = tmp_path / "out"
+    env = os.environ.copy()
+    env.update(
+        {
+            "TRANSFORMERS_OFFLINE": "1",
+            "HF_HUB_OFFLINE": "1",
+            "HF_MODEL_PATH": "models/tiny-gpt2",
+        }
+    )
+    cmd = [
+        sys.executable,
+        "scripts/replay_consolidate.py",
+        "--store_dir",
+        str(store_dir),
+        "--session_id",
+        "s",
+        "--config",
+        str(cfg),
+        "--outdir",
+        str(outdir),
+        "--model",
+        "models/tiny-gpt2",
+    ]
+    subprocess.run(cmd, check=True, env=env)
+    assert (outdir / "adapter_config.json").exists()
+
+
 @pytest.mark.slow
 def test_replay_consolidate_runs(tmp_path: Path) -> None:
     store_dir = _write_store(tmp_path / "stores")
