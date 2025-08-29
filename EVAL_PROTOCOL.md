@@ -119,9 +119,9 @@ for suite in episodic episodic_multi episodic_cross episodic_capacity; do
     for seed in "${SEEDS[@]}"; do
       OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach store_dir="$STORES/hei_nw" session_id="$SESS" outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES/hei_nw" session_id="$SESS" outdir="$OUT"
       # Replay (3 cycles)
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=replay store_dir="$STORES/hei_nw" session_id="$SESS" replay.cycles=3 outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=replay persist=true store_dir="$STORES/hei_nw" session_id="$SESS" replay.cycles=3 outdir="$OUT"
       # Test (post‑replay)
       python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=test store_dir="$STORES/hei_nw" session_id="$SESS" outdir="$OUT"
     done
