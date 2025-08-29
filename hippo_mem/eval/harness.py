@@ -469,7 +469,18 @@ def run_suite(
     flat_ablate = _flatten_ablate(base_cfg.get("ablate"))
     modules = _init_modules(base_cfg.get("memory"), flat_ablate)
 
-    model_path = to_absolute_path(str(base_cfg.model))
+    model_id = (str(base_cfg.model) or "").strip()
+    if not model_id:
+        raise ValueError("cfg.model is empty. Pass --model or set $MODEL.")
+    p = Path(model_id)
+    if p.exists() and p.is_dir():
+        if not (p / "config.json").exists():
+            raise ValueError(
+                f"Model path '{p}' exists but is not a Hugging Face model dir (missing config.json). "
+                "Did you accidentally pass the repository root? Set --model correctly."
+            )
+
+    model_path = to_absolute_path(model_id)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     if cfg.pad_token_id is not None:
         tokenizer.pad_token_id = cfg.pad_token_id
@@ -798,7 +809,16 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             if spat_file.exists():
                 modules["spatial"]["map"].load(str(session_dir), sid)
 
-    model_id = str(cfg.model)
+    model_id = (str(cfg.model) or "").strip()
+    if not model_id:
+        raise ValueError("cfg.model is empty. Pass --model or set $MODEL.")
+    p = Path(model_id)
+    if p.exists() and p.is_dir():
+        if not (p / "config.json").exists():
+            raise ValueError(
+                f"Model path '{p}' exists but is not a Hugging Face model dir (missing config.json). "
+                "Did you accidentally pass the repository root? Set --model correctly."
+            )
     abs_model_path = Path(to_absolute_path(model_id))
     model_path = abs_model_path if abs_model_path.exists() else model_id
     tokenizer = AutoTokenizer.from_pretrained(model_path)
