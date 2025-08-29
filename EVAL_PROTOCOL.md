@@ -26,6 +26,7 @@ mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"
 MODEL="Qwen/Qwen2.5-1.5B-Instruct"   # set to a real HF model; avoid CI-only stubs
 SIZES=(50 200 1000)
 SEEDS=(1337 2025 4242)
+SESS="s1"
 
 echo "DATE=$DATE"
 echo "MODEL=$MODEL"
