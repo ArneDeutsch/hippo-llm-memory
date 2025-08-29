@@ -172,3 +172,40 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
     subprocess.run(cmd_off, check=True)
     metrics_off = json.loads((outdir_off / "metrics.json").read_text())
     assert metrics_off["retrieval"]["episodic"]["requests"] == 0
+
+
+@pytest.mark.parametrize(
+    "preset,expected",
+    [
+        ("baselines/core", ["baselines", "core"]),
+        ("memory/hei_nw", ["hei_nw"]),
+    ],
+)
+def test_date_parameter_controls_outdir(tmp_path: Path, preset: str, expected: list[str]) -> None:
+    """CLI ``date`` parameter selects the run subdirectory."""
+
+    repo_root = Path(__file__).resolve().parent.parent
+    # provide data and model via symlinks so harness can resolve them
+    (tmp_path / "data").symlink_to(repo_root / "data", target_is_directory=True)
+    (tmp_path / "models").symlink_to(repo_root / "models", target_is_directory=True)
+
+    cmd = [
+        sys.executable,
+        str(repo_root / "scripts" / "eval_model.py"),
+        "suite=episodic",
+        f"preset={preset}",
+        "n=2",
+        "seed=1337",
+        "model=models/tiny-gpt2",
+        "date=20250101_0101",
+        "dry_run=true",
+    ]
+    subprocess.run(cmd, check=True, cwd=tmp_path)
+
+    run_dir = tmp_path / "runs" / "20250101_0101"
+    for part in expected:
+        run_dir /= part
+    run_dir /= "episodic"
+    assert (run_dir / "meta.json").exists()
+    meta = json.loads((run_dir / "meta.json").read_text())
+    assert meta["date"] == "20250101_0101"

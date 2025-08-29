@@ -43,7 +43,7 @@ import numpy as np
 import torch
 import yaml
 from hydra.utils import to_absolute_path
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, open_dict
 
 from hippo_mem.adapters import (
     EpisodicMemoryAdapter,
@@ -620,6 +620,8 @@ def main(cfg: DictConfig) -> None:
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
     date = _date_str(cfg.get("date"))
+    with open_dict(cfg):
+        cfg.date = date
     outdir: Optional[str] = cfg.get("outdir")
     preset_path = Path(str(cfg.preset))
     if cfg.get("run_matrix"):
