@@ -1,0 +1,10 @@
+{"id": 0, "prompt": "Carol bought a apple at StoreB. StoreB is in Berlin. In which city did Carol buy the apple?", "answer": "Berlin", "pred": "Berlin"}
+{"id": 1, "prompt": "Carol bought a ball at StoreB. StoreB is in London. In which city did Carol buy the ball?", "answer": "London", "pred": "London"}
+{"id": 2, "prompt": "Carol bought a book at StoreB. StoreB is in Berlin. In which city did Carol buy the book?", "answer": "Berlin", "pred": "Berlin"}
+{"id": 3, "prompt": "Alice bought a ball at StoreB. StoreB is in Berlin. In which city did Alice buy the ball?", "answer": "Berlin", "pred": "Berlin"}
+{"id": 4, "prompt": "Carol bought a book at StoreB. StoreB is in Paris. In which city did Carol buy the book?", "answer": "Paris", "pred": "Paris."}
+{"id": 5, "prompt": "Dave bought a apple at StoreA. StoreA is in Rome. In which city did Dave buy the apple?", "answer": "Rome", "pred": "Rome"}
+{"id": 6, "prompt": "Dave bought a ball at StoreA. StoreA is in Paris. In which city did Dave buy the ball?", "answer": "Paris", "pred": "Paris"}
+{"id": 7, "prompt": "Alice bought a book at StoreB. StoreB is in Paris. In which city did Alice buy the book?", "answer": "Paris", "pred": "Paris"}
+{"id": 8, "prompt": "Alice bought a apple at StoreA. StoreA is in Paris. In which city did Alice buy the apple?", "answer": "Paris", "pred": "Paris."}
+{"id": 9, "prompt": "Carol bought a apple at StoreB. StoreB is in Rome. In which city did Carol buy the apple?", "answer": "Rome", "pred": "Rome."}
