@@ -231,6 +231,9 @@ DATE="$RUN_ID"
 test -f "$STORES/hei_nw/$SID/episodic.jsonl" || {
   echo "No persisted HEI-NW store for $SID. Run step 4.1 (teach+replay with persist=true) first."
 }
+test -f "$STORES/hei_nw/$SESS/episodic.jsonl" || {
+  echo "No persisted HEI-NW store for $SESS. Run §4.1 with persist=true."; exit 1;
+}
 
 # 1) Pre‑consolidation baseline (memory OFF)
 python scripts/test_consolidation.py --phase pre \
