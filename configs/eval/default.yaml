@@ -12,7 +12,7 @@ suite: ${task}
 preset: baselines/core
 n: 5
 seed: 0
-date: null
+date: ${env:RUN_ID,${env:DATE,null}}
 outdir: null
 dry_run: false
 model: models/tiny-gpt2
