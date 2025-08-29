@@ -1,6 +1,0 @@
-task,model,n,seed,em,f1,tokens,time_ms_per_100
-semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,1.0,0.48,2587,194.51308121374765
-semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,1.0,0.72,2575,176.63664473783004
-semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,1.0,0.6,2581,199.77107485473132
-semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,1.0,0.58,2582,196.53881928741535
-semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,1.0,0.7,2576,191.7879095885583
