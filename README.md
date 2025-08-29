@@ -132,13 +132,17 @@ python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337 
   model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
 
 # 2) Pre-consolidation baseline (memory OFF)
-python scripts/test_consolidation.py --phase pre   --suite episodic --n 50 --seed 1337 --memory_off true   --model Qwen/Qwen2.5-1.5B-Instruct   --outdir runs/$DATE/consolidation/pre
+python scripts/test_consolidation.py --phase pre   --suite episodic --n 50 --seed 1337 \
+  --model Qwen/Qwen2.5-1.5B-Instruct   --outdir runs/$DATE/consolidation/pre
 
 # 3) Consolidate via replay → LoRA
-python scripts/replay_consolidate.py   --store_dir runs/$DATE/stores --session_id $SID   --config configs/consolidation/lora_small.yaml   --outdir runs/$DATE/consolidation/lora
+python scripts/replay_consolidate.py   --store_dir runs/$DATE/stores --session_id $SID \
+  --config configs/consolidation/lora_small.yaml   --outdir runs/$DATE/consolidation/lora
 
 # 4) Post-consolidation test (memory OFF)
-python scripts/test_consolidation.py --phase post   --suite episodic --n 50 --seed 1337 --memory_off true   --model Qwen/Qwen2.5-1.5B-Instruct   --lora runs/$DATE/consolidation/lora   --outdir runs/$DATE/consolidation/post
+python scripts/test_consolidation.py --phase post   --suite episodic --n 50 --seed 1337 \
+  --model Qwen/Qwen2.5-1.5B-Instruct   --adapter runs/$DATE/consolidation/lora \
+  --pre_dir runs/$DATE/consolidation/pre   --outdir runs/$DATE/consolidation/post
 ```
 
 ## Cross-session runs
