@@ -83,6 +83,7 @@ python scripts/eval_model.py +run_matrix=true date="$DATE" \
 Notes:
 - Baseline presets **disable** memory and retrieval as configured under `configs/eval/baselines/*.yaml`.
 - You can extend `tasks` to include `episodic_multi,episodic_cross,episodic_capacity` if required.
+```
 
 ---
 
