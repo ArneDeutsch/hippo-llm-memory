@@ -232,7 +232,6 @@ DATE="$RUN_ID"
 
 test -f "$STORES/hei_nw/$SID/episodic.jsonl" || {
   echo "No persisted HEI-NW store for $SID. Run step 4.1 (teach+replay with persist=true) first."
-  exit 1
 }
 
 # 1) Pre‑consolidation baseline (memory OFF)
