@@ -8,27 +8,46 @@ This protocol executes a **complete, reproducible** validation run across **base
 
 ---
 
+### Choosing a run identifier
+
+Set a stable session id once before running the protocol:
+
+```bash
+# Example: timestamp + short git sha
+export RUN_ID="$(date -u +%Y%m%d_%H%M)-$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
+# or a human label, e.g.
+export RUN_ID="ablation-aug29"
+```
+
+All outputs (runs, reports, stores, adapters) and `meta.json.date` will use this `RUN_ID`.
+For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
+
 ## 0) Shell prelude — environment & variables
 
 ```bash
 set -euo pipefail
 
-# 0.1) Date stamp for this run and standard directories
-DATE=$(date +%Y%m%d_%H%M)
-RUNS="runs/$DATE"
-REPORTS="reports/$DATE"
+# >>> RUN_ID prelude (stable session identifier)
+# Prefer RUN_ID if provided; else use DATE; else use UTC timestamp.
+: "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
+# Back-compat: keep DATE equal to RUN_ID so existing $DATE usages still work.
+DATE="$RUN_ID"
+
+# Derived paths
+RUNS="runs/$RUN_ID"
+REPORTS="reports/$RUN_ID"
 STORES="$RUNS/stores"
-ADAPTERS="adapters/$DATE"
+ADAPTERS="adapters/$RUN_ID"
+
+# Defaults (caller can override before sourcing)
+: "${MODEL:=Qwen/Qwen2.5-1.5B-Instruct}"
+if [[ -z ${SIZES+x} ]]; then SIZES=(50 200 1000); fi
+if [[ -z ${SEEDS+x} ]]; then SEEDS=(1337 2025 4242); fi
+# <<< RUN_ID prelude
 
 mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"
 
-# 0.2) Model & matrix defaults (override as needed)
-MODEL="Qwen/Qwen2.5-1.5B-Instruct"   # set to a real HF model; avoid CI-only stubs
-SIZES=(50 200 1000)
-SEEDS=(1337 2025 4242)
-SESS="s1"
-
-echo "DATE=$DATE"
+echo "RUN_ID=$RUN_ID"
 echo "MODEL=$MODEL"
 ```
 
