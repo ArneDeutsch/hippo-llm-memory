@@ -22,7 +22,7 @@ import yaml
 from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from hippo_mem.adapters.lora import export_adapter, merge_adapter
+from hippo_mem.adapters.lora import default_target_modules, export_adapter, merge_adapter
 from hippo_mem.common import io
 from hippo_mem.consolidation import ReplayDataset
 
@@ -91,7 +91,6 @@ def load_config(path: Optional[str]) -> Dict[str, Any]:
             "rank": 8,
             "alpha": 16,
             "dropout": 0.05,
-            "targets": ["q_proj", "v_proj", "o_proj", "up_proj", "down_proj"],
         },
         "train": {"lr": 2.0e-4, "steps": 100, "batch_size": 4},
         "replay": {"policy": "priority", "cycles": 1},
@@ -130,11 +129,24 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(args.model)
+
+    modules = cfg["peft"].get("targets")
+    if not modules or modules == "auto":
+        modules = default_target_modules(model)
+    else:
+        available = {name.split(".")[-1] for name, _ in model.named_modules()}
+        missing = [m for m in modules if m not in available]
+        if missing:
+            logging.warning("target modules %s not found; using defaults", missing)
+            modules = default_target_modules(model)
+    if not modules:
+        raise ValueError("Could not determine target modules for model")
+    cfg["peft"]["targets"] = modules
     lora_cfg = LoraConfig(
         r=cfg["peft"]["rank"],
         lora_alpha=cfg["peft"]["alpha"],
         lora_dropout=cfg["peft"]["dropout"],
-        target_modules=cfg["peft"]["targets"],
+        target_modules=modules,
         bias="none",
         task_type="CAUSAL_LM",
     )

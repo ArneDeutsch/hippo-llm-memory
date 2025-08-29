@@ -3,7 +3,7 @@ peft:
   rank: 8
   alpha: 16
   dropout: 0.05
-  targets: [q_proj, v_proj, o_proj, up_proj, down_proj]
+  targets: auto
 train:
   lr: 2.0e-4
   steps: 4000
