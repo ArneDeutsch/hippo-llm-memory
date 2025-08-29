@@ -25,8 +25,6 @@ For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
 ## 0) Shell prelude — environment & variables
 
 ```bash
-set -euo pipefail
-
 # >>> RUN_ID prelude (stable session identifier)
 # Prefer RUN_ID if provided; else use DATE; else use UTC timestamp.
 : "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
