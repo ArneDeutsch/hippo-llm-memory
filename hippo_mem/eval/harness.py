@@ -125,7 +125,34 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
                 cfg.replay_cycles = int(nested.get("cycles", 0))
             except Exception:
                 cfg.replay_cycles = 0
+    _merge_memory_overrides(cfg)
     return cfg
+
+
+def _merge_memory_overrides(cfg: DictConfig) -> None:
+    """Fold top-level memory blocks into ``cfg.memory``.
+
+    CLI overrides may specify ``episodic.*`` or ``relational.*`` directly for
+    convenience.  Hydra requires these keys to exist in the schema, so
+    ``configs/eval/default.yaml`` defines them as empty dictionaries.  This
+    helper merges such top-level sections into ``cfg.memory`` and removes the
+    shortcuts so downstream code only sees ``cfg.memory``.
+    """
+
+    if not isinstance(cfg, DictConfig):
+        return
+    mem = cfg.get("memory")
+    with open_dict(cfg):
+        if mem is None:
+            cfg.memory = {}
+        mem = cfg.memory
+        for name in ("episodic", "relational", "spatial"):
+            if name in cfg:
+                block = cfg.pop(name)
+                if block is None:
+                    continue
+                with open_dict(mem):
+                    mem[name] = OmegaConf.merge(mem.get(name, {}), block)
 
 
 @dataclass
