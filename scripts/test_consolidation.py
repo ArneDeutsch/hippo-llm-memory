@@ -61,7 +61,7 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument(
         "--model",
-        default=os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2"),
+        default=os.environ.get("MODEL"),
         help="Base model identifier or path",
     )
     parser.add_argument("--outdir", required=True)
@@ -72,6 +72,16 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
     )
     ns = parser.parse_args(argv)
     return ns  # type: ignore[return-value]
+
+
+def _resolve_model(arg_model: str | None) -> str:
+    m = (arg_model or os.environ.get("MODEL") or "").strip()
+    if not m:
+        raise SystemExit(
+            "Error: --model is empty and $MODEL is not set.\n"
+            "Set --model (e.g., Qwen/Qwen2.5-1.5B-Instruct) or export MODEL."
+        )
+    return m
 
 
 def _build_cfg(model_path: str, args: Args) -> Any:
@@ -126,6 +136,7 @@ def _compute_delta(pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]) ->
 
 def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
     args = _parse_args(argv)
+    args.model = _resolve_model(getattr(args, "model", None))
     model_path = args.model
     tmp_dir: Optional[tempfile.TemporaryDirectory] = None
     if args.phase == "post":
