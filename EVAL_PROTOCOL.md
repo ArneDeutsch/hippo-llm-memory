@@ -113,17 +113,17 @@ We evaluate each algorithm with **pre‑replay** and **post‑replay** phases. O
 ### 4.1) HEI‑NW (episodic + variants)
 
 ```bash
-SESS="hei_${DATE}"  # session id for persistent store reuse
+SID="hei_${DATE}"  # session id for persistent store reuse
 for suite in episodic episodic_multi episodic_cross episodic_capacity; do
   for n in "${SIZES[@]}"; do
     for seed in "${SEEDS[@]}"; do
       OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES/hei_nw" session_id="$SESS" outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES/hei_nw" session_id="$SID" outdir="$OUT"
       # Replay (3 cycles)
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=replay persist=true store_dir="$STORES/hei_nw" session_id="$SESS" replay.cycles=3 outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=replay persist=true store_dir="$STORES/hei_nw" session_id="$SID" replay.cycles=3 outdir="$OUT"
       # Test (post‑replay)
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=test store_dir="$STORES/hei_nw" session_id="$SESS" outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=test store_dir="$STORES/hei_nw" session_id="$SID" outdir="$OUT"
     done
   done
 done
@@ -132,14 +132,14 @@ done
 ### 4.2) SGC‑RSS (semantic)
 
 ```bash
-SESS="sgc_${DATE}"
+SID="sgc_${DATE}"
 suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/sgc_rss/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES/sgc_rss" session_id="$SESS" outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES/sgc_rss" session_id="$SESS" replay.cycles=3 outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES/sgc_rss" session_id="$SESS" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES/sgc_rss" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES/sgc_rss" session_id="$SID" replay.cycles=3 outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES/sgc_rss" session_id="$SID" outdir="$OUT"
   done
 done
 ```
@@ -147,14 +147,14 @@ done
 ### 4.3) SMPD (spatial)
 
 ```bash
-SESS="smpd_${DATE}"
+SID="smpd_${DATE}"
 suite=spatial
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/smpd/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES/smpd" session_id="$SESS" outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES/smpd" session_id="$SESS" replay.cycles=3 outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES/smpd" session_id="$SESS" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES/smpd" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES/smpd" session_id="$SID" replay.cycles=3 outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES/smpd" session_id="$SID" outdir="$OUT"
   done
 done
 ```
@@ -224,15 +224,25 @@ python scripts/report.py --date "$DATE" --runs-dir runs --out-dir reports --data
 Minimal smoke for **cross‑session recall** using the same store directory.
 
 ```bash
-SID="hei_${RUN_ID}"  # session id reused from HEI‑NW runs above
+# §8 prelude (self-contained)
+set -euo pipefail
+
 : "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
 DATE="$RUN_ID"
+RUNS="runs/$RUN_ID"
+REPORTS="reports/$RUN_ID"
+STORES="$RUNS/stores"
+ADAPTERS="adapters/$RUN_ID"
+: "${MODEL:=Qwen/Qwen2.5-1.5B-Instruct}"  # default for production runs
 
+mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"
+
+SID="hei_${RUN_ID}"
+
+# Require a persisted HEI-NW store
 test -f "$STORES/hei_nw/$SID/episodic.jsonl" || {
-  echo "No persisted HEI-NW store for $SID. Run step 4.1 (teach+replay with persist=true) first."
-}
-test -f "$STORES/hei_nw/$SESS/episodic.jsonl" || {
-  echo "No persisted HEI-NW store for $SESS. Run §4.1 with persist=true.";
+  echo "No persisted HEI-NW store for $SID. Run §4.1 (teach+replay with persist=true) first."
+  exit 1
 }
 
 # 1) Pre‑consolidation baseline (memory OFF)
