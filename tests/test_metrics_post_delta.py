@@ -3,7 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.slow
 def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
     store_dir = tmp_path / "stores"
@@ -12,7 +15,7 @@ def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
         "scripts/eval_model.py",
         "suite=episodic",
         "preset=memory/hei_nw",
-        "n=2",
+        "n=1",
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir}",

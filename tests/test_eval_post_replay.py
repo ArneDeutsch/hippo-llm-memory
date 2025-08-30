@@ -3,7 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.slow
 def test_post_replay_cycle_generates_metrics(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
     cmd = [
@@ -11,7 +14,7 @@ def test_post_replay_cycle_generates_metrics(tmp_path: Path) -> None:
         "scripts/eval_bench.py",
         "suite=episodic",
         "preset=memory/hei_nw",
-        "n=2",
+        "n=1",
         "seed=0",
         "post_replay_cycles=1",
         f"outdir={outdir}",

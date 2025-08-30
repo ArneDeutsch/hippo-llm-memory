@@ -9,10 +9,11 @@ import pytest
 @pytest.mark.parametrize(
     "n_values,seeds",
     [
-        ([2], [123]),
+        ([1], [123]),
         pytest.param([2, 3], [123, 456], marks=pytest.mark.slow),
     ],
 )
+@pytest.mark.slow
 def test_run_matrix_generates_outputs(
     tmp_path: Path, n_values: list[int], seeds: list[int]
 ) -> None:

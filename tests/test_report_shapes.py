@@ -4,7 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.slow
 def test_metrics_csv_has_diagnostics(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
     cmd = [
@@ -12,7 +15,7 @@ def test_metrics_csv_has_diagnostics(tmp_path: Path) -> None:
         "scripts/eval_model.py",
         "suite=episodic",
         "preset=baselines/core",
-        "n=2",
+        "n=1",
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir}",

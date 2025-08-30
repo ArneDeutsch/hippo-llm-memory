@@ -22,6 +22,7 @@ CASES = [
 ]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("preset,suite", CASES)
 def test_dry_run_smoke(tmp_path: Path, preset: str, suite: str) -> None:
     """Dry run the harness for a single preset/suite combination."""

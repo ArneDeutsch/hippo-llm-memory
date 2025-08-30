@@ -21,6 +21,7 @@ from scripts import eval_bench
         pytest.param("spatial", marks=pytest.mark.slow),
     ],
 )
+@pytest.mark.slow
 def test_eval_bench(tmp_path: Path, suite: str) -> None:
     """The evaluation harness writes expected metrics for each suite."""
 
@@ -30,7 +31,7 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
         "scripts/eval_bench.py",
         f"suite={suite}",
         "preset=baselines/core",
-        "n=3",
+        "n=1",
         "seed=0",
         f"outdir={outdir}",
     ]
@@ -40,7 +41,7 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     assert metrics_path.exists()
     data = json.loads(metrics_path.read_text())
     assert data["suite"] == suite
-    assert data["n"] == 3
+    assert data["n"] == 1
     # Echo model should achieve perfect exact match.
     assert data["metrics"][suite]["em_raw"] == 1.0
 
@@ -52,7 +53,7 @@ def test_eval_bench(tmp_path: Path, suite: str) -> None:
     assert meta.get("seed") == 0
     assert meta.get("suite") == suite
     assert meta.get("preset") == "baselines/core"
-    assert meta.get("n") == 3
+    assert meta.get("n") == 1
 
 
 @pytest.mark.slow

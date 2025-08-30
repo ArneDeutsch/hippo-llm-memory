@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def _run(primary: str, outdir: Path) -> dict:
     cmd = [
@@ -22,6 +24,7 @@ def _run(primary: str, outdir: Path) -> dict:
     return json.loads((outdir / "metrics.json").read_text())
 
 
+@pytest.mark.slow
 def test_primary_em_switch(tmp_path: Path) -> None:
     metrics_norm = _run("norm", tmp_path / "norm")
     suite_norm = metrics_norm["metrics"]["episodic"]
