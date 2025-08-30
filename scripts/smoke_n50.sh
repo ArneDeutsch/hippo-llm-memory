@@ -22,6 +22,8 @@ SMPD_SESSION_ID="smpd_${RUN_ID}"
 suites=(episodic semantic spatial)
 presets=(memory/hei_nw memory/sgc_rss memory/smpd)
 sessions=("$HEI_SESSION_ID" "$SGC_SESSION_ID" "$SMPD_SESSION_ID")
+algos=(hei_nw sgc_rss smpd)
+kinds=(episodic kg map)
 
 for i in "${!suites[@]}"; do
   suite=${suites[$i]}
@@ -37,6 +39,8 @@ for i in "${!suites[@]}"; do
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
     outdir=$outdir store_dir=$STORES session_id=$session_id --strict-telemetry >/dev/null
+  # Validate store layout before replay
+  python scripts/validate_store.py --algo=${algos[$i]} --kind=${kinds[$i]} >/dev/null
   # Replay phase with cycles=3
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
