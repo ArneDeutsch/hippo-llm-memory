@@ -166,14 +166,31 @@ done
 
 ## 5) Ablations (optional but recommended)
 
-Example ablations for gate toggles and retrieval:
+Example ablations for gate toggles and retrieval. Reuse the session
+identifiers from §4 and iterate over the same `SIZES` and `SEEDS` arrays:
 
 ```bash
-# Disable gating to quantify its impact
-python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=200 seed=1337 date="$DATE"   model="$MODEL" mode=test gating_enabled=false outdir="$RUNS/ablate/sgc_rss_no_gate"
+# Disable relational gating to quantify its impact
+SID="sgc_${DATE}"
+suite=semantic
+for n in "${SIZES[@]}"; do
+  for seed in "${SEEDS[@]}"; do
+    OUT="$RUNS/ablate/sgc_rss_no_gate/$suite/${n}_${seed}"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE" \
+      model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" \
+      gating_enabled=false outdir="$OUT"
+  done
+done
 
-# Disable retrieval to isolate long‑context baseline
-python scripts/eval_model.py suite=semantic preset=baselines/longctx n=200 seed=1337 date="$DATE"   model="$MODEL" outdir="$RUNS/ablate/longctx_no_retrieval"
+# Disable retrieval to isolate the long‑context baseline
+suite=semantic
+for n in "${SIZES[@]}"; do
+  for seed in "${SEEDS[@]}"; do
+    OUT="$RUNS/ablate/longctx_no_retrieval/$suite/${n}_${seed}"
+    python scripts/eval_model.py suite="$suite" preset=baselines/longctx n="$n" seed="$seed" date="$DATE" \
+      model="$MODEL" outdir="$OUT"
+  done
+done
 ```
 
 ---
