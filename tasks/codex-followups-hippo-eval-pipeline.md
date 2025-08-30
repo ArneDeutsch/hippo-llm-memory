@@ -49,7 +49,7 @@ These tasks close the remaining operational gaps so the improved pipeline yields
 **Why:** Old `runs/` and `reports/` mask whether fixes are effective.
 
 **Changes**
-- Add `runs/` and `reports/` to **.gitignore**.
+- Remove `runs/` and `reports/` completely.
 - Add a `make clean-runs` target to remove `runs/*` and `reports/*`.
 - Keep tiny fixtures under `tests/data/` only.
 
