@@ -182,32 +182,61 @@ class EvalConfig:
     pad_token_id: int | None = None
     eos_token_id: int | None = None
     primary_em: str = "norm"
+    dataset_profile: str | None = None
 
 
-def _dataset_path(suite: str, n: int, seed: int) -> Path:
+def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> Path:
     """Return path to a JSONL dataset for ``suite`` covering ``n`` items.
 
-    The function falls back to the smallest canonical size that covers ``n``. If
-    the exact file does not exist it searches for variants matching
-    ``"{suite}_*_{size}_{seed}.jsonl"`` and returns the first match.
+    Parameters
+    ----------
+    suite:
+        Dataset suite name (e.g., ``episodic``).
+    n:
+        Number of requested items; the next canonical size >= ``n`` is used.
+    seed:
+        RNG seed component of the dataset filename.
+    profile:
+        Optional difficulty profile (``base`` or ``hard``). When provided the
+        function first searches for files prefixed with ``{suite}_{profile}_`` or
+        in a ``{suite}_{profile}/`` subdirectory before falling back to the base
+        lookup logic.
     """
 
     sizes = [50, 200, 1000]
     size = next((s for s in sizes if n <= s), sizes[-1])
-    base = Path("data") / f"{suite}_{size}_{seed}.jsonl"
-    if base.exists():
-        return base
-    alt = Path("data") / suite / f"{size}_{seed}.jsonl"
-    if alt.exists():
-        return alt
-    candidates = sorted(Path("data").glob(f"{suite}_*_{size}_{seed}.jsonl"))
-    if not candidates:
-        subdir = Path("data") / suite
-        if subdir.exists():
-            candidates = sorted(subdir.glob(f"*_{size}_{seed}.jsonl"))
-    if candidates:
-        return candidates[0]
-    raise FileNotFoundError("Dataset not found; run scripts/build_datasets.py or check suite name")
+
+    candidates: List[Path] = []
+    if profile and profile != "base":
+        candidates.append(Path("data") / f"{suite}_{profile}_{size}_{seed}.jsonl")
+        candidates.append(Path("data") / f"{suite}_{profile}" / f"{size}_{seed}.jsonl")
+    candidates.append(Path("data") / f"{suite}_{size}_{seed}.jsonl")
+    candidates.append(Path("data") / suite / f"{size}_{seed}.jsonl")
+    for path in candidates:
+        if path.exists():
+            return path
+
+    patterns = []
+    if profile and profile != "base":
+        patterns.append(f"{suite}_{profile}_*_{size}_{seed}.jsonl")
+        patterns.append(
+            f"{suite}_{profile}/{profile}_*_{size}_{seed}.jsonl"
+        )  # pragma: no cover - rare
+    patterns.append(f"{suite}_*_{size}_{seed}.jsonl")
+
+    for pattern in patterns:
+        matches = sorted(Path("data").glob(pattern))
+        if matches:
+            return matches[0]
+
+    subdir = Path("data") / suite
+    if subdir.exists():
+        matches = sorted(subdir.glob(f"*_{size}_{seed}.jsonl"))
+        if matches:
+            return matches[0]
+    raise FileNotFoundError(
+        "Dataset not found; run scripts/make_datasets.py or check suite name",
+    )
 
 
 def _load_tasks(path: Path, n: int) -> List[Task]:
@@ -463,7 +492,7 @@ def run_suite(
         preset_cfg = OmegaConf.load(cfg.preset)
         base_cfg = OmegaConf.merge(base_cfg, preset_cfg)
 
-    tasks = _load_tasks(_dataset_path(cfg.suite, cfg.n, cfg.seed), cfg.n)
+    tasks = _load_tasks(_dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile), cfg.n)
     flat_ablate = _flatten_ablate(base_cfg.get("ablate"))
     modules = _init_modules(base_cfg.get("memory"), flat_ablate)
 
@@ -765,7 +794,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     registry.reset()
     gate_registry.reset()
 
-    dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed)
+    dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile)
     tasks = _load_tasks(dataset, cfg.n)
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     mem_cfg = cfg.get("memory")

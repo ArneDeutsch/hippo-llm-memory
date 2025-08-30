@@ -18,7 +18,9 @@ import random
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Set
+from typing import Any, Dict, Iterable, List, Set
+
+from omegaconf import OmegaConf
 
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
@@ -120,12 +122,43 @@ def generate_episodic_multi(
     return tasks
 
 
-def generate_episodic_cross(size: int, seed: int) -> List[Dict[str, object]]:
-    """Cross-episode recall after a flush marker."""
+def generate_episodic_cross(size: int, seed: int, entity_pool: int = 4) -> List[Dict[str, object]]:
+    """Cross-episode recall after a flush marker.
+
+    Parameters
+    ----------
+    size:
+        Number of items to generate.
+    seed:
+        RNG seed for determinism.
+    entity_pool:
+        Number of unique people/places to sample from. Increasing this raises
+        task difficulty by reducing memorisation of a small fixed set.
+    """
 
     rng = random.Random(seed)
-    people = ["Alice", "Bob", "Carol", "Dave"]
-    places = ["Cafe", "Library", "Park", "Mall"]
+    base_people = [
+        "Alice",
+        "Bob",
+        "Carol",
+        "Dave",
+        "Eve",
+        "Frank",
+        "Grace",
+        "Heidi",
+    ]
+    base_places = [
+        "Cafe",
+        "Library",
+        "Park",
+        "Mall",
+        "Office",
+        "School",
+        "Cinema",
+        "Museum",
+    ]
+    people = base_people[:entity_pool]
+    places = base_places[:entity_pool]
     tasks: List[Dict[str, object]] = []
     for _ in range(size):
         who = rng.choice(people)
@@ -439,7 +472,7 @@ def update_dataset_card(
             "files": {},
             "created_utc": datetime.now(timezone.utc).isoformat(),
             "cli_example": (
-                f"python scripts/build_datasets.py suite={suite} size=<size> seed=<seed> "
+                f"python scripts/make_datasets.py suite={suite} size=<size> seed=<seed> "
                 f"out=data/{suite}/<size>_<seed>.jsonl"
             ),
         }
@@ -447,22 +480,32 @@ def update_dataset_card(
     card_path.write_text(json.dumps(card, indent=2))
 
 
+def _load_profile(name: str) -> Dict[str, Any]:
+    """Return profile configuration for ``name`` or an empty dict."""
+
+    cfg_dir = Path(__file__).resolve().parent.parent / "configs" / "datasets"
+    path = cfg_dir / f"{name}.yaml"
+    if not path.exists():  # pragma: no cover - defensive
+        return {}
+    return OmegaConf.to_container(OmegaConf.load(path), resolve=True)  # type: ignore[return-value]
+
+
 def main() -> None:
     """CLI entry point for building small synthetic datasets.
 
     Example:
 
-    ``python scripts/build_datasets.py --suite episodic --size 100 --seed 42 \
+    ``python scripts/make_datasets.py --suite episodic --size 100 --seed 42 \
     --distractors 2 --out data/episodic_100_42.jsonl``
 
     For the spatial suite additional parameters control the grid world:
 
-    ``python scripts/build_datasets.py --suite spatial --size 50 --seed 0 \
+    ``python scripts/make_datasets.py --suite spatial --size 50 --seed 0 \
     --grid-size 7 --obstacle-density 0.3 --out data/spatial.jsonl``
 
     The semantic suite supports multi-hop chains and optional contradictions:
 
-    ``python scripts/build_datasets.py --suite semantic --size 20 --seed 0 \
+    ``python scripts/make_datasets.py --suite semantic --size 20 --seed 0 \
     --hop-depth 3 --contradict --out data/semantic.jsonl``
     """
 
@@ -472,6 +515,12 @@ def main() -> None:
     parser.add_argument("--n", dest="size", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
     parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
+    parser.add_argument(
+        "--profile",
+        choices=["base", "hard"],
+        default="base",
+        help="Difficulty profile to apply",
+    )
     parser.add_argument(
         "--distractors",
         type=int,
@@ -501,24 +550,60 @@ def main() -> None:
         action="store_true",
         help="Inject contradictory store locations for semantic suite",
     )
+    parser.add_argument(
+        "--context-budget",
+        type=int,
+        default=256,
+        help="Context budget for episodic_capacity suite",
+    )
+    parser.add_argument(
+        "--entity-pool",
+        type=int,
+        default=4,
+        help="Number of unique entities for episodic_cross suite",
+    )
     args = parser.parse_args()
+    profile_cfg = _load_profile(args.profile).get(args.suite, {})
 
     generator = SUITE_TO_GENERATOR[args.suite]
     if args.suite == "spatial":
         items = generator(
             args.size,
             args.seed,
-            grid_size=args.grid_size,
-            obstacle_density=args.obstacle_density,
+            grid_size=profile_cfg.get("grid_size", args.grid_size),
+            obstacle_density=profile_cfg.get("obstacle_density", args.obstacle_density),
         )
     elif args.suite == "episodic":
-        items = generator(args.size, args.seed, distractors=args.distractors)
+        items = generator(
+            args.size,
+            args.seed,
+            distractors=profile_cfg.get("distractors", args.distractors),
+        )
+    elif args.suite == "episodic_multi":
+        items = generator(
+            args.size,
+            args.seed,
+            distractors=profile_cfg.get("distractors", args.distractors),
+            corrections=profile_cfg.get("corrections", True),
+        )
+    elif args.suite == "episodic_cross":
+        items = generator(
+            args.size,
+            args.seed,
+            entity_pool=profile_cfg.get("entity_pool", args.entity_pool),
+        )
+    elif args.suite == "episodic_capacity":
+        items = generator(
+            args.size,
+            args.seed,
+            context_budget=profile_cfg.get("context_budget", args.context_budget),
+        )
     elif args.suite == "semantic":
         items = generator(
             args.size,
             args.seed,
-            hop_depth=args.hop_depth,
-            inject_contradictions=args.contradict,
+            hop_depth=profile_cfg.get("hop_depth", args.hop_depth),
+            inject_contradictions=profile_cfg.get("inject_contradictions", args.contradict),
         )
     else:
         items = generator(args.size, args.seed)
