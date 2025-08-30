@@ -4,6 +4,7 @@ import torch
 from torch import nn
 
 from hippo_mem.common import TraceSpec
+from hippo_mem.common.telemetry import registry
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 
 
@@ -104,3 +105,23 @@ def test_k_zero_returns_empty_tokens():
     assert mem.tokens.shape == (2, 0, 4)
     assert mem.mask.shape == (2, 0)
     assert mem.meta["hit_rate"] == 0.0
+
+
+def test_empty_store_has_zero_hit_rate():
+    class EmptyStore(DummyStore):
+        def recall(self, query, k):
+            return []
+
+        def complete(self, cue, k):
+            return cue
+
+    registry.reset()
+    store = EmptyStore()
+    batch_hidden = torch.zeros(1, 1, 4)
+    k = 3
+    spec = TraceSpec(source="episodic", k=k)
+    episodic_retrieve_and_pack(batch_hidden, spec, store, nn.Identity())
+    snap = registry.get("episodic").snapshot()
+    assert snap["hits"] == 0
+    assert snap["hit_rate_at_k"] == 0.0
+    assert snap["tokens_returned"] == k
