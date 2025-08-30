@@ -15,6 +15,7 @@ def test_gating_flag_disables_gate(tmp_path: Path) -> None:
         "n=1",
         "seed=1337",
         f"outdir={outdir}",
+        "model=models/tiny-gpt2",
         "gating_enabled=false",
         "dry_run=true",
     ]

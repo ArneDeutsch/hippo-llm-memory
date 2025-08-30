@@ -51,6 +51,7 @@ class Args(argparse.Namespace):
     outdir: str
     adapter: Optional[str]
     pre_dir: Optional[str]
+    allow_tiny_test_model: bool
 
 
 def _parse_args(argv: Optional[list[str]] = None) -> Args:
@@ -70,16 +71,27 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
         "--pre_dir",
         help="Directory containing metrics from the pre phase (required for post phase)",
     )
+    parser.add_argument(
+        "--allow-tiny-test-model",
+        action="store_true",
+        help="Enable the tiny-gpt2 test model when MODEL is unset",
+    )
     ns = parser.parse_args(argv)
     return ns  # type: ignore[return-value]
 
 
-def _resolve_model(arg_model: str | None) -> str:
+def _resolve_model(arg_model: str | None, allow_tiny: bool) -> str:
     m = (arg_model or os.environ.get("MODEL") or "").strip()
+    if not m and allow_tiny:
+        m = "models/tiny-gpt2"
     if not m:
         raise SystemExit(
-            "Error: --model is empty and $MODEL is not set.\n"
-            "Set --model (e.g., Qwen/Qwen2.5-1.5B-Instruct) or export MODEL."
+            "Error: --model is empty and $MODEL is not set.\n",
+            "Set --model (e.g., Qwen/Qwen2.5-1.5B-Instruct) or export MODEL.",
+        )
+    if m in {"tiny-gpt2", "models/tiny-gpt2"} and not allow_tiny:
+        raise SystemExit(
+            "Error: tiny-gpt2 is for tests only. Pass --allow-tiny-test-model to use it.",
         )
     return m
 
@@ -136,7 +148,7 @@ def _compute_delta(pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]) ->
 
 def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
     args = _parse_args(argv)
-    args.model = _resolve_model(getattr(args, "model", None))
+    args.model = _resolve_model(getattr(args, "model", None), args.allow_tiny_test_model)
     model_path = args.model
     tmp_dir: Optional[tempfile.TemporaryDirectory] = None
     if args.phase == "post":

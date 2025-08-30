@@ -8,6 +8,7 @@ def run_eval(args: list[str], outdir: Path) -> None:
         sys.executable,
         "scripts/eval_model.py",
         *args,
+        "model=models/tiny-gpt2",
         f"outdir={outdir}",
         "n=2",
         "seed=1337",

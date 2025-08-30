@@ -21,6 +21,7 @@ def test_harness_writes_em_scores(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
+        "model=models/tiny-gpt2",
         f"outdir={outdir}",
         "dry_run=true",
     ]

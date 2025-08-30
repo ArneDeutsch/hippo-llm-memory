@@ -46,7 +46,7 @@ def _parse_args(argv: Optional[List[str]] = None) -> Args:
     parser.add_argument("--store_dir", required=True)
     parser.add_argument("--session_id", required=True)
     parser.add_argument("--outdir", required=True)
-    parser.add_argument("--model", default=os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2"))
+    parser.add_argument("--model", default=os.environ.get("HF_MODEL_PATH"))
     parser.add_argument("--config", default=None, help="YAML file with training and LoRA settings")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--kl_weight", type=float, default=0.0)

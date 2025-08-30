@@ -30,6 +30,7 @@ def test_retrieval_requests_guard(
         n=0,
         seed=0,
         preset=preset,
+        model="models/tiny-gpt2",
     )
 
     monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed: data_file)
@@ -90,6 +91,7 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         preset="configs/eval/baselines/core.yaml",
         use_chat_template=True,
         max_new_tokens=8,
+        model="models/tiny-gpt2",
     )
     with pytest.raises(RuntimeError, match="refusal rate > 0.5"):
         eval_model.run_suite(cfg)
@@ -130,6 +132,7 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "1337",
         "--model",
         "models/tiny-gpt2",
+        "--allow-tiny-test-model",
         "--adapter",
         str(tmp_path / "adapter"),
         "--pre_dir",

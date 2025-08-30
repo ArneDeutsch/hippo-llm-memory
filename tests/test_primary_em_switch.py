@@ -12,6 +12,7 @@ def _run(primary: str, outdir: Path) -> dict:
         "preset=baselines/core",
         "n=1",
         "seed=1337",
+        "model=models/tiny-gpt2",
         f"outdir={outdir}",
         "dry_run=true",
         f"primary_em={primary}",

@@ -89,7 +89,10 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
 
         cfg.n = cfg.get("n", 5)
         cfg.seed = cfg.get("seed", 0)
-        cfg.model = cfg.get("model", "models/tiny-gpt2")
+        m = cfg.get("model") or os.environ.get("MODEL") or os.environ.get("HF_MODEL_PATH")
+        if not m:
+            raise ValueError("cfg.model is missing. Pass --model or set $MODEL.")
+        cfg.model = m
         cfg.max_new_tokens = cfg.get("max_new_tokens")
         cfg.mode = cfg.get("mode", "test")
         cfg.store_dir = cfg.get("store_dir")
@@ -171,7 +174,7 @@ class EvalConfig:
     n: int = 5
     seed: int = 0
     preset: str = "configs/eval/memory/hei_nw.yaml"
-    model: str = "models/tiny-gpt2"
+    model: str = ""
     max_new_tokens: int = 32
     replay_cycles: int = 0
     use_chat_template: bool = False

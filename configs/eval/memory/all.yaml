@@ -1,5 +1,5 @@
 # Combined memory preset using all stores.
-model: models/tiny-gpt2
+model: ???
 memory:
   - hei_nw
   - sgc_rss
