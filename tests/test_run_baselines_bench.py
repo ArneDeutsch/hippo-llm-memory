@@ -31,10 +31,10 @@ def test_baselines_matrix_includes_new_suites() -> None:
 @pytest.mark.slow
 @pytest.mark.parametrize("presets,seeds", CASES)
 def test_run_baselines_accepts_date(presets: list[str], seeds: list[int]) -> None:
-    """``run_baselines.py`` emits metrics/meta for all combinations."""
+    """``run_baselines_bench.py`` emits metrics/meta for all combinations."""
 
     repo_root = Path(__file__).resolve().parents[1]
-    script = repo_root / "scripts" / "run_baselines.py"
+    script = repo_root / "scripts" / "run_baselines_bench.py"
     date = "20250101"
     cmd = [
         sys.executable,

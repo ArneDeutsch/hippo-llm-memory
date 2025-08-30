@@ -8,7 +8,7 @@ RUN_ID=${RUN_ID}
 DATE="$RUN_ID"
 
 # Baseline runs for core preset on key suites
-python scripts/run_baselines.py \
+python scripts/run_baselines_bench.py \
   --date "$RUN_ID" \
   --presets baselines/core \
   --suites episodic semantic spatial \

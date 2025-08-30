@@ -101,6 +101,6 @@ Below I track each task from `tasks/evaluation_pipeline_improvements.md` and jud
 2) **Default the difficult profiles where needed.** In `EVAL_PROTOCOL.md`, put concrete call examples that pass `dataset_profile=hard` for `episodic_cross`/`episodic_capacity` (not just a note).
 3) **Guarantee per‑suite `post_*`/`delta_*` are written.** The harness implements this and tests assert it; ensure the protocol’s replay step always calls the same outdir as `pre` and that the report step **fails** if any suite lacks `post_*` (the smoke script already does this—extend that check to the main protocol too).
 4) **Remove stale run artefacts from the repo.** Add `runs/` and `reports/` to `.gitignore` and ship only a tiny fixture under `tests/data/` to avoid mixing old outputs with new ones.
-5) **Name clarity for CI baselines.** `scripts/run_baselines.py` currently calls the *bench* harness (suitable for CI), which can confuse readers who expect real models. Consider renaming to `run_baselines_bench.py` and keep `EVAL_PROTOCOL.md` on `scripts/eval_model.py` for true baselines.
+5) **Name clarity for CI baselines.** `scripts/run_baselines_bench.py` calls the *bench* harness (suitable for CI), which can confuse readers who expect real models. The rename keeps `EVAL_PROTOCOL.md` on `scripts/eval_model.py` for true baselines.
 
 See the companion “Codex follow‑up tasks” document for concrete, ready‑to‑execute tasks covering the points above.

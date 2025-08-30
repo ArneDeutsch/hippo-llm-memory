@@ -84,7 +84,7 @@ export SIZES=(50)
 export SEEDS=(1337)
 
 # Baselines (unchanged)
-python scripts/run_baselines.py --date "$RUN_ID"
+python scripts/run_baselines_bench.py --date "$RUN_ID"
 
 # Memory pre (writes pre_* and fills stores)
 python scripts/run_memory.py --date "$RUN_ID" --persist true

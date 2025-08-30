@@ -41,7 +41,7 @@ Spatial scoring parses move sequences and reports `steps_pred`, `steps_opt`, `su
 
 Baseline matrix covers core/span_short/rag/longctx across suites including `episodic_multi`, `episodic_cross`, `episodic_capacity`.
 
-- Evidence: `hippo_mem/eval/baselines.py` (`SUITES` includes episodic variants); top‑level `Makefile` has `eval-baselines` → `scripts/run_baselines.py --date $(DATE)`.
+- Evidence: `hippo_mem/eval/baselines.py` (`SUITES` includes episodic variants); top‑level `Makefile` has `eval-baselines` → `scripts/run_baselines_bench.py --date $(DATE)`.
 - Note: the review doc mentions `scripts/Makefile`, but the actual target lives in the **root `Makefile`** (this is correct; doc should be updated).
 ### G — Report deltas and CI guardrails
 
@@ -56,7 +56,7 @@ Baseline matrix covers core/span_short/rag/longctx across suites including `epis
 `EVAL_PROTOCOL.md` is **in sync** with the codebase:
 - **Prelude** defines `DATE`, `RUNS`, `REPORTS`, `STORES`, `SESS`, and `MODEL` (all used later).
 - **Datasets**: `make datasets` calls `scripts/build_datasets.py` across all suites/sizes/seeds and runs a dataset audit.
-- **Baselines**: `python scripts/run_baselines.py --date "$DATE"` matches `hippo_mem/eval/baselines.py` defaults and the `Makefile` target `eval-baselines`.
+- **Baselines**: `python scripts/run_baselines_bench.py --date "$DATE"` matches `hippo_mem/eval/baselines.py` defaults and the `Makefile` target `eval-baselines`.
 - **Memory grids (teach → replay → test)**: three calls per suite use `mode=teach`/`replay`/`test`, `persist=true`, `store_dir`, `session_id`, and `replay.cycles=3`. All these flags are recognised by `scripts/eval_model.py` → `hippo_mem.eval.harness` and are covered by `configs/eval/default.yaml` and memory presets in `configs/eval/memory/*.yaml`.
 - **Ablations per memory**: overrides like `memory.episodic.gate.enabled=false` are applied in the harness before module init.
 - **Reporting**: `scripts/report.py --date "$DATE" --plots --smoke` is valid; it finds the latest date if omitted, but explicit `--date` is fine for reproducibility.
@@ -125,7 +125,7 @@ if wgate.action(prob=sal, query=key, keys=store.index.keys()) == "insert":
 
 
 - Datasets build: **OK** (`make datasets`).
-- Baselines matrix: **OK** (`make eval-baselines DATE=$DATE` or `python scripts/run_baselines.py --date "$DATE"`).
+- Baselines matrix: **OK** (`make eval-baselines DATE=$DATE` or `python scripts/run_baselines_bench.py --date "$DATE"`).
 - Memory grids (teach → replay → test): **OK** (`scripts/eval_model.py` flags match the harness).
 - Reporting: **OK** (`python scripts/report.py --date "$DATE" --plots [--smoke]`).
 
