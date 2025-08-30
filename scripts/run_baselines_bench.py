@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI wrapper for :mod:`hippo_mem.eval.baselines`.
+"""CLI wrapper for :mod:`hippo_mem.eval.baselines` (bench harness).
 
 Allows running the module without installing the package by adding the
 repository root to ``sys.path`` before importing ``hippo_mem``.

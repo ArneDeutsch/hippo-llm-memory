@@ -91,7 +91,7 @@ to avoid saturation.
 
 ## 3) **Baseline grid (fix)**
 
-**Why this matters:** The previous step used `python scripts/run_baselines.py`, which forwards to the **light-weight bench harness** (`hippo_mem.eval.bench`). That harness returns **ground‑truth as predictions** by design (for CI plumbing), so runs are **extremely fast but not meaningful** for baseline quality. For a *real* baseline you must invoke the **model harness**.
+**Why this matters:** The previous step used `python scripts/run_baselines_bench.py`, which forwards to the **light-weight bench harness** (`hippo_mem.eval.bench`). That harness returns **ground‑truth as predictions** by design (for CI plumbing), so runs are **extremely fast but not meaningful** for baseline quality. For a *real* baseline you must invoke the **model harness**.
 
 **Do this instead** — run the matrix with a **real model** and the baseline presets:
 
@@ -351,4 +351,4 @@ echo "  - $ADAPTERS    (trained adapters, if any)"
 
 ### Appendix — Deprecated commands
 
-- `python scripts/run_baselines.py`: **CI/plumbing‑only**. It calls the light‑weight bench that returns ground truth as predictions; **do not use** for real baselines.
+- `python scripts/run_baselines_bench.py`: **CI/plumbing‑only**. It calls the light‑weight bench that returns ground truth as predictions; **do not use** for real baselines.

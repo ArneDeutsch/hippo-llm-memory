@@ -59,14 +59,14 @@ These tasks close the remaining operational gaps so the improved pipeline yields
 ---
 
 ## T5 — Clarify CI baselines vs. model baselines
-**Why:** `scripts/run_baselines.py` leverages the bench harness, which is great for CI but not for model‑backed baselines.
+**Why:** `scripts/run_baselines_bench.py` leverages the bench harness, which is great for CI but not for model‑backed baselines.
 
 **Changes**
-- Rename to **scripts/run_baselines_bench.py** and update references in docs that point to CI usage.
+- Rename the CI helper to **scripts/run_baselines_bench.py** and update references in docs that point to CI usage.
 - Keep **EVAL_PROTOCOL.md** baseline examples on `scripts/eval_model.py` with `model=$MODEL` to avoid ambiguity.
 
 **Acceptance**
-- Grep for `run_baselines.py` in docs yields CI‑scoped references only.
+- Searching for the old script name in docs returns no hits (rename complete).
 - No user attempts to run bench baselines for scientific comparisons.
 
 ---

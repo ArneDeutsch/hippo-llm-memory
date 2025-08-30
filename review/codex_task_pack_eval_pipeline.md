@@ -202,22 +202,22 @@ Harmonize decoding across presets and keep the CI guardrail that requires retrie
 
 ---
 
-## T7 — Update `scripts/run_baselines.py` matrix to include new episodic variants
+## T7 — Update `scripts/run_baselines_bench.py` matrix to include new episodic variants
 
 **Goal:**  
 Allow one command to generate baseline and memory results for the new episodic variants.
 
 **Files to touch:**  
 - `hippo_mem/eval/baselines.py` (constant lists)  
-- `scripts/run_baselines.py` (reads those constants)
+- `scripts/run_baselines_bench.py` (reads those constants)
 
 **Changes:**  
 - In `hippo_mem/eval/baselines.py`, extend `SUITES` to:  
   `["episodic","semantic","spatial","episodic_multi","episodic_cross","episodic_capacity"]`.
 
 **Acceptance tests:**  
-- `tests/test_run_baselines.py` updated/added to assert the matrix covers the six suites.  
-- Running `python scripts/run_baselines.py --date 20990101 --presets baselines/span_short` prints commands for the new suites.
+- `tests/test_run_baselines_bench.py` updated/added to assert the matrix covers the six suites.
+- Running `python scripts/run_baselines_bench.py --date 20990101 --presets baselines/span_short` prints commands for the new suites.
 
 **Run:** `make test`.
 
