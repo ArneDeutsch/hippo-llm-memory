@@ -23,17 +23,28 @@ def test_markdown_includes_ci_and_saturation(tmp_path: Path) -> None:
     """Metrics table shows CI and flags saturation when pre_em_norm high."""
 
     text = report._render_markdown_suite(
-        "episodic", _make_presets(0.02), retrieval=None, gates=None
+        "episodic",
+        _make_presets(0.02),
+        retrieval=None,
+        gates=None,
+        seed_count=2,
     )
     assert "0.500 ± 0.020" in text
     assert "saturated" in text.lower()
 
 
-def test_markdown_omits_ci_with_single_seed() -> None:
-    """CI column omitted for single-seed stats."""
+def test_markdown_includes_zero_ci_and_note_single_seed() -> None:
+    """Single-seed stats show ± 0.000 and explanatory note."""
 
-    text = report._render_markdown_suite("episodic", _make_presets(0.0), retrieval=None, gates=None)
-    assert "0.500 ±" not in text
+    text = report._render_markdown_suite(
+        "episodic",
+        _make_presets(0.0),
+        retrieval=None,
+        gates=None,
+        seed_count=1,
+    )
+    assert "0.500 ± 0.000" in text
+    assert "single-seed run: CI bands unavailable" in text
 
 
 def test_uplift_plot_written(tmp_path: Path) -> None:
