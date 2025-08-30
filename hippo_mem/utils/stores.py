@@ -7,7 +7,8 @@ def assert_store_exists(store_dir: str, session_id: str, kind: str = "episodic")
     Parameters
     ----------
     store_dir : str
-        Base directory containing all stores.
+        Base directory containing all stores **without** the trailing ``hei_nw``.
+        Convenience wrappers handle appending this suffix before calling.
     session_id : str
         Session identifier.
     kind : str, optional
