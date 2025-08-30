@@ -262,6 +262,7 @@ if [[ -f "$P" ]]; then
   echo "OK: $P"
 else
   echo "MISSING: $P" >&2
+  exit 2
 fi
 ```
 
