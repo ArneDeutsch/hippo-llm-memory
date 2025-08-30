@@ -18,6 +18,11 @@ def main() -> int:
         "--session_id",
         help="Logical session key; files are nested under store_dir/<algo>/<session_id>",
     )
+    parser.add_argument(
+        "--strict-telemetry",
+        action="store_true",
+        help="Fail fast on telemetry invariant violations",
+    )
     args, rest = parser.parse_known_args()
 
     overrides = list(args.overrides)
@@ -31,6 +36,8 @@ def main() -> int:
     session_id = args.session_id or os.getenv("HEI_SESSION_ID")
     if session_id is not None:
         overrides.append(f"session_id={session_id}")
+    if args.strict_telemetry:
+        overrides.append("strict_telemetry=true")
 
     cmd = [sys.executable, "scripts/eval_model.py", *overrides, *rest]
     return subprocess.call(cmd)
