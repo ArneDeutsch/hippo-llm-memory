@@ -119,7 +119,7 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         (Path(outdir) / "metrics.json").write_text(json.dumps(data))
 
     monkeypatch.setattr(test_consolidation, "_prepare_model_with_adapter", lambda m, a: (m, None))
-    monkeypatch.setattr(eval_model, "evaluate", fake_eval)
+    monkeypatch.setattr(test_consolidation.eval_model, "evaluate", fake_eval)
 
     args = [
         "--phase",
@@ -139,6 +139,117 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         str(pre_dir),
         "--outdir",
         str(post_dir),
+        "--uplift-mode",
+        "fixed",
+        "--min-uplift",
+        "0.2",
     ]
     with pytest.raises(RuntimeError, match=r"EM uplift < \+0.20"):
+        test_consolidation.main(args)
+
+
+def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """CI-based uplift gate passes when deltas' CI excludes 0."""
+
+    pre_dir = tmp_path / "pre"
+    pre_dir.mkdir()
+    pre_data = {"suite": "episodic", "metrics": {"episodic": {"pre_em": 0.0}}}
+    (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
+
+    post_root = tmp_path / "post"
+    seed_a = post_root / "seed_a"
+    seed_a.mkdir(parents=True)
+    existing = {
+        "suite": "episodic",
+        "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.1}},
+        "delta": {"em": 0.1},
+    }
+    (seed_a / "metrics.json").write_text(json.dumps(existing))
+
+    def fake_eval(cfg, outdir):  # pragma: no cover - helper
+        data = {
+            "suite": "episodic",
+            "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.12}},
+        }
+        Path(outdir).mkdir(parents=True, exist_ok=True)
+        (Path(outdir) / "metrics.json").write_text(json.dumps(data))
+
+    monkeypatch.setattr(test_consolidation, "_prepare_model_with_adapter", lambda m, a: (m, None))
+    monkeypatch.setattr(test_consolidation.eval_model, "evaluate", fake_eval)
+
+    args = [
+        "--phase",
+        "post",
+        "--suite",
+        "episodic",
+        "--n",
+        "50",
+        "--seed",
+        "2025",
+        "--model",
+        "models/tiny-gpt2",
+        "--allow-tiny-test-model",
+        "--adapter",
+        str(tmp_path / "adapter"),
+        "--pre_dir",
+        str(pre_dir),
+        "--outdir",
+        str(post_root / "seed_b"),
+        "--uplift-mode",
+        "ci",
+    ]
+    test_consolidation.main(args)
+
+
+def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """CI gate fails when CI includes 0."""
+
+    pre_dir = tmp_path / "pre"
+    pre_dir.mkdir()
+    pre_data = {"suite": "episodic", "metrics": {"episodic": {"pre_em": 0.0}}}
+    (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
+
+    post_root = tmp_path / "post"
+    seed_a = post_root / "seed_a"
+    seed_a.mkdir(parents=True)
+    existing = {
+        "suite": "episodic",
+        "metrics": {"episodic": {"pre_em": 0.0, "post_em": -0.05}},
+        "delta": {"em": -0.05},
+    }
+    (seed_a / "metrics.json").write_text(json.dumps(existing))
+
+    def fake_eval(cfg, outdir):  # pragma: no cover - helper
+        data = {
+            "suite": "episodic",
+            "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.01}},
+        }
+        Path(outdir).mkdir(parents=True, exist_ok=True)
+        (Path(outdir) / "metrics.json").write_text(json.dumps(data))
+
+    monkeypatch.setattr(test_consolidation, "_prepare_model_with_adapter", lambda m, a: (m, None))
+    monkeypatch.setattr(test_consolidation.eval_model, "evaluate", fake_eval)
+
+    args = [
+        "--phase",
+        "post",
+        "--suite",
+        "episodic",
+        "--n",
+        "50",
+        "--seed",
+        "2025",
+        "--model",
+        "models/tiny-gpt2",
+        "--allow-tiny-test-model",
+        "--adapter",
+        str(tmp_path / "adapter"),
+        "--pre_dir",
+        str(pre_dir),
+        "--outdir",
+        str(post_root / "seed_b"),
+        "--uplift-mode",
+        "ci",
+    ]
+    with pytest.raises(RuntimeError, match="CI includes 0"):
         test_consolidation.main(args)

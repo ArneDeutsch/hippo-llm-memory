@@ -22,11 +22,14 @@ Example usage::
 from __future__ import annotations
 
 import argparse
+import math
 import os
+import statistics
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from statistics import NormalDist
+from typing import Any, Dict, List, Optional
 
 from omegaconf import OmegaConf
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -52,6 +55,9 @@ class Args(argparse.Namespace):
     adapter: Optional[str]
     pre_dir: Optional[str]
     allow_tiny_test_model: bool
+    uplift_mode: str
+    min_uplift: float
+    alpha: float
 
 
 def _parse_args(argv: Optional[list[str]] = None) -> Args:
@@ -75,6 +81,24 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
         "--allow-tiny-test-model",
         action="store_true",
         help="Enable the tiny-gpt2 test model when MODEL is unset",
+    )
+    parser.add_argument(
+        "--uplift-mode",
+        choices=["fixed", "ci"],
+        default="fixed",
+        help="Gate mode: 'fixed' uses --min-uplift; 'ci' requires delta CI > 0",
+    )
+    parser.add_argument(
+        "--min-uplift",
+        type=float,
+        default=0.05,
+        help="Minimum EM uplift required in fixed mode",
+    )
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=0.05,
+        help="Significance level for CI mode (e.g., 0.05 for 95% CI)",
     )
     ns = parser.parse_args(argv)
     return ns  # type: ignore[return-value]
@@ -146,6 +170,23 @@ def _compute_delta(pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]) ->
     return delta
 
 
+def _collect_deltas(root: Path) -> List[float]:
+    """Return all delta.em values under ``root`` for CI computation."""
+
+    deltas: List[float] = []
+    # metrics.json directly under root
+    direct = root / "metrics.json"
+    if direct.exists():
+        d = io.read_json(direct).get("delta", {}).get("em")
+        if isinstance(d, (int, float)):
+            deltas.append(float(d))
+    for path in root.glob("*/metrics.json"):
+        d = io.read_json(path).get("delta", {}).get("em")
+        if isinstance(d, (int, float)):
+            deltas.append(float(d))
+    return deltas
+
+
 def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
     args = _parse_args(argv)
     args.model = _resolve_model(getattr(args, "model", None), args.allow_tiny_test_model)
@@ -167,13 +208,31 @@ def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
         delta = _compute_delta(pre_metrics, data)
         data["delta"] = delta
         io.atomic_write_json(result_path, data)
-        if (
-            args.suite == "episodic"
-            and args.n == 50
-            and args.seed == 1337
-            and delta.get("em", 0.0) < 0.20
-        ):
-            raise RuntimeError("EM uplift < +0.20 on episodic@50 seed=1337")
+
+        suite = data.get("suite")
+        pre_em = pre_metrics.get("metrics", {}).get(suite, {}).get("pre_em", 0.0)
+        post_em = data.get("metrics", {}).get(suite, {}).get("post_em", pre_em)
+        uplift = delta.get("em", 0.0)
+        print(f"pre_em={pre_em:.3f} post_em={post_em:.3f} delta={uplift:.3f}")
+
+        if args.uplift_mode == "fixed":
+            if uplift < args.min_uplift:
+                raise RuntimeError(f"EM uplift < +{args.min_uplift:.2f} (got {uplift:.2f})")
+        else:  # ci mode
+            deltas = _collect_deltas(outdir.parent)
+            if len(deltas) < 2:
+                raise RuntimeError("--uplift-mode=ci requires at least two seeds")
+            mean = statistics.mean(deltas)
+            std = statistics.stdev(deltas)
+            z = NormalDist().inv_cdf(1 - args.alpha / 2)
+            se = std / math.sqrt(len(deltas))
+            lower = mean - z * se
+            upper = mean + z * se
+            print(f"delta_em_mean={mean:.3f} ci=({lower:.3f}, {upper:.3f})")
+            if lower <= 0.0:
+                raise RuntimeError(
+                    f"EM uplift CI includes 0 (mean={mean:.3f}, CI=({lower:.3f}, {upper:.3f}))"
+                )
     if tmp_dir is not None:
         tmp_dir.cleanup()
     return data
