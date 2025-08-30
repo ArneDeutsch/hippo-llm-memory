@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sys
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean, stdev
@@ -134,6 +135,20 @@ def collect_metrics(
         compute_metrics = metrics.get("compute", {})
         data[(suite, preset, size)].append({**cleaned, **compute_metrics})
     return data
+
+
+def _missing_post_metrics(
+    metric_data: Dict[Tuple[str, str, int], Iterable[MetricDict]],
+) -> list[Tuple[str, str, int]]:
+    """Return groups lacking any ``post_*`` keys."""
+
+    missing: list[Tuple[str, str, int]] = []
+    for key, runs in metric_data.items():
+        for record in runs:
+            if not any(k.startswith("post_") for k in record):
+                missing.append(key)
+                break
+    return missing
 
 
 def collect_retrieval(base: Path) -> Dict[str, list[dict[str, MetricDict]]]:
@@ -785,12 +800,28 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     )
     parser.add_argument("--plots", action="store_true", help="render bar plots using matplotlib")
     parser.add_argument("--smoke", action="store_true", help="also write smoke.md with sample rows")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="fail if any suite lacks post_* metrics",
+    )
     args = parser.parse_args()
 
     runs_root = Path(args.runs_dir)
     date = args.date or _find_latest_date(runs_root)
     runs_path = runs_root / date
     metric_data = collect_metrics(runs_path)
+    if args.strict:
+        missing = _missing_post_metrics(metric_data)
+        if missing:
+            for suite, preset, size in missing:
+                log.error(
+                    "missing post_* metrics for suite=%s preset=%s size=%d",
+                    suite,
+                    preset,
+                    size,
+                )
+            sys.exit(1)
     seed_count = max((len(v) for v in metric_data.values()), default=0)
     retrieval_data = collect_retrieval(runs_path)
     gate_data = collect_gates(runs_path)

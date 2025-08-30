@@ -918,28 +918,30 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         # Load pre-metrics if they exist so we can compute deltas.
         pre_metrics: Dict[str, float] = {}
         metrics_path = outdir / "metrics.json"
-        if metrics_path.exists():
-            with metrics_path.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-            suite_metrics = data.get("metrics", {}).get(cfg.suite, {})
-            diagnostics = data.get("diagnostics", {}).get(cfg.suite, {})
-            for key in (
-                "em",
-                "em_raw",
-                "em_norm",
-                "f1",
-                "refusal_rate",
-                "success_rate",
-                "suboptimality_ratio",
-                "steps_to_goal",
-            ):
-                val = suite_metrics.get(f"pre_{key}")
-                if val is not None:
-                    pre_metrics[key] = float(val)
-            for key in ("overlong", "format_violation"):
-                val = diagnostics.get(f"pre_{key}")
-                if val is not None:
-                    pre_metrics[key] = float(val)
+        if not metrics_path.exists():
+            msg = f"missing {metrics_path}; run pre phase in the same outdir before replay"
+            raise FileNotFoundError(msg)
+        with metrics_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        suite_metrics = data.get("metrics", {}).get(cfg.suite, {})
+        diagnostics = data.get("diagnostics", {}).get(cfg.suite, {})
+        for key in (
+            "em",
+            "em_raw",
+            "em_norm",
+            "f1",
+            "refusal_rate",
+            "success_rate",
+            "suboptimality_ratio",
+            "steps_to_goal",
+        ):
+            val = suite_metrics.get(f"pre_{key}")
+            if val is not None:
+                pre_metrics[key] = float(val)
+        for key in ("overlong", "format_violation"):
+            val = diagnostics.get(f"pre_{key}")
+            if val is not None:
+                pre_metrics[key] = float(val)
 
         registry.reset()
         gate_registry.reset()
