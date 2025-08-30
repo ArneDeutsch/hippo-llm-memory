@@ -182,6 +182,11 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
             break
         texts = _format_records(batch)
         toks = tokenizer(texts, return_tensors="pt", padding=True)
+        # Some tokenizer implementations may return floating point tensors
+        # (e.g. when defaults change upstream).  Embedding layers expect
+        # integer index types, so we explicitly cast to ``long`` to avoid
+        # runtime errors like ``Expected tensor for argument #1 'indices'``.
+        toks = {k: v.long() for k, v in toks.items()}
         labels = toks["input_ids"].clone()
         out = model(**toks, labels=labels)
         loss = out.loss
