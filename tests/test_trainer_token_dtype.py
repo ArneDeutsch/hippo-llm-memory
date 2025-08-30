@@ -9,7 +9,9 @@ def test_train_handles_float_token_ids(tmp_path: Path) -> None:
     session_dir = store_root / session_id
     session_dir.mkdir(parents=True)
     # minimal episodic store with one record
-    (session_dir / "episodic.jsonl").write_text('{"prompt": "hi", "answer": "there"}\n', encoding="utf-8")
+    (session_dir / "episodic.jsonl").write_text(
+        '{"prompt": "hi", "answer": "there"}\n', encoding="utf-8"
+    )
 
     out_dir = tmp_path / "out"
     args = Args(
@@ -27,4 +29,3 @@ def test_train_handles_float_token_ids(tmp_path: Path) -> None:
     train(args, cfg)
 
     assert (out_dir / "adapter_config.json").exists()
-

@@ -102,15 +102,26 @@ def load_config(path: Optional[str]) -> Dict[str, Any]:
     return cfg
 
 
-def _format_records(records: Iterable[Dict[str, Any]]) -> List[str]:
-    """Convert replay records into text pairs suitable for tokenization."""
+def _format_records(records: Iterable[Dict[str, Any]]) -> tuple[list[str], list[Dict[str, Any]]]:
+    """Return (texts, records) excluding empty prompt/answer pairs.
 
-    texts = []
+    Some replay stores may contain placeholder entries without meaningful
+    ``prompt``/``answer`` fields.  Feeding such records to the tokenizer
+    yields empty tensors which later trigger reshape errors inside the
+    model.  We therefore skip blank pairs and keep ``texts`` aligned with
+    the filtered ``records`` so downstream processing remains consistent.
+    """
+
+    texts: list[str] = []
+    kept: list[Dict[str, Any]] = []
     for rec in records:
-        prompt = rec.get("prompt", rec.get("q", ""))
-        answer = rec.get("answer", rec.get("a", ""))
-        texts.append(f"{prompt}\n{answer}".strip())
-    return texts
+        prompt = rec.get("prompt") or rec.get("q") or ""
+        answer = rec.get("answer") or rec.get("a") or ""
+        text = f"{prompt}\n{answer}".strip()
+        if text:
+            texts.append(text)
+            kept.append(rec)
+    return texts, kept
 
 
 def _compute_kl(student: torch.Tensor, teacher: torch.Tensor) -> torch.Tensor:
@@ -180,7 +191,9 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
         batch = [b for b in batch if b is not None]
         if not batch:
             break
-        texts = _format_records(batch)
+        texts, batch = _format_records(batch)
+        if not texts:
+            continue
         toks = tokenizer(texts, return_tensors="pt", padding=True)
         # Some tokenizer implementations may return floating point tensors
         # (e.g. when defaults change upstream).  Embedding layers expect
