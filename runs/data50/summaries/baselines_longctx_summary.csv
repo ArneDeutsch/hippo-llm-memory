@@ -1,0 +1,8 @@
+task,model,n,seed,em,f1,tokens,time_ms_per_100
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,,
+episodic_cross,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,,
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,,
+episodic_multi,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,,
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,,
+episodic_capacity,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,,
+episodic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,,
