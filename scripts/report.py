@@ -433,19 +433,28 @@ def _render_markdown_suite(
         header = "| Preset | Size | " + " | ".join(display) + " |"
         sep = "|---" * (len(ordered) + 2) + "|"
         lines.extend(["## Uplift", header, sep])
-        for preset in sorted(presets):
-            sizes = presets[preset]
-            for size in sorted(sizes):
-                metrics = sizes[size]
-                vals: list[str] = []
-                for key in ordered:
-                    stat = metrics.get(key)
-                    if stat is None:
-                        vals.append("–")
-                    else:
-                        vals.append(_format_stat(stat))
-                row = f"| {preset} | {size} | " + " | ".join(vals) + " |"
-                lines.append(row)
+        rows: list[tuple[float, str, int, MetricStats]] = []
+        if suite == "semantic":
+            for preset, sizes in presets.items():
+                for size, metrics in sizes.items():
+                    em_raw = metrics.get("em_raw", (0.0, 0.0))[0]
+                    rows.append((em_raw, preset, size, metrics))
+            rows.sort(key=lambda x: x[0], reverse=True)
+        else:
+            for preset in sorted(presets):
+                sizes = presets[preset]
+                for size in sorted(sizes):
+                    rows.append((0.0, preset, size, sizes[size]))
+        for _, preset, size, metrics in rows:
+            vals: list[str] = []
+            for key in ordered:
+                stat = metrics.get(key)
+                if stat is None:
+                    vals.append("–")
+                else:
+                    vals.append(_format_stat(stat))
+            row = f"| {preset} | {size} | " + " | ".join(vals) + " |"
+            lines.append(row)
         lines.append("")
     if retrieval:
         lines.append("## Retrieval Telemetry")
@@ -624,11 +633,14 @@ def _write_index(
                 agg[key] = sum(vals) / len(vals)
             rollup.append((suite, preset, agg))
             metric_keys.update(agg.keys())
-            em_key = (
-                "em_norm"
-                if "em_norm" in agg
-                else ("em" if "em" in agg else ("em_raw" if "em_raw" in agg else None))
-            )
+            if suite == "semantic" and "em_raw" in agg:
+                em_key = "em_raw"
+            else:
+                em_key = (
+                    "em_norm"
+                    if "em_norm" in agg
+                    else ("em" if "em" in agg else ("em_raw" if "em_raw" in agg else None))
+                )
             if em_key:
                 em_by_preset[preset].append(agg[em_key])
 
