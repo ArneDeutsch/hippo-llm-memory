@@ -1,0 +1,5 @@
+{"schema": "spatial.v1", "type": "meta", "next_id": 2, "last_obs": 1, "step": 2, "position": [0.0, 0.0], "last_coord": null}
+{"schema": "spatial.v1", "type": "node", "id": 0, "context": "a", "coord": [41.052, 18.198], "last_seen": 1}
+{"schema": "spatial.v1", "type": "node", "id": 1, "context": "b", "coord": [42.005, 50.227], "last_seen": 2}
+{"schema": "spatial.v1", "type": "edge", "src": 0, "dst": 1, "cost": 1.0, "success": 1.0, "last_seen": 2, "weight": 1.0}
+{"schema": "spatial.v1", "type": "edge", "src": 1, "dst": 0, "cost": 1.0, "success": 1.0, "last_seen": 2, "weight": 1.0}
