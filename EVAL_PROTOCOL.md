@@ -106,7 +106,7 @@ SID="hei_${DATE}"  # session id for persistent store reuse
 for suite in episodic episodic_multi episodic_cross episodic_capacity; do
   for n in "${SIZES[@]}"; do
     for seed in "${SEEDS[@]}"; do
-      OUT="$RUNS/memory/$suite/${n}_${seed}"
+      OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
       python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES/hei_nw" session_id="$SID" outdir="$OUT"
       # Replay (3 cycles)
