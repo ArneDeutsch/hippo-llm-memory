@@ -15,6 +15,7 @@ def _run(primary: str, outdir: Path) -> dict:
         "model=models/tiny-gpt2",
         f"outdir={outdir}",
         "dry_run=true",
+        "mode=teach",
         f"primary_em={primary}",
     ]
     subprocess.run(cmd, check=True)

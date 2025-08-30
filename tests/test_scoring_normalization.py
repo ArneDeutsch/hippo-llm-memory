@@ -23,6 +23,7 @@ def test_harness_writes_em_scores(tmp_path: Path) -> None:
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir}",
+        "mode=teach",
         "dry_run=true",
     ]
     subprocess.run(cmd, check=True)

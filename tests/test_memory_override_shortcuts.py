@@ -12,6 +12,7 @@ def run_eval(args: list[str], outdir: Path) -> None:
         f"outdir={outdir}",
         "n=2",
         "seed=1337",
+        "mode=teach",
         "dry_run=true",
     ]
     subprocess.run(cmd, check=True)
