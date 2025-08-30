@@ -113,6 +113,12 @@ for suite in episodic episodic_multi episodic_cross episodic_capacity; do
 done
 ```
 
+> When running with `SIZES=(50)` and `SEEDS=(1337)`, the expected store is `runs/$RUN_ID/stores/hei_nw/hei_$RUN_ID/episodic.jsonl`.
+
+```bash
+ls -l "runs/$RUN_ID/stores/hei_nw/hei_${RUN_ID}/episodic.jsonl"
+```
+
 ### 4.2) SGC‑RSS (semantic)
 
 ```bash
@@ -207,6 +213,8 @@ python scripts/report.py --date "$DATE" --runs-dir runs --out-dir reports --data
 
 Minimal smoke for **cross‑session recall** using the same store directory.
 
+> When running with `SIZES=(50)` and `SEEDS=(1337)`, the expected store is `runs/$RUN_ID/stores/hei_nw/hei_$RUN_ID/episodic.jsonl`.
+
 ```bash
 # §8 prelude (self-contained)
 source scripts/env_prelude.sh
@@ -218,6 +226,7 @@ test -f "$STORES/hei_nw/$SID/episodic.jsonl" || {
   echo "No persisted HEI-NW store for $SID. Run §4.1 (teach+replay with persist=true) first."
   exit 1
 }
+ls -l "runs/$RUN_ID/stores/hei_nw/hei_${RUN_ID}/episodic.jsonl"
 
 # 1) Pre‑consolidation baseline (memory OFF)
 python scripts/test_consolidation.py --phase pre \
