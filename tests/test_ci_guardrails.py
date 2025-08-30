@@ -33,7 +33,7 @@ def test_retrieval_requests_guard(
         model="models/tiny-gpt2",
     )
 
-    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed: data_file)
+    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed, profile=None: data_file)
     with pytest.raises(RuntimeError, match="retrieval.requests == 0"):
         eval_model.run_suite(cfg)
 
@@ -44,7 +44,7 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     # dataset
     data_file = tmp_path / "d.jsonl"
     data_file.write_text(json.dumps({"prompt": "p", "answer": "a"}) + "\n")
-    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed: data_file)
+    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed, profile=None: data_file)
 
     class DummyTokenizer:
         pad_token_id = 0

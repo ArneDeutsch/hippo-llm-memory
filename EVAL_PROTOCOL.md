@@ -67,10 +67,15 @@ python scripts/bench_gating_overhead.py
 make datasets DATE="$DATE"
 
 # In case you prefer explicit calls (equivalent to the Makefile target), e.g.:
-# python scripts/build_datasets.py --suite episodic --size 50  --seed 1337 --out data/episodic/50_1337.jsonl
-# python scripts/build_datasets.py --suite semantic --size 200 --seed 2025 --out data/semantic/200_2025.jsonl
-# python scripts/build_datasets.py --suite spatial  --size 1000 --seed 4242 --out data/spatial/1000_4242.jsonl
+# python scripts/make_datasets.py --suite episodic --profile base --size 50  --seed 1337 --out data/episodic/50_1337.jsonl
+# python scripts/make_datasets.py --suite semantic --profile hard --size 200 --seed 2025 --out data/semantic_hard/200_2025.jsonl
+# python scripts/make_datasets.py --suite spatial  --profile base --size 1000 --seed 4242 --out data/spatial/1000_4242.jsonl
 ```
+
+`--profile` selects a difficulty preset defined in `configs/datasets/`. The `datasets`
+Makefile target emits both `base` and `hard` variants; use `dataset_profile=hard`
+when running evaluations for suites such as `episodic_cross` or `episodic_capacity`
+to avoid saturation.
 
 ---
 
@@ -112,15 +117,19 @@ own `<algo>` subfolder and nests traces under the provided `--session_id`.
 ```bash
 SID="hei_${DATE}"  # session id for persistent store reuse
 for suite in episodic episodic_multi episodic_cross episodic_capacity; do
+  profile=base
+  if [ "$suite" = "episodic_cross" ] || [ "$suite" = "episodic_capacity" ]; then
+    profile=hard
+  fi
   for n in "${SIZES[@]}"; do
     for seed in "${SEEDS[@]}"; do
       OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" dataset_profile="$profile" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT"
       # Replay (3 cycles)
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" dataset_profile="$profile" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
       # Test (post‑replay)
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" dataset_profile="$profile" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT"
     done
   done
 done
