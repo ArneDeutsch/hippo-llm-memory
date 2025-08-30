@@ -2,6 +2,17 @@
 
 A concrete, repeatable plan to **validate** HEI‑NW, SGC‑RSS, and SMPD on a single 12 GB GPU setup. It defines datasets, baselines, run matrix, metrics, ablations, file formats, and commands so Codex/CI and local runs yield comparable, auditable results.
 
+# 0.1) Quick smoke test
+
+For a fast end‑to‑end check at `n=50`, `seed=1337`, run:
+
+```bash
+bash scripts/smoke_n50.sh
+```
+
+This script performs baselines → memory (teach+replay) → report and fails if
+`post_*` metrics are missing.
+
 # 1) Hypotheses (what we expect to improve)
 
 - **HEI‑NW (episodic):** one‑shot episodic recall from partial cues with durability after replay; lower interference than long‑context.
@@ -9,6 +20,12 @@ A concrete, repeatable plan to **validate** HEI‑NW, SGC‑RSS, and SMPD on a s
 - **SMPD (spatial/procedural):** higher path success and lower path suboptimality; fewer steps via macro reuse on repeated tasks.
 * **Relational gates:** reduce duplicate churn and hub growth **without degrading** multi‑hop accuracy; faster stabilization via reduced noise.
 * **Spatial gates:** reduce graph/map growth (nodes/edges per 1k obs) and planning latency with unchanged success/suboptimality.
+
+## 1.1) Metric selection per suite
+
+- **semantic**: `EM(raw)` is the primary metric; `EM(norm)` is reported for
+  context.
+- **other suites**: `EM(norm)` remains primary with `EM(raw)` optional.
 
 # 2) Baselines
 
@@ -56,6 +73,9 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
 
 Each suite provides a minimal `n=50` split for smoke and cross‑session experiments.
 
+Generators offer `base` and `hard` difficulty profiles (`--profile`/`dataset_profile`).
+Use `hard` for suites prone to saturation (`episodic_cross`, `episodic_capacity`).
+
 ## 3.1 Episodic suite (HEI‑NW)
 
 - **W4 stories:** short, templated stories with tuples (who, what, where, when). Example size: 100–1,000 items.
@@ -94,6 +114,10 @@ Generators live in `hippo_mem/eval/datasets.py` and are addressable via the CLI 
 
 # 4) Run matrix
 
+Set a single `RUN_ID` and source `scripts/env_prelude.sh` so `DATE=$RUN_ID` and
+common paths (`$RUNS`, `$STORES`, `$REPORTS`) are defined. Derive deterministic
+session ids such as `hei_$RUN_ID` so replay phases find the correct stores.
+
 For each **suite**:
 
 - Presets: `baselines/{core,rag,longctx,span_short}` and `memory/{hei_nw,sgc_rss,smpd}` (or `all` for combined).
@@ -103,6 +127,10 @@ For each **suite**:
 - Replay: evaluate **pre‑replay** and **post‑replay** (1–3 cycles).
 
 For relational and spatial suites, execute **paired runs** with gates `enabled=true` and `enabled=false` per (size, seed). Report ON→OFF deltas for duplicate rate and map growth alongside primary accuracy metrics.
+
+Gate toggles are surfaced via CLI flags such as
+`episodic.gate.enabled=false`, `relational.gate.enabled=false`, and
+`spatial.gate.enabled=false`.
 
 # 4.1 Cross-session protocol & persistence
 
@@ -337,6 +365,9 @@ python scripts/eval_model.py suite=episodic preset=memory/hei_nw   n=50 seed=133
 - **High contradiction rate:** raise tuple confidence threshold; prefer schema‑fit fast‑track; add provenance rollbacks.
 - **Map explosion:** enable node merge by cosine similarity, set TTL for stale nodes.
 - **CI timeouts:** use `n_trials=5` and `dry_run=true`.
+- **Step 9 aborts (`EM uplift < ...`):** ensure a replay run wrote `post_*` metrics,
+  lower the threshold via `--min-uplift 0.05`, or collect more seeds and use
+  `--uplift-mode ci`.
 
 # 15) Directory conventions
 
@@ -435,8 +466,12 @@ python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=200 seed=1337
 5. **Ablations** — run `span_short`, `longctx`, `rag` to isolate gains.
 
 **Metrics & assertions**
-- `post.EM - pre.EM ≥ +0.20` on `episodic@50` (seed=1337).
-- Memory runs show `retrieval.requests > 0`, `replay.samples > 0` in `metrics.json`.
+- Gate uplift using `test_consolidation.py`'s flags:
+  `--uplift-mode [fixed|ci]`, `--min-uplift 0.05`, `--alpha 0.05`.
+- Default pass condition: `post.EM - pre.EM ≥ min_uplift` on
+  `episodic@50` (seed=1337).
+- Memory runs show `retrieval.requests > 0`, `replay.samples > 0` in
+  `metrics.json`.
 - Refusal‑rate ≤ 0.5 on span suites.
 - Sanity suite ≤ 1% degradation post‑LoRA.
 
