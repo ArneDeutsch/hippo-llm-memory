@@ -3,7 +3,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 
+
+@pytest.mark.slow
 def test_run_memory_gate_flags(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
     cmd = [

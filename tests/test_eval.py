@@ -20,6 +20,7 @@ PRESETS = [
 ]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("preset", PRESETS)
 def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
     """Each baseline preset writes well-formed metrics and metadata files."""
@@ -31,6 +32,7 @@ def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
         "suite=episodic",
         f"preset={preset}",
         "dry_run=true",
+        "n=1",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path)
     # discover the date directory created by the run

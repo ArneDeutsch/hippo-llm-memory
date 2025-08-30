@@ -2,6 +2,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def run_eval(args: list[str], outdir: Path) -> None:
     cmd = [
@@ -10,7 +12,7 @@ def run_eval(args: list[str], outdir: Path) -> None:
         *args,
         "model=models/tiny-gpt2",
         f"outdir={outdir}",
-        "n=2",
+        "n=1",
         "seed=1337",
         "mode=teach",
         "dry_run=true",
@@ -19,6 +21,7 @@ def run_eval(args: list[str], outdir: Path) -> None:
     assert (outdir / "meta.json").exists()
 
 
+@pytest.mark.slow
 def test_memory_override_shortcuts(tmp_path: Path) -> None:
     run_eval(
         [

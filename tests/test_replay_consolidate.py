@@ -41,6 +41,7 @@ def test_parse_args(tmp_path: Path) -> None:
     assert args.config == str(cfg)
 
 
+@pytest.mark.slow
 def test_replay_consolidate_auto_targets(tmp_path: Path) -> None:
     store_dir = _write_store(tmp_path / "stores")
     cfg = tmp_path / "cfg.yaml"

@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from hippo_mem.eval.score import em_norm, normalize
 
 
@@ -12,6 +14,7 @@ def test_normalize_and_em() -> None:
     assert em_norm("apple", "banana") == 0
 
 
+@pytest.mark.slow
 def test_harness_writes_em_scores(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
     cmd = [
