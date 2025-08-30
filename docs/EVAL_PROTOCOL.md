@@ -22,6 +22,12 @@ Datasets ship with `base` and `hard` profiles. Use `dataset_profile=hard` for
 suites like `episodic_cross` or `episodic_capacity` to avoid saturation.
 
 ```bash
+# Recommended flags for sensitive suites
+suite=episodic_cross dataset_profile=hard --strict-telemetry
+suite=episodic_capacity dataset_profile=hard --strict-telemetry
+```
+
+```bash
 make datasets DATE="$RUN_ID"
 ```
 
