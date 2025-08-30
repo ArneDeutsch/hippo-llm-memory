@@ -33,6 +33,9 @@ from hippo_mem.eval.harness import (
     run_suite,
 )
 from hippo_mem.eval.harness import main as harness_main
+from hippo_mem.utils.stores import assert_store_exists
+from scripts.store_paths import StoreLayout
+from scripts.store_paths import derive as derive_store_layout
 
 __all__ = [
     "AutoModelForCausalLM",
@@ -62,50 +65,40 @@ def main(cfg: DictConfig) -> None:
 
     algo = _infer_algo(cfg.get("preset"))
 
+    layout: StoreLayout | None = None
     if cfg.mode == "replay":
         if not getattr(cfg, "store_dir", None) or not getattr(cfg, "session_id", None):
-            raise SystemExit("Error: --store_dir and --session_id are required for this mode.")
-        from hippo_mem.utils.stores import assert_store_exists
-
-        root = Path(str(cfg.store_dir))
-        if root.name == algo:
-            print(
-                f"Warning: store_dir already ends with '{algo}'; not appending.",
-                file=sys.stderr,
-            )
-            base_dir = root.parent
-            cfg.store_dir = str(root)
+            layout = derive_store_layout(algo=algo)
+            cfg.store_dir = cfg.store_dir or str(layout.algo_dir)
+            cfg.session_id = cfg.session_id or layout.session_id
         else:
-            base_dir = root
-            cfg.store_dir = str(root / algo)
-        assert_store_exists(str(base_dir), str(cfg.session_id), algo, kind="episodic")
-    elif (
-        cfg.mode == "test" and getattr(cfg, "store_dir", None) and getattr(cfg, "session_id", None)
+            root = Path(str(cfg.store_dir))
+            base_dir = root.parent if root.name == algo else root
+            cfg.store_dir = str(root if root.name == algo else root / algo)
+            layout = StoreLayout(
+                base_dir=base_dir, algo_dir=Path(cfg.store_dir), session_id=str(cfg.session_id)
+            )
+        assert_store_exists(str(layout.base_dir), str(cfg.session_id), algo, kind="episodic")
+    elif cfg.mode == "test" and (
+        getattr(cfg, "store_dir", None) or getattr(cfg, "session_id", None)
     ):
-        from hippo_mem.utils.stores import assert_store_exists
-
-        root = Path(str(cfg.store_dir))
-        if root.name == algo:
-            print(
-                f"Warning: store_dir already ends with '{algo}'; not appending.",
-                file=sys.stderr,
+        if getattr(cfg, "store_dir", None) and getattr(cfg, "session_id", None):
+            root = Path(str(cfg.store_dir))
+            base_dir = root.parent if root.name == algo else root
+            cfg.store_dir = str(root if root.name == algo else root / algo)
+            layout = StoreLayout(
+                base_dir=base_dir, algo_dir=Path(cfg.store_dir), session_id=str(cfg.session_id)
             )
-            base_dir = root.parent
-            cfg.store_dir = str(root)
         else:
-            base_dir = root
-            cfg.store_dir = str(root / algo)
-        assert_store_exists(str(base_dir), str(cfg.session_id), algo, kind="episodic")
+            layout = derive_store_layout(algo=algo)
+            if getattr(cfg, "store_dir", None) is None:
+                cfg.store_dir = str(layout.algo_dir)
+            if getattr(cfg, "session_id", None) is None:
+                cfg.session_id = layout.session_id
+        assert_store_exists(str(layout.base_dir), str(cfg.session_id), algo, kind="episodic")
     elif getattr(cfg, "store_dir", None):
         root = Path(str(cfg.store_dir))
-        if root.name == algo:
-            print(
-                f"Warning: store_dir already ends with '{algo}'; not appending.",
-                file=sys.stderr,
-            )
-            cfg.store_dir = str(root)
-        else:
-            cfg.store_dir = str(root / algo)
+        cfg.store_dir = str(root if root.name == algo else root / algo)
 
     harness_main(cfg)
 
