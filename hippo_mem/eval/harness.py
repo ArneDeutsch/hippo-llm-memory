@@ -596,6 +596,10 @@ def _write_outputs(
                 "post_format_violation": post_metrics.get("format_violation", 0),
             }
         )
+        for key, pre_val in pre_metrics.items():
+            post_val = post_metrics.get(key)
+            if isinstance(pre_val, (int, float)) and isinstance(post_val, (int, float)):
+                suite_metrics[f"delta_{key}"] = post_val - pre_val
     metrics: Dict[str, object] = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -881,18 +885,76 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                 modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
             if "spatial" in modules:
                 modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
+
+        # Load pre-metrics if they exist so we can compute deltas.
+        pre_metrics: Dict[str, float] = {}
+        metrics_path = outdir / "metrics.json"
+        if metrics_path.exists():
+            with metrics_path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            suite_metrics = data.get("metrics", {}).get(cfg.suite, {})
+            diagnostics = data.get("diagnostics", {}).get(cfg.suite, {})
+            for key in (
+                "em",
+                "em_raw",
+                "em_norm",
+                "f1",
+                "refusal_rate",
+                "success_rate",
+                "suboptimality_ratio",
+                "steps_to_goal",
+            ):
+                val = suite_metrics.get(f"pre_{key}")
+                if val is not None:
+                    pre_metrics[key] = float(val)
+            for key in ("overlong", "format_violation"):
+                val = diagnostics.get(f"pre_{key}")
+                if val is not None:
+                    pre_metrics[key] = float(val)
+
+        registry.reset()
+        gate_registry.reset()
+        post_rows, post_metrics, in_tok, gen_tok, elapsed = _evaluate(
+            tasks,
+            modules,
+            tokenizer,
+            model,
+            int(cfg.max_new_tokens),
+            use_chat_template=cfg.use_chat_template,
+            system_prompt=cfg.system_prompt,
+            compute_metrics=True,
+            suite=cfg.suite,
+        )
+        post_metrics["em"] = (
+            post_metrics.get("em_norm", 0.0)
+            if cfg.primary_em == "norm"
+            else post_metrics.get("em_raw", 0.0)
+        )
+        total_tokens = in_tok + gen_tok
+        compute = {
+            "input_tokens": in_tok,
+            "generated_tokens": gen_tok,
+            "total_tokens": total_tokens,
+            "time_ms_per_100": 100 * elapsed * 1000 / max(1, total_tokens),
+            "rss_mb": _rss_mb(),
+            "latency_ms_mean": sum(r["latency_ms"] for r in post_rows) / max(1, len(post_rows)),
+        }
         store_sizes = _store_sizes(modules)
         _write_outputs(
             outdir,
             [],
-            {},
-            None,
-            None,
+            pre_metrics,
+            post_rows,
+            post_metrics,
             cfg,
             flat_ablate,
-            None,
+            compute,
             replay_samples=replay_samples,
             store_sizes=store_sizes,
+        )
+        retrieval_snaps = registry.all_snapshots()
+        _enforce_guardrails(
+            cfg, pre_metrics, post_metrics, retrieval_snaps, has_memory=bool(modules)
         )
         return
 
