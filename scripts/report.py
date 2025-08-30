@@ -458,13 +458,23 @@ def _render_markdown_suite(
         lines.append("")
     if retrieval:
         lines.append("## Retrieval Telemetry")
-        lines.append("| mem | requests | hit_rate_at_k | avg_latency_ms | tokens_returned |")
-        lines.append("|---|---|---|---|---|")
+        note_path = (
+            Path(__file__).resolve().parent.parent / "reports" / "templates" / "retrieval_note.md"
+        )
+        if note_path.exists():
+            lines.append(note_path.read_text().strip())
+        else:
+            lines.append(
+                "> Hits reflect actual recalled traces; cue-only fallbacks are excluded from telemetry."
+            )
+        lines.append("| mem | requests | hits | hit_rate_at_k | tokens_returned | avg_latency_ms |")
+        lines.append("|---|---|---|---|---|---|")
         for mem in sorted(retrieval):
             stats = retrieval[mem]
             row = (
-                f"| {mem} | {int(stats['requests'])} | {stats['hit_rate_at_k']:.3f} | "
-                f"{stats['avg_latency_ms']:.3f} | {int(stats['tokens_returned'])} |"
+                f"| {mem} | {int(stats['requests'])} | {int(stats.get('hits', 0))} | "
+                f"{stats['hit_rate_at_k']:.3f} | {int(stats['tokens_returned'])} | "
+                f"{stats['avg_latency_ms']:.3f} |"
             )
             lines.append(row)
         lines.append("")
