@@ -111,7 +111,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     assert round(em_stats[1], 3) == 0.196
 
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
+    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
     # per-suite summaries present
     assert set(paths.keys()) == {"episodic", "semantic"}
     md_path = paths["episodic"]
@@ -148,7 +148,7 @@ def test_report_handles_missing_optional(tmp_path: Path) -> None:
     gates = summarise_gates(collect_gates(base))
     gate_ablation = collect_gate_ablation(base)
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
+    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
     text = paths["episodic"].read_text()
     assert "Retrieval Telemetry" not in text
     assert "Gate Telemetry" not in text
@@ -183,7 +183,7 @@ def test_smoke_report(tmp_path: Path) -> None:
     gate_ablation = collect_gate_ablation(base)
     out_dir = tmp_path / "reports" / "20250101"
     write_smoke(data_root, out_dir / "smoke.md")
-    write_reports(summary, retrieval, gates, gate_ablation, out_dir, plots=False)
+    write_reports(summary, retrieval, gates, gate_ablation, out_dir, plots=False, seed_count=1)
     idx_text = (out_dir / "index.md").read_text()
     assert "[smoke.md](smoke.md)" in idx_text
     smoke_text = (out_dir / "smoke.md").read_text()

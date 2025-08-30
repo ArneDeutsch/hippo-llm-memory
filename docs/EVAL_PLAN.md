@@ -15,6 +15,8 @@ capture the latest pipeline changes.
 - **Metric choices**: `semantic` ranks by `EM(raw)`; other suites keep
   `EM(norm)` primary.
 - **Consolidation gate flags**: `test_consolidation.py` exposes
-  `--uplift-mode`, `--min-uplift`, and `--alpha`.
+  `--uplift-mode`, `--min-uplift`, and `--alpha`. When runs cover two or more
+  seeds, the script automatically switches to CI mode and reports the 95%
+  confidence interval.
 - **Smoke script**: `bash scripts/smoke_n50.sh` runs a full n=50, seed=1337
   cycle and verifies that `post_*` metrics exist.
