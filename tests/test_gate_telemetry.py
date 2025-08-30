@@ -46,6 +46,7 @@ def test_gate_metrics_propagate(tmp_path: Path) -> None:
         n=5,
         seed=1337,
         preset="configs/eval/memory/hei_nw.yaml",
+        model="models/tiny-gpt2",
     )
     rows, metrics, _ = run_suite(cfg)
     assert rows

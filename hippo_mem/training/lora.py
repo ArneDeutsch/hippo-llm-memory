@@ -110,9 +110,7 @@ class TrainConfig:
     """Configuration for LoRA/QLoRA training."""
 
     # Model & data
-    model_name: str = field(
-        default_factory=lambda: os.environ.get("HF_MODEL_PATH", "models/tiny-gpt2")
-    )
+    model_name: str = field(default_factory=lambda: os.environ.get("HF_MODEL_PATH", ""))
     dataset_name: str = "imdb"
     data_format: str = "jsonl"  # {"hf","jsonl"}
     train_files: List[str] = field(default_factory=list)

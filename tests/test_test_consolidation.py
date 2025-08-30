@@ -67,6 +67,7 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         "1337",
         "--model",
         "models/tiny-gpt2",
+        "--allow-tiny-test-model",
         "--outdir",
         str(pre_dir),
     ]
@@ -86,6 +87,7 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         "1337",
         "--model",
         "models/tiny-gpt2",
+        "--allow-tiny-test-model",
         "--adapter",
         str(adapter_dir),
         "--pre_dir",

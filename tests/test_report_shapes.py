@@ -14,6 +14,7 @@ def test_metrics_csv_has_diagnostics(tmp_path: Path) -> None:
         "preset=baselines/core",
         "n=2",
         "seed=1337",
+        "model=models/tiny-gpt2",
         f"outdir={outdir}",
         "dry_run=true",
     ]
