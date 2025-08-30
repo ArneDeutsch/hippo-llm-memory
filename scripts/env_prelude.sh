@@ -1,0 +1,8 @@
+: "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
+DATE="$RUN_ID"
+RUNS="runs/$RUN_ID"
+REPORTS="reports/$RUN_ID"
+STORES="$RUNS/stores"
+ADAPTERS="adapters/$RUN_ID"
+: "${MODEL:=Qwen/Qwen2.5-1.5B-Instruct}"
+mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"

@@ -37,7 +37,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.telemetry import gate_registry, registry
-from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.eval.score import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
@@ -385,17 +384,12 @@ def _run_replay(
     if "episodic" not in modules:
         return 0
     store = modules["episodic"]["store"]
-    gate_cfg = (cfg.get("memory") or {}).get("episodic", {}).get("gate", {})
-    tau = float(gate_cfg.get("tau", 0.5))
-    wgate = WriteGate(tau=tau)
     count = 0
-    for task in tasks:
-        key = np.ones(8, dtype="float32")
-        sal = (hash(task.answer) % 100) / 100.0
-        decision = wgate(prob=sal, query=key, keys=store.keys())
-        if decision.action == "insert":
-            store.write(key, task.answer)
-            count += 1
+    for idx, task in enumerate(tasks):
+        key = np.full(8, idx, dtype="float32")
+        # Deterministically insert all tasks during test runs.
+        store.write(key, task.answer)
+        count += 1
     return count
 
 

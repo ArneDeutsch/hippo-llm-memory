@@ -25,25 +25,9 @@ For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
 ## 0) Shell prelude — environment & variables
 
 ```bash
-# >>> RUN_ID prelude (stable session identifier)
-# Prefer RUN_ID if provided; else use DATE; else use UTC timestamp.
-: "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
-# Back-compat: keep DATE equal to RUN_ID so existing $DATE usages still work.
-DATE="$RUN_ID"
-
-# Derived paths
-RUNS="runs/$RUN_ID"
-REPORTS="reports/$RUN_ID"
-STORES="$RUNS/stores"
-ADAPTERS="adapters/$RUN_ID"
-
-# Defaults (caller can override before sourcing)
-: "${MODEL:=Qwen/Qwen2.5-1.5B-Instruct}"
+source scripts/env_prelude.sh
 if [[ -z ${SIZES+x} ]]; then SIZES=(50 200 1000); fi
 if [[ -z ${SEEDS+x} ]]; then SEEDS=(1337 2025 4242); fi
-# <<< RUN_ID prelude
-
-mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"
 
 echo "RUN_ID=$RUN_ID"
 echo "MODEL=$MODEL"
@@ -225,15 +209,7 @@ Minimal smoke for **cross‑session recall** using the same store directory.
 
 ```bash
 # §8 prelude (self-contained)
-: "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
-DATE="$RUN_ID"
-RUNS="runs/$RUN_ID"
-REPORTS="reports/$RUN_ID"
-STORES="$RUNS/stores"
-ADAPTERS="adapters/$RUN_ID"
-: "${MODEL:=Qwen/Qwen2.5-1.5B-Instruct}"  # default for production runs
-
-mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"
+source scripts/env_prelude.sh
 
 SID="hei_${RUN_ID}"
 
