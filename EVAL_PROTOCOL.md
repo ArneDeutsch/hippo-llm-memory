@@ -289,8 +289,13 @@ python scripts/replay_consolidate.py \
 python scripts/test_consolidation.py --phase post \
   --suite episodic --n 50 --seed 1337 \
   --model "$MODEL" --adapter "$RUNS/consolidation/lora" \
-  --pre_dir "$RUNS/consolidation/pre" --outdir "$RUNS/consolidation/post"
+  --pre_dir "$RUNS/consolidation/pre" --outdir "$RUNS/consolidation/post" \
+  --min-uplift 0.05
 ```
+
+Use `--uplift-mode ci` when multiple seeds are present; the gate then
+requires the 95% CI of `(post - pre)` to exclude zero (significance
+controlled by `--alpha`, default 0.05).
 
 ---
 
