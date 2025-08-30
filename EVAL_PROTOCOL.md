@@ -197,7 +197,7 @@ done
 
 ## 6) Gate threshold sweeps (clarified)
 
-These are **small, example sweeps** around the defaults to **check sensitivity**, **not** exhaustive grid searches. Keep them light to control runtime.
+These are **small, example sweeps** around the defaults to **check sensitivity**, **not** exhaustive grid searches. Keep them light to control runtime. Reuse the persisted stores from §4; `mode=test` requires `--store_dir` and `--session_id`.
 
 ```bash
 # Choose small, symmetric ranges around the configured defaults:
@@ -209,19 +209,35 @@ SPATIAL_BLOCK_THRESHOLDS=(0.5 1.0 2.0)
 SWEEP_SIZES=(200)
 SWEEP_SEEDS=(1337 2025)
 
+# Reuse persisted stores from §4
+SID_HEI="hei_${DATE}"
+SID_SGC="sgc_${DATE}"
+SID_SMPD="smpd_${DATE}"
+
 # HEI‑NW taus
 for tau in "${EPISODIC_TAUS[@]}"; do
-  python scripts/eval_model.py suite=episodic preset=memory/hei_nw n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE"     model="$MODEL" mode=test episodic.gate.tau="$tau" outdir="$RUNS/sweeps/hei_nw_tau_${tau}"
+  python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
+    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE" \
+    model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_HEI" \
+    episodic.gate.tau="$tau" outdir="$RUNS/sweeps/hei_nw_tau_${tau}"
 done
 
 # SGC‑RSS relational thresholds
 for thr in "${RELATIONAL_THRESHOLDS[@]}"; do
-  python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE"     model="$MODEL" mode=test relational.gate.threshold="$thr" outdir="$RUNS/sweeps/sgc_rss_thr_${thr}"
+  python scripts/eval_model.py suite=semantic preset=memory/sgc_rss \
+    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE" \
+    model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_SGC" \
+    relational.gate.threshold="$thr" \
+    outdir="$RUNS/sweeps/sgc_rss_thr_${thr}"
 done
 
 # SMPD spatial thresholds
 for thr in "${SPATIAL_BLOCK_THRESHOLDS[@]}"; do
-  python scripts/eval_model.py suite=spatial preset=memory/smpd n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE"     model="$MODEL" mode=test spatial.gate.block_threshold="$thr" outdir="$RUNS/sweeps/smpd_thr_${thr}"
+  python scripts/eval_model.py suite=spatial preset=memory/smpd \
+    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE" \
+    model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_SMPD" \
+    spatial.gate.block_threshold="$thr" \
+    outdir="$RUNS/sweeps/smpd_thr_${thr}"
 done
 ```
 
