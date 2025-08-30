@@ -132,7 +132,8 @@ class GateRegistry:
             return {k: v.snapshot() for k, v in self._stats.items()}
 
 
-gate_registry = GateRegistry(["relational", "spatial"])
+# Track gate counters for all memory types.
+gate_registry = GateRegistry(["episodic", "relational", "spatial"])
 
 __all__ = [
     "RetrievalStats",

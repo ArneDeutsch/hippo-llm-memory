@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from scripts.report import (
+    collect_gate_ablation,
     collect_gates,
     collect_metrics,
     collect_retrieval,
@@ -34,8 +35,9 @@ def test_report_shows_em_and_diagnostics(tmp_path: Path) -> None:
     summary = summarise(metrics)
     retrieval = summarise_retrieval(collect_retrieval(runs))
     gates = summarise_gates(collect_gates(runs))
+    gate_ablation = collect_gate_ablation(runs)
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, retrieval, gates, out, plots=False)
+    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
     text = paths["episodic"].read_text()
     assert "EM (raw)" in text and "EM (norm)" in text
     assert "overlong" in text and "format_violation" in text

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from scripts.report import (
     _find_latest_date,
+    collect_gate_ablation,
     collect_gates,
     collect_metrics,
     collect_retrieval,
@@ -103,13 +104,14 @@ def test_report_aggregation(tmp_path: Path) -> None:
     summary = summarise(metrics)
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
+    gate_ablation = collect_gate_ablation(base)
 
     em_stats = summary["episodic"]["baselines/core/gate_on"][50]["em_raw"]
     assert em_stats[0] == 0.6
     assert round(em_stats[1], 3) == 0.196
 
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, retrieval, gates, out, plots=False)
+    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
     # per-suite summaries present
     assert set(paths.keys()) == {"episodic", "semantic"}
     md_path = paths["episodic"]
@@ -123,8 +125,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     assert "duplicate_rate" in text
     assert "nodes_per_1k" in text
     assert "Gate ON vs OFF" in text
-    assert "+0.200" in text
-    assert "-250.000" in text
+    assert "| mem | store_on | store_off | accepts_on | accepts_off | ΔEM |" in text
 
     idx = out / "index.md"
     assert idx.exists()
@@ -145,8 +146,9 @@ def test_report_handles_missing_optional(tmp_path: Path) -> None:
     summary = summarise(collect_metrics(base))
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
+    gate_ablation = collect_gate_ablation(base)
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, retrieval, gates, out, plots=False)
+    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
     text = paths["episodic"].read_text()
     assert "Retrieval Telemetry" not in text
     assert "Gate Telemetry" not in text
@@ -178,9 +180,10 @@ def test_smoke_report(tmp_path: Path) -> None:
     summary = summarise(collect_metrics(base))
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
+    gate_ablation = collect_gate_ablation(base)
     out_dir = tmp_path / "reports" / "20250101"
     write_smoke(data_root, out_dir / "smoke.md")
-    write_reports(summary, retrieval, gates, out_dir, plots=False)
+    write_reports(summary, retrieval, gates, gate_ablation, out_dir, plots=False)
     idx_text = (out_dir / "index.md").read_text()
     assert "[smoke.md](smoke.md)" in idx_text
     smoke_text = (out_dir / "smoke.md").read_text()

@@ -52,6 +52,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from hippo_mem.common import GateDecision, ProvenanceLogger, log_gate
+from hippo_mem.common.telemetry import gate_registry
 
 from .utils import cosine_dissimilarity
 
@@ -467,15 +468,17 @@ def gate_batch(
         pins = np.asarray(pins, dtype=bool).reshape(-1)
 
     decisions: list[GateDecision] = []
+    stats = gate_registry.get("episodic")
     accepts = 0
     for i, p in enumerate(probs):
+        stats.attempts += 1
         r = float(rewards[i]) if rewards is not None else 0.0
         pin = bool(pins[i]) if pins is not None else False
         dec = gate(p, queries[i], keys, r, pin, provenance)
         decisions.append(dec)
         if dec.action == "insert":
+            stats.inserted += 1
             accepts += 1
-
     rate = accepts / len(decisions) if decisions else 0.0
     logger.info("write_accept_rate=%.2f", rate)
     return decisions, rate
