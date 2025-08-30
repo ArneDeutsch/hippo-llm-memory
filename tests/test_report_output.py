@@ -43,3 +43,35 @@ def test_report_shows_em_and_diagnostics(tmp_path: Path) -> None:
     assert "overlong" in text and "format_violation" in text
     # ensure ratios computed: 2/10=0.2, 1/10=0.1
     assert "0.200" in text and "0.100" in text
+
+
+def test_report_retrieval_section(tmp_path: Path) -> None:
+    base = tmp_path / "runs" / "20250101" / "memory" / "hei_nw" / "episodic" / "50_1337"
+    base.mkdir(parents=True)
+    content = {
+        "metrics": {"episodic": {"em": 1.0}},
+        "retrieval": {
+            "episodic": {
+                "requests": 2,
+                "hits": 1,
+                "hit_rate_at_k": 0.5,
+                "tokens_returned": 4,
+                "avg_latency_ms": 0.1,
+            }
+        },
+    }
+    (base / "metrics.json").write_text(json.dumps(content))
+
+    runs = tmp_path / "runs" / "20250101"
+    metrics = collect_metrics(runs)
+    summary = summarise(metrics)
+    retrieval = summarise_retrieval(collect_retrieval(runs))
+    gates = summarise_gates(collect_gates(runs))
+    gate_ablation = collect_gate_ablation(runs)
+    out = tmp_path / "reports" / "20250101"
+    write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
+    text = (out / "episodic" / "summary.md").read_text()
+    header = "| mem | requests | hits | hit_rate_at_k | tokens_returned | avg_latency_ms |"
+    assert header in text
+    assert "| episodic | 2 | 1 | 0.500 | 4 | 0.100 |" in text
+    assert "actual recalled traces" in text
