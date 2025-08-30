@@ -6,7 +6,9 @@ to :func:`hippo_mem.eval.harness.main` when executed as a script.
 
 It exposes the ``teach``, ``replay`` and ``test`` modes as well as
 ``store_dir``/``session_id`` persistence flags used by the evaluation
-protocol.
+protocol.  In ``replay`` mode the harness now evaluates the suite after
+consolidation and updates ``metrics.json`` with ``post_*`` and
+``delta_*`` fields.
 """
 
 import sys
