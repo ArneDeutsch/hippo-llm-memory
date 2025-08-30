@@ -182,13 +182,13 @@ for n in "${SIZES[@]}"; do
   done
 done
 
-# Disable retrieval to isolate the long‑context baseline
+# Disable retrieval to isolate the long‑context baseline (stateless; `mode=teach` avoids store requirements)
 suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/ablate/longctx_no_retrieval/$suite/${n}_${seed}"
     python scripts/eval_model.py suite="$suite" preset=baselines/longctx n="$n" seed="$seed" date="$DATE" \
-      model="$MODEL" outdir="$OUT"
+      model="$MODEL" mode=teach outdir="$OUT"
   done
 done
 ```
