@@ -32,16 +32,16 @@ for i in "${!suites[@]}"; do
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
     outdir=$outdir mode=teach persist=true \
-    store_dir=$STORES session_id=$session_id >/dev/null
+    store_dir=$STORES session_id=$session_id --strict-telemetry >/dev/null
   # Test phase to obtain pre metrics
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
-    outdir=$outdir store_dir=$STORES session_id=$session_id >/dev/null
+    outdir=$outdir store_dir=$STORES session_id=$session_id --strict-telemetry >/dev/null
   # Replay phase with cycles=3
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
     outdir=$outdir mode=replay persist=true replay.cycles=3 \
-    store_dir=$STORES session_id=$session_id >/dev/null
+    store_dir=$STORES session_id=$session_id --strict-telemetry >/dev/null
   # Verify post_* and delta_* metrics
   jq -e ".metrics[\"$suite\"] | has(\"post_em\") and has(\"delta_em\")" "$outdir/metrics.json" >/dev/null
 done
