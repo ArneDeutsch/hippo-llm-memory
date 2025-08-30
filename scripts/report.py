@@ -36,6 +36,9 @@ DISPLAY_NAMES = {
     "pre_em": "EM (pre)",
     "post_em": "EM (post)",
     "delta_em": "ΔEM",
+    "pre_em_norm": "EM (pre, norm)",
+    "post_em_norm": "EM (post, norm)",
+    "delta_em_norm": "ΔEM (norm)",
     "pre_f1": "F1 (pre)",
     "post_f1": "F1 (post)",
     "delta_f1": "ΔF1",
@@ -44,6 +47,20 @@ DISPLAY_NAMES = {
 }
 MetricStats = Dict[str, tuple[float, float]]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
+
+
+def _format_stat(stat: tuple[float, float]) -> str:
+    """Return a formatted statistic with optional 95% CI.
+
+    Parameters
+    ----------
+    stat:
+        Tuple of ``(mean, ci)``. When ``ci`` is zero the ± suffix is omitted
+        to reflect that only a single seed contributed to the statistic.
+    """
+
+    mean_val, ci = stat
+    return f"{mean_val:.3f} ± {ci:.3f}" if ci else f"{mean_val:.3f}"
 
 
 def _find_latest_date(root: Path) -> str:
@@ -332,6 +349,18 @@ def _render_markdown_suite(
 
     lines: list[str] = [f"# {suite} Summary", ""]
     if presets:
+        saturated = False
+        for preset_stats in presets.values():
+            for size_stats in preset_stats.values():
+                stat = size_stats.get("pre_em_norm") or size_stats.get("em_norm")
+                if stat and stat[0] >= 0.98:
+                    saturated = True
+                    break
+            if saturated:
+                break
+        if saturated:
+            lines.extend(["> ⚠️ saturated: pre_em_norm ≥ 0.98", ""])
+
         metric_keys = sorted(
             {
                 key
@@ -360,7 +389,7 @@ def _render_markdown_suite(
         display = [DISPLAY_NAMES.get(k, k) for k in ordered]
         header = "| Preset | Size | " + " | ".join(display) + " |"
         sep = "|---" * (len(ordered) + 2) + "|"
-        lines.extend([header, sep])
+        lines.extend(["## Uplift", header, sep])
         for preset in sorted(presets):
             sizes = presets[preset]
             for size in sorted(sizes):
@@ -371,8 +400,7 @@ def _render_markdown_suite(
                     if stat is None:
                         vals.append("–")
                     else:
-                        mval, ci = stat
-                        vals.append(f"{mval:.3f} ± {ci:.3f}")
+                        vals.append(_format_stat(stat))
                 row = f"| {preset} | {size} | " + " | ".join(vals) + " |"
                 lines.append(row)
         lines.append("")
@@ -486,6 +514,47 @@ def _render_plots_suite(
         plt.tight_layout()
         out_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(out_dir / f"{metric}.png")
+        plt.close()
+
+    if "pre_em" in metric_keys and "post_em" in metric_keys:
+        labels: list[str] = []
+        pre_vals: list[float] = []
+        pre_ci: list[float] = []
+        post_vals: list[float] = []
+        post_ci: list[float] = []
+        for preset in sorted(presets):
+            for size in sorted(presets[preset]):
+                labels.append(f"{preset}-{size}")
+                pre = presets[preset][size].get("pre_em")
+                post = presets[preset][size].get("post_em")
+                pre_vals.append(pre[0] if pre else 0.0)
+                pre_ci.append(pre[1] if pre else 0.0)
+                post_vals.append(post[0] if post else 0.0)
+                post_ci.append(post[1] if post else 0.0)
+        x = list(range(len(labels)))
+        width = 0.4
+        plt.figure()
+        plt.bar(
+            [i - width / 2 for i in x],
+            pre_vals,
+            width,
+            yerr=pre_ci if any(pre_ci) else None,
+            label="pre",
+        )
+        plt.bar(
+            [i + width / 2 for i in x],
+            post_vals,
+            width,
+            yerr=post_ci if any(post_ci) else None,
+            label="post",
+        )
+        plt.xticks(x, labels, rotation=45, ha="right")
+        plt.ylabel("EM")
+        plt.title(f"{suite} uplift")
+        plt.legend()
+        plt.tight_layout()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_dir / "uplift.png")
         plt.close()
 
 
