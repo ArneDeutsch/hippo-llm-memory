@@ -1,4 +1,4 @@
-.PHONY: format lint test slow-test type fix install-dev datasets
+.PHONY: format lint test slow-test type fix install-dev datasets check-stores
 
 install-dev:
 	python -m pip install -U pip
@@ -43,6 +43,9 @@ eval-baselines:
 
 smoke:
 	bash scripts/smoke_eval.sh
+
+check-stores:
+	@./scripts/ls_store.sh
 
 
 gate-sweep:
