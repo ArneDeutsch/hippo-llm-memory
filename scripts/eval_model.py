@@ -59,10 +59,12 @@ def main(cfg: DictConfig) -> None:
         from hippo_mem.utils.stores import assert_store_exists
 
         root = Path(str(cfg.store_dir))
-        assert_store_exists(str(root), str(cfg.session_id), kind="episodic")
-        cfg.store_dir = str(root / "hei_nw")
+        base = root.parent if root.name == "hei_nw" else root
+        assert_store_exists(str(base), str(cfg.session_id), kind="episodic")
+        cfg.store_dir = str(base / "hei_nw")
     elif getattr(cfg, "store_dir", None):
-        cfg.store_dir = str(Path(str(cfg.store_dir)) / "hei_nw")
+        root = Path(str(cfg.store_dir))
+        cfg.store_dir = str(root if root.name == "hei_nw" else root / "hei_nw")
 
     harness_main(cfg)
 
