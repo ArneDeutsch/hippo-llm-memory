@@ -51,17 +51,17 @@ Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
 
 
 def _format_stat(stat: tuple[float, float]) -> str:
-    """Return a formatted statistic with optional 95% CI.
+    """Return a formatted statistic with 95% CI.
 
     Parameters
     ----------
     stat:
-        Tuple of ``(mean, ci)``. When ``ci`` is zero the ± suffix is omitted
-        to reflect that only a single seed contributed to the statistic.
+        Tuple of ``(mean, ci)`` where ``ci`` may be zero when only a single
+        seed contributed.
     """
 
     mean_val, ci = stat
-    return f"{mean_val:.3f} ± {ci:.3f}" if ci else f"{mean_val:.3f}"
+    return f"{mean_val:.3f} ± {ci:.3f}"
 
 
 def _find_latest_date(root: Path) -> str:
@@ -402,6 +402,7 @@ def _render_markdown_suite(
     presets: Dict[str, Dict[int, MetricStats]],
     retrieval: Dict[str, MetricDict] | None,
     gates: Dict[str, Dict[str, MetricDict]] | None,
+    seed_count: int,
 ) -> str:
     """Return a Markdown table for a single suite."""
 
@@ -447,7 +448,10 @@ def _render_markdown_suite(
         display = [DISPLAY_NAMES.get(k, k) for k in ordered]
         header = "| Preset | Size | " + " | ".join(display) + " |"
         sep = "|---" * (len(ordered) + 2) + "|"
-        lines.extend(["## Uplift", header, sep])
+        lines.append("## Uplift")
+        if seed_count <= 1:
+            lines.extend(["> single-seed run: CI bands unavailable", ""])
+        lines.extend([header, sep])
         rows: list[tuple[float, str, int, MetricStats]] = []
         if suite == "semantic":
             for preset, sizes in presets.items():
@@ -693,7 +697,7 @@ def _write_index(
     if seed_count >= 2:
         lines.extend([f"> aggregated over {seed_count} seeds (95% CI)", ""])
     else:
-        lines.extend(["> single-seed run (no CI)", ""])
+        lines.extend(["> single-seed run: CI bands unavailable", ""])
     if ordered:
         header = "| Suite | Preset | " + " | ".join(display) + " |"
         sep = "|---" * (len(ordered) + 2) + "|"
@@ -780,7 +784,13 @@ def write_reports(
         suite_dir.mkdir(parents=True, exist_ok=True)
         md_path = suite_dir / "summary.md"
         md_path.write_text(
-            _render_markdown_suite(suite, presets, retrieval.get(suite), gates.get(suite))
+            _render_markdown_suite(
+                suite,
+                presets,
+                retrieval.get(suite),
+                gates.get(suite),
+                seed_count,
+            )
         )
         paths[suite] = md_path
         if plots:
