@@ -10,7 +10,19 @@ def test_format_records_handles_prompt_and_q() -> None:
         {"q": "x", "a": "y"},
         {"prompt": "only"},
     ]
-    assert _format_records(records) == ["p\na", "x\ny", "only"]
+    texts, kept = _format_records(records)
+    assert texts == ["p\na", "x\ny", "only"]
+    assert kept == records
+
+
+def test_format_records_skips_empty_entries() -> None:
+    records = [
+        {"prompt": "", "answer": ""},
+        {"q": "x", "a": "y"},
+    ]
+    texts, kept = _format_records(records)
+    assert texts == ["x\ny"]
+    assert kept == [{"q": "x", "a": "y"}]
 
 
 def test_compute_kl_zero_for_identical_logits() -> None:
