@@ -59,10 +59,27 @@ def main(cfg: DictConfig) -> None:
         from hippo_mem.utils.stores import assert_store_exists
 
         root = Path(str(cfg.store_dir))
-        assert_store_exists(str(root), str(cfg.session_id), kind="episodic")
-        cfg.store_dir = str(root / "hei_nw")
+        if root.name == "hei_nw":
+            print(
+                "Warning: store_dir already ends with 'hei_nw'; not appending.",
+                file=sys.stderr,
+            )
+            base_dir = root.parent
+            cfg.store_dir = str(root)
+        else:
+            base_dir = root
+            cfg.store_dir = str(root / "hei_nw")
+        assert_store_exists(str(base_dir), str(cfg.session_id), kind="episodic")
     elif getattr(cfg, "store_dir", None):
-        cfg.store_dir = str(Path(str(cfg.store_dir)) / "hei_nw")
+        root = Path(str(cfg.store_dir))
+        if root.name == "hei_nw":
+            print(
+                "Warning: store_dir already ends with 'hei_nw'; not appending.",
+                file=sys.stderr,
+            )
+            cfg.store_dir = str(root)
+        else:
+            cfg.store_dir = str(root / "hei_nw")
 
     harness_main(cfg)
 

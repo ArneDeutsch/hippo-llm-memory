@@ -28,8 +28,18 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit("Error: --store_dir and --session_id are required for this mode.")
     from hippo_mem.utils.stores import assert_store_exists
 
-    assert_store_exists(args.store_dir, args.session_id, kind="episodic")
-    args.store_dir = str(Path(args.store_dir) / "hei_nw")
+    root = Path(str(args.store_dir))
+    if root.name == "hei_nw":
+        print(
+            "Warning: store_dir already ends with 'hei_nw'; not appending.",
+            file=sys.stderr,
+        )
+        base_dir = root.parent
+        args.store_dir = str(root)
+    else:
+        base_dir = root
+        args.store_dir = str(root / "hei_nw")
+    assert_store_exists(str(base_dir), str(args.session_id), kind="episodic")
     cfg = load_config(args.config)
     train(args, cfg)
 
