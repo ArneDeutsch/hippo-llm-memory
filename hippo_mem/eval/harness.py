@@ -596,6 +596,10 @@ def _write_outputs(
                 "post_format_violation": post_metrics.get("format_violation", 0),
             }
         )
+        for k, v in post_metrics.items():
+            pre_v = pre_metrics.get(k)
+            if isinstance(v, (int, float)) and isinstance(pre_v, (int, float)):
+                suite_metrics[f"delta_{k}"] = v - pre_v
     metrics: Dict[str, object] = {
         "suite": cfg.suite,
         "n": cfg.n,
@@ -881,16 +885,45 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                 modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
             if "spatial" in modules:
                 modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
+        post_rows, post_metrics, *_ = _evaluate(
+            tasks,
+            modules,
+            tokenizer,
+            model,
+            int(cfg.max_new_tokens),
+            use_chat_template=cfg.use_chat_template,
+            system_prompt=cfg.system_prompt,
+            compute_metrics=True,
+            suite=cfg.suite,
+        )
+        post_metrics["em"] = (
+            post_metrics.get("em_norm", 0.0)
+            if cfg.primary_em == "norm"
+            else post_metrics.get("em_raw", 0.0)
+        )
+        pre_metrics: Dict[str, float] = {}
+        compute = None
+        metrics_path = outdir / "metrics.json"
+        if metrics_path.exists():
+            data = json.loads(metrics_path.read_text())
+            suite_data = data.get("metrics", {}).get(cfg.suite, {})
+            pre_metrics = {k[4:]: v for k, v in suite_data.items() if k.startswith("pre_")}
+            diag = data.get("diagnostics", {}).get(cfg.suite, {})
+            if "pre_overlong" in diag:
+                pre_metrics["overlong"] = diag.get("pre_overlong", 0)
+            if "pre_format_violation" in diag:
+                pre_metrics["format_violation"] = diag.get("pre_format_violation", 0)
+            compute = data.get("metrics", {}).get("compute")
         store_sizes = _store_sizes(modules)
         _write_outputs(
             outdir,
             [],
-            {},
-            None,
-            None,
+            pre_metrics,
+            post_rows,
+            post_metrics,
             cfg,
             flat_ablate,
-            None,
+            compute,
             replay_samples=replay_samples,
             store_sizes=store_sizes,
         )
