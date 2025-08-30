@@ -37,7 +37,7 @@ def test_report_shows_em_and_diagnostics(tmp_path: Path) -> None:
     gates = summarise_gates(collect_gates(runs))
     gate_ablation = collect_gate_ablation(runs)
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
+    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
     text = paths["episodic"].read_text()
     assert "EM (raw)" in text and "EM (norm)" in text
     assert "overlong" in text and "format_violation" in text
@@ -69,7 +69,7 @@ def test_report_retrieval_section(tmp_path: Path) -> None:
     gates = summarise_gates(collect_gates(runs))
     gate_ablation = collect_gate_ablation(runs)
     out = tmp_path / "reports" / "20250101"
-    write_reports(summary, retrieval, gates, gate_ablation, out, plots=False)
+    write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
     text = (out / "episodic" / "summary.md").read_text()
     header = "| mem | requests | hits | hit_rate_at_k | tokens_returned | avg_latency_ms |"
     assert header in text

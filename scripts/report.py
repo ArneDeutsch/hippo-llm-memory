@@ -629,6 +629,7 @@ def _write_index(
     gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
     gate_ablation: Dict[str, Dict[str, Dict[str, float]]],
     out_dir: Path,
+    seed_count: int,
 ) -> Path:
     """Write a top-level roll-up report and return its path."""
 
@@ -674,6 +675,10 @@ def _write_index(
     ]
     display = [DISPLAY_NAMES.get(k, k) for k in ordered]
     lines: list[str] = ["# Overall Summary", ""]
+    if seed_count >= 2:
+        lines.extend([f"> aggregated over {seed_count} seeds (95% CI)", ""])
+    else:
+        lines.extend(["> single-seed run (no CI)", ""])
     if ordered:
         header = "| Suite | Preset | " + " | ".join(display) + " |"
         sep = "|---" * (len(ordered) + 2) + "|"
@@ -750,6 +755,7 @@ def write_reports(
     gate_ablation: Dict[str, Dict[str, Dict[str, float]]],
     out_dir: Path,
     plots: bool,
+    seed_count: int,
 ) -> Dict[str, Path]:
     """Write per-suite reports and optional plots to ``out_dir``."""
 
@@ -764,7 +770,7 @@ def write_reports(
         paths[suite] = md_path
         if plots:
             _render_plots_suite(suite, presets, suite_dir)
-    idx = _write_index(summary, paths, gates, gate_ablation, out_dir)
+    idx = _write_index(summary, paths, gates, gate_ablation, out_dir, seed_count)
     log.info("wrote %s", idx)
     return paths
 
@@ -785,6 +791,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     date = args.date or _find_latest_date(runs_root)
     runs_path = runs_root / date
     metric_data = collect_metrics(runs_path)
+    seed_count = max((len(v) for v in metric_data.values()), default=0)
     retrieval_data = collect_retrieval(runs_path)
     gate_data = collect_gates(runs_path)
     gate_ablation_data = collect_gate_ablation(runs_path)
@@ -795,7 +802,13 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     if args.smoke:
         write_smoke(Path(args.data_dir), out_dir / "smoke.md")
     paths = write_reports(
-        summary, retrieval_summary, gate_summary, gate_ablation_data, out_dir, args.plots
+        summary,
+        retrieval_summary,
+        gate_summary,
+        gate_ablation_data,
+        out_dir,
+        args.plots,
+        seed_count,
     )
     for suite, md_path in paths.items():
         log.info("wrote %s for %s", md_path, suite)

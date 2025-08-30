@@ -235,15 +235,13 @@ def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
         pre_em = pre_metrics.get("metrics", {}).get(suite, {}).get("pre_em", 0.0)
         post_em = data.get("metrics", {}).get(suite, {}).get("post_em", pre_em)
         uplift = delta.get("em", 0.0)
+
         print(f"pre_em={pre_em:.3f} post_em={post_em:.3f} delta={uplift:.3f}")
 
-        if args.uplift_mode == "fixed":
-            if uplift < args.min_uplift:
-                raise RuntimeError(f"EM uplift < +{args.min_uplift:.2f} (got {uplift:.2f})")
-        else:  # ci mode
-            deltas = _collect_deltas(outdir.parent)
-            if len(deltas) < 2:
-                raise RuntimeError("--uplift-mode=ci requires at least two seeds")
+        deltas = _collect_deltas(outdir.parent)
+        if len(deltas) >= 2:
+            if args.uplift_mode == "fixed":
+                print(f"detected {len(deltas)} seeds; switching to CI mode")
             mean = statistics.mean(deltas)
             std = statistics.stdev(deltas)
             z = NormalDist().inv_cdf(1 - args.alpha / 2)
@@ -253,7 +251,14 @@ def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
             print(f"delta_em_mean={mean:.3f} ci=({lower:.3f}, {upper:.3f})")
             if lower <= 0.0:
                 raise RuntimeError(
-                    f"EM uplift CI includes 0 (mean={mean:.3f}, CI=({lower:.3f}, {upper:.3f}))"
+                    f"EM uplift CI includes 0 (mean={mean:.3f}, CI=({lower:.3f}, {upper:.3f}))",
+                )
+        else:
+            if args.uplift_mode == "ci":
+                raise RuntimeError("--uplift-mode=ci requires at least two seeds")
+            if uplift < args.min_uplift:
+                raise RuntimeError(
+                    f"EM uplift < +{args.min_uplift:.2f} (got {uplift:.2f})",
                 )
     if tmp_dir is not None:
         tmp_dir.cleanup()
