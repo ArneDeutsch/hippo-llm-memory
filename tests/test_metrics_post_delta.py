@@ -32,3 +32,7 @@ def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
     suite = data["metrics"]["episodic"]
     assert "post_em" in suite
     assert "delta_em" in suite
+    assert "post_f1" in suite
+    assert "delta_f1" in suite
+    assert "post_refusal_rate" in suite
+    assert "delta_refusal_rate" in suite

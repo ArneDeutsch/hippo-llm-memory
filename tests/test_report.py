@@ -189,3 +189,11 @@ def test_smoke_report(tmp_path: Path) -> None:
     smoke_text = (out_dir / "smoke.md").read_text()
     assert "## episodic" in smoke_text
     assert "| Q | A |" in smoke_text
+
+
+def test_missing_post_metrics_detector() -> None:
+    data = {("episodic", "preset", 50): [{"pre_em": 0.1}]}
+    from scripts.report import _missing_post_metrics
+
+    missing = _missing_post_metrics(data)
+    assert missing == [("episodic", "preset", 50)]
