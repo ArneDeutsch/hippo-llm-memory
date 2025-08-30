@@ -25,6 +25,7 @@ import argparse
 import math
 import os
 import statistics
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -91,7 +92,7 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
     parser.add_argument(
         "--min-uplift",
         type=float,
-        default=0.05,
+        default=0.0,
         help="Minimum EM uplift required in fixed mode",
     )
     parser.add_argument(
@@ -135,6 +136,27 @@ def _build_cfg(model_path: str, args: Args) -> Any:
     )
     cfg = eval_model._load_preset(cfg)
     cfg = eval_model._apply_model_defaults(cfg)
+    try:
+        eval_model._dataset_path(cfg.suite, cfg.n, cfg.seed)
+    except FileNotFoundError:
+        size = 50 if cfg.n <= 50 else cfg.n
+        out = Path("data") / cfg.suite / f"{size}_{cfg.seed}.jsonl"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            [
+                sys.executable,
+                str(_SCRIPT_DIR / "build_datasets.py"),
+                "--suite",
+                cfg.suite,
+                "--size",
+                str(size),
+                "--seed",
+                str(cfg.seed),
+                "--out",
+                str(out),
+            ],
+            check=True,
+        )
     return cfg
 
 

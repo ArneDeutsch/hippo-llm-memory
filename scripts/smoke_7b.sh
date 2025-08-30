@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "$(dirname "$0")/_env.sh"
 IFS=$'\n\t'
 
 LOG=$(mktemp)

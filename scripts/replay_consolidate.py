@@ -5,6 +5,7 @@ installing the package.  All implementation lives in the
 ``hippo_mem.consolidation.trainer`` module.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -24,6 +25,10 @@ __all__ = ["Args", "load_config", "main", "parse_args", "train"]
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
+    if not args.store_dir:
+        args.store_dir = os.getenv("STORES")
+    if not args.session_id:
+        args.session_id = os.getenv("HEI_SESSION_ID")
     if not args.store_dir or not args.session_id:
         raise SystemExit("Error: --store_dir and --session_id are required for this mode.")
     from hippo_mem.utils.stores import assert_store_exists

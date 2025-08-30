@@ -62,9 +62,26 @@ def main(cfg: DictConfig) -> None:
 
     algo = _infer_algo(cfg.get("preset"))
 
-    if cfg.mode in ("replay", "test"):
+    if cfg.mode == "replay":
         if not getattr(cfg, "store_dir", None) or not getattr(cfg, "session_id", None):
             raise SystemExit("Error: --store_dir and --session_id are required for this mode.")
+        from hippo_mem.utils.stores import assert_store_exists
+
+        root = Path(str(cfg.store_dir))
+        if root.name == algo:
+            print(
+                f"Warning: store_dir already ends with '{algo}'; not appending.",
+                file=sys.stderr,
+            )
+            base_dir = root.parent
+            cfg.store_dir = str(root)
+        else:
+            base_dir = root
+            cfg.store_dir = str(root / algo)
+        assert_store_exists(str(base_dir), str(cfg.session_id), algo, kind="episodic")
+    elif (
+        cfg.mode == "test" and getattr(cfg, "store_dir", None) and getattr(cfg, "session_id", None)
+    ):
         from hippo_mem.utils.stores import assert_store_exists
 
         root = Path(str(cfg.store_dir))
