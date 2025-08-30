@@ -30,6 +30,7 @@ session_id: null
 persist: false
 memory_off: false
 gating_enabled: false
+strict_telemetry: false
 primary_em: norm
 
 # Report macro averaged scores in addition to micro scores.

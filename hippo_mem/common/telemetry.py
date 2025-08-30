@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from dataclasses import dataclass
 from typing import Dict
@@ -41,6 +42,53 @@ class RetrievalStats:
         }
 
 
+_STRICT = False
+_EPS = 1e-9
+_log = logging.getLogger(__name__)
+
+
+def set_strict_telemetry(flag: bool) -> None:
+    """Enable or disable strict telemetry validation."""
+
+    global _STRICT
+    _STRICT = bool(flag)
+
+
+def validate_retrieval_snapshot(
+    snap: Dict[str, int | float], *, strict: bool | None = None, eps: float = _EPS
+) -> None:
+    """Ensure retrieval telemetry obeys basic invariants.
+
+    Parameters
+    ----------
+    snap:
+        Snapshot dictionary from :meth:`RetrievalStats.snapshot`.
+    strict:
+        When ``True`` raise ``ValueError`` on violation, otherwise log a warning.
+    eps:
+        Allowed numerical tolerance for floating point comparisons.
+    """
+
+    if strict is None:
+        strict = _STRICT
+    total_k = int(snap.get("total_k", 0))
+    hits = int(snap.get("hits", 0))
+    rate = float(snap.get("hit_rate_at_k", 0.0))
+    errors = []
+    if hits < 0 or total_k < 0:
+        errors.append("negative values")
+    if hits > total_k:
+        errors.append("hits > total_k")
+    expected = (hits / total_k) if total_k else 0.0
+    if abs(rate - expected) > eps:
+        errors.append("hit_rate mismatch")
+    if errors:
+        msg = ", ".join(errors)
+        if strict:
+            raise ValueError(f"Telemetry invariant violated: {msg}")
+        _log.warning("Telemetry invariant violated: %s", msg)
+
+
 class _Registry:
     """Thread-safe container for per-memory stats."""
 
@@ -77,8 +125,9 @@ registry = _Registry()
 
 def record_stats(kind: str, **metrics: int | float) -> None:
     """Update retrieval metrics for ``kind`` in the registry."""
-
-    registry.get(kind).update(**metrics)
+    stats = registry.get(kind)
+    stats.update(**metrics)
+    validate_retrieval_snapshot(stats.snapshot())
 
 
 @dataclass
@@ -139,6 +188,8 @@ __all__ = [
     "RetrievalStats",
     "registry",
     "record_stats",
+    "set_strict_telemetry",
+    "validate_retrieval_snapshot",
     "GateStats",
     "GateRegistry",
     "gate_registry",
