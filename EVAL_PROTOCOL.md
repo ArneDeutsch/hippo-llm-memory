@@ -75,17 +75,22 @@ make datasets DATE="$DATE"
 **Do this instead** — run the matrix with a **real model** and the baseline presets:
 
 ```bash
+# Expand the SIZES/SEEDS arrays from §0 into comma‑separated lists
+NV=$(IFS=,; echo "${SIZES[*]}")
+SD=$(IFS=,; echo "${SEEDS[*]}")
+
 python scripts/eval_model.py +run_matrix=true date="$DATE" \
   presets="[baselines/core,baselines/span_short,baselines/rag,baselines/longctx]" \
   tasks="[episodic,semantic,spatial,episodic_multi,episodic_cross,episodic_capacity]" \
-  n_values="[50,200,1000]" \
-  seeds="[1337,2025,4242]" \
-  model="$MODEL" outdir="runs/$DATE"
+  n_values="[$NV]" seeds="[$SD]" \
+  mode=teach model="$MODEL" outdir="$RUNS"
 ```
 
 Notes:
 - Baseline presets **disable** memory and retrieval as configured under `configs/eval/baselines/*.yaml`.
-- You can extend `tasks` to include `episodic_multi,episodic_cross,episodic_capacity` if required.
+- `mode=teach` avoids the `--store_dir/--session_id` requirement of `mode=test` and keeps runs stateless.
+- `SIZES` and `SEEDS` default to `(50 200 1000)` and `(1337 2025 4242)`; override them before sourcing `scripts/env_prelude.sh`.
+- You can extend `tasks` to include additional suites as needed.
 
 
 ---
