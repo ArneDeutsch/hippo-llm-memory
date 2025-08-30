@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Shim to allow legacy `--mode`-style flags for eval_model.py."""
 import argparse
+import os
 import subprocess
 import sys
 
@@ -24,10 +25,12 @@ def main() -> int:
         overrides.append(f"mode={args.mode}")
     if args.persist is not None:
         overrides.append(f"persist={args.persist}")
-    if args.store_dir is not None:
-        overrides.append(f"store_dir={args.store_dir}")
-    if args.session_id is not None:
-        overrides.append(f"session_id={args.session_id}")
+    store_dir = args.store_dir or os.getenv("STORES")
+    if store_dir is not None:
+        overrides.append(f"store_dir={store_dir}")
+    session_id = args.session_id or os.getenv("HEI_SESSION_ID")
+    if session_id is not None:
+        overrides.append(f"session_id={session_id}")
 
     cmd = [sys.executable, "scripts/eval_model.py", *overrides, *rest]
     return subprocess.call(cmd)

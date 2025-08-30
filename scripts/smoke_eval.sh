@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "$(dirname "$0")/_env.sh"
 
 outdir=$(mktemp -d)
 python scripts/eval_model.py suite=episodic preset=baselines/core n=50 seed=1337 \
