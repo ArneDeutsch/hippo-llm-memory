@@ -794,7 +794,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     elif cfg.mode in ("test", "replay") and cfg.store_dir and cfg.session_id:
         session_dir = Path(to_absolute_path(str(cfg.store_dir)))
         sid = str(cfg.session_id)
-        assert_store_exists(str(session_dir.parent), sid)
+        assert_store_exists(str(session_dir.parent), sid, session_dir.name)
         if "episodic" in modules:
             modules["episodic"]["store"].load(str(session_dir), sid)
         if "relational" in modules:

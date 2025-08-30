@@ -108,12 +108,12 @@ if p.exists() and p.is_dir():
 # hippo_mem/utils/stores.py
 from pathlib import Path
 
-def assert_store_exists(store_dir: str, session_id: str, kind: str = "episodic") -> Path:
-    p = Path(store_dir) / "hei_nw" / session_id / f"{kind}.jsonl"
+def assert_store_exists(store_dir: str, session_id: str, algo: str, kind: str = "episodic") -> Path:
+    p = Path(store_dir) / algo / session_id / f"{kind}.jsonl"
     if not p.exists():
         raise FileNotFoundError(
             f"Missing persisted store: {p}\n"
-            "Run §4.1 (teach + replay with persist=true) to create it."
+            "Run teach + replay with persist=true to create it."
         )
     return p
 ```
@@ -225,7 +225,7 @@ source scripts/env_prelude.sh
   if not args.store_dir or not args.session_id:
       raise SystemExit("Error: --store_dir and --session_id are required for this mode.")
   from hippo_mem.utils.stores import assert_store_exists
-  assert_store_exists(args.store_dir, args.session_id, kind="episodic")
+  assert_store_exists(args.store_dir, args.session_id, "hei_nw", kind="episodic")
   ```
 
 **Acceptance criteria**

@@ -140,8 +140,8 @@ suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/sgc_rss/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES" session_id="$SID" outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
     python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT"
   done
 done
@@ -155,8 +155,8 @@ suite=spatial
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/smpd/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES" session_id="$SID" outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
     python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT"
   done
 done
