@@ -38,6 +38,12 @@ For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
 > | semantic           | base               |
 > | spatial            | base               |
 
+```bash
+# Recommended flags for sensitive suites
+suite=episodic_cross dataset_profile=hard --strict-telemetry
+suite=episodic_capacity dataset_profile=hard --strict-telemetry
+```
+
 ## 0) Shell prelude — environment & variables
 
 ```bash
