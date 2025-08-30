@@ -30,9 +30,7 @@ from hippo_mem.eval.harness import (
     evaluate_matrix,
     run_suite,
 )
-from hippo_mem.eval.harness import (
-    main as harness_main,
-)
+from hippo_mem.eval.harness import main as harness_main
 
 __all__ = [
     "AutoModelForCausalLM",
@@ -53,33 +51,42 @@ __all__ = [
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
 def main(cfg: DictConfig) -> None:
     """Hydra entry point forwarding to :mod:`hippo_mem.eval.harness`."""
+
+    def _infer_algo(preset: str | None) -> str:
+        p = Path(str(preset)) if preset else None
+        if p and len(p.parts) >= 2 and p.parts[0] == "memory":
+            return p.parts[1]
+        return "hei_nw"
+
+    algo = _infer_algo(cfg.get("preset"))
+
     if cfg.mode in ("replay", "test"):
         if not getattr(cfg, "store_dir", None) or not getattr(cfg, "session_id", None):
             raise SystemExit("Error: --store_dir and --session_id are required for this mode.")
         from hippo_mem.utils.stores import assert_store_exists
 
         root = Path(str(cfg.store_dir))
-        if root.name == "hei_nw":
+        if root.name == algo:
             print(
-                "Warning: store_dir already ends with 'hei_nw'; not appending.",
+                f"Warning: store_dir already ends with '{algo}'; not appending.",
                 file=sys.stderr,
             )
             base_dir = root.parent
             cfg.store_dir = str(root)
         else:
             base_dir = root
-            cfg.store_dir = str(root / "hei_nw")
-        assert_store_exists(str(base_dir), str(cfg.session_id), kind="episodic")
+            cfg.store_dir = str(root / algo)
+        assert_store_exists(str(base_dir), str(cfg.session_id), algo, kind="episodic")
     elif getattr(cfg, "store_dir", None):
         root = Path(str(cfg.store_dir))
-        if root.name == "hei_nw":
+        if root.name == algo:
             print(
-                "Warning: store_dir already ends with 'hei_nw'; not appending.",
+                f"Warning: store_dir already ends with '{algo}'; not appending.",
                 file=sys.stderr,
             )
             cfg.store_dir = str(root)
         else:
-            cfg.store_dir = str(root / "hei_nw")
+            cfg.store_dir = str(root / algo)
 
     harness_main(cfg)
 

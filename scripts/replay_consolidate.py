@@ -29,17 +29,18 @@ def main(argv: list[str] | None = None) -> None:
     from hippo_mem.utils.stores import assert_store_exists
 
     root = Path(str(args.store_dir))
-    if root.name == "hei_nw":
+    algo = "hei_nw"
+    if root.name == algo:
         print(
-            "Warning: store_dir already ends with 'hei_nw'; not appending.",
+            f"Warning: store_dir already ends with '{algo}'; not appending.",
             file=sys.stderr,
         )
         base_dir = root.parent
         args.store_dir = str(root)
     else:
         base_dir = root
-        args.store_dir = str(root / "hei_nw")
-    assert_store_exists(str(base_dir), str(args.session_id), kind="episodic")
+        args.store_dir = str(root / algo)
+    assert_store_exists(str(base_dir), str(args.session_id), algo, kind="episodic")
     cfg = load_config(args.config)
     train(args, cfg)
 
