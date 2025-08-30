@@ -108,11 +108,11 @@ for suite in episodic episodic_multi episodic_cross episodic_capacity; do
     for seed in "${SEEDS[@]}"; do
       OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES/hei_nw" session_id="$SID" outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT"
       # Replay (3 cycles)
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=replay persist=true store_dir="$STORES/hei_nw" session_id="$SID" replay.cycles=3 outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
       # Test (post‑replay)
-      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=test store_dir="$STORES/hei_nw" session_id="$SID" outdir="$OUT"
+      python scripts/eval_model.py suite="$suite" preset=memory/hei_nw n="$n" seed="$seed" date="$DATE"         model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT"
     done
   done
 done
@@ -240,7 +240,7 @@ python scripts/test_consolidation.py --phase pre \
 
 # 2) Replay → LoRA training
 python scripts/replay_consolidate.py \
-  --store_dir "$STORES/hei_nw" --session_id "$SID" \
+  --store_dir "$STORES" --session_id "$SID" \
   --model "$MODEL" --config configs/consolidation/lora_small.yaml \
   --outdir "$RUNS/consolidation/lora"
 
