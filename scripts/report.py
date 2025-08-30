@@ -111,6 +111,9 @@ def collect_metrics(
             continue
         suite_metrics = metrics[suite]
         cleaned: Dict[str, float] = dict(suite_metrics)
+        store = record.get("store")
+        if isinstance(store, dict):
+            cleaned["store_size"] = float(store.get("size", 0))
         diag = diagnostics.get(suite, {})
         n_items = record.get("n", 0) or 0
         for key, val in diag.items():
@@ -181,6 +184,46 @@ def collect_gates(base: Path) -> Dict[str, Dict[str, list[dict[str, MetricDict]]
         gates = record.get("gates")
         if gates:
             data[suite][status].append(gates)
+    return data
+
+
+def collect_gate_ablation(base: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
+    """Collect metrics for gate ON/OFF ablations.
+
+    Returns a mapping ``memory -> {status -> {metric: value}}`` capturing
+    ``store_size``, ``accepts`` and ``pre_em`` for each gate status.
+    """
+
+    data: Dict[str, Dict[str, Dict[str, float]]] = {}
+    for metrics_path in base.rglob("metrics.json"):
+        parts = metrics_path.relative_to(base).parts
+        if "gate_on" in parts:
+            status = "on"
+        elif "gate_off" in parts:
+            status = "off"
+        else:
+            continue
+        suite = parts[-3] if len(parts) >= 3 else ""
+        mem = {
+            "episodic": "episodic",
+            "semantic": "relational",
+            "spatial": "spatial",
+        }.get(suite)
+        if mem is None:
+            continue
+        try:
+            with metrics_path.open() as fh:
+                record = json.load(fh)
+        except json.JSONDecodeError:
+            continue
+        metrics = record.get("metrics", {}).get(suite, {})
+        gates = record.get("gates", {}).get(mem, {})
+        store_size = float(record.get("store", {}).get("size", 0))
+        em = float(metrics.get("pre_em", metrics.get("em", 0.0)))
+        entry = data.setdefault(mem, {}).setdefault(status, {})
+        entry["store_size"] = store_size
+        entry["accepts"] = float(gates.get("accepts", 0))
+        entry["em"] = em
     return data
 
 
@@ -458,28 +501,31 @@ def _render_markdown_suite(
             lines.append("")
         if "on" in gates and "off" in gates:
             lines.append("### Gate ON vs OFF")
-            lines.append("| mem | metric | on | off | Δ |")
-            lines.append("|---|---|---|---|---|")
+            lines.append("| mem | store_on | store_off | accepts_on | accepts_off | ΔEM |")
+            lines.append("|---|---|---|---|---|---|")
             on = gates["on"]
             off = gates["off"]
-            rel_on = on.get("relational")
-            rel_off = off.get("relational")
-            if rel_on and rel_off and "duplicate_rate" in rel_on and "duplicate_rate" in rel_off:
-                dv = rel_on["duplicate_rate"] - rel_off["duplicate_rate"]
+
+            def _metric(status: str, metric: str) -> float:
+                for preset_name, size_stats in presets.items():
+                    if preset_name.endswith(f"gate_{status}"):
+                        stats = next(iter(size_stats.values()))
+                        return stats.get(metric, (0.0, 0.0))[0]
+                return 0.0
+
+            store_on = _metric("on", "store_size")
+            store_off = _metric("off", "store_size")
+            em_on = _metric("on", "pre_em") or _metric("on", "em")
+            em_off = _metric("off", "pre_em") or _metric("off", "em")
+            delta_em = em_on - em_off
+
+            mems = sorted(set(on) | set(off))
+            for mem in mems:
+                accepts_on = on.get(mem, {}).get("accepts", 0)
+                accepts_off = off.get(mem, {}).get("accepts", 0)
                 lines.append(
-                    f"| relational | duplicate_rate | {rel_on['duplicate_rate']:.3f} | "
-                    f"{rel_off['duplicate_rate']:.3f} | {dv:+.3f} |"
+                    f"| {mem} | {store_on:.0f} | {store_off:.0f} | {accepts_on:.0f} | {accepts_off:.0f} | {delta_em:+.3f} |"
                 )
-            spa_on = on.get("spatial")
-            spa_off = off.get("spatial")
-            if spa_on and spa_off:
-                for metric in ["nodes_per_1k", "edges_per_1k"]:
-                    if metric in spa_on and metric in spa_off:
-                        dv = spa_on[metric] - spa_off[metric]
-                        lines.append(
-                            f"| spatial | {metric} | {spa_on[metric]:.3f} | "
-                            f"{spa_off[metric]:.3f} | {dv:+.3f} |"
-                        )
             lines.append("")
     return "\n".join(lines)
 
@@ -562,6 +608,7 @@ def _write_index(
     summary: Summary,
     suite_paths: Dict[str, Path],
     gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
+    gate_ablation: Dict[str, Dict[str, Dict[str, float]]],
     out_dir: Path,
 ) -> Path:
     """Write a top-level roll-up report and return its path."""
@@ -647,6 +694,20 @@ def _write_index(
                 lines.append(f"| {status} | {mem} | {dr:.3f} | {npk:.3f} | {epk:.3f} |")
         lines.append("")
 
+    if gate_ablation:
+        lines.append("## Gate ON vs OFF")
+        lines.append("| mem | store_on | store_off | accepts_on | accepts_off | ΔEM |")
+        lines.append("|---|---|---|---|---|---|")
+        for mem in sorted(gate_ablation):
+            on = gate_ablation[mem].get("on", {})
+            off = gate_ablation[mem].get("off", {})
+            delta = on.get("em", 0.0) - off.get("em", 0.0)
+            lines.append(
+                f"| {mem} | {on.get('store_size', 0):.0f} | {off.get('store_size', 0):.0f} | "
+                f"{on.get('accepts', 0):.0f} | {off.get('accepts', 0):.0f} | {delta:+.3f} |"
+            )
+        lines.append("")
+
     lines.append("## Per-suite summaries")
     for suite in sorted(suite_paths):
         lines.append(f"- [{suite}]({suite}/summary.md)")
@@ -664,6 +725,7 @@ def write_reports(
     summary: Summary,
     retrieval: Dict[str, Dict[str, MetricDict]],
     gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
+    gate_ablation: Dict[str, Dict[str, Dict[str, float]]],
     out_dir: Path,
     plots: bool,
 ) -> Dict[str, Path]:
@@ -680,7 +742,7 @@ def write_reports(
         paths[suite] = md_path
         if plots:
             _render_plots_suite(suite, presets, suite_dir)
-    idx = _write_index(summary, paths, gates, out_dir)
+    idx = _write_index(summary, paths, gates, gate_ablation, out_dir)
     log.info("wrote %s", idx)
     return paths
 
@@ -703,13 +765,16 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     metric_data = collect_metrics(runs_path)
     retrieval_data = collect_retrieval(runs_path)
     gate_data = collect_gates(runs_path)
+    gate_ablation_data = collect_gate_ablation(runs_path)
     summary = summarise(metric_data)
     retrieval_summary = summarise_retrieval(retrieval_data)
     gate_summary = summarise_gates(gate_data)
     out_dir = Path(args.out_dir) / date
     if args.smoke:
         write_smoke(Path(args.data_dir), out_dir / "smoke.md")
-    paths = write_reports(summary, retrieval_summary, gate_summary, out_dir, args.plots)
+    paths = write_reports(
+        summary, retrieval_summary, gate_summary, gate_ablation_data, out_dir, args.plots
+    )
     for suite, md_path in paths.items():
         log.info("wrote %s for %s", md_path, suite)
 
