@@ -22,6 +22,12 @@ export RUN_ID="ablation-aug29"
 All outputs (runs, reports, stores, adapters) and `meta.json.date` will use this `RUN_ID`.
 For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
 
+> **Parameter reference**
+> - `--store_dir`: base directory for persistent stores, typically `$STORES`
+> - `--session_id`: logical key nested under each algorithm's subfolder
+> - `--persist`: write to `store_dir` during `mode=teach` or `mode=replay`
+> - `--mode`: `{teach,replay,test}` phase selector
+
 ## 0) Shell prelude — environment & variables
 
 ```bash
@@ -97,7 +103,9 @@ Notes:
 
 ## 4) Memory grids with teach → replay → test
 
-We evaluate each algorithm with **pre‑replay** and **post‑replay** phases. Outputs are written under `runs/$DATE/memory/<algo>/<suite>/<n>_<seed>/`.
+We evaluate each algorithm with **pre‑replay** and **post‑replay** phases. Outputs are written under
+`runs/$DATE/memory/<algo>/<suite>/<n>_<seed>/`. Pass `--store_dir "$STORES"`; each wrapper appends its
+own `<algo>` subfolder and nests traces under the provided `--session_id`.
 
 ### 4.1) HEI‑NW (episodic + variants)
 
@@ -132,9 +140,9 @@ suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/sgc_rss/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES/sgc_rss" session_id="$SID" outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES/sgc_rss" session_id="$SID" replay.cycles=3 outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES/sgc_rss" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT"
   done
 done
 ```
@@ -147,9 +155,9 @@ suite=spatial
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/smpd/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES/smpd" session_id="$SID" outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES/smpd" session_id="$SID" replay.cycles=3 outdir="$OUT"
-    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES/smpd" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach store_dir="$STORES" session_id="$SID" outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT"
+    python scripts/eval_model.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT"
   done
 done
 ```

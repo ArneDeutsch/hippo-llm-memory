@@ -58,6 +58,20 @@ hippo-llm-memory/
 └─ .github/               # CI workflows and templates
 ```
 
+## Persistence layout
+
+Persistent stores live under a common base directory:
+
+```
+runs/$RUN_ID/stores/
+  hei_nw/<SID>/{episodic.jsonl, relational.jsonl, spatial.jsonl}
+  sgc_rss/<SID>/kg.jsonl
+  smpd/<SID>/map.jsonl
+```
+
+Pass this base path via `--store_dir`; wrappers create the algorithm subfolder and
+nested `--session_id` directory.
+
 ## Quickstart (local, single 12 GB GPU)
 
 1. Create and activate a Conda env (Python 3.10):
@@ -152,7 +166,9 @@ Memory stores can persist across processes. `scripts/eval_model.py` accepts over
 an optional second run can **replay**, and a fresh process can **test** delayed recall. See
 `MILESTONE_9_5_PLAN.md` for the protocol.
 
-For convenience, `scripts/eval_cli.py` translates legacy `--mode`-style flags into these overrides.
+Pass the base stores directory (e.g., `runs/$DATE/stores`) via `--store_dir`; wrappers create the
+algorithm subfolder automatically. For convenience, `scripts/eval_cli.py` translates legacy
+`--mode`-style flags into these overrides.
 
 ## Key artifacts
 
