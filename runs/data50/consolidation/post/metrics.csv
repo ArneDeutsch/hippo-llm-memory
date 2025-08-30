@@ -1,0 +1,119 @@
+idx,prompt,answer,pred,em_raw,em_norm,f1,pred_len,gold_len,overlong,format_violation,latency_ms,success,steps_pred,steps_opt,suboptimality,time_ms_per_100,rss_mb,flags,gating_enabled,retrieval.episodic.avg_latency_ms,retrieval.episodic.hit_rate_at_k,retrieval.episodic.hits,retrieval.episodic.requests,retrieval.episodic.tokens_returned,retrieval.episodic.total_k,retrieval.relational.avg_latency_ms,retrieval.relational.hit_rate_at_k,retrieval.relational.hits,retrieval.relational.requests,retrieval.relational.tokens_returned,retrieval.relational.total_k,retrieval.spatial.avg_latency_ms,retrieval.spatial.hit_rate_at_k,retrieval.spatial.hits,retrieval.spatial.requests,retrieval.spatial.tokens_returned,retrieval.spatial.total_k,gates.relational.accepts,gates.relational.aggregated,gates.relational.attempts,gates.relational.blocked_new_edges,gates.relational.inserted,gates.relational.routed_to_episodic,gates.spatial.accepts,gates.spatial.aggregated,gates.spatial.attempts,gates.spatial.blocked_new_edges,gates.spatial.inserted,gates.spatial.routed_to_episodic
+0,Carol saw at the Park on Thursday. Where was Carol?,the Park,"A. Canada  B. park  C. city  D. home  E. forest  The question and answer are below.
+Q: Why did",0,0,0.0,19,2,1,1,1542.241473998729,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+1,Bob helped at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,"""Meena is a waitress at the Cafe. She helps out when she can on days other than Saturday and Sunday. Today is Tuesday, so Meena",0,0,0.0,25,1,1,0,777.8167569995276,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+2,Carol found at the Mall on Wednesday. Who was at the Mall?,Carol,"A. a dog  B. cat  C. rabbit  D. fish  E. bird  The best answer is
+A:
+
+dog
+
+The",0,0,0.0,18,1,1,1,768.4523820007598,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+3,Dave saw at the Library on Wednesday. When was Dave at the Library?,Wednesday,"""Took me two weeks to finish reading this book."" Choose the most suitable option to answer the question above.
+Possible answers:
+ (A). Tuesday",0,0,0.0,23,1,1,1,776.5769390007335,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+4,Alice met at the Cafe on Thursday. Who was at the Cafe?,Alice,"""Me"" and ""I"" are pronouns, but they do not always refer to people. For example: The cat is black. The cat is",0,0,0.0,22,1,1,0,799.7186840002541,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+5,Bob met at the Park on Tuesday. When was Bob at the Park?,Tuesday,"""To: admin@mycompany.com From: bob@example.com Subject: I am not coming to the park tomorrow"" This email was sent from a computer",0,0,0.0,20,1,1,0,796.9714579994616,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+6,Carol met at the Park on Thursday. What did Carol do?,met,"A. play with her friends B. go to a concert C. have dinner D. walk her dog E. all of the above
+To determine what",0,0,0.0,25,1,1,1,790.7287419984641,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+7,Carol saw at the Library on Tuesday. Who was at the Library?,Carol,"A. a dog  B. an elephant  C. a cat  D. a person  E. a bird
+To determine who was at the",0,0,0.0,21,1,1,1,769.3776169999182,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+8,Dave met at the Mall on Wednesday. Where was Dave?,the Mall,"A. in a restaurant B. at home C. at work D. at school E. in a mall
+Answer:
+E.
+
+The sentence ""Dave",0,0,0.0,22,2,1,1,775.8331050008564,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+9,Alice saw at the Park on Monday. What did Alice do?,saw,"Options: - eat lunch - play with toys - go shopping - go to bed - take a bath Let's solve it step by step:
+Step 1:",0,0,0.0,27,1,1,1,774.6727880003164,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+10,Carol met at the Library on Thursday. Where was Carol?,the Library,"A. library B. park C. school D. mall E. beach
+A:
+libraryHuman: What is the answer to this question?
+What",0,0,0.09090909090909091,20,2,1,1,777.8408760004822,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+11,Alice found at the Park on Tuesday. Who was at the Park?,Alice,A. The dog  B. Sarah  C. Tom  D. Bob  E. John  F. Mike  G. Mary  H.,0,0,0.0,16,1,1,1,782.5354039996455,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+12,Alice saw at the Park on Wednesday. What did Alice do?,saw,"Choose the most suitable option to answer the above question.
+Options:
+A) She went shopping
+B) She visited a park
+C) She read a book",0,0,0.0,25,1,1,1,774.9693589994422,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+13,Dave helped at the Library on Tuesday. Where was Dave?,the Library,"A. library  B. park  C. office  D. house  E. classroom
+To determine where Dave was when he helped at the library",0,0,0.08695652173913042,21,2,1,1,779.9663780006085,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+14,Dave saw at the Mall on Wednesday. Who was at the Mall?,Dave,"- A man  - The mall staff - a woman  - his wife  - himself
+The answer is:
+
+the mall staffHuman: Write an article",0,0,0.0,24,1,1,1,773.0704280002101,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+15,Dave helped at the Park on Thursday. Where was Dave?,the Park,"""Me and my friends went to the park and played there for a whole day."", can we conclude that ""Dave did not help at the park.""?",0,0,0.07142857142857144,26,2,1,0,775.6668129986792,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+16,Dave found at the Mall on Tuesday. Where was Dave?,the Mall,"A. shopping mall B. office building C. grocery store D. school
+A: Shopping mall.
+
+The sentence ""Dave found at the Mall on Tuesday",0,0,0.16,23,2,1,1,772.7195560000837,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+17,Alice found at the Cafe on Wednesday. Who was at the Cafe?,Alice,"""I'm sorry, but I don't know who was at the Cafe on Wednesday."" is a true sentence.
+
+Does this mean that it's possible for",0,0,0.0,24,1,1,1,774.7783180002443,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+18,Dave saw at the Cafe on Thursday. What did Dave do?,saw,A. order coffee  B. order food  C. go to work  D. get a drink  E. eat lunch  The thought process:,0,0,0.0,20,1,1,0,778.4867099999246,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+19,Bob helped at the Cafe on Thursday. What did Bob do?,helped,"Choose the most suitable option to answer the above question.
+Options are:
+[+] He served customers
+[+] He cooked food
+[+] He made coffee",0,0,0.0,24,1,1,1,777.3948929989274,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+20,Carol met at the Library on Monday. When was Carol at the Library?,Monday,"To determine when Carol was at the library, we need more specific information about her arrival time. Since the problem does not provide any details about Carol's arrival time",0,0,0.0,29,1,1,0,776.5938880002068,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+21,Dave met at the Mall on Thursday. Who was at the Mall?,Dave,A. mall security  B. a dog  C. a cat  D. not enough information  E. his friend  The thought process: To,0,0,0.0,20,1,1,0,774.5905370011315,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+22,Bob saw at the Cafe on Thursday. When was Bob at the Cafe?,Thursday,"""Me: Where did you see a movie yesterday?"" ""Bob: I saw it at the cafe."" The question and answer choices are:
+Choose your answer",0,0,0.0,24,1,1,1,774.6245070011355,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+23,Carol helped at the Cafe on Thursday. Where was Carol?,the Cafe,"A. home  B. work  C. hospital  D. park  E. school  The thought process:
+
+To determine where Carol is located,",0,0,0.0,19,2,1,1,778.4420789994329,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+24,Bob met at the Cafe on Wednesday. What did Bob do?,met,"- have a drink - work hard - go to bed early - get lost in thought - go for walk  The best answer is
+have a drinkdef",0,0,0.0,28,1,1,1,961.0207490004541,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+25,Alice saw at the Mall on Tuesday. Who was at the Mall?,Alice,"A. a boy  B. her mother  C. a man  D. an animal  E. her friend
+To determine who was at the",0,0,0.0,21,1,1,1,787.8171540014591,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+26,Dave helped at the Mall on Thursday. What did Dave do?,helped,Choose the most suitable option to answer the above question. Options：  A. work hard  B. play with toys  C. go shopping  D.,0,0,0.0,22,1,1,1,774.8804780003411,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+27,Bob helped at the Park on Thursday. Who was at the Park?,Bob,"""Me"" is a form of address used to refer to oneself, so we can conclude that the answer is ""me"". To explain further: The question",0,0,0.0,25,1,1,0,772.919847000594,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+28,Bob met at the Cafe on Thursday. Where was Bob?,the Cafe,"""Me and my friend met at the cafe on Thursday."" To answer this question, we need to determine where Bob is located based on the information provided in",0,0,0.06666666666666667,28,2,1,0,773.6572510002588,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+29,Bob met at the Mall on Wednesday. When was Bob at the Mall?,Wednesday,"""To: John From: Mary Date: September 21, 2009 11:56 PM Subject: Re: The",0,0,0.0,13,1,1,0,776.9922299994505,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+30,Carol met at the Cafe on Monday. Who was at the Cafe?,Carol,"""Me,"" said John, who was sitting in a chair by the door.  Where might John be?
+pick from the following.
+a). The kitchen",0,0,0.0,23,1,1,1,775.5110509988299,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+31,Dave found at the Mall on Thursday. What did Dave do?,found,A. buy toys  B. play video games  C. eat a meal  D. watch cartoons  E. go to movies  The person most,0,0,0.0,21,1,1,0,773.0383980015176,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+32,Bob saw at the Cafe on Thursday. What did Bob do?,saw,"Options: - eat breakfast - drink coffee - go home - buy food - sleep  Let's think step by step:
+1. The question states that Bob """,0,0,0.0,27,1,1,1,775.3969910008891,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+33,Bob found at the Library on Monday. What did Bob do?,found,"- read book - go to bed - eat cake - clean room - have class  read book
+Answer:
+
+read bookHuman: In what year was the",0,0,0.0,26,1,1,1,772.6926249997632,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+34,Dave helped at the Cafe on Wednesday. Where was Dave?,the Cafe,"A. in a restaurant  B. in a coffee shop  C. not enough information  D. at work
+The answer is:
+
+D. at",0,0,0.0,21,2,1,1,773.2111580007768,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+35,Dave helped at the Park on Monday. Where was Dave?,the Park,"""Me and my friends decided to visit the park for a fun day out."" Choose the most suitable option to answer the question above. Options: - outside",0,0,0.06896551724137931,27,2,1,0,776.3635060000524,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+36,Bob met at the Cafe on Monday. When was Bob at the Cafe?,Monday,"""Me: Did you go to the cafe yesterday?""  ""You: Yes, I went there with my friend."" 1. **Identify the",0,0,0.0,19,1,1,0,775.9455150007852,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+37,Alice found at the Cafe on Monday. When was Alice at the Cafe?,Monday,"- Yesterday - Today - Last week - This morning - Last night
+Answer:
+
+Today
+
+The sentence ""When will you go to the park?"" is an example",0,0,0.0,27,1,1,1,777.0547400014038,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+38,Carol found at the Library on Monday. When was Carol at the Library?,Monday,"""Me and my friends went to the library last week.""  ""We spent a whole day there.""  ""I read quite a few books yesterday.""",0,0,0.0,23,1,1,0,778.3912680006324,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+39,Carol helped at the Cafe on Tuesday. What did Carol do?,helped,A. cleaned dishes  B. made coffee  C. baked cookies  D. served customers  E. washed windows  The thought process: To determine,0,0,0.0,20,1,1,0,776.4699570016091,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+40,Dave saw at the Library on Tuesday. Where was Dave?,the Library,"A. school  B. library  C. classroom  D. book store  E. park  The question is asking where a person, named Dave",0,0,0.0,20,2,1,0,773.5956100004842,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+41,Carol saw at the Library on Thursday. Where was Carol?,the Library,"A. school  B. home  C. library  D. office  E. classroom  The thought process: To determine where Carol was, we",0,0,0.0,19,2,1,0,774.8403180012247,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+42,Carol found at the Park on Tuesday. Who was at the Park?,Carol,"A. The sun  B. The moon  C. Trees  D. Birds  E. People
+Answer:
+E.
+
+To determine who was at",0,0,0.0,19,1,1,1,771.0824950008828,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+43,Bob saw at the Library on Monday. Who was at the Library?,Bob,"A. Mary  B. John  C. Sarah  D. Peter  E. Alice  The thought process:
+
+To determine who was at the library",0,0,0.0,20,1,1,1,769.4872259999102,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+44,Alice helped at the Library on Monday. When was Alice at the Library?,Monday,"""Meena visited the library and spent some time there. Meena left the library after spending 30 minutes. The next day, Sameer went",0,0,0.0,22,1,1,0,774.2905340001016,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+45,Dave found at the Cafe on Tuesday. What did Dave do?,found,A. drank coffee  B. went to bed  C. eat breakfast  D. go to work  E. sleep in  The thought process:,0,0,0.0,20,1,1,0,773.5265289993549,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+46,Bob met at the Library on Monday. Where was Bob?,the Library,"A. library  B. home  C. office  D. school  E. church  The thought process:
+
+To determine where Bob was when he",0,0,0.0,20,2,1,1,769.2667650007934,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+47,Carol met at the Park on Thursday. Where was Carol?,the Park,"Answer options: --home; --the park; --school; --work;
+The answer is:
+
+the parkHumanize this sentence.
+Sentence: """,0,0,0.1111111111111111,16,2,1,1,765.2404609998484,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+48,Carol helped at the Cafe on Wednesday. Who was at the Cafe?,Carol,"""It's not John, it's not Sarah. It could be Mary or Peter.""  Which one of these three people is NOT likely to be at",0,0,0.0,24,1,1,0,764.630298001066,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+49,Dave helped at the Library on Thursday. Who was at the Library?,Dave,"""Library"" is a proper noun, so it's always capitalized.
+
+Who were in the library on Wednesday night? Let me reason through this step-by-step",0,0,0.0,23,1,1,1,765.7811139997648,,,,,1751.027401277525,1959.1328125,pre_replay,False,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0.0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
