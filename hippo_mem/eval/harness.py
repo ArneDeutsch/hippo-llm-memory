@@ -882,8 +882,6 @@ def _load_preset(cfg: DictConfig) -> DictConfig:
         preset_cfg = OmegaConf.load(preset_path)
         with open_dict(cfg):
             cfg = OmegaConf.merge(preset_cfg, cfg)
-            if "gating_enabled" in preset_cfg:
-                cfg.gating_enabled = preset_cfg.gating_enabled
     return cfg
 
 
