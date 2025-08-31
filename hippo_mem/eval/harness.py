@@ -282,6 +282,8 @@ def _evaluate(
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
+    registry.reset()
+    gate_registry.reset()
     rows: List[Dict[str, object]] = []
     emr_total = emn_total = f1_total = 0.0
     overlong_total = fmt_total = refusal_total = 0
