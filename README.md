@@ -189,6 +189,18 @@ algorithm subfolder automatically. For convenience, `scripts/eval_cli.py` transl
   with adapters.
 - [docs/api_surface.md](docs/api_surface.md) – current public APIs.
 
+## How to read reports
+
+Reports live under `reports/<DATE>/index.md` with per‑suite summaries. Rows carry
+⚠️ warnings when invariants are violated:
+
+- Baselines must show `retrieval.*.requests == 0` and `store.size == 0`.
+- Memory presets with gates enabled should report `gate.*.attempts > 0`.
+- `pre_em_norm ≥ 0.98` with a matching baseline `< 0.20` signals saturation.
+
+See [EVAL_PROTOCOL.md](EVAL_PROTOCOL.md#telemetry-invariants) for the full list
+and troubleshooting tips.
+
 ## Suggested shell aliases
 
 ```bash

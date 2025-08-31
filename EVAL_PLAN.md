@@ -73,8 +73,17 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
 
 Each suite provides a minimal `n=50` split for smoke and cross‑session experiments.
 
-Generators offer `base` and `hard` difficulty profiles (`--profile`/`dataset_profile`).
-Use `hard` for suites prone to saturation (`episodic_cross`, `episodic_capacity`).
+Generators expose `profile` options forwarded via `dataset_profile`. Profiles
+tune difficulty and what the suite probes:
+
+| Suite   | `base` evaluates                  | `hard` adds to probe            |
+| ------- | --------------------------------- | ------------------------------- |
+| episodic | single‑hop recall                | extra distractors and swaps     |
+| semantic | schema‑fit triples              | near‑miss relations, contradictions |
+| spatial  | simple grids and paths           | dead‑ends and alternative routes |
+
+Select `dataset_profile=hard` when baselines exceed 0.98 EM or when running
+`episodic_cross`/`episodic_capacity` to avoid saturation.
 
 ## 3.1 Episodic suite (HEI‑NW)
 
