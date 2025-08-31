@@ -31,7 +31,10 @@ def test_tuple_precision() -> None:
     preds = {(h, r, t) for h, r, t, *_ in tuples}
     correct = preds & gold
     precision = len(correct) / len(preds)
+    recall = len(correct) / len(gold)
     assert precision >= 0.9
+    assert recall >= 0.9
+    assert len(tuples) == len(preds)
 
 
 def test_sentence_helpers() -> None:

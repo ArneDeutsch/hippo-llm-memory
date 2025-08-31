@@ -49,8 +49,13 @@ def test_relational_gate_penalizes_high_degree() -> None:
     gate._last_seen["A"] = time.time()
     gate._last_seen["B"] = time.time()
     tup = ("A", "likes", "B", "ctx", None, 1.0, 0)
+    deg_pen = gate._degree_penalty("A", "B", kg)
+    prev_seen = gate._last_seen["A"]
     decision = gate.decide(tup, kg)
     assert decision.action == "route_to_episodic"
+    assert deg_pen > 0.0
+    assert decision.score is not None and decision.score < gate.threshold
+    assert gate._last_seen["A"] > prev_seen
 
 
 def test_relational_gate_threshold_and_counters() -> None:

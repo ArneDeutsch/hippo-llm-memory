@@ -18,6 +18,8 @@ def test_priority_scores_reflect_weights() -> None:
     q.add("b", key2, score=0.9)
     priorities = q._priority_scores()
     assert priorities[0] < priorities[1]
+    assert len(priorities) == 2
+    assert np.isclose(priorities[0], 0.1) and np.isclose(priorities[1], 0.9)
 
 
 def test_replay_queue_weighting() -> None:
@@ -57,6 +59,8 @@ def test_replay_queue_maxlen_trimming() -> None:
     q.add("b", key2, score=0.2)
     q.add("c", key3, score=0.3)
     assert [item.trace_id for item in q.items] == ["b", "c"]
+    assert len(q.items) == 2
+    assert [item.step for item in q.items] == [2, 3]
 
 
 @settings(max_examples=25, deadline=None)

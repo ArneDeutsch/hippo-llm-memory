@@ -100,6 +100,8 @@ def test_adapter_zero_without_tokens() -> None:
     adapter = RelationalMemoryAdapter()
     residual = adapter(hidden, memory=mem)
     assert torch.equal(residual, torch.zeros_like(hidden))
+    assert residual.shape == hidden.shape
+    assert not mem.mask.any()
 
 
 def test_relational_hops_two_edges():
