@@ -73,21 +73,42 @@ def test_report_aggregation(tmp_path: Path) -> None:
         runs_on / "50_1337",
         "episodic",
         {"em_raw": 0.5, "r": 0.7},
-        {"total_tokens": 10, "rss_mb": 1.0, "time_ms_per_100": 2.0},
+        {
+            "input_tokens": 5,
+            "generated_tokens": 5,
+            "total_tokens": 10,
+            "rss_mb": 1.0,
+            "time_ms_per_100": 2.0,
+            "latency_ms_mean": 1.0,
+        },
         gates_on,
     )
     _make_metrics(
         runs_on / "50_2025",
         "episodic",
         {"em_raw": 0.7, "r": 0.9},
-        {"total_tokens": 30, "rss_mb": 1.5, "time_ms_per_100": 4.0},
+        {
+            "input_tokens": 15,
+            "generated_tokens": 15,
+            "total_tokens": 30,
+            "rss_mb": 1.5,
+            "time_ms_per_100": 4.0,
+            "latency_ms_mean": 1.0,
+        },
         gates_on,
     )
     _make_metrics(
         runs_off / "50_4242",
         "episodic",
         {"em_raw": 0.6, "r": 0.8},
-        {"total_tokens": 20, "rss_mb": 2.0, "time_ms_per_100": 3.0},
+        {
+            "input_tokens": 10,
+            "generated_tokens": 10,
+            "total_tokens": 20,
+            "rss_mb": 2.0,
+            "time_ms_per_100": 3.0,
+            "latency_ms_mean": 1.0,
+        },
         gates_off,
     )
     # also create another suite to ensure per-suite report generation
@@ -96,11 +117,29 @@ def test_report_aggregation(tmp_path: Path) -> None:
         other / "50_1337",
         "semantic",
         {"f1": 0.4},
-        {"total_tokens": 5, "rss_mb": 0.5, "time_ms_per_100": 1.0},
+        {
+            "input_tokens": 2,
+            "generated_tokens": 3,
+            "total_tokens": 5,
+            "rss_mb": 0.5,
+            "time_ms_per_100": 1.0,
+            "latency_ms_mean": 1.0,
+        },
     )
 
     base = tmp_path / "runs" / "20250101"
     metrics = collect_metrics(base)
+    for recs in metrics.values():
+        for rec in recs:
+            for key in (
+                "input_tokens",
+                "generated_tokens",
+                "total_tokens",
+                "time_ms_per_100",
+                "rss_mb",
+                "latency_ms_mean",
+            ):
+                assert key in rec
     summary = summarise(metrics)
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
@@ -117,7 +156,15 @@ def test_report_aggregation(tmp_path: Path) -> None:
     md_path = paths["episodic"]
     text = md_path.read_text()
     # table header contains all fields
-    assert "| Preset | Size | EM (raw) | r | rss_mb | time_ms_per_100 | total_tokens |" in text
+    header = next(line for line in text.splitlines() if line.startswith("| Preset"))
+    for col in [
+        "EM (raw)",
+        "r",
+        "rss_mb",
+        "time_ms_per_100",
+        "total_tokens",
+    ]:
+        assert col in header
     # both presets appear as rows
     assert "| baselines/core/gate_on | 50 |" in text
     assert "| baselines/core/gate_off | 50 |" in text
@@ -174,7 +221,14 @@ def test_smoke_report(tmp_path: Path) -> None:
         runs_dir / "50_1337",
         "episodic",
         {"em": 1.0},
-        {"total_tokens": 1, "rss_mb": 1.0, "time_ms_per_100": 1.0},
+        {
+            "input_tokens": 1,
+            "generated_tokens": 0,
+            "total_tokens": 1,
+            "rss_mb": 1.0,
+            "time_ms_per_100": 1.0,
+            "latency_ms_mean": 1.0,
+        },
     )
     base = tmp_path / "runs" / "20250101"
     summary = summarise(collect_metrics(base))

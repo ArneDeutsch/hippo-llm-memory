@@ -374,7 +374,6 @@ def _run_replay_once(modules: Dict[str, Dict[str, object]]) -> None:
         batch_size=1,
     )
     worker.start()
-    time.sleep(0.05)
     worker.stop()
     worker.join(timeout=1)
 
