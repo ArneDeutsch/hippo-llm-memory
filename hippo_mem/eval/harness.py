@@ -285,6 +285,8 @@ def _evaluate(
     system_prompt: str | None,
     compute_metrics: bool = True,
     suite: str | None = None,
+    retrieval_enabled: bool = True,
+    long_context_enabled: bool = False,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
@@ -301,7 +303,7 @@ def _evaluate(
     t0 = time.perf_counter()
     for idx, item in enumerate(task_list, 1):
         item_t0 = time.perf_counter()
-        if modules:
+        if retrieval_enabled and modules:
             hidden = torch.zeros(1, 1, 8)
             mems: List[MemoryTokens] = []
             if "episodic" in modules:
@@ -336,9 +338,12 @@ def _evaluate(
                     if adapter is not None:
                         adapter(hidden, memory=mem)
 
+        prompt = item.prompt
+        if long_context_enabled and not retrieval_enabled:
+            prompt = f"{prompt} [CTX]"
         inputs = encode_prompt(
             tokenizer,
-            item.prompt,
+            prompt,
             model.device,
             use_chat_template=use_chat_template,
             system_prompt=(
@@ -531,6 +536,9 @@ def run_suite(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
+    retrieval_enabled = bool(base_cfg.get("retrieval", {}).get("enabled", False))
+    long_ctx_enabled = bool(base_cfg.get("long_context", {}).get("enabled", False))
+
     rows, metrics, in_tokens, gen_tokens, elapsed = _evaluate(
         tasks,
         modules,
@@ -540,6 +548,8 @@ def run_suite(
         use_chat_template=cfg.use_chat_template,
         system_prompt=cfg.system_prompt,
         suite=cfg.suite,
+        retrieval_enabled=retrieval_enabled,
+        long_context_enabled=long_ctx_enabled,
     )
     metrics["em"] = (
         metrics.get("em_norm", 0.0) if cfg.primary_em == "norm" else metrics.get("em_raw", 0.0)
@@ -848,6 +858,9 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             if spat_file.exists():
                 modules["spatial"]["map"].load(str(session_dir), sid)
 
+    retrieval_enabled = bool(cfg.get("retrieval", {}).get("enabled", False))
+    long_ctx_enabled = bool(cfg.get("long_context", {}).get("enabled", False))
+
     model_id = (str(cfg.model) or "").strip()
     if not model_id:
         raise ValueError("cfg.model is empty. Pass --model or set $MODEL.")
@@ -888,6 +901,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             system_prompt=cfg.system_prompt,
             compute_metrics=False,
             suite=cfg.suite,
+            retrieval_enabled=retrieval_enabled,
+            long_context_enabled=long_ctx_enabled,
         )
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
@@ -964,6 +979,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             system_prompt=cfg.system_prompt,
             compute_metrics=True,
             suite=cfg.suite,
+            retrieval_enabled=retrieval_enabled,
+            long_context_enabled=long_ctx_enabled,
         )
         post_metrics["em"] = (
             post_metrics.get("em_norm", 0.0)
@@ -1008,6 +1025,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         system_prompt=cfg.system_prompt,
         compute_metrics=True,
         suite=cfg.suite,
+        retrieval_enabled=retrieval_enabled,
+        long_context_enabled=long_ctx_enabled,
     )
     pre_metrics["em"] = (
         pre_metrics.get("em_norm", 0.0)
