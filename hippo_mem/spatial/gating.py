@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Deque, Optional
 
 from hippo_mem.common import GateDecision, ProvenanceLogger, log_gate
+from hippo_mem.common.telemetry import gate_registry
 
 from .map import PlaceGraph
 
@@ -45,6 +46,8 @@ class SpatialGate:
 
     def decide(self, prev_ctx: Optional[str], context: str, graph: PlaceGraph) -> GateDecision:
         """Return a :class:`GateDecision` for a context transition."""
+        stats = gate_registry.get("spatial")
+        stats.attempts += 1
 
         repeat_pen = 0.0
         if len(self._ctx_hist) >= self.repeat_N - 1 and all(
@@ -68,6 +71,7 @@ class SpatialGate:
         self._ctx_hist.append(context)
         if score >= self.block_threshold:
             decision = GateDecision("route_to_episodic", f"score={score:.2f}>=thr", score)
+            stats.blocked_new_edges += 1
         else:
             action = "insert"
             reason = "new_edge"
@@ -79,6 +83,10 @@ class SpatialGate:
                     reason = "duplicate_edge"
                 self._edge_hist.append((prev_ctx, context))
             decision = GateDecision(action, reason, score)
+            if action == "insert":
+                stats.inserted += 1
+            elif action == "aggregate":
+                stats.aggregated += 1
         log_gate(
             self.logger,
             "spatial",

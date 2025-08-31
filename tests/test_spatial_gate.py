@@ -66,6 +66,7 @@ def test_spatial_gate_threshold_and_counters() -> None:
     gate = SpatialGate(block_threshold=0.5, max_degree=2)
     decision = SpatialGate(block_threshold=0.5, max_degree=2).decide(None, "hub", graph)
     assert decision.action == "route_to_episodic"
+    gate_registry.reset()
     records = [{"trajectory": ["hub"]}, {"trajectory": ["new"]}]
     ingest_spatial_traces(records, graph, gate)
     stats = gate_registry.get("spatial")
