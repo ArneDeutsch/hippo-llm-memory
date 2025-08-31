@@ -48,6 +48,13 @@ DISPLAY_NAMES = {
 }
 MetricStats = Dict[str, tuple[float, float]]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
+WARNING_MESSAGES = {
+    "BaselineRetrieval": "baseline retrieval requests > 0",
+    "BaselineStore": "baseline store size > 0",
+    "AblationRetrieval": "no-retrieval ablation made retrieval requests",
+    "SaturationSuspect": "pre_em_norm ≥ 0.98 while baseline < 0.20",
+    "GateNoOp": "gate enabled but counters are zero",
+}
 
 
 def _format_stat(stat: tuple[float, float]) -> str:
@@ -242,6 +249,50 @@ def collect_gate_ablation(base: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
     return data
 
 
+def collect_warnings(base: Path) -> Dict[str, Dict[str, set[str]]]:
+    """Collect invariant violations per ``(suite, preset)``.
+
+    The function inspects each ``metrics.json`` and records warning codes when
+    invariants are broken. Warning codes:
+
+    - ``BaselineRetrieval`` – baseline runs issued retrieval requests.
+    - ``BaselineStore`` – baseline runs wrote to a store.
+    - ``AblationRetrieval`` – no-retrieval ablation made retrieval requests.
+    - ``GateNoOp`` – memory preset had gating enabled but all counters were zero.
+    """
+
+    warnings: Dict[str, Dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
+    for metrics_path in base.rglob("metrics.json"):
+        parts = metrics_path.relative_to(base).parts
+        if len(parts) < 4:
+            continue
+        suite = parts[-3]
+        preset = "/".join(parts[:-3]) or "unknown"
+        try:
+            with metrics_path.open() as fh:
+                record = json.load(fh)
+        except json.JSONDecodeError:  # pragma: no cover - file is corrupt
+            continue
+        retrieval = record.get("retrieval", {})
+        total_requests = sum(float(v.get("requests", 0)) for v in retrieval.values())
+        store_size = float(record.get("store", {}).get("size", 0))
+        gates = record.get("gates", {})
+        total_gate = 0.0
+        for stats in gates.values():
+            total_gate += sum(float(stats.get(k, 0)) for k in stats)
+        flags = warnings[suite][preset]
+        if preset.startswith("baselines"):
+            if total_requests > 0:
+                flags.add("BaselineRetrieval")
+            if store_size > 0:
+                flags.add("BaselineStore")
+        if "no_retrieval" in preset and total_requests > 0:
+            flags.add("AblationRetrieval")
+        if preset.startswith("memory/") and total_gate == 0:
+            flags.add("GateNoOp")
+    return warnings
+
+
 def summarise(data: Dict[Tuple[str, str, int], Iterable[MetricDict]]) -> Summary:
     """Average metrics for each ``(suite, preset, size)`` with 95% CI."""
 
@@ -403,10 +454,12 @@ def _render_markdown_suite(
     retrieval: Dict[str, MetricDict] | None,
     gates: Dict[str, Dict[str, MetricDict]] | None,
     seed_count: int,
+    warnings: Dict[str, set[str]] | None = None,
 ) -> str:
     """Return a Markdown table for a single suite."""
 
     lines: list[str] = [f"# {suite} Summary", ""]
+    warn_map: Dict[str, set[str]] = {k: set(v) for k, v in (warnings or {}).items()}
     if presets:
         saturated = False
         for preset_stats in presets.values():
@@ -446,13 +499,21 @@ def _render_markdown_suite(
             k for k in metric_keys if k not in preferred
         ]
         display = [DISPLAY_NAMES.get(k, k) for k in ordered]
-        header = "| Preset | Size | " + " | ".join(display) + " |"
-        sep = "|---" * (len(ordered) + 2) + "|"
+        header = "| Preset | Size | " + " | ".join(display) + " | Note |"
+        sep = "|---" * (len(ordered) + 3) + "|"
         lines.append("## Uplift")
         if seed_count <= 1:
             lines.extend(["> single-seed run: CI bands unavailable", ""])
         lines.extend([header, sep])
         rows: list[tuple[float, str, int, MetricStats]] = []
+        baseline_norm: float | None = None
+        for preset_name, sizes in presets.items():
+            if preset_name.startswith("baselines"):
+                stats = next(iter(sizes.values()))
+                stat = stats.get("pre_em_norm") or stats.get("em_norm")
+                if stat:
+                    baseline_norm = stat[0]
+                break
         if suite == "semantic":
             for preset, sizes in presets.items():
                 for size, metrics in sizes.items():
@@ -472,9 +533,28 @@ def _render_markdown_suite(
                     vals.append("–")
                 else:
                     vals.append(_format_stat(stat))
-            row = f"| {preset} | {size} | " + " | ".join(vals) + " |"
+            flags = warn_map.get(preset, set())
+            stat_norm = metrics.get("pre_em_norm") or metrics.get("em_norm")
+            if (
+                baseline_norm is not None
+                and baseline_norm < 0.20
+                and stat_norm
+                and stat_norm[0] >= 0.98
+            ):
+                flags.add("SaturationSuspect")
+            note = ""
+            if flags:
+                warn_map[preset] = flags
+                note = "⚠️ " + ",".join(sorted(flags))
+            row = f"| {preset} | {size} | " + " | ".join(vals) + f" | {note} |"
             lines.append(row)
         lines.append("")
+        if warn_map:
+            lines.append("## Warnings")
+            for preset, flags in sorted(warn_map.items()):
+                msgs = [WARNING_MESSAGES.get(f, f) for f in sorted(flags)]
+                lines.append(f"- {preset}: {', '.join(msgs)}")
+            lines.append("")
     if retrieval:
         lines.append("## Retrieval Telemetry")
         note_path = (
@@ -775,6 +855,7 @@ def write_reports(
     out_dir: Path,
     plots: bool,
     seed_count: int,
+    warnings: Dict[str, Dict[str, set[str]]] | None = None,
 ) -> Dict[str, Path]:
     """Write per-suite reports and optional plots to ``out_dir``."""
 
@@ -790,6 +871,7 @@ def write_reports(
                 retrieval.get(suite),
                 gates.get(suite),
                 seed_count,
+                (warnings or {}).get(suite),
             )
         )
         paths[suite] = md_path
@@ -836,6 +918,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     retrieval_data = collect_retrieval(runs_path)
     gate_data = collect_gates(runs_path)
     gate_ablation_data = collect_gate_ablation(runs_path)
+    warning_data = collect_warnings(runs_path)
     summary = summarise(metric_data)
     retrieval_summary = summarise_retrieval(retrieval_data)
     gate_summary = summarise_gates(gate_data)
@@ -850,6 +933,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
         out_dir,
         args.plots,
         seed_count,
+        warning_data,
     )
     for suite, md_path in paths.items():
         log.info("wrote %s for %s", md_path, suite)

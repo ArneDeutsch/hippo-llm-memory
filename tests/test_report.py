@@ -9,6 +9,7 @@ from scripts.report import (
     collect_gates,
     collect_metrics,
     collect_retrieval,
+    collect_warnings,
     summarise,
     summarise_gates,
     summarise_retrieval,
@@ -23,6 +24,8 @@ def _make_metrics(
     metrics: dict,
     compute: dict | None = None,
     gates: dict | None = None,
+    retrieval: dict | None = None,
+    store: dict | None = None,
 ) -> None:
     path.mkdir(parents=True, exist_ok=True)
     content = {"metrics": {suite: metrics}}
@@ -30,6 +33,10 @@ def _make_metrics(
         content["metrics"]["compute"] = compute
     if gates:
         content["gates"] = gates
+    if retrieval:
+        content["retrieval"] = retrieval
+    if store:
+        content["store"] = store
     (path / "metrics.json").write_text(json.dumps(content))
 
 
@@ -117,7 +124,9 @@ def test_report_aggregation(tmp_path: Path) -> None:
     md_path = paths["episodic"]
     text = md_path.read_text()
     # table header contains all fields
-    assert "| Preset | Size | EM (raw) | r | rss_mb | time_ms_per_100 | total_tokens |" in text
+    assert (
+        "| Preset | Size | EM (raw) | r | rss_mb | time_ms_per_100 | total_tokens | Note |" in text
+    )
     # both presets appear as rows
     assert "| baselines/core/gate_on | 50 |" in text
     assert "| baselines/core/gate_off | 50 |" in text
@@ -197,3 +206,84 @@ def test_missing_post_metrics_detector() -> None:
 
     missing = _missing_post_metrics(data)
     assert missing == [("episodic", "preset", 50)]
+
+
+def test_report_warnings(tmp_path: Path) -> None:
+    base = tmp_path / "runs" / "20250101"
+    # baseline with retrieval and store
+    _make_metrics(
+        base / "baselines" / "core" / "episodic" / "50_1337",
+        "episodic",
+        {"pre_em_norm": 0.1},
+        retrieval={
+            "episodic": {
+                "requests": 1,
+                "hits": 0,
+                "hit_rate_at_k": 0.0,
+                "tokens_returned": 0,
+                "avg_latency_ms": 0.0,
+            }
+        },
+        store={"size": 1},
+    )
+    # memory preset with high norm and zero gate counters
+    _make_metrics(
+        base / "memory" / "hei_nw" / "episodic" / "50_1337",
+        "episodic",
+        {"pre_em_norm": 0.99},
+        gates={"episodic": {"attempts": 0}},
+        retrieval={
+            "episodic": {
+                "requests": 1,
+                "hits": 1,
+                "hit_rate_at_k": 1.0,
+                "tokens_returned": 1,
+                "avg_latency_ms": 0.0,
+            }
+        },
+    )
+    # no-retrieval ablation issuing retrieval requests
+    _make_metrics(
+        base / "ablate" / "longctx_no_retrieval" / "episodic" / "50_1337",
+        "episodic",
+        {"pre_em_norm": 0.2},
+        retrieval={
+            "episodic": {
+                "requests": 5,
+                "hits": 0,
+                "hit_rate_at_k": 0.0,
+                "tokens_returned": 0,
+                "avg_latency_ms": 0.0,
+            }
+        },
+    )
+
+    metrics = collect_metrics(base)
+    summary = summarise(metrics)
+    retrieval = summarise_retrieval(collect_retrieval(base))
+    gates = summarise_gates(collect_gates(base))
+    gate_ablation = collect_gate_ablation(base)
+    warnings = collect_warnings(base)
+    out = tmp_path / "reports" / "20250101"
+    paths = write_reports(
+        summary,
+        retrieval,
+        gates,
+        gate_ablation,
+        out,
+        plots=False,
+        seed_count=1,
+        warnings=warnings,
+    )
+    text = paths["episodic"].read_text()
+    # note column present
+    header = next(line for line in text.splitlines() if line.startswith("| Preset"))
+    assert header.endswith("| Note |")
+    # row-level flags
+    assert "⚠️ BaselineRetrieval,BaselineStore" in text
+    assert "⚠️ AblationRetrieval" in text
+    assert "⚠️ GateNoOp,SaturationSuspect" in text
+    # warnings section with readable messages
+    assert "## Warnings" in text
+    assert "baseline retrieval requests > 0" in text
+    assert "no-retrieval ablation made retrieval requests" in text
