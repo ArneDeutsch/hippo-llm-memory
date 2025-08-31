@@ -23,6 +23,8 @@ def _make_metrics(
     metrics: dict,
     compute: dict | None = None,
     gates: dict | None = None,
+    retrieval: dict | None = None,
+    store: dict | None = None,
 ) -> None:
     path.mkdir(parents=True, exist_ok=True)
     content = {"metrics": {suite: metrics}}
@@ -30,6 +32,10 @@ def _make_metrics(
         content["metrics"]["compute"] = compute
     if gates:
         content["gates"] = gates
+    if retrieval:
+        content["retrieval"] = retrieval
+    if store:
+        content["store"] = store
     (path / "metrics.json").write_text(json.dumps(content))
 
 
@@ -198,7 +204,68 @@ def test_report_handles_missing_optional(tmp_path: Path) -> None:
     paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
     text = paths["episodic"].read_text()
     assert "Retrieval Telemetry" not in text
-    assert "Gate Telemetry" not in text
+
+
+def test_report_warnings(tmp_path: Path) -> None:
+    base = tmp_path / "runs" / "20250101"
+    _make_metrics(
+        base / "baselines" / "core" / "episodic" / "50_1337",
+        "episodic",
+        {"pre_em_norm": 0.0},
+        retrieval={
+            "episodic": {
+                "requests": 1,
+                "hits": 0,
+                "hit_rate_at_k": 0.0,
+                "tokens_returned": 0,
+                "avg_latency_ms": 0.0,
+            }
+        },
+        store={"size": 1},
+    )
+    _make_metrics(
+        base / "memory" / "hei_nw" / "episodic" / "50_1337",
+        "episodic",
+        {"pre_em_norm": 1.0},
+        gates={"episodic": {"attempts": 0}},
+        retrieval={
+            "episodic": {
+                "requests": 5,
+                "hits": 0,
+                "hit_rate_at_k": 0.0,
+                "tokens_returned": 0,
+                "avg_latency_ms": 0.0,
+            }
+        },
+        store={"size": 5},
+    )
+    _make_metrics(
+        base / "ablate" / "no_retrieval" / "episodic" / "50_1337",
+        "episodic",
+        {"pre_em_norm": 0.1},
+        retrieval={
+            "episodic": {
+                "requests": 2,
+                "hits": 0,
+                "hit_rate_at_k": 0.0,
+                "tokens_returned": 0,
+                "avg_latency_ms": 0.0,
+            }
+        },
+        store={"size": 0},
+    )
+    summary = summarise(collect_metrics(base))
+    retrieval = summarise_retrieval(collect_retrieval(base))
+    gates = summarise_gates(collect_gates(base))
+    gate_ablation = collect_gate_ablation(base)
+    out = tmp_path / "reports" / "20250101"
+    write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
+    text = (out / "episodic" / "summary.md").read_text()
+    assert "BaselineTelemetry" in text
+    assert "NoRetrievalTelemetry" in text
+    assert "SaturationSuspect" in text
+    assert "GateNoOp" in text
+    assert "### Warnings" in text
     assert (out / "index.md").exists()
 
 

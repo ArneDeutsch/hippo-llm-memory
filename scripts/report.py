@@ -122,6 +122,14 @@ def collect_metrics(
                 cleaned[key] = float(val) / n_items
             else:
                 cleaned[key] = float(val)
+        retrieval = record.get("retrieval", {})
+        for mem, stats in retrieval.items():
+            cleaned[f"retrieval_{mem}_requests"] = float(stats.get("requests", 0))
+        gates = record.get("gates", {})
+        if isinstance(gates, dict):
+            cleaned["gate_attempts"] = float(
+                sum(float(m.get("attempts", 0)) for m in gates.values())
+            )
         # derive delta_* metrics and normalise solitary pre_* keys
         for key in list(cleaned.keys()):
             if key.startswith("post_"):
@@ -426,6 +434,7 @@ def _render_markdown_suite(
                 for preset in presets.values()
                 for size_stats in preset.values()
                 for key in size_stats
+                if not key.startswith("retrieval_") and not key.startswith("gate_")
             }
         )
         preferred = [
@@ -446,13 +455,19 @@ def _render_markdown_suite(
             k for k in metric_keys if k not in preferred
         ]
         display = [DISPLAY_NAMES.get(k, k) for k in ordered]
-        header = "| Preset | Size | " + " | ".join(display) + " |"
-        sep = "|---" * (len(ordered) + 2) + "|"
+        header = "| Preset | Size | " + " | ".join(display) + " | ⚠️ |"
+        sep = "|---" * (len(ordered) + 3) + "|"
         lines.append("## Uplift")
         if seed_count <= 1:
             lines.extend(["> single-seed run: CI bands unavailable", ""])
         lines.extend([header, sep])
         rows: list[tuple[float, str, int, MetricStats]] = []
+        baseline_pre = 0.0
+        for preset, sizes in presets.items():
+            if preset.startswith("baselines/"):
+                first = next(iter(sizes.values()))
+                baseline_pre = (first.get("pre_em_norm") or first.get("em_norm") or (0.0, 0.0))[0]
+                break
         if suite == "semantic":
             for preset, sizes in presets.items():
                 for size, metrics in sizes.items():
@@ -464,6 +479,7 @@ def _render_markdown_suite(
                 sizes = presets[preset]
                 for size in sorted(sizes):
                     rows.append((0.0, preset, size, sizes[size]))
+        warnings_summary: list[str] = []
         for _, preset, size, metrics in rows:
             vals: list[str] = []
             for key in ordered:
@@ -472,9 +488,41 @@ def _render_markdown_suite(
                     vals.append("–")
                 else:
                     vals.append(_format_stat(stat))
-            row = f"| {preset} | {size} | " + " | ".join(vals) + " |"
+            note: str = ""
+            warn: list[str] = []
+            store_size = metrics.get("store_size", (0.0, 0.0))[0]
+            retrieval_reqs = [
+                metrics.get(f"retrieval_{mem}_requests", (0.0, 0.0))[0]
+                for mem in ("episodic", "relational", "spatial")
+            ]
+            gate_attempts = metrics.get("gate_attempts", (0.0, 0.0))[0]
+            pre_norm_stat = metrics.get("pre_em_norm") or metrics.get("em_norm")
+            pre_norm = pre_norm_stat[0] if pre_norm_stat else 0.0
+            if preset.startswith("baselines/") and (
+                store_size > 0 or any(r > 0 for r in retrieval_reqs)
+            ):
+                warn.append("BaselineTelemetry")
+            if "no_retrieval" in preset and any(r > 0 for r in retrieval_reqs):
+                warn.append("NoRetrievalTelemetry")
+            if pre_norm >= 0.98 and baseline_pre < 0.20 and not preset.startswith("baselines/"):
+                warn.append("SaturationSuspect")
+            if (
+                preset.startswith("memory/")
+                and gate_attempts == 0
+                and (store_size > 0 or any(r > 0 for r in retrieval_reqs))
+            ):
+                warn.append("GateNoOp")
+            if warn:
+                note = "⚠️ " + ", ".join(warn)
+                warnings_summary.append(f"{preset} {size}: {', '.join(warn)}")
+            row = f"| {preset} | {size} | " + " | ".join(vals) + " | " + note + " |"
             lines.append(row)
         lines.append("")
+        if warnings_summary:
+            lines.append("### Warnings")
+            for w in warnings_summary:
+                lines.append(f"- {w}")
+            lines.append("")
     if retrieval:
         lines.append("## Retrieval Telemetry")
         note_path = (
