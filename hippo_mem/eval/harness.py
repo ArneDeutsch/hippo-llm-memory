@@ -484,23 +484,17 @@ def _run_replay(
         if gate_cfg.get("enabled", False):
             params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
             gate = SpatialGate(**params)
-        stats = gate_registry.get("spatial")
         prev: str | None = None
         for idx in range(len(task_list)):
             ctx = f"ctx{idx}"
             if gate is None:
                 graph.observe(ctx)
             else:
-                stats.attempts += 1
                 decision = gate.decide(prev, ctx, graph)
                 if decision.action == "insert":
-                    stats.inserted += 1
                     graph.observe(ctx)
                 elif decision.action == "aggregate" and prev is not None:
-                    stats.aggregated += 1
                     graph.aggregate_duplicate(prev, ctx)
-                elif decision.action == "route_to_episodic":
-                    stats.blocked_new_edges += 1
             prev = ctx
 
     return count

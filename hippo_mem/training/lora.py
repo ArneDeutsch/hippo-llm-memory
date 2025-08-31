@@ -40,7 +40,6 @@ from hippo_mem.adapters.lora import count_trainable_parameters, default_target_m
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
 from hippo_mem.common import MemoryTokens, ProvenanceLogger, TraceSpec
-from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic import episodic_retrieve_and_pack
 from hippo_mem.episodic.adapter import AdapterConfig
@@ -605,23 +604,17 @@ def process_coordinate(
     ctx: str,
     gate: SpatialGate | None,
     graph: PlaceGraph,
-    stats,
 ) -> str:
     """Apply gate decision for ``ctx`` and insert/aggregate as needed."""
 
     if gate is None:
         graph.observe(ctx)
     else:
-        stats.attempts += 1
         decision = gate.decide(prev, ctx, graph)
         if decision.action == "insert":
-            stats.inserted += 1
             graph.observe(ctx)
         elif decision.action == "aggregate" and prev is not None:
-            stats.aggregated += 1
             graph.aggregate_duplicate(prev, ctx)
-        elif decision.action == "route_to_episodic":
-            stats.blocked_new_edges += 1
     return ctx
 
 
@@ -642,8 +635,6 @@ def ingest_spatial_traces(
         Optional gating module controlling insert/aggregate decisions.
     """
 
-    stats = gate_registry.get("spatial")
-
     count = 0
     steps = 0
     for rec in records:
@@ -658,7 +649,7 @@ def ingest_spatial_traces(
                 ctx = f"{coord[0]},{coord[1]}"
             else:  # pragma: no cover - defensive
                 ctx = str(coord)
-            prev = process_coordinate(prev, ctx, gate, graph, stats)
+            prev = process_coordinate(prev, ctx, gate, graph)
     if count:
         logging.info(
             "spatial_ingest_traces=%d avg_len=%.2f",
