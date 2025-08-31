@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from hippo_mem._faiss import faiss
-from hippo_mem.episodic.index import VectorIndex
+from hippo_mem.episodic.index import NumpyIndex, VectorIndex
 
 
 def _vec(values: list[float]) -> np.ndarray:
@@ -126,3 +126,22 @@ def test_pq_search_untrained_raises() -> None:
     assert not index.is_trained
     with pytest.raises(RuntimeError):
         index.search(v1, k=1)
+
+
+def test_numpy_index_collision_and_deletion() -> None:
+    """NumpyIndex overwrites ids and ignores missing removals."""
+
+    index = NumpyIndex(dim=3)
+    v1 = np.array([[1.0, 0.0, 0.0]], dtype="float32")
+    v2 = np.array([[0.0, 1.0, 0.0]], dtype="float32")
+    index.add(v1, 7)
+    index.add(v2, 7)  # collision
+    assert index.ntotal == 1
+    dist, ids = index.search(v2, k=1)
+    assert ids[0][0] == 7
+    index.remove(99)  # out-of-range
+    assert index.ntotal == 1
+    index.remove(7)
+    assert index.ntotal == 0
+    dist, ids = index.search(v1, k=1)
+    assert ids[0][0] == -1

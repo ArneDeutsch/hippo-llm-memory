@@ -112,6 +112,66 @@ def test_loads_real_model_offline(monkeypatch) -> None:
     assert tokenizer is not None
 
 
+def test_load_model_flash_attention_toggle(monkeypatch) -> None:
+    """``flash_attention`` flag toggles model attention implementation."""
+
+    class DummyModel:
+        def __init__(self) -> None:
+            self.config = SimpleNamespace(use_cache=False)
+            self.gradient_checkpointing_enable = lambda: None
+            self.called = False
+
+        def set_attn_implementation(self, impl: str) -> None:  # pragma: no cover - simple
+            self.called = True
+
+    def model_from_pretrained(_name: str, **_kw):
+        return DummyModel()
+
+    monkeypatch.setattr(
+        "hippo_mem.training.lora.AutoModelForCausalLM.from_pretrained", model_from_pretrained
+    )
+    monkeypatch.setattr(
+        "hippo_mem.training.lora.AutoTokenizer.from_pretrained",
+        lambda _n: SimpleNamespace(pad_token=None, eos_token="<eos>"),
+    )
+
+    cfg = TrainConfig(dry_run=True)
+    cfg.efficiency.flash_attention = True
+    model, _ = _load_model_and_tokenizer(cfg)
+    assert model.called
+
+    cfg.efficiency.flash_attention = False
+    model2, _ = _load_model_and_tokenizer(cfg)
+    assert not model2.called
+
+
+def test_load_model_flash_attention_warning(monkeypatch, caplog) -> None:
+    """Warning is logged when FlashAttention cannot be enabled."""
+
+    class DummyModel:
+        def __init__(self) -> None:
+            self.config = SimpleNamespace(use_cache=False)
+            self.gradient_checkpointing_enable = lambda: None
+
+        def set_attn_implementation(self, impl: str) -> None:  # pragma: no cover - trivial
+            raise RuntimeError("no flash")
+
+    monkeypatch.setattr(
+        "hippo_mem.training.lora.AutoModelForCausalLM.from_pretrained",
+        lambda _n, **_kw: DummyModel(),
+    )
+    monkeypatch.setattr(
+        "hippo_mem.training.lora.AutoTokenizer.from_pretrained",
+        lambda _n: SimpleNamespace(pad_token=None, eos_token="<eos>"),
+    )
+
+    cfg = TrainConfig(dry_run=True)
+    cfg.efficiency.flash_attention = True
+    with caplog.at_level(logging.WARNING):
+        _load_model_and_tokenizer(cfg)
+    assert "FlashAttention not available" in caplog.text
+
+
 def test_adapter_ablation_flags(monkeypatch) -> None:
     """Hydra flags toggle adapters independently."""
 
