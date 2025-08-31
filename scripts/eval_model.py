@@ -33,9 +33,8 @@ from hippo_mem.eval.harness import (
     run_suite,
 )
 from hippo_mem.eval.harness import main as harness_main
-from hippo_mem.utils.stores import assert_store_exists
-from scripts.store_paths import StoreLayout
-from scripts.store_paths import derive as derive_store_layout
+from hippo_mem.utils.stores import StoreLayout, assert_store_exists
+from hippo_mem.utils.stores import derive as derive_store_layout
 
 __all__ = [
     "AutoModelForCausalLM",

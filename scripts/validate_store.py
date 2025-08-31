@@ -8,8 +8,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from hippo_mem.utils.stores import assert_store_exists
-from scripts.store_paths import derive
+from hippo_mem.utils.stores import validate_store
 
 
 def main() -> None:
@@ -19,17 +18,22 @@ def main() -> None:
     parser.add_argument("--run_id", help="Run identifier; defaults to $RUN_ID or $DATE env vars")
     parser.add_argument("--algo", default="hei_nw", help="Memory algorithm identifier")
     parser.add_argument("--kind", default="episodic", help="Store kind to validate")
+    parser.add_argument(
+        "--preset", help="Preset identifier; baselines must not produce stores", default=None
+    )
     args = parser.parse_args()
 
-    layout = derive(run_id=args.run_id, algo=args.algo)
     try:
-        path = assert_store_exists(
-            str(layout.base_dir), layout.session_id, args.algo, kind=args.kind
+        path = validate_store(
+            run_id=args.run_id, algo=args.algo, kind=args.kind, preset=args.preset
         )
-    except FileNotFoundError as err:  # pragma: no cover - exercised in tests
+    except (FileExistsError, FileNotFoundError) as err:  # pragma: no cover - tested via CLI
         print(err, file=sys.stderr)
         raise SystemExit(1) from err
-    print(f"OK: {path}")
+    if path is None:
+        print(f"OK: no store for baseline {args.preset}")
+    else:
+        print(f"OK: {path}")
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point

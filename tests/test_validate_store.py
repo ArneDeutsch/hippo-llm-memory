@@ -3,7 +3,7 @@ import sys
 import pytest
 
 import scripts.validate_store as vs
-from scripts.store_paths import derive
+from hippo_mem.utils.stores import derive
 
 
 def run_validator(monkeypatch, args):

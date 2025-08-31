@@ -44,7 +44,7 @@ from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
-from hippo_mem.utils.stores import assert_store_exists
+from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
 from .bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 from .encode import encode_prompt
@@ -148,9 +148,9 @@ def _merge_memory_overrides(cfg: DictConfig) -> None:
     if not isinstance(cfg, DictConfig):
         return
     mem = cfg.get("memory")
-    is_memory_preset = str(cfg.get("preset", "")).split("/", 1)[0] == "memory"
+    memory_preset = is_memory_preset(str(cfg.get("preset")))
     with open_dict(cfg):
-        if not (is_memory_preset or mem not in (None, {})):
+        if not (memory_preset or mem not in (None, {})):
             for name in ("episodic", "relational", "spatial"):
                 if name in cfg:
                     cfg.pop(name)
@@ -574,6 +574,8 @@ def run_suite(
     tasks = _load_tasks(_dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile), cfg.n)
     flat_ablate = _flatten_ablate(base_cfg.get("ablate"))
     modules = _init_modules(base_cfg.get("memory"), flat_ablate)
+    if cfg.preset and not is_memory_preset(str(cfg.preset)):
+        modules = {}
 
     model_id = (str(base_cfg.model) or "").strip()
     if not model_id:
@@ -906,9 +908,11 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                     with open_dict(gate_cfg):
                         gate_cfg.enabled = bool(flat_ablate["spatial.gate.enabled"])
     modules = _init_modules(mem_cfg, flat_ablate)
+    if cfg.preset and not is_memory_preset(str(cfg.preset)):
+        modules = {}
     if cfg.memory_off:
         modules = {}
-    elif cfg.mode in ("test", "replay") and cfg.store_dir and cfg.session_id:
+    elif modules and cfg.mode in ("test", "replay") and cfg.store_dir and cfg.session_id:
         session_dir = Path(to_absolute_path(str(cfg.store_dir)))
         sid = str(cfg.session_id)
         assert_store_exists(str(session_dir.parent), sid, session_dir.name)
