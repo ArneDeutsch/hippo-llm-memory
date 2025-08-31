@@ -26,6 +26,7 @@ def test_gate_ablation(tmp_path: Path, preset: str, suite: str, key: str) -> Non
         f"preset={preset}",
         "n=1",
         "seed=1337",
+        "model=models/tiny-gpt2",
         f"outdir={outdir}",
         f"+ablate.{key}=false",
         "dry_run=true",

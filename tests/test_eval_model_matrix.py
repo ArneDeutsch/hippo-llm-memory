@@ -20,6 +20,7 @@ def test_eval_model_run_matrix(tmp_path: Path) -> None:
         "+suites=[episodic]",
         "+n_values=[2]",
         "+seeds=[1337]",
+        "model=models/tiny-gpt2",
         f"outdir={outdir}",
         "dry_run=true",
     ]
@@ -44,6 +45,7 @@ def test_eval_model_run_matrix_episodic_multi(tmp_path: Path) -> None:
         "tasks=[episodic_multi]",
         "n_values=[2]",
         "seeds=[1337]",
+        "model=models/tiny-gpt2",
         f"outdir={outdir}",
         "dry_run=true",
     ]
@@ -68,6 +70,7 @@ def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
         "+suites=[episodic]",
         "+n_values=[2]",
         "+seeds=[1337]",
+        "model=models/tiny-gpt2",
         "dry_run=true",
         "date=20250824",
     ]
@@ -92,6 +95,7 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
         "+suites=[episodic]",
         "+n_values=[2]",
         "+seeds=[1337]",
+        "model=models/tiny-gpt2",
         "dry_run=true",
         "date=20250824",
     ]
@@ -125,6 +129,7 @@ def test_eval_model_run_matrix_date_time(tmp_path: Path) -> None:
         "+suites=[episodic]",
         "+n_values=[2]",
         "+seeds=[1337]",
+        "model=models/tiny-gpt2",
         "dry_run=true",
         "date=20250829_0841",
     ]
@@ -147,6 +152,7 @@ def test_eval_model_run_matrix_presets(tmp_path: Path) -> None:
         "tasks=[episodic]",
         "n_values=[2]",
         "seeds=[1337]",
+        "model=models/tiny-gpt2",
         f"outdir={tmp_path}",
         "dry_run=true",
     ]
