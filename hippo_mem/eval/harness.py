@@ -206,17 +206,17 @@ def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> 
     seed:
         RNG seed component of the dataset filename.
     profile:
-        Optional difficulty profile (``base`` or ``hard``). When provided the
-        function first searches for files prefixed with ``{suite}_{profile}_`` or
-        in a ``{suite}_{profile}/`` subdirectory before falling back to the base
-        lookup logic.
+        Optional difficulty profile (``easy``/``default``/``hard``). When
+        provided the function first searches for files prefixed with
+        ``{suite}_{profile}_`` or in a ``{suite}_{profile}/`` subdirectory
+        before falling back to the default lookup logic.
     """
 
     sizes = [50, 200, 1000]
     size = next((s for s in sizes if n <= s), sizes[-1])
 
     candidates: List[Path] = []
-    if profile and profile != "base":
+    if profile and profile != "default":
         candidates.append(Path("data") / f"{suite}_{profile}_{size}_{seed}.jsonl")
         candidates.append(Path("data") / f"{suite}_{profile}" / f"{size}_{seed}.jsonl")
     candidates.append(Path("data") / f"{suite}_{size}_{seed}.jsonl")
@@ -226,7 +226,7 @@ def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> 
             return path
 
     patterns = []
-    if profile and profile != "base":
+    if profile and profile != "default":
         patterns.append(f"{suite}_{profile}_*_{size}_{seed}.jsonl")
         patterns.append(
             f"{suite}_{profile}/{profile}_*_{size}_{seed}.jsonl"
