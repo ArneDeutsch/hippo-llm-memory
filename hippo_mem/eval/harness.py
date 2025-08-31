@@ -1019,6 +1019,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             if "spatial" in modules:
                 modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
         store_sizes, store_diags = _store_sizes(modules)
+        if cfg.preset and not is_memory_preset(str(cfg.preset)):
+            gate_registry.reset()
         _write_outputs(
             outdir,
             pre_rows,
@@ -1113,6 +1115,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             "latency_ms_mean": sum(r["latency_ms"] for r in post_rows) / max(1, len(post_rows)),
         }
         store_sizes, store_diags = _store_sizes(modules)
+        if cfg.preset and not is_memory_preset(str(cfg.preset)):
+            gate_registry.reset()
         _write_outputs(
             outdir,
             [],
@@ -1167,6 +1171,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     for _ in range(int(cfg.replay_cycles)):
         replay_samples += _run_replay(cfg, modules, tasks)
     store_sizes, store_diags = _store_sizes(modules)
+    if cfg.preset and not is_memory_preset(str(cfg.preset)):
+        gate_registry.reset()
     _write_outputs(
         outdir,
         pre_rows,

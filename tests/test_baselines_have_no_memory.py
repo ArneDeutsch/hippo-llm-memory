@@ -32,3 +32,4 @@ def test_baseline_has_no_memory(tmp_path: Path) -> None:
     metrics = json.loads((outdir / "metrics.json").read_text())
     assert metrics["store"]["size"] == 0
     assert all(m["requests"] == 0 for m in metrics["retrieval"].values())
+    assert all(v["attempts"] == 0 for v in metrics["gates"].values())
