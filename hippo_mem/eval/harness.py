@@ -145,7 +145,13 @@ def _merge_memory_overrides(cfg: DictConfig) -> None:
     if not isinstance(cfg, DictConfig):
         return
     mem = cfg.get("memory")
+    is_memory_preset = str(cfg.get("preset", "")).split("/", 1)[0] == "memory"
     with open_dict(cfg):
+        if not (is_memory_preset or mem not in (None, {})):
+            for name in ("episodic", "relational", "spatial"):
+                if name in cfg:
+                    cfg.pop(name)
+            return
         if mem is None:
             cfg.memory = {}
         mem = cfg.memory
