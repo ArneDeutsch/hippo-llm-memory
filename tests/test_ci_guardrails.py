@@ -34,8 +34,9 @@ def test_retrieval_requests_guard(
     )
 
     monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed, profile=None: data_file)
-    with pytest.raises(RuntimeError, match="retrieval.requests == 0"):
+    with pytest.raises(RuntimeError) as exc:
         eval_model.run_suite(cfg)
+    assert "retrieval.requests == 0" in str(exc.value)
 
 
 def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -93,8 +94,9 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         max_new_tokens=8,
         model="models/tiny-gpt2",
     )
-    with pytest.raises(RuntimeError, match="refusal rate > 0.5"):
+    with pytest.raises(RuntimeError) as exc:
         eval_model.run_suite(cfg)
+    assert "refusal rate > 0.5" in str(exc.value)
 
 
 def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -144,8 +146,9 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "--min-uplift",
         "0.2",
     ]
-    with pytest.raises(RuntimeError, match=r"EM uplift < \+0.20"):
+    with pytest.raises(RuntimeError) as exc:
         test_consolidation.main(args)
+    assert "EM uplift < +0.20" in str(exc.value)
 
 
 def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -199,6 +202,8 @@ def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
         "ci",
     ]
     test_consolidation.main(args)
+    metrics = json.loads((post_root / "seed_b" / "metrics.json").read_text())
+    assert metrics["delta"]["em"] > 0
 
 
 def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -251,5 +256,6 @@ def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "--uplift-mode",
         "ci",
     ]
-    with pytest.raises(RuntimeError, match="CI includes 0"):
+    with pytest.raises(RuntimeError) as exc:
         test_consolidation.main(args)
+    assert "CI includes 0" in str(exc.value)

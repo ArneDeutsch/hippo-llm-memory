@@ -18,8 +18,9 @@ def test_assert_store_exists_ok(tmp_path, algo, kind):
 
 
 def test_assert_store_exists_missing(tmp_path):
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(FileNotFoundError) as exc:
         assert_store_exists(str(tmp_path), "s", "hei_nw")
+    assert "Persisted store not found" in str(exc.value)
 
 
 @pytest.mark.parametrize("algo,prefix", [("hei_nw", "hei"), ("sgc_rss", "sgc"), ("smpd", "smpd")])

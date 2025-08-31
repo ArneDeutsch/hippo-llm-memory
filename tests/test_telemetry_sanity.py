@@ -25,8 +25,9 @@ def _reset_registry() -> None:
 def test_valid_stats_pass() -> None:
     set_strict_telemetry(True)
     record_stats("episodic", k=4, hits=2, tokens=4, latency_ms=0.1)
-    # Should not raise
-    validate_retrieval_snapshot(registry.get("episodic").snapshot())
+    snap = registry.get("episodic").snapshot()
+    assert snap["requests"] == 1 and snap["hits"] == 2
+    validate_retrieval_snapshot(snap)
     set_strict_telemetry(False)
 
 

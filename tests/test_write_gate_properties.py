@@ -65,7 +65,9 @@ def test_threshold_blocks_writes(prob: float, query: np.ndarray) -> None:
 
 
 def test_write_gate_rejects_bad_config() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc:
         WriteGate(tau=-0.1)
-    with pytest.raises(ValueError):
+    assert "tau" in str(exc.value)
+    with pytest.raises(ValueError) as exc:
         WriteGate(alpha=1.5)
+    assert "alpha" in str(exc.value)

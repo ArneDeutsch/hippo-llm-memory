@@ -33,14 +33,18 @@ def test_spatial_gate_reduces_repeats() -> None:
 
 
 def test_spatial_gate_rejects_bad_config() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc:
         SpatialGate(block_threshold=1.5)
-    with pytest.raises(ValueError):
+    assert "block_threshold" in str(exc.value)
+    with pytest.raises(ValueError) as exc:
         SpatialGate(repeat_N=0)
-    with pytest.raises(ValueError):
+    assert "repeat_N" in str(exc.value)
+    with pytest.raises(ValueError) as exc:
         SpatialGate(max_degree=0)
-    with pytest.raises(ValueError):
+    assert "max_degree" in str(exc.value)
+    with pytest.raises(ValueError) as exc:
         SpatialGate(recent_window=0)
+    assert "recent_window" in str(exc.value)
 
 
 def test_spatial_gate_penalizes_high_degree() -> None:

@@ -296,4 +296,6 @@ def test_stop_background_tasks_idempotent() -> None:
     kg.upsert("A", "r", "B", "ctx")
     time.sleep(0.02)
     kg.stop_background_tasks()
+    assert kg._task_manager is not None and kg._task_manager._thread is None
     kg.stop_background_tasks()
+    assert kg._task_manager._thread is None
