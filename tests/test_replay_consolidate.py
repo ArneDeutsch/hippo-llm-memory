@@ -73,7 +73,10 @@ def test_replay_consolidate_auto_targets(tmp_path: Path) -> None:
         "models/tiny-gpt2",
     ]
     subprocess.run(cmd, check=True, env=env)
-    assert (outdir / "adapter_config.json").exists()
+    cfg_path = outdir / "adapter_config.json"
+    assert cfg_path.exists()
+    cfg = json.loads(cfg_path.read_text())
+    assert "target_modules" in cfg and len(cfg["target_modules"]) > 0
 
 
 @pytest.mark.slow

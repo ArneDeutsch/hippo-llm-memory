@@ -32,4 +32,7 @@ def test_relational_restore_ignores_duplicate_edges(tmp_path) -> None:
     with sqlite3.connect(db_path) as con:
         cur = con.cursor()
         cur.execute("SELECT COUNT(*) FROM edges WHERE id=1")
-        assert cur.fetchone()[0] == 1
+        count = cur.fetchone()[0]
+    assert count == 1
+    assert kg.graph.number_of_edges() == 1
+    assert kg.graph.has_edge("a", "b")

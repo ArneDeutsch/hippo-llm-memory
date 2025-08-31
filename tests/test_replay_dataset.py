@@ -52,6 +52,8 @@ def test_replay_dataset_respects_ratio(ratio: float) -> None:
     sampled_ratio = replay_count / len(samples)
 
     assert abs(sampled_ratio - ratio) <= 0.05
+    assert 0 < replay_count < len(samples)
+    assert len(samples) == 1000
 
 
 def test_replay_dataset_falls_back_when_replay_exhausted() -> None:
