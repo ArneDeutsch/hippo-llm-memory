@@ -961,7 +961,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     replay_samples = 0
 
     if cfg.mode == "teach":
-        pre_rows, _, _, _, _ = _evaluate(
+        pre_rows, _, in_tok, gen_tok, elapsed = _evaluate(
             tasks,
             modules,
             tokenizer,
@@ -974,6 +974,15 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
         )
+        total_tokens = in_tok + gen_tok
+        compute = {
+            "input_tokens": in_tok,
+            "generated_tokens": gen_tok,
+            "total_tokens": total_tokens,
+            "time_ms_per_100": 100 * elapsed * 1000 / max(1, total_tokens),
+            "rss_mb": _rss_mb(),
+            "latency_ms_mean": sum(r["latency_ms"] for r in pre_rows) / max(1, len(pre_rows)),
+        }
         replay_samples = _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
@@ -992,7 +1001,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             None,
             cfg,
             flat_ablate,
-            None,
+            compute,
             replay_samples=replay_samples,
             store_sizes=store_sizes,
         )
