@@ -570,7 +570,7 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         path = Path(directory) / session_id
         path.mkdir(parents=True, exist_ok=True)
         if fmt == "jsonl":
-            file = path / "relational.jsonl"
+            file = path / "kg.jsonl"
 
             def _write(tmp_path: Path) -> None:
                 with open(tmp_path, "w", encoding="utf-8") as fh:
@@ -650,7 +650,9 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
 
         path = Path(directory) / session_id
         if fmt == "jsonl":
-            file = path / "relational.jsonl"
+            file = path / "kg.jsonl"
+            if not file.exists():
+                file = path / "relational.jsonl"
             for rec in io.read_jsonl(file):
                 if rec.get("type") == "node":
                     emb = (

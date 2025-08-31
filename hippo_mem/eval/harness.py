@@ -831,8 +831,9 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         if "episodic" in modules:
             modules["episodic"]["store"].load(str(session_dir), sid)
         if "relational" in modules:
+            kg_file = session_dir / sid / "kg.jsonl"
             rel_file = session_dir / sid / "relational.jsonl"
-            if rel_file.exists():
+            if kg_file.exists() or rel_file.exists():
                 modules["relational"]["kg"].load(str(session_dir), sid)
         if "spatial" in modules:
             spat_file = session_dir / sid / "spatial.jsonl"

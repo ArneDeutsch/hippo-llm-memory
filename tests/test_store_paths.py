@@ -5,14 +5,14 @@ from hippo_mem.utils.stores import assert_store_exists
 from scripts.store_paths import derive
 
 
-@pytest.mark.parametrize("algo", ["hei_nw", "sgc_rss"])
-def test_assert_store_exists_ok(tmp_path, algo):
+@pytest.mark.parametrize("algo,kind", [("hei_nw", "episodic"), ("sgc_rss", "kg")])
+def test_assert_store_exists_ok(tmp_path, algo, kind):
     base = tmp_path
     sid = "s"
-    store = base / algo / sid / "episodic.jsonl"
+    store = base / algo / sid / f"{kind}.jsonl"
     store.parent.mkdir(parents=True)
     store.write_text("{}")
-    path = assert_store_exists(str(base), sid, algo)
+    path = assert_store_exists(str(base), sid, algo, kind=kind)
     assert path == store
 
 
@@ -32,9 +32,10 @@ def test_derive_store_layout(monkeypatch, tmp_path, algo, prefix):
 
 @pytest.mark.parametrize("append", [False, True])
 @pytest.mark.parametrize(
-    "preset,algo", [("memory/hei_nw", "hei_nw"), ("memory/sgc_rss", "sgc_rss")]
+    "preset,algo,kind",
+    [("memory/hei_nw", "hei_nw", "episodic"), ("memory/sgc_rss", "sgc_rss", "kg")],
 )
-def test_eval_model_store_dir_normalization(tmp_path, monkeypatch, append, preset, algo):
+def test_eval_model_store_dir_normalization(tmp_path, monkeypatch, append, preset, algo, kind):
     import scripts.eval_model as em
 
     base = tmp_path / "base"
@@ -59,4 +60,4 @@ def test_eval_model_store_dir_normalization(tmp_path, monkeypatch, append, prese
 
     expected = store_dir if append else base / algo
     assert called["cfg_store_dir"] == str(expected)
-    assert called["assert_args"] == (str(base), "sid", algo, "episodic")
+    assert called["assert_args"] == (str(base), "sid", algo, kind)
