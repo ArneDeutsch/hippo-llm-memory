@@ -255,6 +255,8 @@ def _eval_tasks(
     *,
     flag: str,
     start_idx: int,
+    retrieval_enabled: bool,
+    long_context_enabled: bool,
 ) -> tuple[List[Dict[str, object]], Dict[str, float], int, float, float, float]:
     """Evaluate ``tasks`` returning rows, metrics and token stats."""
 
@@ -267,7 +269,7 @@ def _eval_tasks(
     for off, item in enumerate(tasks):
         item_t0 = time.perf_counter()
         epi_feats = None
-        if "episodic" in modules:
+        if retrieval_enabled and "episodic" in modules:
             store = modules["episodic"]["store"]
             traces = store.recall(np.zeros(8, dtype="float32"), 1)
             if traces:
@@ -276,19 +278,21 @@ def _eval_tasks(
                 mem = torch.zeros(1, 1, 8)
             hidden_t = torch.zeros(1, 1, 8)
             epi_feats = modules["episodic"]["adapter"](hidden_t, mem).detach().numpy()[0]
-        if "relational" in modules:
+        if retrieval_enabled and "relational" in modules:
             modules["relational"]["kg"].retrieve(np.zeros(8, dtype="float32"))
             modules["relational"]["adapter"](
                 np.zeros(8, dtype="float32"),
                 np.zeros((1, 8), dtype="float32"),
                 epi_feats,
             )
-        if "spatial" in modules:
+        if retrieval_enabled and "spatial" in modules:
             modules["spatial"]["map"].plan("a", "b")
             plans = torch.zeros(1, 1, 8)
             modules["spatial"]["adapter"](torch.zeros(1, 1, 8), plans)
 
         prompt = str(item["prompt"])
+        if long_context_enabled and not retrieval_enabled:
+            prompt = f"{prompt} [CTX]"
         answer = str(item["answer"])
         pred = str(item.get("pred", answer))
 
@@ -397,10 +401,18 @@ def run_suite(
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
+    retrieval_enabled = bool(cfg.get("retrieval", {}).get("enabled", False))
+    long_ctx_enabled = bool(cfg.get("long_context", {}).get("enabled", False))
+
     registry.reset()
     gate_registry.reset()
     rows, metrics_pre, in_tokens, gen_tokens, elapsed, lat_mean = _eval_tasks(
-        tasks, modules, flag="pre_replay", start_idx=0
+        tasks,
+        modules,
+        flag="pre_replay",
+        start_idx=0,
+        retrieval_enabled=retrieval_enabled,
+        long_context_enabled=long_ctx_enabled,
     )
     total_time = elapsed
     lat_sum = lat_mean * len(tasks)
@@ -422,7 +434,14 @@ def run_suite(
                 cycle_gen_tokens,
                 cycle_time,
                 cycle_lat,
-            ) = _eval_tasks(tasks, modules, flag=f"post_replay_{cycle}", start_idx=start)
+            ) = _eval_tasks(
+                tasks,
+                modules,
+                flag=f"post_replay_{cycle}",
+                start_idx=start,
+                retrieval_enabled=retrieval_enabled,
+                long_context_enabled=long_ctx_enabled,
+            )
             rows.extend(cycle_rows)
             post_tokens = cycle_in_tokens + cycle_gen_tokens
             post_metrics[str(cycle)] = {
