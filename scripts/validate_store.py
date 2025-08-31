@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from hippo_mem.utils.stores import assert_store_exists
-
-from .store_paths import derive
+from scripts.store_paths import derive
 
 
 def main() -> None:
