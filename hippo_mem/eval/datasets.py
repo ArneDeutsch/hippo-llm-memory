@@ -26,14 +26,28 @@ SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
 
 
-def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[str, object]]:
-    """Generate ``size`` W4 stories with distractor events and queries.
+def generate_episodic(
+    size: int,
+    seed: int,
+    distractors: int | None = None,
+    profile: str = "default",
+) -> List[Dict[str, object]]:
+    """Generate ``size`` W4 stories with optional distractors and swaps.
 
-    Each item contains a multi-sentence story where the final sentence is the
-    relevant event followed by a query.  ``distractors`` controls how many
-    unrelated sentences precede the target event.  The generator is completely
-    deterministic given ``seed``.  Episodes are annotated with ``reward`` and
-    ``pin`` flags used by the neuromodulated write gate.
+    Parameters
+    ----------
+    size:
+        Number of items to generate.
+    seed:
+        RNG seed.
+    distractors:
+        Optional count of distractor sentences to insert *before* the target
+        fact. When ``None`` the count is derived from ``profile``.
+    profile:
+        Difficulty profile (``easy``/``default``/``hard``). ``hard`` adds an
+        extra distractor after the target event that reuses the same location
+        with a different protagonist, forcing models to avoid relying on the
+        last sentence.
     """
 
     rng = random.Random(seed)
@@ -43,23 +57,32 @@ def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[s
     times = ["Monday", "Tuesday", "Wednesday", "Thursday"]
     qtypes = ["who_at_where", "what_did_who", "where_was_who", "when_was_who"]
 
+    if distractors is None:
+        distractors = {"easy": 0, "default": 2, "hard": 4}[profile]
+    post_distractors = 1 if profile == "hard" else 0
+
     tasks: List[Dict[str, object]] = []
     for _ in range(size):
-        # Build distractor sentences first
-        distractor_sents: List[str] = []
+        pre_sents: List[str] = []
         for _ in range(distractors):
             dwho = rng.choice(people)
             dwhat = rng.choice(actions)
             dwhere = rng.choice(places)
             dwhen = rng.choice(times)
-            distractor_sents.append(f"{dwho} {dwhat} at the {dwhere} on {dwhen}.")
+            pre_sents.append(f"{dwho} {dwhat} at the {dwhere} on {dwhen}.")
 
-        # Target sentence that the query will reference
         who = rng.choice(people)
         what = rng.choice(actions)
         where = rng.choice(places)
         when = rng.choice(times)
         target_sent = f"{who} {what} at the {where} on {when}."
+
+        post_sents: List[str] = []
+        for _ in range(post_distractors):
+            pdwho = rng.choice([p for p in people if p != who])
+            pdwhat = rng.choice(actions)
+            pdwhen = rng.choice(times)
+            post_sents.append(f"{pdwho} {pdwhat} at the {where} on {pdwhen}.")
 
         qtype = rng.choice(qtypes)
         if qtype == "who_at_where":
@@ -75,7 +98,7 @@ def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[s
             question = f"When was {who} at the {where}?"
             answer = when
 
-        story = " ".join(distractor_sents + [target_sent])
+        story = " ".join(pre_sents + [target_sent] + post_sents)
         reward = rng.random() < 0.3
         pin = rng.random() < 0.1
         tasks.append(
@@ -93,10 +116,16 @@ def generate_episodic(size: int, seed: int, distractors: int = 0) -> List[Dict[s
 def generate_episodic_multi(
     size: int,
     seed: int,
-    distractors: int = 8,
-    corrections: bool = True,
+    distractors: int | None = None,
+    corrections: bool | None = None,
+    profile: str = "default",
 ) -> List[Dict[str, object]]:
     """Multi-turn episodes with distractors and optional corrections."""
+
+    if distractors is None:
+        distractors = {"easy": 8, "default": 10, "hard": 12}[profile]
+    if corrections is None:
+        corrections = True
 
     rng = random.Random(seed)
     people = ["Alice", "Bob", "Carol", "Dave"]
@@ -122,7 +151,12 @@ def generate_episodic_multi(
     return tasks
 
 
-def generate_episodic_cross(size: int, seed: int, entity_pool: int = 4) -> List[Dict[str, object]]:
+def generate_episodic_cross(
+    size: int,
+    seed: int,
+    entity_pool: int | None = None,
+    profile: str = "default",
+) -> List[Dict[str, object]]:
     """Cross-episode recall after a flush marker.
 
     Parameters
@@ -133,10 +167,15 @@ def generate_episodic_cross(size: int, seed: int, entity_pool: int = 4) -> List[
         RNG seed for determinism.
     entity_pool:
         Number of unique people/places to sample from. Increasing this raises
-        task difficulty by reducing memorisation of a small fixed set.
+        task difficulty by reducing memorisation of a small fixed set. When
+        ``None`` the value is derived from ``profile``.
+    profile:
+        Difficulty profile controlling the default ``entity_pool`` size.
     """
 
     rng = random.Random(seed)
+    if entity_pool is None:
+        entity_pool = {"easy": 4, "default": 6, "hard": 8}[profile]
     base_people = [
         "Alice",
         "Bob",
@@ -172,11 +211,17 @@ def generate_episodic_cross(size: int, seed: int, entity_pool: int = 4) -> List[
 def generate_episodic_capacity(
     size: int,
     seed: int,
-    context_budget: int = 256,
+    context_budget: int | None = None,
+    profile: str = "default",
 ) -> List[Dict[str, object]]:
-    """Episodes exceeding the decoding context budget."""
+    """Episodes exceeding the decoding context budget.
+
+    ``context_budget`` defaults depend on ``profile``.
+    """
 
     rng = random.Random(seed)
+    if context_budget is None:
+        context_budget = {"easy": 256, "default": 384, "hard": 512}[profile]
     people = ["Alice", "Bob", "Carol", "Dave"]
     places = ["Cafe", "Library", "Park", "Mall"]
     tasks: List[Dict[str, object]] = []
@@ -194,9 +239,10 @@ def generate_episodic_capacity(
 def generate_semantic(
     size: int,
     seed: int,
-    hop_depth: int = 2,
-    inject_contradictions: bool = False,
+    hop_depth: int | None = None,
+    inject_contradictions: bool | None = None,
     require_memory: bool = False,
+    profile: str = "default",
 ) -> List[Dict[str, object]]:
     """Generate 2–3 hop fact chains linking people, items, stores and cities.
 
@@ -217,6 +263,9 @@ def generate_semantic(
         When ``True``, the prompt omits fact sentences, forcing models to
         retrieve them from memory.  Facts are still returned in ``facts`` for
         ingestion during teach mode.
+    profile:
+        Difficulty profile controlling default ``hop_depth`` and contradiction
+        behaviour.
 
     Returns
     -------
@@ -225,6 +274,10 @@ def generate_semantic(
         a ``schema_fit`` label and ``time`` index for consolidation studies.
     """
 
+    if hop_depth is None:
+        hop_depth = 2 if profile != "hard" else 3
+    if inject_contradictions is None:
+        inject_contradictions = profile in {"default", "hard"}
     if hop_depth not in {2, 3}:
         raise ValueError("hop_depth must be 2 or 3")
 
@@ -282,10 +335,13 @@ def generate_semantic(
 def generate_spatial(
     size: int,
     seed: int,
-    grid_size: int = 5,
-    obstacle_density: float = 0.2,
+    grid_size: int | None = None,
+    obstacle_density: float | None = None,
+    profile: str = "default",
 ) -> List[Dict[str, object]]:
     """Generate grid-world tasks with obstacles, macros and trajectories.
+
+    Defaults for ``grid_size`` and ``obstacle_density`` depend on ``profile``.
 
     A third of the tasks ask for the shortest path length between two
     coordinates while avoiding obstacles.  Another third repeat **macro paths**—
@@ -297,6 +353,11 @@ def generate_spatial(
     from collections import deque
 
     rng = random.Random(seed)
+
+    if grid_size is None:
+        grid_size = {"easy": 5, "default": 6, "hard": 7}[profile]
+    if obstacle_density is None:
+        obstacle_density = {"easy": 0.15, "default": 0.25, "hard": 0.3}[profile]
 
     obstacles: Set[tuple[int, int]] = set()
     for x in range(grid_size):
@@ -404,8 +465,10 @@ SUITE_TO_GENERATOR = {
 
 
 # kept: used by tests/test_datasets.py
-def generate_dataset(suite: str, size: int, seed: int, **kwargs: object) -> List[Dict[str, object]]:
-    """Dispatch to the generator for ``suite``.
+def generate_dataset(
+    suite: str, size: int, seed: int, profile: str = "default", **kwargs: object
+) -> List[Dict[str, object]]:
+    """Dispatch to the generator for ``suite`` with a difficulty profile.
 
     Additional keyword arguments are forwarded to the underlying generator,
     allowing callers to customise parameters such as grid size or obstacle
@@ -416,7 +479,7 @@ def generate_dataset(suite: str, size: int, seed: int, **kwargs: object) -> List
         generator = SUITE_TO_GENERATOR[suite]
     except KeyError as exc:  # pragma: no cover - defensive programming
         raise ValueError(f"Unknown suite: {suite}") from exc
-    return generator(size, seed, **kwargs)
+    return generator(size, seed, profile=profile, **kwargs)
 
 
 def write_jsonl(path: Path, items: Iterable[Dict[str, object]]) -> None:
@@ -483,7 +546,7 @@ def update_dataset_card(
 def _load_profile(name: str) -> Dict[str, Any]:
     """Return profile configuration for ``name`` or an empty dict."""
 
-    cfg_dir = Path(__file__).resolve().parent.parent / "configs" / "datasets"
+    cfg_dir = Path(__file__).resolve().parents[2] / "configs" / "datasets"
     path = cfg_dir / f"{name}.yaml"
     if not path.exists():  # pragma: no cover - defensive
         return {}
@@ -517,8 +580,8 @@ def main() -> None:
     parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
     parser.add_argument(
         "--profile",
-        choices=["base", "hard"],
-        default="base",
+        choices=["easy", "default", "hard"],
+        default="default",
         help="Difficulty profile to apply",
     )
     parser.add_argument(
@@ -566,18 +629,21 @@ def main() -> None:
     profile_cfg = _load_profile(args.profile).get(args.suite, {})
 
     generator = SUITE_TO_GENERATOR[args.suite]
+    common = {"profile": args.profile}
     if args.suite == "spatial":
         items = generator(
             args.size,
             args.seed,
             grid_size=profile_cfg.get("grid_size", args.grid_size),
             obstacle_density=profile_cfg.get("obstacle_density", args.obstacle_density),
+            **common,
         )
     elif args.suite == "episodic":
         items = generator(
             args.size,
             args.seed,
             distractors=profile_cfg.get("distractors", args.distractors),
+            **common,
         )
     elif args.suite == "episodic_multi":
         items = generator(
@@ -585,18 +651,21 @@ def main() -> None:
             args.seed,
             distractors=profile_cfg.get("distractors", args.distractors),
             corrections=profile_cfg.get("corrections", True),
+            **common,
         )
     elif args.suite == "episodic_cross":
         items = generator(
             args.size,
             args.seed,
             entity_pool=profile_cfg.get("entity_pool", args.entity_pool),
+            **common,
         )
     elif args.suite == "episodic_capacity":
         items = generator(
             args.size,
             args.seed,
             context_budget=profile_cfg.get("context_budget", args.context_budget),
+            **common,
         )
     elif args.suite == "semantic":
         items = generator(
@@ -604,9 +673,10 @@ def main() -> None:
             args.seed,
             hop_depth=profile_cfg.get("hop_depth", args.hop_depth),
             inject_contradictions=profile_cfg.get("inject_contradictions", args.contradict),
+            **common,
         )
     else:
-        items = generator(args.size, args.seed)
+        items = generator(args.size, args.seed, **common)
     write_jsonl(args.out, items)
     checksum_path = args.out.parent / "checksums.json"
     digest = record_checksum(args.out, checksum_path)
