@@ -874,9 +874,22 @@ def _load_preset(cfg: DictConfig) -> DictConfig:
     return cfg
 
 
+def _strict_flag(cfg: DictConfig) -> bool:
+    """Return ``True`` when strict telemetry should be enabled."""
+
+    cfg_val = cfg.get("strict_telemetry")
+    if cfg_val is not None:
+        return bool(cfg_val)
+    env_val = os.environ.get("STRICT_TELEMETRY")
+    if env_val is None:
+        return False
+    return env_val not in ("0", "false", "False", "")
+
+
 def evaluate(cfg: DictConfig, outdir: Path) -> None:
     """Run a single evaluation and write outputs to ``outdir``."""
 
+    set_strict_telemetry(_strict_flag(cfg))
     registry.reset()
     gate_registry.reset()
 
@@ -1175,7 +1188,8 @@ def main(cfg: DictConfig) -> None:
     with open_dict(cfg):
         run_date = _date_str(cfg.get("date"))
         cfg.date = run_date
-        set_strict_telemetry(cfg.get("strict_telemetry", False))
+        cfg.strict_telemetry = _strict_flag(cfg)
+        set_strict_telemetry(cfg.strict_telemetry)
 
     base_cfg = cfg
     outdir_cfg = cfg.get("outdir")
