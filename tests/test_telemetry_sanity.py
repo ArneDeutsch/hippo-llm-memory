@@ -1,4 +1,5 @@
 import pytest
+from omegaconf import OmegaConf
 
 from hippo_mem.common.telemetry import (
     record_stats,
@@ -6,6 +7,7 @@ from hippo_mem.common.telemetry import (
     set_strict_telemetry,
     validate_retrieval_snapshot,
 )
+from hippo_mem.eval import harness
 
 
 @pytest.fixture(autouse=True)
@@ -39,4 +41,23 @@ def test_hit_rate_mismatch_raises() -> None:
     set_strict_telemetry(True)
     with pytest.raises(ValueError):
         validate_retrieval_snapshot({"total_k": 10, "hits": 5, "hit_rate_at_k": 0.9})
+    set_strict_telemetry(False)
+
+
+def test_env_var_enables_strict(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("STRICT_TELEMETRY", "1")
+    cfg = OmegaConf.create(
+        {
+            "suite": "missing",
+            "n": 1,
+            "seed": 0,
+            "preset": "baselines/core",
+            "model": "models/tiny-gpt2",
+            "dataset_profile": None,
+        }
+    )
+    with pytest.raises(FileNotFoundError):
+        harness.evaluate(cfg, tmp_path)
+    with pytest.raises(ValueError):
+        validate_retrieval_snapshot({"total_k": 1, "hits": 2, "hit_rate_at_k": 0.0})
     set_strict_telemetry(False)

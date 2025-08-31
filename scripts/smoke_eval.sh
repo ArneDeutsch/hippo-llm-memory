@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export STRICT_TELEMETRY=1
 source "$(dirname "$0")/_env.sh"
 
 outdir=$(mktemp -d)
