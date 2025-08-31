@@ -504,10 +504,18 @@ def _run_replay(
     return count
 
 
-def _store_sizes(modules: Dict[str, Dict[str, object]]) -> Dict[str, int]:
-    """Return the number of items per memory store."""
+def _store_sizes(
+    modules: Dict[str, Dict[str, object]],
+) -> tuple[Dict[str, int], Dict[str, Dict[str, int]]]:
+    """Return the number of persisted items per memory store and diagnostics.
+
+    The first mapping reports item counts used in ``metrics["store"]["per_memory"]``.
+    The second mapping contains diagnostic counters for stores that require
+    additional context.
+    """
 
     sizes: Dict[str, int] = {}
+    diags: Dict[str, Dict[str, int]] = {}
     if "episodic" in modules:
         store = modules["episodic"]["store"]
         try:
@@ -519,10 +527,14 @@ def _store_sizes(modules: Dict[str, Dict[str, object]]) -> Dict[str, int]:
     if "relational" in modules:
         kg = modules["relational"]["kg"]
         sizes["relational"] = int(kg.graph.number_of_edges())
+        diags["relational"] = {"nodes_added": int(kg.graph.number_of_nodes())}
     if "spatial" in modules:
         g = modules["spatial"].get("map")
-        sizes["spatial"] = int(g.log_status().get("writes", 0))
-    return sizes
+        nodes = len(getattr(g, "_context_to_id", {}))
+        edges = sum(len(nbrs) for nbrs in getattr(g, "graph", {}).values())
+        sizes["spatial"] = int(nodes + edges)
+        diags["spatial"] = {"writes": int(g.log_status().get("writes", 0))}
+    return sizes, diags
 
 
 def _enforce_guardrails(
@@ -629,7 +641,7 @@ def run_suite(
         replay_samples += _run_replay(base_cfg, modules, tasks)
 
     total_tokens = in_tokens + gen_tokens
-    store_sizes = _store_sizes(modules)
+    store_sizes, store_diags = _store_sizes(modules)
     retrieval_snaps = registry.all_snapshots()
     metrics_dict = {
         "suite": cfg.suite,
@@ -653,6 +665,7 @@ def run_suite(
         "store": {
             "size": sum(store_sizes.values()),
             "per_memory": store_sizes,
+            "diagnostics": store_diags,
         },
     }
     _enforce_guardrails(base_cfg, metrics, None, retrieval_snaps, has_memory=bool(modules))
@@ -671,6 +684,7 @@ def _write_outputs(
     *,
     replay_samples: int = 0,
     store_sizes: Dict[str, int] | None = None,
+    store_diags: Dict[str, Dict[str, int]] | None = None,
 ) -> None:
     """Persist metrics and metadata."""
 
@@ -728,6 +742,7 @@ def _write_outputs(
         "store": {
             "size": sum((store_sizes or {}).values()),
             "per_memory": store_sizes or {},
+            "diagnostics": store_diags or {},
         },
     }
     if compute:
@@ -1005,7 +1020,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                 modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
             if "spatial" in modules:
                 modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
-        store_sizes = _store_sizes(modules)
+        store_sizes, store_diags = _store_sizes(modules)
         _write_outputs(
             outdir,
             pre_rows,
@@ -1017,6 +1032,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             compute,
             replay_samples=replay_samples,
             store_sizes=store_sizes,
+            store_diags=store_diags,
         )
         return
 
@@ -1089,7 +1105,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             "rss_mb": _rss_mb(),
             "latency_ms_mean": sum(r["latency_ms"] for r in post_rows) / max(1, len(post_rows)),
         }
-        store_sizes = _store_sizes(modules)
+        store_sizes, store_diags = _store_sizes(modules)
         _write_outputs(
             outdir,
             [],
@@ -1101,6 +1117,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             compute,
             replay_samples=replay_samples,
             store_sizes=store_sizes,
+            store_diags=store_diags,
         )
         retrieval_snaps = registry.all_snapshots()
         _enforce_guardrails(
@@ -1142,7 +1159,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
     }
     for _ in range(int(cfg.replay_cycles)):
         replay_samples += _run_replay(cfg, modules, tasks)
-    store_sizes = _store_sizes(modules)
+    store_sizes, store_diags = _store_sizes(modules)
     _write_outputs(
         outdir,
         pre_rows,
@@ -1154,6 +1171,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         compute,
         replay_samples=replay_samples,
         store_sizes=store_sizes,
+        store_diags=store_diags,
     )
 
     retrieval_snaps = registry.all_snapshots()

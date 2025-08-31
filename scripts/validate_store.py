@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -21,6 +22,7 @@ def main() -> None:
     parser.add_argument(
         "--preset", help="Preset identifier; baselines must not produce stores", default=None
     )
+    parser.add_argument("--metrics", help="Path to metrics.json for count validation", default=None)
     args = parser.parse_args()
 
     try:
@@ -30,6 +32,34 @@ def main() -> None:
     except (FileExistsError, FileNotFoundError) as err:  # pragma: no cover - tested via CLI
         print(err, file=sys.stderr)
         raise SystemExit(1) from err
+    if args.metrics:
+        with Path(args.metrics).open("r", encoding="utf-8") as fh:
+            metrics = json.load(fh)
+        store = metrics.get("store", {})
+        per_mem = store.get("per_memory", {})
+        diag = store.get("diagnostics", {})
+        key_map = {
+            "episodic": "episodic",
+            "kg": "relational",
+            "map": "spatial",
+            "spatial": "spatial",
+        }
+        key = key_map.get(args.kind, args.kind)
+        expected = int(per_mem.get(key, 0))
+        if args.kind == "kg":
+            expected += int(diag.get("relational", {}).get("nodes_added", 0))
+        elif args.kind in ("map", "spatial"):
+            expected += 1  # meta line
+        if path is None:
+            if expected != 0:
+                raise ValueError("metrics report store entries but no file found")
+        else:
+            with path.open("r", encoding="utf-8") as fh:
+                actual = sum(1 for line in fh if line.strip())
+            if actual != expected:
+                raise ValueError(
+                    f"{args.kind} store line count {actual} != metrics expectation {expected}"
+                )
     if path is None:
         print(f"OK: no store for baseline {args.preset}")
     else:
