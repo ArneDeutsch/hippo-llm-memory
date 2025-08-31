@@ -881,7 +881,9 @@ def _load_preset(cfg: DictConfig) -> DictConfig:
     if preset_path.exists():
         preset_cfg = OmegaConf.load(preset_path)
         with open_dict(cfg):
-            cfg = OmegaConf.merge(preset_cfg, cfg)  # CLI overrides preset
+            cfg = OmegaConf.merge(preset_cfg, cfg)
+            if "gating_enabled" in preset_cfg:
+                cfg.gating_enabled = preset_cfg.gating_enabled
     return cfg
 
 
@@ -1044,6 +1046,8 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             if "spatial" in modules:
                 modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
 
+        gate_snaps = gate_registry.all_snapshots()
+
         # Load pre-metrics if they exist so we can compute deltas.
         pre_metrics: Dict[str, float] = {}
         metrics_path = outdir / "metrics.json"
@@ -1087,6 +1091,13 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
         )
+        for name, snap in gate_snaps.items():
+            stats = gate_registry.get(name)
+            stats.attempts += int(snap.get("attempts", 0))
+            stats.inserted += int(snap.get("inserted", 0))
+            stats.aggregated += int(snap.get("aggregated", 0))
+            stats.routed_to_episodic += int(snap.get("routed_to_episodic", 0))
+            stats.blocked_new_edges += int(snap.get("blocked_new_edges", 0))
         post_metrics["em"] = (
             post_metrics.get("em_norm", 0.0)
             if cfg.primary_em == "norm"
