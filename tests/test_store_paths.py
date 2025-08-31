@@ -21,12 +21,13 @@ def test_assert_store_exists_missing(tmp_path):
         assert_store_exists(str(tmp_path), "s", "hei_nw")
 
 
-def test_derive_store_layout(monkeypatch, tmp_path):
+@pytest.mark.parametrize("algo,prefix", [("hei_nw", "hei"), ("sgc_rss", "sgc")])
+def test_derive_store_layout(monkeypatch, tmp_path, algo, prefix):
     monkeypatch.chdir(tmp_path)
-    layout = derive(run_id="foo", algo="sgc_rss")
+    layout = derive(run_id="foo", algo=algo)
     assert str(layout.base_dir) == "runs/foo/stores"
-    assert str(layout.algo_dir) == "runs/foo/stores/sgc_rss"
-    assert layout.session_id == "sgc_rss_foo"
+    assert str(layout.algo_dir) == f"runs/foo/stores/{algo}"
+    assert layout.session_id == f"{prefix}_foo"
 
 
 @pytest.mark.parametrize("append", [False, True])

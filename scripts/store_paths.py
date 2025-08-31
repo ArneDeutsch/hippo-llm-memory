@@ -36,7 +36,9 @@ def derive(run_id: str | None = None, algo: str = "hei_nw") -> StoreLayout:
     -------
     StoreLayout
         Dataclass containing base directory, algorithm subdirectory and
-        deterministic session identifier.
+        deterministic session identifier. The session identifier uses the
+        first segment of ``algo`` (e.g. ``hei`` for ``hei_nw``) to match
+        the shell prelude's ``HEI_SESSION_ID`` variable.
     """
 
     rid = run_id or os.environ.get("RUN_ID") or os.environ.get("DATE")
@@ -45,7 +47,8 @@ def derive(run_id: str | None = None, algo: str = "hei_nw") -> StoreLayout:
 
     base = Path("runs") / rid / "stores"
     algo_dir = base / algo
-    session_id = f"{algo}_{rid}"
+    prefix = algo.split("_")[0]
+    session_id = f"{prefix}_{rid}"
     return StoreLayout(base, algo_dir, session_id)
 
 
