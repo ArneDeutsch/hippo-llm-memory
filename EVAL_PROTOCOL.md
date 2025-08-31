@@ -44,6 +44,33 @@ suite=episodic_cross dataset_profile=hard --strict-telemetry
 suite=episodic_capacity dataset_profile=hard --strict-telemetry
 ```
 
+### Telemetry invariants
+
+Runs must satisfy these checks; reports flag violations with ⚠️:
+
+- Baselines: `retrieval.*.requests == 0` and `store.size == 0`.
+- Ablations with retrieval disabled (e.g., `longctx_no_retrieval`):
+  `retrieval.*.requests == 0`.
+- Memory presets with gates enabled: `gate.*.attempts > 0`.
+- If `pre_em_norm ≥ 0.98` while the matching baseline `< 0.20`, the suite is
+  flagged as saturation-suspect.
+
+Use `--strict-telemetry` to turn warnings into errors.
+
+### Teach vs test
+
+- `mode=teach` writes to stores (respect gates when enabled) and **should not**
+  grade EM.
+- `mode=test` reads from stores without writing.
+- Baselines run in `mode=teach` for parity but must keep retrieval counters at
+  zero.
+
+> **Troubleshooting (baseline retrieval > 0):**
+> - Ensure the preset starts with `baselines/`.
+> - Remove leftover store directories under `runs/$RUN_ID/stores`.
+> - Check `configs/eval/default.yaml` has no `memory:` root key.
+> - Re-run `pytest tests/test_baselines_have_no_memory.py`.
+
 ## 0) Shell prelude — environment & variables
 
 ```bash
