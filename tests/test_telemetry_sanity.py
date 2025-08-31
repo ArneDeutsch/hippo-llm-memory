@@ -8,8 +8,19 @@ from hippo_mem.common.telemetry import (
 )
 
 
-def test_valid_stats_pass() -> None:
+@pytest.fixture(autouse=True)
+def _reset_registry() -> None:
     registry.reset()
+    for snap in registry.all_snapshots().values():
+        assert snap["requests"] == 0
+        assert snap["hits"] == 0
+        assert snap["total_k"] == 0
+        assert snap["tokens_returned"] == 0
+        assert snap["avg_latency_ms"] == 0.0
+        assert snap["hit_rate_at_k"] == 0.0
+
+
+def test_valid_stats_pass() -> None:
     set_strict_telemetry(True)
     record_stats("episodic", k=4, hits=2, tokens=4, latency_ms=0.1)
     # Should not raise
@@ -18,7 +29,6 @@ def test_valid_stats_pass() -> None:
 
 
 def test_invalid_hits_raise() -> None:
-    registry.reset()
     set_strict_telemetry(True)
     with pytest.raises(ValueError):
         record_stats("episodic", k=4, hits=5, tokens=4, latency_ms=0.1)

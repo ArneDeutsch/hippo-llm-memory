@@ -50,6 +50,7 @@ from hippo_mem.adapters import (
     RelationalMemoryAdapter,
     SpatialMemoryAdapter,
 )
+from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.replay import ReplayScheduler
@@ -396,6 +397,8 @@ def run_suite(
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     modules = _init_modules(cfg.get("memory"), flat_ablate)
 
+    registry.reset()
+    gate_registry.reset()
     rows, metrics_pre, in_tokens, gen_tokens, elapsed, lat_mean = _eval_tasks(
         tasks, modules, flag="pre_replay", start_idx=0
     )
@@ -410,6 +413,8 @@ def run_suite(
         start = len(tasks)
         for cycle in range(1, post_cycles + 1):
             _run_replay_once(modules)
+            registry.reset()
+            gate_registry.reset()
             (
                 cycle_rows,
                 cycle_metrics,
@@ -551,7 +556,8 @@ def write_outputs(
 
 def evaluate(cfg: DictConfig, outdir: Path) -> None:
     """Run evaluation for ``cfg.suite`` and write metrics to ``outdir``."""
-
+    registry.reset()
+    gate_registry.reset()
     rows, metrics, flat_ablate = run_suite(cfg)
     write_outputs(outdir, rows, metrics, flat_ablate, cfg)
 
