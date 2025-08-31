@@ -92,10 +92,11 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
 
         cfg.n = cfg.get("n", 5)
         cfg.seed = cfg.get("seed", 0)
+        cfg.dataset_profile = cfg.get("dataset_profile")
         m = cfg.get("model") or os.environ.get("MODEL") or os.environ.get("HF_MODEL_PATH")
         if not m:
             raise ValueError("cfg.model is missing. Pass --model or set $MODEL.")
-        cfg.model = m
+        cfg.model = str(m)
         cfg.max_new_tokens = cfg.get("max_new_tokens")
         cfg.mode = cfg.get("mode", "test")
         cfg.store_dir = cfg.get("store_dir")
@@ -164,7 +165,8 @@ def _merge_memory_overrides(cfg: DictConfig) -> None:
                 if block is None:
                     continue
                 with open_dict(mem):
-                    mem[name] = OmegaConf.merge(mem.get(name, {}), block)
+                    if (memory_preset and name in mem) or not memory_preset:
+                        mem[name] = OmegaConf.merge(mem.get(name, {}), block)
 
 
 @dataclass
