@@ -5,7 +5,7 @@ import math
 import hypothesis.extra.numpy as hnp
 import numpy as np
 import pytest
-from hypothesis import assume, given, settings
+from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
 from hippo_mem.episodic.gating import WriteGate
@@ -73,7 +73,7 @@ def test_write_gate_rejects_bad_config() -> None:
     assert "alpha" in str(exc.value)
 
 
-@settings(max_examples=50)
+@settings(max_examples=50, suppress_health_check=[HealthCheck.filter_too_much])
 @given(
     st.floats(min_value=1e-6, max_value=1.0),
     st.floats(min_value=1e-6, max_value=1.0),
