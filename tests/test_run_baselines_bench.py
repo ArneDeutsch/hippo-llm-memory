@@ -1,5 +1,6 @@
 import itertools
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -50,7 +51,8 @@ def test_run_baselines_accepts_date(presets: list[str], seeds: list[int]) -> Non
         "--seeds",
         *(str(s) for s in seeds),
     ]
-    subprocess.run(cmd, check=True, cwd=repo_root)
+    env = {**os.environ, "ALLOW_BENCH": "1"}
+    subprocess.run(cmd, check=True, cwd=repo_root, env=env)
     base = repo_root / "runs" / date
     try:
         for preset, seed in itertools.product(presets, seeds):

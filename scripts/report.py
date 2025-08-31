@@ -175,7 +175,7 @@ def collect_retrieval(base: Path) -> Dict[str, list[dict[str, MetricDict]]]:
             log.warning("failed to parse %s: %s", metrics_path, exc)
             continue
         ret = record.get("retrieval")
-        if ret:
+        if isinstance(ret, dict):
             data[suite].append(ret)
     return data
 
@@ -205,7 +205,7 @@ def collect_gates(base: Path) -> Dict[str, Dict[str, list[dict[str, MetricDict]]
             log.warning("failed to parse %s: %s", metrics_path, exc)
             continue
         gates = record.get("gates")
-        if gates:
+        if isinstance(gates, dict):
             data[suite][status].append(gates)
     return data
 

@@ -6,6 +6,10 @@ This protocol executes a **complete, reproducible** validation run across **base
 
 > All commands are copy‑pasteable in **bash**. Lines with `#` are comments.
 
+> **Canonical entry point:** Use `scripts/eval_model.py` for all evaluations, including
+> baselines. The lightweight bench wrapper `scripts/run_baselines_bench.py` is
+> reserved for CI smoke tests and requires `ALLOW_BENCH=1` to run.
+
 ---
 
 ### Choosing a run identifier
