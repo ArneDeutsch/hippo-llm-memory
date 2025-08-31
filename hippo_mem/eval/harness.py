@@ -37,9 +37,12 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.telemetry import gate_registry, registry, set_strict_telemetry
+from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.eval.score import em_norm, em_raw, f1, spatial_kpis
+from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
+from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from hippo_mem.utils.stores import assert_store_exists
 
@@ -424,17 +427,80 @@ def _evaluate(
 def _run_replay(
     cfg: DictConfig, modules: Dict[str, Dict[str, object]], tasks: Iterable[Task]
 ) -> int:
-    """Replay loop that writes answers to the episodic store using a gate."""
+    """Write ``tasks`` into stores while updating gate telemetry."""
 
-    if "episodic" not in modules:
-        return 0
-    store = modules["episodic"]["store"]
+    task_list = list(tasks)
     count = 0
-    for idx, task in enumerate(tasks):
-        key = np.full(8, idx, dtype="float32")
-        # Deterministically insert all tasks during test runs.
-        store.write(key, task.answer)
-        count += 1
+
+    if "episodic" in modules:
+        store = modules["episodic"]["store"]
+        gate_cfg = (
+            (cfg.get("memory", {}).get("episodic", {}).get("gate", {}))
+            if isinstance(cfg, DictConfig)
+            else {}
+        )
+        gate: WriteGate | None = None
+        if gate_cfg.get("enabled", True):
+            params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
+            gate = WriteGate(**params)
+        keys = store.keys()
+        probs = np.full(len(task_list), 0.5)
+        queries = np.stack([np.full(store.dim, i, dtype="float32") for i in range(len(task_list))])
+        if gate is None:
+            for q, task in zip(queries, task_list):
+                store.write(q, task.answer)
+                count += 1
+        else:
+            decisions, _ = gate_batch(gate, probs, queries, keys, provenance="replay")
+            for dec, q, task in zip(decisions, queries, task_list):
+                if dec.action == "insert":
+                    store.write(q, task.answer)
+                    count += 1
+
+    if "relational" in modules:
+        kg = modules["relational"]["kg"]
+        gate_cfg = (
+            (cfg.get("memory", {}).get("relational", {}).get("gate", {}))
+            if isinstance(cfg, DictConfig)
+            else {}
+        )
+        if gate_cfg.get("enabled", False):
+            params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
+            kg.gate = RelationalGate(**params)
+        for idx, _task in enumerate(task_list):
+            tup = (f"h{idx}", "rel", f"t{idx}", "ctx", None, 1.0, idx)
+            kg.ingest(tup)
+
+    if "spatial" in modules:
+        graph = modules["spatial"]["map"]
+        gate_cfg = (
+            (cfg.get("memory", {}).get("spatial", {}).get("gate", {}))
+            if isinstance(cfg, DictConfig)
+            else {}
+        )
+        gate: SpatialGate | None = None
+        if gate_cfg.get("enabled", False):
+            params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
+            gate = SpatialGate(**params)
+        stats = gate_registry.get("spatial")
+        prev: str | None = None
+        for idx in range(len(task_list)):
+            ctx = f"ctx{idx}"
+            if gate is None:
+                graph.observe(ctx)
+            else:
+                stats.attempts += 1
+                decision = gate.decide(prev, ctx, graph)
+                if decision.action == "insert":
+                    stats.inserted += 1
+                    graph.observe(ctx)
+                elif decision.action == "aggregate" and prev is not None:
+                    stats.aggregated += 1
+                    graph.aggregate_duplicate(prev, ctx)
+                elif decision.action == "route_to_episodic":
+                    stats.blocked_new_edges += 1
+            prev = ctx
+
     return count
 
 
@@ -904,6 +970,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
         )
+        replay_samples = _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
             if "episodic" in modules:
@@ -922,7 +989,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
             cfg,
             flat_ablate,
             None,
-            replay_samples=0,
+            replay_samples=replay_samples,
             store_sizes=store_sizes,
         )
         return
