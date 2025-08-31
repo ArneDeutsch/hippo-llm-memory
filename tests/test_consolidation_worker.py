@@ -97,6 +97,43 @@ def test_worker_skips_without_trainable_params() -> None:
     worker.join(timeout=1)
 
 
+def test_optim_step_requires_gradients() -> None:
+    """_optim_step rejects tensors without gradients."""
+
+    hidden = 2
+    store = EpisodicStore(hidden)
+    kg = KnowledgeGraph()
+    scheduler = ReplayScheduler(store, kg, batch_mix=_BatchMix())
+    model = torch.nn.Linear(hidden, hidden)
+    cfg = AdapterConfig(hidden_size=hidden, num_heads=1, lora_r=hidden, enabled=True)
+    adapter = EpisodicAdapter(cfg)
+    worker = ConsolidationWorker(scheduler, model, episodic_adapter=adapter, batch_size=1)
+
+    loss = torch.tensor(0.0)
+    with pytest.raises(RuntimeError, match="does not require gradients"):
+        worker._optim_step(loss)
+
+
+def test_step_episodic_skips_without_adapter(monkeypatch) -> None:
+    """When no adapter is present, episodic steps are gated off."""
+
+    hidden = 2
+    store = EpisodicStore(hidden)
+    kg = KnowledgeGraph()
+    scheduler = ReplayScheduler(store, kg, batch_mix=_BatchMix())
+    worker = ConsolidationWorker(scheduler, torch.nn.Linear(hidden, hidden), batch_size=1)
+
+    called = False
+
+    def _fake_optim(_loss: torch.Tensor) -> None:  # pragma: no cover - should not run
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(worker, "_optim_step", _fake_optim)
+    worker.step_adapters([("episodic", object())])
+    assert called is False
+
+
 def test_worker_records_maintenance_logs() -> None:
     """Maintenance thread logs events for all stores."""
 

@@ -66,17 +66,24 @@ def test_faiss_index_edge_cases() -> None:
     query = [1.0, 0.0, 0.0, 0.0]
 
     # Search before any training or vectors have been added.
-    assert index.search(query, k=1) == []
+    backend_index = getattr(index._backend, "index", None)
+    if backend_index is not None:
+        assert not backend_index.is_trained
+    assert index.search(query, k=3) == []
 
     # Train the index but do not add vectors yet; still expect no hits.
     train_data = [[1.0 if i % 4 == j else 0.0 for j in range(4)] for i in range(256)]
     index.train(train_data)
-    assert index.search(query, k=1) == []
+    backend_index = getattr(index._backend, "index", None)
+    if backend_index is not None:
+        assert backend_index.is_trained
+    assert index.search(query, k=2) == []
 
     # After adding vectors the nearest neighbour should be returned.
     for vec in train_data[:2]:
         index.add(vec)
-    assert index.search(query, k=1) == [0]
+    res = index.search(query, k=5)
+    assert res[0] == 0 and len(res) == 2
 
 
 def test_faiss_index_update_and_error_handling(monkeypatch: pytest.MonkeyPatch) -> None:

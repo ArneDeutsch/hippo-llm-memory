@@ -5,7 +5,7 @@ import math
 import hypothesis.extra.numpy as hnp
 import numpy as np
 import pytest
-from hypothesis import assume, given
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from hippo_mem.episodic.gating import WriteGate
@@ -71,3 +71,26 @@ def test_write_gate_rejects_bad_config() -> None:
     with pytest.raises(ValueError) as exc:
         WriteGate(alpha=1.5)
     assert "alpha" in str(exc.value)
+
+
+@settings(max_examples=50)
+@given(
+    st.floats(min_value=1e-6, max_value=1.0),
+    st.floats(min_value=1e-6, max_value=1.0),
+    st.floats(min_value=0.0, max_value=math.pi / 2),
+    st.floats(min_value=0.0, max_value=math.pi / 2),
+)
+def test_score_monotonic_in_joint_signals(
+    p_high: float, p_low: float, angle1: float, angle2: float
+) -> None:
+    """Score increases when surprise and novelty rise together."""
+
+    assume(p_high > p_low + 1e-3)
+    assume(angle2 > angle1 + 1e-3)
+    gate = WriteGate()
+    key = np.array([[1.0, 0.0]], dtype="float32")
+    q1 = np.array([math.cos(angle1), math.sin(angle1)], dtype="float32")
+    q2 = np.array([math.cos(angle2), math.sin(angle2)], dtype="float32")
+    s1 = gate.score(p_high, q1, key)
+    s2 = gate.score(p_low, q2, key)
+    assert s2 > s1
