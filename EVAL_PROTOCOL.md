@@ -47,7 +47,7 @@ suite=episodic_capacity dataset_profile=hard --strict-telemetry
 ## 0) Shell prelude — environment & variables
 
 ```bash
-source scripts/env_prelude.sh
+source scripts/_env.sh
 if [[ -z ${SIZES+x} ]]; then SIZES=(50 200 1000); fi
 if [[ -z ${SEEDS+x} ]]; then SEEDS=(1337 2025 4242); fi
 
