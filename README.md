@@ -66,7 +66,7 @@ Persistent stores live under a common base directory:
 runs/$RUN_ID/stores/
   hei_nw/<SID>/{episodic.jsonl, relational.jsonl, spatial.jsonl}
   sgc_rss/<SID>/kg.jsonl
-  smpd/<SID>/map.jsonl
+  smpd/<SID>/spatial.jsonl
 ```
 
 Pass this base path via `--store_dir`; wrappers create the algorithm subfolder and

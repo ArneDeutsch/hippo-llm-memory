@@ -207,7 +207,7 @@ for n in "${SIZES[@]}"; do
     OUT="$RUNS/memory/smpd/$suite/${n}_${seed}"
     python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
     # Validate persisted store layout
-    python scripts/validate_store.py --algo smpd --kind map
+    python scripts/validate_store.py --algo smpd --kind spatial
     python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
     python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
   done

@@ -66,7 +66,7 @@ def main(cfg: DictConfig) -> None:
     algo = _infer_algo(cfg.get("preset"))
 
     def _store_kind(a: str) -> str:
-        return {"sgc_rss": "kg", "smpd": "map"}.get(a, "episodic")
+        return {"sgc_rss": "kg", "smpd": "spatial"}.get(a, "episodic")
 
     store_kind = _store_kind(algo)
 

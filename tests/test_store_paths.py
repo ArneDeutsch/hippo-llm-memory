@@ -5,7 +5,9 @@ from hippo_mem.utils.stores import assert_store_exists
 from scripts.store_paths import derive
 
 
-@pytest.mark.parametrize("algo,kind", [("hei_nw", "episodic"), ("sgc_rss", "kg")])
+@pytest.mark.parametrize(
+    "algo,kind", [("hei_nw", "episodic"), ("sgc_rss", "kg"), ("smpd", "spatial")]
+)
 def test_assert_store_exists_ok(tmp_path, algo, kind):
     base = tmp_path
     sid = "s"
@@ -21,7 +23,7 @@ def test_assert_store_exists_missing(tmp_path):
         assert_store_exists(str(tmp_path), "s", "hei_nw")
 
 
-@pytest.mark.parametrize("algo,prefix", [("hei_nw", "hei"), ("sgc_rss", "sgc")])
+@pytest.mark.parametrize("algo,prefix", [("hei_nw", "hei"), ("sgc_rss", "sgc"), ("smpd", "smpd")])
 def test_derive_store_layout(monkeypatch, tmp_path, algo, prefix):
     monkeypatch.chdir(tmp_path)
     layout = derive(run_id="foo", algo=algo)
@@ -33,7 +35,11 @@ def test_derive_store_layout(monkeypatch, tmp_path, algo, prefix):
 @pytest.mark.parametrize("append", [False, True])
 @pytest.mark.parametrize(
     "preset,algo,kind",
-    [("memory/hei_nw", "hei_nw", "episodic"), ("memory/sgc_rss", "sgc_rss", "kg")],
+    [
+        ("memory/hei_nw", "hei_nw", "episodic"),
+        ("memory/sgc_rss", "sgc_rss", "kg"),
+        ("memory/smpd", "smpd", "spatial"),
+    ],
 )
 def test_eval_model_store_dir_normalization(tmp_path, monkeypatch, append, preset, algo, kind):
     import scripts.eval_model as em
