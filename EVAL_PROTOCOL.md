@@ -44,6 +44,20 @@ suite=episodic_cross dataset_profile=hard --strict-telemetry
 suite=episodic_capacity dataset_profile=hard --strict-telemetry
 ```
 
+### Telemetry invariants
+
+- Baselines: `retrieval.*.requests == 0` and `store.size == 0`.
+- No-retrieval ablations: `retrieval.*.requests == 0`.
+- If a memory preset reports `pre_em_norm ≥ 0.98` while the baseline on the same suite is `< 0.20`,
+  flag the suite as **SaturationSuspect**.
+- Gate enabled but all gate counters stay at zero → **GateNoOp**.
+
+### Teach vs test
+
+- `mode=teach` writes to the configured store when `--persist` is set.
+- `mode=test` reads from stores but does not write.
+- Baselines should emit zero retrieval and zero store writes; any non‑zero value signals misconfiguration.
+
 ## 0) Shell prelude — environment & variables
 
 ```bash
@@ -126,6 +140,9 @@ Notes:
 - `SIZES` and `SEEDS` default to `(50 200 1000)` and `(1337 2025 4242)`; override them before sourcing `scripts/env_prelude.sh`.
 - You can extend `tasks` to include additional suites as needed.
 
+> **Troubleshooting:** Baseline runs showing `retrieval.requests > 0` or `store.size > 0`
+> indicate memory modules were activated. Ensure presets are under `baselines/*`
+> and telemetry counters are reset before rerunning.
 
 ---
 

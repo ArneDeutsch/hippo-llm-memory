@@ -189,6 +189,19 @@ algorithm subfolder automatically. For convenience, `scripts/eval_cli.py` transl
   with adapters.
 - [docs/api_surface.md](docs/api_surface.md) – current public APIs.
 
+## How to read reports
+
+Reports under `reports/<DATE>/` include warning flags when invariants are
+violated. See [EVAL_PROTOCOL.md](EVAL_PROTOCOL.md#telemetry-invariants) for the
+full list. Key checks:
+
+- Baseline rows must show `retrieval.requests == 0` and `store.size == 0`.
+- `GateNoOp` appears when a gate is enabled but counters remain at zero.
+- `SaturationSuspect` marks suites where baselines score `< 0.20` but memory
+  runs saturate at `pre_em_norm ≥ 0.98`.
+
+Use these cues before drawing conclusions from a report.
+
 ## Suggested shell aliases
 
 ```bash
