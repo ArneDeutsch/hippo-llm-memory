@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from scripts.report import (
     _find_latest_date,
     collect_gate_ablation,
@@ -25,9 +27,12 @@ def _make_metrics(
     gates: dict | None = None,
     retrieval: dict | None = None,
     store: dict | None = None,
+    bench: bool = False,
 ) -> None:
     path.mkdir(parents=True, exist_ok=True)
     content = {"metrics": {suite: metrics}}
+    if bench:
+        content.update({"suite": suite, "preset": "baselines/core", "n": 50, "seed": 1337})
     if compute:
         content["metrics"]["compute"] = compute
     if gates:
@@ -310,6 +315,48 @@ def test_smoke_report(tmp_path: Path) -> None:
     smoke_text = (out_dir / "smoke.md").read_text()
     assert "## episodic" in smoke_text
     assert "| Q | A |" in smoke_text
+
+
+@pytest.mark.parametrize("telemetry", [False, True])
+def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> None:
+    """Report generation works for bench-style and harness metrics."""
+
+    base = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
+    retrieval = None
+    gates = None
+    if telemetry:
+        retrieval = {
+            "episodic": {
+                "requests": 1,
+                "hits": 0,
+                "hit_rate_at_k": 0.0,
+                "tokens_returned": 0,
+                "avg_latency_ms": 0.0,
+            }
+        }
+        gates = {"episodic": {"attempts": 1}}
+    _make_metrics(
+        base / "50_1337",
+        "episodic",
+        {"em": 0.5},
+        retrieval=retrieval,
+        gates=gates,
+        store={"size": 0},
+        bench=not telemetry,
+    )
+    root = tmp_path / "runs" / "20250101"
+    summary = summarise(collect_metrics(root))
+    retrieval_s = summarise_retrieval(collect_retrieval(root))
+    gates_s = summarise_gates(collect_gates(root))
+    gate_ablation = collect_gate_ablation(root)
+    out_dir = tmp_path / "reports" / "20250101"
+    write_reports(summary, retrieval_s, gates_s, gate_ablation, out_dir, plots=False, seed_count=1)
+    text = (out_dir / "episodic" / "summary.md").read_text()
+    if telemetry:
+        assert "Retrieval Telemetry" in text or "Gate Telemetry" in text
+    else:
+        assert "Retrieval Telemetry" not in text
+        assert "Gate Telemetry" not in text
 
 
 def test_missing_post_metrics_detector() -> None:
