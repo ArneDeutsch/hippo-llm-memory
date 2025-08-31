@@ -281,8 +281,9 @@ def test_optim_step_requires_grad_loss_error() -> None:
     param = torch.nn.Parameter(torch.tensor(1.0))
     worker.optimizer = torch.optim.SGD([param], lr=0.1)
     loss = torch.tensor(1.0)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as exc:
         worker._optim_step(loss)
+    assert "loss does not require gradients" in str(exc.value)
 
 
 @pytest.mark.parametrize("setup", ["no_adapter", "no_kg"])

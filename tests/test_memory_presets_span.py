@@ -18,12 +18,18 @@ def _assert_preset(p: Path) -> None:
 
 
 def test_hei_nw_preset_fields() -> None:
-    _assert_preset(Path("configs/eval/memory/hei_nw.yaml"))
+    p = Path("configs/eval/memory/hei_nw.yaml")
+    assert p.exists()
+    _assert_preset(p)
 
 
 def test_sgc_rss_preset_fields() -> None:
-    _assert_preset(Path("configs/eval/memory/sgc_rss.yaml"))
+    p = Path("configs/eval/memory/sgc_rss.yaml")
+    assert p.exists()
+    _assert_preset(p)
 
 
 def test_smpd_preset_fields() -> None:
-    _assert_preset(Path("configs/eval/memory/smpd.yaml"))
+    p = Path("configs/eval/memory/smpd.yaml")
+    assert p.exists()
+    _assert_preset(p)

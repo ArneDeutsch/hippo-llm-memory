@@ -87,8 +87,9 @@ def test_loader_rejects_corrupted_json(tmp_path: Path) -> None:
 
     file = tmp_path / "bad.jsonl"
     file.write_text('{"prompt": "p1", "answer": "a1"}\n{bad line}\n')
-    with pytest.raises(json.JSONDecodeError):
+    with pytest.raises(json.JSONDecodeError) as exc:
         jsonl_dataset.load_jsonl_files([str(file)])
+    assert "Expecting" in str(exc.value)
 
 
 def _collect_batches(ds, seed: int) -> list[list[str]]:

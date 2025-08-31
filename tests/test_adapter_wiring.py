@@ -38,13 +38,13 @@ def test_disabled_memory_matches_snapshot(monkeypatch: pytest.MonkeyPatch) -> No
             0.01217225,
         ]
     )
-    torch.testing.assert_close(logits, expected, rtol=0, atol=1e-5)
+    assert torch.allclose(logits, expected, rtol=0, atol=1e-5)
 
     cfg = MemoryFusionConfig(enabled=False)
     attach_adapters(model, cfg)
     with torch.no_grad():
         disabled = model(input_ids).logits[0, 0, :10]
-    torch.testing.assert_close(disabled, expected, rtol=0, atol=1e-5)
+    assert torch.allclose(disabled, expected, rtol=0, atol=1e-5)
 
 
 def test_no_memory_tokens_preserves_baseline(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -136,8 +136,9 @@ def test_missing_blocks_attribute_errors() -> None:
             return x
 
     cfg = MemoryFusionConfig()
-    with pytest.raises(AttributeError):
+    with pytest.raises(AttributeError) as exc:
         attach_adapters(Dummy(), cfg)
+    assert "Could not find transformer blocks" in str(exc.value)
 
 
 def test_empty_block_list_errors() -> None:
@@ -150,8 +151,9 @@ def test_empty_block_list_errors() -> None:
             return x
 
     cfg = MemoryFusionConfig()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc:
         attach_adapters(Dummy(), cfg)
+    assert "empty" in str(exc.value)
 
 
 def test_remove_hooks_restore_forward(monkeypatch: pytest.MonkeyPatch) -> None:

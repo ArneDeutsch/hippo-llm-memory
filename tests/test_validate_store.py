@@ -26,5 +26,6 @@ def test_validate_store_ok(tmp_path, monkeypatch, capsys):
 def test_validate_store_missing(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("RUN_ID", "foo")
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as exc:
         run_validator(monkeypatch, ["--algo", "hei_nw"])
+    assert exc.value.code == 1
