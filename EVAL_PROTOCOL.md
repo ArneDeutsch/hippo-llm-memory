@@ -56,6 +56,7 @@ Runs must satisfy these checks; reports flag violations with ⚠️:
 - Ablations with retrieval disabled (e.g., `longctx_no_retrieval`):
   `retrieval.*.requests == 0`.
 - Memory presets with gates enabled: `gate.*.attempts > 0`.
+- Spatial gate attempts must be > 0 on memory presets.
 - If `pre_em_norm ≥ 0.98` while the matching baseline `< 0.20`, the suite is
   flagged as saturation-suspect.
 
@@ -68,6 +69,7 @@ Use `--strict-telemetry` to turn warnings into errors.
 - `mode=test` reads from stores without writing.
 - Baselines run in `mode=teach` for parity but must keep retrieval counters at
   zero.
+- Baselines MUST NOT be run with `persist=true`.
 
 > **Troubleshooting (baseline retrieval > 0):**
 > - Ensure the preset starts with `baselines/`.
