@@ -1,8 +1,7 @@
 import pytest
 from omegaconf import OmegaConf
 
-from hippo_mem.utils.stores import assert_store_exists
-from scripts.store_paths import derive
+from hippo_mem.utils.stores import assert_store_exists, derive
 
 
 @pytest.mark.parametrize(
