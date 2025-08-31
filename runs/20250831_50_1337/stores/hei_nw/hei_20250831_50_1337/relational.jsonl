@@ -1,0 +1,3 @@
+{"schema": "relational.v1", "type": "node", "name": "a", "embedding": null}
+{"schema": "relational.v1", "type": "node", "name": "b", "embedding": null}
+{"schema": "relational.v1", "type": "edge", "id": 1, "src": "a", "relation": "rel", "dst": "b", "context": "a rel b", "time": null, "conf": 1.0, "provenance": null, "embedding": null}
