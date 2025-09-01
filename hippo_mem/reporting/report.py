@@ -286,7 +286,7 @@ def collect_lineage(base: Path) -> Dict[str, Dict[str, set]]:
         size = record.get("n")
         if size is not None:
             entry.setdefault("sizes", set()).add(int(size))
-        profile = record.get("dataset_profile", "default")
+        profile = record.get("dataset_profile") or "default"
         entry.setdefault("profiles", set()).add(str(profile))
         replay_samples = record.get("replay", {}).get("samples")
         if replay_samples is not None:
