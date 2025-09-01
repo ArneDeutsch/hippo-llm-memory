@@ -33,8 +33,10 @@ class SpatialGate:
     _edge_hist: Deque[tuple[str, str]] = field(init=False)
 
     def __post_init__(self) -> None:
-        if not 0.0 <= self.block_threshold <= 1.0:
-            raise ValueError("block_threshold must be in [0, 1]")
+        # why: allow thresholds above 1.0 to effectively disable gating in tests and
+        # configurable runs. Only negative values are invalid.
+        if self.block_threshold < 0.0:
+            raise ValueError("block_threshold must be >= 0")
         if self.repeat_N < 1:
             raise ValueError("repeat_N must be >= 1")
         if self.recent_window < 1:

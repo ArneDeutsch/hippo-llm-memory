@@ -34,7 +34,7 @@ def test_spatial_gate_reduces_repeats() -> None:
 
 def test_spatial_gate_rejects_bad_config() -> None:
     with pytest.raises(ValueError) as exc:
-        SpatialGate(block_threshold=1.5)
+        SpatialGate(block_threshold=-0.1)
     assert "block_threshold" in str(exc.value)
     with pytest.raises(ValueError) as exc:
         SpatialGate(repeat_N=0)
