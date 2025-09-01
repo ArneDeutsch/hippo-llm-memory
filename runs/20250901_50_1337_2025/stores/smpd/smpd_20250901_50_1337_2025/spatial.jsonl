@@ -1,0 +1,157 @@
+{"schema": "spatial.v1", "type": "meta", "next_id": 52, "last_obs": 51, "step": 202, "position": [0.0, 0.0], "last_coord": null}
+{"schema": "spatial.v1", "type": "node", "id": 0, "context": "a", "coord": [37.092, 62.679], "last_seen": 1}
+{"schema": "spatial.v1", "type": "node", "id": 1, "context": "b", "coord": [22.982, 27.721], "last_seen": 2}
+{"schema": "spatial.v1", "type": "node", "id": 2, "context": "ctx0", "coord": [12.86, 10.364], "last_seen": 153}
+{"schema": "spatial.v1", "type": "node", "id": 3, "context": "ctx1", "coord": [29.373, 53.612], "last_seen": 4}
+{"schema": "spatial.v1", "type": "node", "id": 4, "context": "ctx2", "coord": [4.481, 53.995], "last_seen": 5}
+{"schema": "spatial.v1", "type": "node", "id": 5, "context": "ctx3", "coord": [7.779, 27.694], "last_seen": 6}
+{"schema": "spatial.v1", "type": "node", "id": 6, "context": "ctx4", "coord": [30.298, 33.43], "last_seen": 7}
+{"schema": "spatial.v1", "type": "node", "id": 7, "context": "ctx5", "coord": [50.962, 58.161], "last_seen": 8}
+{"schema": "spatial.v1", "type": "node", "id": 8, "context": "ctx6", "coord": [54.065, 17.475], "last_seen": 9}
+{"schema": "spatial.v1", "type": "node", "id": 9, "context": "ctx7", "coord": [48.763, 37.841], "last_seen": 10}
+{"schema": "spatial.v1", "type": "node", "id": 10, "context": "ctx8", "coord": [19.478, 25.163], "last_seen": 11}
+{"schema": "spatial.v1", "type": "node", "id": 11, "context": "ctx9", "coord": [35.911, 38.352], "last_seen": 12}
+{"schema": "spatial.v1", "type": "node", "id": 12, "context": "ctx10", "coord": [11.883, 24.661], "last_seen": 13}
+{"schema": "spatial.v1", "type": "node", "id": 13, "context": "ctx11", "coord": [5.055, 53.663], "last_seen": 14}
+{"schema": "spatial.v1", "type": "node", "id": 14, "context": "ctx12", "coord": [7.064, 57.045], "last_seen": 15}
+{"schema": "spatial.v1", "type": "node", "id": 15, "context": "ctx13", "coord": [11.751, 20.158], "last_seen": 16}
+{"schema": "spatial.v1", "type": "node", "id": 16, "context": "ctx14", "coord": [45.402, 57.127], "last_seen": 17}
+{"schema": "spatial.v1", "type": "node", "id": 17, "context": "ctx15", "coord": [10.875, 31.907], "last_seen": 18}
+{"schema": "spatial.v1", "type": "node", "id": 18, "context": "ctx16", "coord": [11.441, 35.143], "last_seen": 19}
+{"schema": "spatial.v1", "type": "node", "id": 19, "context": "ctx17", "coord": [19.109, 9.109], "last_seen": 20}
+{"schema": "spatial.v1", "type": "node", "id": 20, "context": "ctx18", "coord": [31.328, 10.489], "last_seen": 21}
+{"schema": "spatial.v1", "type": "node", "id": 21, "context": "ctx19", "coord": [20.818, 54.368], "last_seen": 22}
+{"schema": "spatial.v1", "type": "node", "id": 22, "context": "ctx20", "coord": [6.296, 15.832], "last_seen": 23}
+{"schema": "spatial.v1", "type": "node", "id": 23, "context": "ctx21", "coord": [23.995, 0.317], "last_seen": 24}
+{"schema": "spatial.v1", "type": "node", "id": 24, "context": "ctx22", "coord": [47.761, 64.719], "last_seen": 25}
+{"schema": "spatial.v1", "type": "node", "id": 25, "context": "ctx23", "coord": [0.024, 31.402], "last_seen": 26}
+{"schema": "spatial.v1", "type": "node", "id": 26, "context": "ctx24", "coord": [25.578, 25.2], "last_seen": 27}
+{"schema": "spatial.v1", "type": "node", "id": 27, "context": "ctx25", "coord": [57.165, 63.575], "last_seen": 28}
+{"schema": "spatial.v1", "type": "node", "id": 28, "context": "ctx26", "coord": [27.422, 1.364], "last_seen": 29}
+{"schema": "spatial.v1", "type": "node", "id": 29, "context": "ctx27", "coord": [17.712, 63.735], "last_seen": 30}
+{"schema": "spatial.v1", "type": "node", "id": 30, "context": "ctx28", "coord": [26.223, 22.162], "last_seen": 31}
+{"schema": "spatial.v1", "type": "node", "id": 31, "context": "ctx29", "coord": [26.607, 18.996], "last_seen": 32}
+{"schema": "spatial.v1", "type": "node", "id": 32, "context": "ctx30", "coord": [31.303, 26.225], "last_seen": 33}
+{"schema": "spatial.v1", "type": "node", "id": 33, "context": "ctx31", "coord": [28.668, 48.889], "last_seen": 34}
+{"schema": "spatial.v1", "type": "node", "id": 34, "context": "ctx32", "coord": [42.451, 34.973], "last_seen": 35}
+{"schema": "spatial.v1", "type": "node", "id": 35, "context": "ctx33", "coord": [38.965, 24.693], "last_seen": 36}
+{"schema": "spatial.v1", "type": "node", "id": 36, "context": "ctx34", "coord": [2.795, 43.987], "last_seen": 37}
+{"schema": "spatial.v1", "type": "node", "id": 37, "context": "ctx35", "coord": [34.644, 41.706], "last_seen": 38}
+{"schema": "spatial.v1", "type": "node", "id": 38, "context": "ctx36", "coord": [25.613, 11.321], "last_seen": 39}
+{"schema": "spatial.v1", "type": "node", "id": 39, "context": "ctx37", "coord": [39.504, 14.863], "last_seen": 40}
+{"schema": "spatial.v1", "type": "node", "id": 40, "context": "ctx38", "coord": [39.282, 35.242], "last_seen": 41}
+{"schema": "spatial.v1", "type": "node", "id": 41, "context": "ctx39", "coord": [42.661, 63.902], "last_seen": 42}
+{"schema": "spatial.v1", "type": "node", "id": 42, "context": "ctx40", "coord": [27.075, 13.867], "last_seen": 43}
+{"schema": "spatial.v1", "type": "node", "id": 43, "context": "ctx41", "coord": [52.994, 4.201], "last_seen": 44}
+{"schema": "spatial.v1", "type": "node", "id": 44, "context": "ctx42", "coord": [19.126, 33.031], "last_seen": 45}
+{"schema": "spatial.v1", "type": "node", "id": 45, "context": "ctx43", "coord": [28.55, 45.301], "last_seen": 46}
+{"schema": "spatial.v1", "type": "node", "id": 46, "context": "ctx44", "coord": [26.958, 3.086], "last_seen": 47}
+{"schema": "spatial.v1", "type": "node", "id": 47, "context": "ctx45", "coord": [39.212, 19.845], "last_seen": 48}
+{"schema": "spatial.v1", "type": "node", "id": 48, "context": "ctx46", "coord": [21.215, 61.139], "last_seen": 49}
+{"schema": "spatial.v1", "type": "node", "id": 49, "context": "ctx47", "coord": [28.363, 13.041], "last_seen": 50}
+{"schema": "spatial.v1", "type": "node", "id": 50, "context": "ctx48", "coord": [44.896, 0.369], "last_seen": 51}
+{"schema": "spatial.v1", "type": "node", "id": 51, "context": "ctx49", "coord": [40.362, 62.427], "last_seen": 52}
+{"schema": "spatial.v1", "type": "edge", "src": 0, "dst": 1, "cost": 1.0, "success": 1.0, "last_seen": 2, "weight": 1.0}
+{"schema": "spatial.v1", "type": "edge", "src": 1, "dst": 0, "cost": 1.0, "success": 1.0, "last_seen": 2, "weight": 1.0}
+{"schema": "spatial.v1", "type": "edge", "src": 1, "dst": 2, "cost": 1.0, "success": 1.0, "last_seen": 3, "weight": 1.0}
+{"schema": "spatial.v1", "type": "edge", "src": 2, "dst": 1, "cost": 1.0, "success": 1.0, "last_seen": 3, "weight": 1.0}
+{"schema": "spatial.v1", "type": "edge", "src": 2, "dst": 3, "cost": 1.0, "success": 1.0, "last_seen": 154, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 2, "dst": 51, "cost": 1.0, "success": 1.0, "last_seen": 153, "weight": 1.0}
+{"schema": "spatial.v1", "type": "edge", "src": 3, "dst": 2, "cost": 1.0, "success": 1.0, "last_seen": 154, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 3, "dst": 4, "cost": 1.0, "success": 1.0, "last_seen": 155, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 4, "dst": 3, "cost": 1.0, "success": 1.0, "last_seen": 155, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 4, "dst": 5, "cost": 1.0, "success": 1.0, "last_seen": 156, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 5, "dst": 4, "cost": 1.0, "success": 1.0, "last_seen": 156, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 5, "dst": 6, "cost": 1.0, "success": 1.0, "last_seen": 157, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 6, "dst": 5, "cost": 1.0, "success": 1.0, "last_seen": 157, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 6, "dst": 7, "cost": 1.0, "success": 1.0, "last_seen": 158, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 7, "dst": 6, "cost": 1.0, "success": 1.0, "last_seen": 158, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 7, "dst": 8, "cost": 1.0, "success": 1.0, "last_seen": 159, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 8, "dst": 7, "cost": 1.0, "success": 1.0, "last_seen": 159, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 8, "dst": 9, "cost": 1.0, "success": 1.0, "last_seen": 160, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 9, "dst": 8, "cost": 1.0, "success": 1.0, "last_seen": 160, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 9, "dst": 10, "cost": 1.0, "success": 1.0, "last_seen": 161, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 10, "dst": 9, "cost": 1.0, "success": 1.0, "last_seen": 161, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 10, "dst": 11, "cost": 1.0, "success": 1.0, "last_seen": 162, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 11, "dst": 10, "cost": 1.0, "success": 1.0, "last_seen": 162, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 11, "dst": 12, "cost": 1.0, "success": 1.0, "last_seen": 163, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 12, "dst": 11, "cost": 1.0, "success": 1.0, "last_seen": 163, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 12, "dst": 13, "cost": 1.0, "success": 1.0, "last_seen": 164, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 13, "dst": 12, "cost": 1.0, "success": 1.0, "last_seen": 164, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 13, "dst": 14, "cost": 1.0, "success": 1.0, "last_seen": 165, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 14, "dst": 13, "cost": 1.0, "success": 1.0, "last_seen": 165, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 14, "dst": 15, "cost": 1.0, "success": 1.0, "last_seen": 166, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 15, "dst": 14, "cost": 1.0, "success": 1.0, "last_seen": 166, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 15, "dst": 16, "cost": 1.0, "success": 1.0, "last_seen": 167, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 16, "dst": 15, "cost": 1.0, "success": 1.0, "last_seen": 167, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 16, "dst": 17, "cost": 1.0, "success": 1.0, "last_seen": 168, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 17, "dst": 16, "cost": 1.0, "success": 1.0, "last_seen": 168, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 17, "dst": 18, "cost": 1.0, "success": 1.0, "last_seen": 169, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 18, "dst": 17, "cost": 1.0, "success": 1.0, "last_seen": 169, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 18, "dst": 19, "cost": 1.0, "success": 1.0, "last_seen": 170, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 19, "dst": 18, "cost": 1.0, "success": 1.0, "last_seen": 170, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 19, "dst": 20, "cost": 1.0, "success": 1.0, "last_seen": 171, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 20, "dst": 19, "cost": 1.0, "success": 1.0, "last_seen": 171, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 20, "dst": 21, "cost": 1.0, "success": 1.0, "last_seen": 172, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 21, "dst": 20, "cost": 1.0, "success": 1.0, "last_seen": 172, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 21, "dst": 22, "cost": 1.0, "success": 1.0, "last_seen": 173, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 22, "dst": 21, "cost": 1.0, "success": 1.0, "last_seen": 173, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 22, "dst": 23, "cost": 1.0, "success": 1.0, "last_seen": 174, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 23, "dst": 22, "cost": 1.0, "success": 1.0, "last_seen": 174, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 23, "dst": 24, "cost": 1.0, "success": 1.0, "last_seen": 175, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 24, "dst": 23, "cost": 1.0, "success": 1.0, "last_seen": 175, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 24, "dst": 25, "cost": 1.0, "success": 1.0, "last_seen": 176, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 25, "dst": 24, "cost": 1.0, "success": 1.0, "last_seen": 176, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 25, "dst": 26, "cost": 1.0, "success": 1.0, "last_seen": 177, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 26, "dst": 25, "cost": 1.0, "success": 1.0, "last_seen": 177, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 26, "dst": 27, "cost": 1.0, "success": 1.0, "last_seen": 178, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 27, "dst": 26, "cost": 1.0, "success": 1.0, "last_seen": 178, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 27, "dst": 28, "cost": 1.0, "success": 1.0, "last_seen": 179, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 28, "dst": 27, "cost": 1.0, "success": 1.0, "last_seen": 179, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 28, "dst": 29, "cost": 1.0, "success": 1.0, "last_seen": 180, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 29, "dst": 28, "cost": 1.0, "success": 1.0, "last_seen": 180, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 29, "dst": 30, "cost": 1.0, "success": 1.0, "last_seen": 181, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 30, "dst": 29, "cost": 1.0, "success": 1.0, "last_seen": 181, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 30, "dst": 31, "cost": 1.0, "success": 1.0, "last_seen": 182, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 31, "dst": 30, "cost": 1.0, "success": 1.0, "last_seen": 182, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 31, "dst": 32, "cost": 1.0, "success": 1.0, "last_seen": 183, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 32, "dst": 31, "cost": 1.0, "success": 1.0, "last_seen": 183, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 32, "dst": 33, "cost": 1.0, "success": 1.0, "last_seen": 184, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 33, "dst": 32, "cost": 1.0, "success": 1.0, "last_seen": 184, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 33, "dst": 34, "cost": 1.0, "success": 1.0, "last_seen": 185, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 34, "dst": 33, "cost": 1.0, "success": 1.0, "last_seen": 185, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 34, "dst": 35, "cost": 1.0, "success": 1.0, "last_seen": 186, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 35, "dst": 34, "cost": 1.0, "success": 1.0, "last_seen": 186, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 35, "dst": 36, "cost": 1.0, "success": 1.0, "last_seen": 187, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 36, "dst": 35, "cost": 1.0, "success": 1.0, "last_seen": 187, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 36, "dst": 37, "cost": 1.0, "success": 1.0, "last_seen": 188, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 37, "dst": 36, "cost": 1.0, "success": 1.0, "last_seen": 188, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 37, "dst": 38, "cost": 1.0, "success": 1.0, "last_seen": 189, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 38, "dst": 37, "cost": 1.0, "success": 1.0, "last_seen": 189, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 38, "dst": 39, "cost": 1.0, "success": 1.0, "last_seen": 190, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 39, "dst": 38, "cost": 1.0, "success": 1.0, "last_seen": 190, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 39, "dst": 40, "cost": 1.0, "success": 1.0, "last_seen": 191, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 40, "dst": 39, "cost": 1.0, "success": 1.0, "last_seen": 191, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 40, "dst": 41, "cost": 1.0, "success": 1.0, "last_seen": 192, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 41, "dst": 40, "cost": 1.0, "success": 1.0, "last_seen": 192, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 41, "dst": 42, "cost": 1.0, "success": 1.0, "last_seen": 193, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 42, "dst": 41, "cost": 1.0, "success": 1.0, "last_seen": 193, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 42, "dst": 43, "cost": 1.0, "success": 1.0, "last_seen": 194, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 43, "dst": 42, "cost": 1.0, "success": 1.0, "last_seen": 194, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 43, "dst": 44, "cost": 1.0, "success": 1.0, "last_seen": 195, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 44, "dst": 43, "cost": 1.0, "success": 1.0, "last_seen": 195, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 44, "dst": 45, "cost": 1.0, "success": 1.0, "last_seen": 196, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 45, "dst": 44, "cost": 1.0, "success": 1.0, "last_seen": 196, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 45, "dst": 46, "cost": 1.0, "success": 1.0, "last_seen": 197, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 46, "dst": 45, "cost": 1.0, "success": 1.0, "last_seen": 197, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 46, "dst": 47, "cost": 1.0, "success": 1.0, "last_seen": 198, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 47, "dst": 46, "cost": 1.0, "success": 1.0, "last_seen": 198, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 47, "dst": 48, "cost": 1.0, "success": 1.0, "last_seen": 199, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 48, "dst": 47, "cost": 1.0, "success": 1.0, "last_seen": 199, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 48, "dst": 49, "cost": 1.0, "success": 1.0, "last_seen": 200, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 49, "dst": 48, "cost": 1.0, "success": 1.0, "last_seen": 200, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 49, "dst": 50, "cost": 1.0, "success": 1.0, "last_seen": 201, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 50, "dst": 49, "cost": 1.0, "success": 1.0, "last_seen": 201, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 50, "dst": 51, "cost": 1.0, "success": 1.0, "last_seen": 202, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 51, "dst": 50, "cost": 1.0, "success": 1.0, "last_seen": 202, "weight": 4.0}
+{"schema": "spatial.v1", "type": "edge", "src": 51, "dst": 2, "cost": 1.0, "success": 1.0, "last_seen": 153, "weight": 1.0}
