@@ -96,6 +96,8 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         str(pre_dir),
         "--outdir",
         str(post_dir),
+        "--min-em-uplift",
+        "0",
     ]
     subprocess.run(cmd_post, check=True, env=env, cwd=repo)
 
