@@ -874,6 +874,12 @@ def _write_index(
     ]
     display = [DISPLAY_NAMES.get(k, k) for k in ordered]
     lines: list[str] = ["# Overall Summary", ""]
+    run_dir = Path("runs") / out_dir.name
+    failed = list(run_dir.rglob("failed_preflight.json"))
+    if failed:
+        lines.extend([f"> ❌ Preflight failed in {len(failed)} run(s)", ""])
+    else:
+        lines.extend(["> ✅ Preflight passed", ""])
     if seed_count >= 2:
         lines.extend([f"> aggregated over {seed_count} seeds (95% CI)", ""])
     else:

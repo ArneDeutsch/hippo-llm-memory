@@ -22,6 +22,7 @@ import logging
 import os
 import re
 import sys
+import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -929,8 +930,63 @@ def _strict_flag(cfg: DictConfig) -> bool:
     return env_val not in ("0", "false", "False", "")
 
 
-def evaluate(cfg: DictConfig, outdir: Path) -> None:
+def preflight_check(cfg: DictConfig, outdir: Path) -> None:
+    """Validate run prerequisites and abort with diagnostics when unmet."""
+
+    if cfg.get("dry_run"):
+        return
+    preset = str(cfg.get("preset", ""))
+    if preset.startswith("baselines/"):
+        return
+
+    failures: list[str] = []
+    if cfg.get("mode") != "teach":
+        try:
+            baseline_metrics = outdir.parents[2] / "baselines" / "metrics.csv"
+        except IndexError:  # pragma: no cover - outdir too shallow
+            baseline_metrics = Path()
+        if not baseline_metrics.exists():
+            failures.append(f"missing baseline metrics: {baseline_metrics}")
+
+    store_dir = cfg.get("store_dir")
+    session_id = cfg.get("session_id")
+    if store_dir and session_id and cfg.get("mode") in ("test", "replay"):
+        meta_path = Path(to_absolute_path(str(store_dir))) / str(session_id) / "store_meta.json"
+        if not meta_path.exists():
+            failures.append(f"missing store_meta.json: {meta_path}")
+        else:
+            try:
+                meta = json.loads(meta_path.read_text())
+                if meta.get("source") == "stub":
+                    failures.append(f"store_meta.source == 'stub' in {meta_path}")
+            except Exception as exc:  # pragma: no cover - diagnostics only
+                failures.append(f"invalid store_meta.json: {meta_path}: {exc}")
+
+    dry_cfg = OmegaConf.merge(
+        cfg,
+        {"mode": "teach", "n": 1, "dry_run": True, "persist": False},
+    )
+    gate_registry.reset()
+    with tempfile.TemporaryDirectory() as tmp:
+        evaluate(dry_cfg, Path(tmp), preflight=False)
+    attempts = sum(
+        gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
+    )
+    if attempts == 0:
+        failures.append("gate.attempts == 0 in dry-run")
+
+    if failures:
+        outdir.mkdir(parents=True, exist_ok=True)
+        fail_path = outdir / "failed_preflight.json"
+        fail_path.write_text(json.dumps({"errors": failures}, indent=2))
+        raise RuntimeError("preflight check failed")
+
+
+def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     """Run a single evaluation and write outputs to ``outdir``."""
+
+    if preflight:
+        preflight_check(cfg, outdir)
 
     set_strict_telemetry(_strict_flag(cfg))
     registry.reset()
