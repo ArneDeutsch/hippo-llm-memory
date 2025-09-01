@@ -10,7 +10,7 @@ LOG=$(mktemp)
 python scripts/train_lora.py \
   dry_run=true \
   data_format=jsonl \
-  train_files='["data/episodic_50_2025.jsonl"]' \
+  train_files='["data/episodic/50_2025.jsonl"]' \
   fusion_insert_block_index=-1 \
   replay.enabled=true \
   > "$LOG" 2>&1
