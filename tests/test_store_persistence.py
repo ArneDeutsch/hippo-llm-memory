@@ -110,7 +110,12 @@ def test_store_meta(tmp_path, factory, writer, data_file, meta_schema) -> None:
     assert meta["schema"] == meta_schema
     assert meta["source"] == "stub"
     assert meta["replay_samples"] == 0
-    assert not (stub_dir / data_file).exists()
+    expected_exists = data_file in {"kg.jsonl", "spatial.jsonl"}
+    path = stub_dir / data_file
+    if expected_exists:
+        assert path.exists()
+    else:
+        assert not path.exists()
 
     store.save(tmp_path, "real", replay_samples=1)
     real_dir = tmp_path / "real"
