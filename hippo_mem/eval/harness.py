@@ -748,6 +748,7 @@ def _write_outputs(
         "n": cfg.n,
         "seed": cfg.seed,
         "preset": cfg.preset,
+        "dataset_profile": cfg.get("dataset_profile") or "default",
         "metrics": {cfg.suite: suite_metrics},
         "diagnostics": {cfg.suite: diagnostics},
         "retrieval": registry.all_snapshots(),
@@ -761,6 +762,18 @@ def _write_outputs(
     }
     if compute:
         metrics["metrics"]["compute"] = compute
+    store_dir = cfg.get("store_dir")
+    session_id = cfg.get("session_id")
+    if store_dir and session_id:
+        meta_path = Path(to_absolute_path(str(store_dir))) / str(session_id) / "store_meta.json"
+        try:
+            with meta_path.open("r", encoding="utf-8") as f:
+                store_meta = json.load(f)
+            source = store_meta.get("source")
+            if source:
+                metrics.setdefault("store", {})["source"] = source
+        except Exception:  # pragma: no cover - diagnostic only
+            pass
     with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f)
     mem_obj = cfg.get("memory")
@@ -876,6 +889,7 @@ def _write_outputs(
         "session_id": cfg.get("session_id"),
         "persist": cfg.get("persist"),
         "memory_off": cfg.get("memory_off"),
+        "dataset_profile": cfg.get("dataset_profile") or "default",
     }
     config_meta: Dict[str, Dict[str, object]] = {}
     if epi_gate is not None:

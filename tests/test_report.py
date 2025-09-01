@@ -29,6 +29,7 @@ def _make_metrics(
     gates: dict | None = None,
     retrieval: dict | None = None,
     store: dict | None = None,
+    dataset_profile: str | None = None,
     bench: bool = False,
     seed: int = 1337,
 ) -> None:
@@ -44,6 +45,8 @@ def _make_metrics(
         content["retrieval"] = retrieval
     if store:
         content["store"] = store
+    if dataset_profile is not None:
+        content["dataset_profile"] = dataset_profile
     (path / "metrics.json").write_text(json.dumps(content))
 
 
@@ -393,6 +396,22 @@ def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> N
     else:
         assert "Retrieval Telemetry" not in text
         assert "Gate Telemetry" not in text
+
+
+def test_collect_lineage_tracks_dataset_profile_and_store_source(tmp_path: Path) -> None:
+    base = tmp_path / "runs" / "20250101"
+    metrics_dir = base / "baselines" / "core" / "episodic" / "50_1337"
+    _make_metrics(
+        metrics_dir,
+        "episodic",
+        {"em": 0.5},
+        bench=True,
+        store={"size": 0, "source": "replay"},
+        dataset_profile="hard",
+    )
+    lineage = collect_lineage(base)
+    assert lineage["episodic"]["profiles"] == {"hard"}
+    assert lineage["episodic"]["store_source"] == {"replay"}
 
 
 def test_missing_post_metrics_detector() -> None:
