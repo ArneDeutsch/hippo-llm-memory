@@ -1,0 +1,12 @@
+{% if pruned > 0 %}
+> {{ pruned }} sweep{{ 's' if pruned != 1 else '' }} were flat (Δ < {{ epsilon }}) and hidden.
+{% endif %}
+{% if rows %}
+| name | suite | ΔEM_raw | ΔF1 | config |
+|:-----|:------|-------:|----:|:-------|
+{% for row in rows %}
+| {{ row.name }} | {{ row.suite }} | {{ '%.3f'|format(row.delta_em_raw|float) }} | {{ '%.3f'|format(row.delta_f1|float) }} | {{ row.config_hint }} |
+{% endfor %}
+{% else %}
+_No informative sweeps._
+{% endif %}
