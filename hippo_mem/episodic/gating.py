@@ -253,7 +253,7 @@ class WriteGate:
 
     def __init__(
         self,
-        tau: float = 0.5,
+        tau: float = 0.3,
         *,
         alpha: float = 0.5,
         beta: float = 0.5,

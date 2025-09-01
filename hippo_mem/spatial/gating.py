@@ -24,7 +24,7 @@ from .map import PlaceGraph
 class SpatialGate:
     """Reject degenerate spatial observations."""
 
-    block_threshold: float = 1.0
+    block_threshold: float = 0.5
     repeat_N: int = 3
     recent_window: int = 20
     max_degree: int = 64

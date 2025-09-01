@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Dict
 
 from hippo_mem.common import GateDecision, ProvenanceLogger, log_gate
+from hippo_mem.common.telemetry import gate_registry
 
 from .tuples import TupleType
 
@@ -26,7 +27,7 @@ if TYPE_CHECKING:  # pragma: no cover - import cycle hints
 class RelationalGate:
     """Score tuples and block low-salience inserts."""
 
-    threshold: float = 0.6
+    threshold: float = 0.3
     w_conf: float = 0.6
     w_nov: float = 0.5
     w_deg: float = 0.4
@@ -80,6 +81,8 @@ class RelationalGate:
 
     def decide(self, tup: TupleType, kg: "KnowledgeGraph") -> GateDecision:
         """Return a :class:`GateDecision` for ``tup``."""
+        stats = gate_registry.get("relational")
+        stats.attempts += 1
 
         head, rel, tail, *_rest, conf, _prov = tup
 
@@ -101,15 +104,21 @@ class RelationalGate:
         }
         if novelty == 0.0:
             decision = GateDecision("aggregate", "duplicate_edge", score)
+            stats.aggregated += 1
+            stats.accepted += 1
             log_gate(self.logger, "relational", decision, payload | {"score": score})
             return decision
 
         if score < self.threshold:
             decision = GateDecision("route_to_episodic", f"score={score:.2f}<thr", score)
+            stats.routed_to_episodic += 1
+            stats.blocked += 1
             log_gate(self.logger, "relational", decision, payload | {"score": score})
             return decision
 
         decision = GateDecision("insert", f"score={score:.2f}>=thr", score)
+        stats.inserted += 1
+        stats.accepted += 1
         log_gate(self.logger, "relational", decision, payload | {"score": score})
         return decision
 

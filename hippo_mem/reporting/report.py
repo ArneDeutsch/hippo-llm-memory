@@ -677,6 +677,9 @@ def _render_markdown_suite(
         lines.append("## Gate Telemetry")
         int_keys = {
             "attempts",
+            "accepted",
+            "blocked",
+            "skipped",
             "inserted",
             "aggregated",
             "routed_to_episodic",
@@ -686,6 +689,9 @@ def _render_markdown_suite(
         }
         order = [
             "attempts",
+            "accepted",
+            "blocked",
+            "skipped",
             "inserted",
             "aggregated",
             "duplicate_rate",
@@ -932,14 +938,29 @@ def _write_index(
     if gates:
         lines.append("## Gate Telemetry")
         agg = _aggregate_gates(gates)
-        header = "| status | mem | duplicate_rate | nodes_per_1k | edges_per_1k |"
-        lines.extend([header, "|---|---|---|---|---|"])
+        header = (
+            "| status | mem | attempts | accepted | blocked | skipped | "
+            "duplicate_rate | nodes_per_1k | edges_per_1k |"
+        )
+        lines.extend([header, "|---|---|---|---|---|---|---|---|---|"])
         for status, mems in sorted(agg.items()):
             for mem, stats in sorted(mems.items()):
                 dr = stats.get("duplicate_rate", float("nan"))
                 npk = stats.get("nodes_per_1k", float("nan"))
                 epk = stats.get("edges_per_1k", float("nan"))
-                lines.append(f"| {status} | {mem} | {dr:.3f} | {npk:.3f} | {epk:.3f} |")
+                lines.append(
+                    "| {status} | {mem} | {att:.0f} | {acc:.0f} | {blk:.0f} | {skp:.0f} | {dr:.3f} | {npk:.3f} | {epk:.3f} |".format(
+                        status=status,
+                        mem=mem,
+                        att=stats.get("attempts", 0.0),
+                        acc=stats.get("accepted", 0.0),
+                        blk=stats.get("blocked", 0.0),
+                        skp=stats.get("skipped", 0.0),
+                        dr=dr,
+                        npk=npk,
+                        epk=epk,
+                    )
+                )
         lines.append("")
 
     if gate_ablation:
