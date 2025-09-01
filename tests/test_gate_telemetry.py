@@ -53,7 +53,7 @@ def test_gate_metrics_propagate(tmp_path: Path) -> None:
     gates = metrics.get("gates")
     assert gates is not None
     assert "relational" in gates and "spatial" in gates
-    assert "accepts" in gates["relational"]
+    assert "accepted" in gates["relational"]
 
 
 def test_gate_counter_invariants() -> None:
@@ -74,7 +74,8 @@ def test_gate_counter_invariants() -> None:
         1,
         1,
     )
-    assert rel.attempts == rel.inserted + rel.aggregated + rel.routed_to_episodic
+    assert rel.accepted == rel.inserted + rel.aggregated
+    assert rel.attempts == rel.accepted + rel.blocked + rel.skipped + rel.null_input
 
     records = [{"trajectory": [(0, 0), (1, 0), (0, 0), (0, 0), (0, 0)]}]
     graph = PlaceGraph()
@@ -87,4 +88,5 @@ def test_gate_counter_invariants() -> None:
         1,
         1,
     )
-    assert spa.attempts == spa.inserted + spa.aggregated + spa.blocked_new_edges
+    assert spa.accepted == spa.inserted + spa.aggregated
+    assert spa.attempts == spa.accepted + spa.blocked + spa.skipped + spa.null_input

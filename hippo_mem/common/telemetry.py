@@ -135,6 +135,10 @@ class GateStats:
     """Counters for gate decisions."""
 
     attempts: int = 0
+    accepted: int = 0
+    blocked: int = 0
+    skipped: int = 0
+    null_input: int = 0
     inserted: int = 0
     aggregated: int = 0
     routed_to_episodic: int = 0
@@ -143,10 +147,12 @@ class GateStats:
     def snapshot(self) -> Dict[str, int]:
         """Return raw gate counters."""
 
-        accepts = self.inserted + self.aggregated
         return {
             "attempts": self.attempts,
-            "accepts": accepts,
+            "accepted": self.accepted,
+            "blocked": self.blocked,
+            "skipped": self.skipped,
+            "null_input": self.null_input,
             "inserted": self.inserted,
             "aggregated": self.aggregated,
             "routed_to_episodic": self.routed_to_episodic,

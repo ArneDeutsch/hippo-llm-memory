@@ -215,7 +215,7 @@ def collect_gate_ablation(base: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
     """Collect metrics for gate ON/OFF ablations.
 
     Returns a mapping ``memory -> {status -> {metric: value}}`` capturing
-    ``store_size``, ``accepts`` and ``pre_em`` for each gate status.
+    ``store_size``, ``accepted`` and ``pre_em`` for each gate status.
     """
 
     data: Dict[str, Dict[str, Dict[str, float]]] = {}
@@ -246,7 +246,7 @@ def collect_gate_ablation(base: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
         em = float(metrics.get("pre_em", metrics.get("em", 0.0)))
         entry = data.setdefault(mem, {}).setdefault(status, {})
         entry["store_size"] = store_size
-        entry["accepts"] = float(gates.get("accepts", 0))
+        entry["accepted"] = float(gates.get("accepted", 0))
         entry["em"] = em
     return data
 
@@ -633,7 +633,7 @@ def _render_markdown_suite(
             lines.append("")
         if "on" in gates and "off" in gates:
             lines.append("### Gate ON vs OFF")
-            lines.append("| mem | store_on | store_off | accepts_on | accepts_off | ΔEM |")
+            lines.append("| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |")
             lines.append("|---|---|---|---|---|---|")
             on = gates["on"]
             off = gates["off"]
@@ -653,10 +653,10 @@ def _render_markdown_suite(
 
             mems = sorted(set(on) | set(off))
             for mem in mems:
-                accepts_on = on.get(mem, {}).get("accepts", 0)
-                accepts_off = off.get(mem, {}).get("accepts", 0)
+                accepted_on = on.get(mem, {}).get("accepted", 0)
+                accepted_off = off.get(mem, {}).get("accepted", 0)
                 lines.append(
-                    f"| {mem} | {store_on:.0f} | {store_off:.0f} | {accepts_on:.0f} | {accepts_off:.0f} | {delta_em:+.3f} |"
+                    f"| {mem} | {store_on:.0f} | {store_off:.0f} | {accepted_on:.0f} | {accepted_off:.0f} | {delta_em:+.3f} |"
                 )
             lines.append("")
     return "\n".join(lines)
@@ -841,7 +841,7 @@ def _write_index(
 
     if gate_ablation:
         lines.append("## Gate ON vs OFF")
-        lines.append("| mem | store_on | store_off | accepts_on | accepts_off | ΔEM |")
+        lines.append("| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |")
         lines.append("|---|---|---|---|---|---|")
         for mem in sorted(gate_ablation):
             on = gate_ablation[mem].get("on", {})
@@ -849,7 +849,7 @@ def _write_index(
             delta = on.get("em", 0.0) - off.get("em", 0.0)
             lines.append(
                 f"| {mem} | {on.get('store_size', 0):.0f} | {off.get('store_size', 0):.0f} | "
-                f"{on.get('accepts', 0):.0f} | {off.get('accepts', 0):.0f} | {delta:+.3f} |"
+                f"{on.get('accepted', 0):.0f} | {off.get('accepted', 0):.0f} | {delta:+.3f} |"
             )
         lines.append("")
 

@@ -39,6 +39,31 @@ def test_retrieval_requests_guard(
     assert "retrieval.requests == 0" in str(exc.value)
 
 
+def test_retrieval_tokens_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Memory runs must return retrieval tokens."""
+
+    data_file = tmp_path / "data.jsonl"
+    data_file.write_text("")
+
+    cfg = eval_model.EvalConfig(
+        suite="episodic",
+        n=0,
+        seed=0,
+        preset="configs/eval/memory/hei_nw.yaml",
+        model="models/tiny-gpt2",
+    )
+
+    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(
+        eval_model.registry,
+        "all_snapshots",
+        lambda: {"episodic": {"requests": 1, "tokens_returned": 0}},
+    )
+    with pytest.raises(RuntimeError) as exc:
+        eval_model.run_suite(cfg)
+    assert "retrieval.tokens_returned == 0" in str(exc.value)
+
+
 def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """High refusal rate on span suites should raise an error."""
 

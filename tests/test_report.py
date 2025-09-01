@@ -52,12 +52,14 @@ def test_report_aggregation(tmp_path: Path) -> None:
     gates_on = {
         "relational": {
             "attempts": 10,
+            "accepted": 10,
             "inserted": 8,
             "aggregated": 2,
             "routed_to_episodic": 0,
         },
         "spatial": {
             "attempts": 20,
+            "accepted": 20,
             "inserted": 19,
             "aggregated": 1,
             "blocked_new_edges": 1,
@@ -68,12 +70,14 @@ def test_report_aggregation(tmp_path: Path) -> None:
     gates_off = {
         "relational": {
             "attempts": 10,
+            "accepted": 10,
             "inserted": 10,
             "aggregated": 0,
             "routed_to_episodic": 0,
         },
         "spatial": {
             "attempts": 20,
+            "accepted": 20,
             "inserted": 20,
             "aggregated": 0,
             "blocked_new_edges": 0,
@@ -184,7 +188,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     assert "duplicate_rate" in text
     assert "nodes_per_1k" in text
     assert "Gate ON vs OFF" in text
-    assert "| mem | store_on | store_off | accepts_on | accepts_off | ΔEM |" in text
+    assert "| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |" in text
 
     idx = out / "index.md"
     assert idx.exists()

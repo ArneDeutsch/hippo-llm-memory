@@ -74,6 +74,7 @@ class SpatialGate:
         if score >= self.block_threshold:
             decision = GateDecision("route_to_episodic", f"score={score:.2f}>=thr", score)
             stats.blocked_new_edges += 1
+            stats.blocked += 1
         else:
             action = "insert"
             reason = "new_edge"
@@ -87,8 +88,10 @@ class SpatialGate:
             decision = GateDecision(action, reason, score)
             if action == "insert":
                 stats.inserted += 1
+                stats.accepted += 1
             elif action == "aggregate":
                 stats.aggregated += 1
+                stats.accepted += 1
         log_gate(
             self.logger,
             "spatial",

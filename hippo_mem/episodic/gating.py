@@ -469,7 +469,11 @@ def gate_batch(
 
     decisions: list[GateDecision] = []
     stats = gate_registry.get("episodic")
-    accepts = 0
+    if len(probs) == 0:
+        stats.null_input += 1
+        logger.info("write_accept_rate=0.00")
+        return decisions, 0.0
+    accepted = 0
     for i, p in enumerate(probs):
         stats.attempts += 1
         r = float(rewards[i]) if rewards is not None else 0.0
@@ -478,7 +482,10 @@ def gate_batch(
         decisions.append(dec)
         if dec.action == "insert":
             stats.inserted += 1
-            accepts += 1
-    rate = accepts / len(decisions) if decisions else 0.0
+            stats.accepted += 1
+            accepted += 1
+        else:
+            stats.skipped += 1
+    rate = accepted / len(decisions)
     logger.info("write_accept_rate=%.2f", rate)
     return decisions, rate

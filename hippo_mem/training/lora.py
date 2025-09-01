@@ -451,7 +451,7 @@ class TrainerContext:
     sources: list[MemorySource] = field(default_factory=list)
     hidden_size: int = 0
     gate_attempts: int = 0
-    gate_accepts: int = 0
+    gate_accepted: int = 0
     step: int = 0
     log_interval: int = 100
     store_size: int = 0
@@ -469,7 +469,7 @@ class TrainerContext:
             self.worker.join(timeout=1)
         if self.writer is not None:
             self.writer.stop()
-            rate = self.gate_accepts / self.gate_attempts if self.gate_attempts else 0.0
+            rate = self.gate_accepted / self.gate_attempts if self.gate_attempts else 0.0
             logging.info(
                 "write_accept_rate=%.2f writes_enqueued=%d writes_committed=%d",
                 rate,
@@ -489,7 +489,7 @@ class TrainerContext:
 
         return {
             "step": self.step,
-            "gate_accepts": self.gate_accepts,
+            "gate_accepted": self.gate_accepted,
             "gate_attempts": self.gate_attempts,
             "store_size": self.store_size,
             "writer_queue_depth": self.writer_queue_depth,
@@ -517,7 +517,7 @@ def _enqueue_allowed_writes(context: TrainerContext, probs, queries, keys) -> No
 
     decisions, _ = gate_batch(context.gate, probs, queries, keys)
     context.gate_attempts += len(decisions)
-    context.gate_accepts += sum(d.action == "insert" for d in decisions)
+    context.gate_accepted += sum(d.action == "insert" for d in decisions)
     for dec, q in zip(decisions, queries):
         if dec.action == "insert":
             context.writer.enqueue(q, TraceValue(provenance="train"))
@@ -541,9 +541,9 @@ def maybe_write_memory(context: TrainerContext, outputs, labels) -> None:
     _enqueue_allowed_writes(context, probs, queries, keys)
     if context.step % context.log_interval == 0:
         logging.info(
-            "step=%d gate_accepts=%d gate_attempts=%d store_size=%d queue_depth=%d",
+            "step=%d gate_accepted=%d gate_attempts=%d store_size=%d queue_depth=%d",
             context.step,
-            context.gate_accepts,
+            context.gate_accepted,
             context.gate_attempts,
             context.store_size,
             context.writer_queue_depth,
@@ -1094,7 +1094,7 @@ class TrainingSession:
         keys = np.zeros((0, hidden), dtype=np.float32)
         decisions, _ = gate_batch(self.context.gate, probs, queries, keys)
         self.context.gate_attempts += len(decisions)
-        self.context.gate_accepts += sum(d.action == "insert" for d in decisions)
+        self.context.gate_accepted += sum(d.action == "insert" for d in decisions)
         for dec, q in zip(decisions, queries):
             if dec.action == "insert" and self.context.writer is not None:
                 self.context.writer.enqueue(q, TraceValue(provenance="dry_run"))
