@@ -23,7 +23,7 @@ def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
         "session_id=s1",
     ]
     subprocess.run(base_cmd + ["mode=teach", "persist=true"], check=True)
-    baseline_path = outdir.parents[2] / "baselines" / "metrics.csv"
+    baseline_path = outdir.parents[3] / "baselines" / "metrics.csv"
     baseline_path.parent.mkdir(parents=True, exist_ok=True)
     baseline_path.write_text("suite,em_raw,em_norm,f1\n")
     subprocess.run(base_cmd, check=True)
