@@ -886,4 +886,4 @@ def test_gate_logging(monkeypatch, caplog) -> None:
 
     caplog.set_level(logging.INFO)
     _run_training(monkeypatch, ["memory.runtime.log_interval=1"])
-    assert any("gate_accepts" in r.message for r in caplog.records)
+    assert any("gate_accepted" in r.message for r in caplog.records)

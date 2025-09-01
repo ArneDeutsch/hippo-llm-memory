@@ -545,9 +545,12 @@ def _enforce_guardrails(
     """Raise errors when CI guardrails are violated."""
 
     if has_memory and not cfg.get("memory_off"):
-        total = sum(int(snap.get("requests", 0)) for snap in retrieval_snaps.values())
-        if total == 0:
+        total_req = sum(int(snap.get("requests", 0)) for snap in retrieval_snaps.values())
+        if total_req == 0:
             raise RuntimeError("retrieval.requests == 0 for memory run")
+        total_tok = sum(int(snap.get("tokens_returned", 0)) for snap in retrieval_snaps.values())
+        if total_tok == 0:
+            raise RuntimeError("retrieval.tokens_returned == 0 for memory run")
 
     if cfg.get("use_chat_template") and int(cfg.get("max_new_tokens", 0)) <= 16:
         rates = [pre_metrics.get("refusal_rate", 0.0)]

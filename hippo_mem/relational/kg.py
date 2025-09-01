@@ -244,13 +244,18 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
 
         if decision.action == "insert":
             stats.inserted += 1
+            stats.accepted += 1
             self.schema_index.fast_track(tup, self)
         elif decision.action == "aggregate":
             stats.aggregated += 1
+            stats.accepted += 1
             self.aggregate_duplicate(tup)
         elif decision.action == "route_to_episodic":
             stats.routed_to_episodic += 1
+            stats.blocked += 1
             self.route_to_episodic(tup)
+        else:
+            stats.skipped += 1
         return decision
 
     def aggregate_duplicate(self, tup: TupleType) -> None:

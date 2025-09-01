@@ -56,7 +56,7 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     suite_metrics = metrics["metrics"]["episodic"]
     assert "pre_refusal_rate" in suite_metrics
     assert metrics["gates"]["relational"]["attempts"] == 0
-    assert "accepts" in metrics["gates"]["relational"]
+    assert "accepted" in metrics["gates"]["relational"]
 
     with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
