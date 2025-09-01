@@ -135,6 +135,10 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     }
     (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
 
+    meta = tmp_path / "stores" / "hei_nw" / "sid" / "store_meta.json"
+    meta.parent.mkdir(parents=True, exist_ok=True)
+    meta.write_text(json.dumps({"replay_samples": 1, "source": "replay"}))
+
     post_dir = tmp_path / "post"
 
     def fake_eval(cfg, outdir):  # pragma: no cover - helper
@@ -168,7 +172,7 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         str(post_dir),
         "--uplift-mode",
         "fixed",
-        "--min-uplift",
+        "--min-em-uplift",
         "0.2",
     ]
     with pytest.raises(RuntimeError) as exc:
@@ -183,6 +187,10 @@ def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     pre_dir.mkdir()
     pre_data = {"suite": "episodic", "metrics": {"episodic": {"pre_em": 0.0}}}
     (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
+
+    meta = tmp_path / "stores" / "hei_nw" / "sid" / "store_meta.json"
+    meta.parent.mkdir(parents=True, exist_ok=True)
+    meta.write_text(json.dumps({"replay_samples": 1, "source": "replay"}))
 
     post_root = tmp_path / "post"
     seed_a = post_root / "seed_a"
@@ -238,6 +246,10 @@ def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     pre_dir.mkdir()
     pre_data = {"suite": "episodic", "metrics": {"episodic": {"pre_em": 0.0}}}
     (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
+
+    meta = tmp_path / "stores" / "hei_nw" / "sid" / "store_meta.json"
+    meta.parent.mkdir(parents=True, exist_ok=True)
+    meta.write_text(json.dumps({"replay_samples": 1, "source": "replay"}))
 
     post_root = tmp_path / "post"
     seed_a = post_root / "seed_a"

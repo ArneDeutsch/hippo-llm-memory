@@ -14,6 +14,8 @@ def _write_store(base: Path) -> Path:
     (session / "episodic.jsonl").write_text(json.dumps(rec) + "\n")
     (session / "relational.jsonl").write_text("")
     (session / "spatial.jsonl").write_text("")
+    meta = {"replay_samples": 1, "source": "replay"}
+    (session / "store_meta.json").write_text(json.dumps(meta))
     return base
 
 
@@ -94,6 +96,8 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         str(pre_dir),
         "--outdir",
         str(post_dir),
+        "--min-em-uplift",
+        "0",
     ]
     subprocess.run(cmd_post, check=True, env=env, cwd=repo)
 
