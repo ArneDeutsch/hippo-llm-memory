@@ -32,7 +32,7 @@ def test_report_shows_em_and_diagnostics(tmp_path: Path) -> None:
 
     runs = tmp_path / "runs" / "20250101"
     metrics = collect_metrics(runs)
-    summary = summarise(metrics)
+    summary, _ = summarise(metrics)
     retrieval = summarise_retrieval(collect_retrieval(runs))
     gates = summarise_gates(collect_gates(runs))
     gate_ablation = collect_gate_ablation(runs)
@@ -64,7 +64,7 @@ def test_report_retrieval_section(tmp_path: Path) -> None:
 
     runs = tmp_path / "runs" / "20250101"
     metrics = collect_metrics(runs)
-    summary = summarise(metrics)
+    summary, _ = summarise(metrics)
     retrieval = summarise_retrieval(collect_retrieval(runs))
     gates = summarise_gates(collect_gates(runs))
     gate_ablation = collect_gate_ablation(runs)
@@ -75,3 +75,22 @@ def test_report_retrieval_section(tmp_path: Path) -> None:
     assert header in text
     assert "| episodic | 2 | 1 | 0.500 | 4 | 0.100 |" in text
     assert "actual recalled traces" in text
+
+
+def test_missing_pre_marked(tmp_path: Path) -> None:
+    base = tmp_path / "runs" / "20250101" / "memory" / "hei_nw" / "episodic" / "50_1337"
+    base.mkdir(parents=True)
+    content = {"metrics": {"episodic": {"post_em": 0.5}}}
+    (base / "metrics.json").write_text(json.dumps(content))
+
+    runs = tmp_path / "runs" / "20250101"
+    metrics = collect_metrics(runs)
+    summary, _ = summarise(metrics)
+    retrieval = summarise_retrieval(collect_retrieval(runs))
+    gates = summarise_gates(collect_gates(runs))
+    gate_ablation = collect_gate_ablation(runs)
+    out = tmp_path / "reports" / "20250101"
+    write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
+    text = (out / "episodic" / "summary.md").read_text()
+    assert "_missing_" in text
+    assert "MissingPre" in text

@@ -7,6 +7,7 @@ import pytest
 
 from scripts.report import (
     _find_latest_date,
+    _missing_pre_suites,
     collect_gate_ablation,
     collect_gates,
     collect_metrics,
@@ -151,7 +152,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
                 "latency_ms_mean",
             ):
                 assert key in rec
-    summary = summarise(metrics)
+    summary, _ = summarise(metrics)
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
     gate_ablation = collect_gate_ablation(base)
@@ -201,7 +202,7 @@ def test_report_handles_missing_optional(tmp_path: Path) -> None:
     base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
     _make_metrics(base_dir / "50_1337", "episodic", {"em": 0.5}, {"total_tokens": 10})
     base = tmp_path / "runs" / "20250101"
-    summary = summarise(collect_metrics(base))
+    summary, _ = summarise(collect_metrics(base))
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
     gate_ablation = collect_gate_ablation(base)
@@ -259,7 +260,7 @@ def test_report_warnings(tmp_path: Path) -> None:
         },
         store={"size": 0},
     )
-    summary = summarise(collect_metrics(base))
+    summary, _ = summarise(collect_metrics(base))
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
     gate_ablation = collect_gate_ablation(base)
@@ -303,7 +304,7 @@ def test_smoke_report(tmp_path: Path) -> None:
         },
     )
     base = tmp_path / "runs" / "20250101"
-    summary = summarise(collect_metrics(base))
+    summary, _ = summarise(collect_metrics(base))
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
     gate_ablation = collect_gate_ablation(base)
@@ -345,7 +346,7 @@ def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> N
         bench=not telemetry,
     )
     root = tmp_path / "runs" / "20250101"
-    summary = summarise(collect_metrics(root))
+    summary, _ = summarise(collect_metrics(root))
     retrieval_s = summarise_retrieval(collect_retrieval(root))
     gates_s = summarise_gates(collect_gates(root))
     gate_ablation = collect_gate_ablation(root)
@@ -365,3 +366,9 @@ def test_missing_post_metrics_detector() -> None:
 
     missing = _missing_post_metrics(data)
     assert missing == [("episodic", "preset", 50)]
+
+
+def test_missing_pre_suites_detector() -> None:
+    data = {("episodic", "preset", 50): [{"post_em": 0.8}, {"post_em": 0.7, "pre_em": 0.6}]}
+    _, missing_pre = summarise(data)
+    assert _missing_pre_suites(missing_pre) == ["episodic"]
