@@ -589,11 +589,14 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         io.atomic_write_json(path / "store_meta.json", meta)
+        file = path / "kg.jsonl"
         if replay_samples <= 0:
+            # Create an empty placeholder so downstream checks pass even when no
+            # relational facts were written during the teach phase.
+            io.atomic_write_file(file, lambda tmp: open(tmp, "w", encoding="utf-8").write(""))
             return
 
         if fmt == "jsonl":
-            file = path / "kg.jsonl"
 
             def _write(tmp_path: Path) -> None:
                 with open(tmp_path, "w", encoding="utf-8") as fh:
