@@ -10,6 +10,7 @@ recent edge use, and node degree before being written to the
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Deque, Optional
@@ -19,12 +20,14 @@ from hippo_mem.common.telemetry import gate_registry
 
 from .map import PlaceGraph
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class SpatialGate:
     """Reject degenerate spatial observations."""
 
-    block_threshold: float = 1.0
+    block_threshold: float = 0.5
     repeat_N: int = 3
     recent_window: int = 20
     max_degree: int = 64
@@ -97,6 +100,13 @@ class SpatialGate:
             "spatial",
             decision,
             {"prev": prev_ctx, "ctx": context, "deg_pen": deg_pen, "score": score},
+        )
+        rejected = stats.blocked + stats.skipped
+        logger.info(
+            "gate_counts attempts=%d accepted=%d rejected=%d",
+            stats.attempts,
+            stats.accepted,
+            rejected,
         )
         return decision
 

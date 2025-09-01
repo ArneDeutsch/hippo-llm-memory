@@ -31,6 +31,7 @@ hippo_mem.relational.tuples.extract_tuples
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 from datetime import datetime, timezone
@@ -51,6 +52,8 @@ from .gating import RelationalGate
 from .maintenance import MaintenanceManager
 from .schema import SchemaIndex
 from .tuples import TupleType
+
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
@@ -256,6 +259,13 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
             self.route_to_episodic(tup)
         else:
             stats.skipped += 1
+        rejected = stats.blocked + stats.skipped
+        logger.info(
+            "gate_counts attempts=%d accepted=%d rejected=%d",
+            stats.attempts,
+            stats.accepted,
+            rejected,
+        )
         return decision
 
     def aggregate_duplicate(self, tup: TupleType) -> None:

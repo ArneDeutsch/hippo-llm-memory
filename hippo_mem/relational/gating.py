@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover - import cycle hints
 class RelationalGate:
     """Score tuples and block low-salience inserts."""
 
-    threshold: float = 0.6
+    threshold: float = 0.4
     w_conf: float = 0.6
     w_nov: float = 0.5
     w_deg: float = 0.4

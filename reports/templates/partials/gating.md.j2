@@ -1,0 +1,5 @@
+| mem | attempts | accepted | rejected |
+|:----|---------:|---------:|---------:|
+{% for mem, stats in gating.items() %}
+| {{ mem }} | {{ stats.attempts }} | {{ stats.accepted }} | {{ (stats.blocked | default(0)) + (stats.skipped | default(0)) }} |
+{% endfor %}

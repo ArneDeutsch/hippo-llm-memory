@@ -55,13 +55,13 @@ replay:
 # ``memory`` root key intentionally omitted so baselines don't load memories.
 episodic:
   gate:
-    tau: 0.5
+    tau: 0.3
 relational:
   gate:
-    threshold: 0.6
+    threshold: 0.4
 spatial:
   gate:
-    block_threshold: 1.0
+    block_threshold: 0.5
 
 # Hydra stays in-place so our manual ``outdir`` handling works.
 hydra:

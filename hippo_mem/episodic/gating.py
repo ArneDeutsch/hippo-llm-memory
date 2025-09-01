@@ -253,7 +253,7 @@ class WriteGate:
 
     def __init__(
         self,
-        tau: float = 0.5,
+        tau: float = 0.3,
         *,
         alpha: float = 0.5,
         beta: float = 0.5,
@@ -488,4 +488,11 @@ def gate_batch(
             stats.skipped += 1
     rate = accepted / len(decisions)
     logger.info("write_accept_rate=%.2f", rate)
+    rejected = stats.blocked + stats.skipped
+    logger.info(
+        "gate_counts attempts=%d accepted=%d rejected=%d",
+        stats.attempts,
+        stats.accepted,
+        rejected,
+    )
     return decisions, rate

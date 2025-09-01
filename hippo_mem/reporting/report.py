@@ -149,6 +149,14 @@ def collect_metrics(
             cleaned["gate_attempts"] = float(
                 sum(float(m.get("attempts", 0)) for m in gating.values())
             )
+            cleaned["gate_accepted"] = float(
+                sum(float(m.get("accepted", 0)) for m in gating.values())
+            )
+            cleaned["gate_rejected"] = float(
+                sum(
+                    float(m.get("blocked", 0)) + float(m.get("skipped", 0)) for m in gating.values()
+                )
+            )
         # derive delta_* metrics and normalise solitary pre_* keys
         for key in list(cleaned.keys()):
             if key.startswith("post_"):
