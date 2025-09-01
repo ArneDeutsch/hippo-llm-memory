@@ -10,7 +10,7 @@
     2025,
     4242
   ],
-  "generator_version": "d8994ea06af035f45ae6c932cc493c8dc0f42580",
+  "generator_version": "1fda9c1f22b164b492807d5bb18772b953d3b6fd",
   "files": {
     "50_1337.jsonl": "7a82b5316be77450c13bce1138909123f2b4443ef123588e20bcfef2ae19aceb",
     "50_2025.jsonl": "09e569e89b2d9548f120ab9a2dd20f9a323bed4db50adfc93a3bf52f16fe0fc3",
@@ -22,6 +22,6 @@
     "1000_2025.jsonl": "054706082e5993ecf592af155ed2950e33ef13f99145098ebc7526e7591a3bfb",
     "1000_4242.jsonl": "e58601b640306b5cb586be893318f4f7925f112987aa724978dc2d89e758a3a1"
   },
-  "created_utc": "2025-09-01T06:57:28.395485+00:00",
+  "created_utc": "2025-09-01T13:11:10.352667+00:00",
   "cli_example": "python scripts/make_datasets.py suite=episodic size=<size> seed=<seed> out=data/episodic/<size>_<seed>.jsonl"
 }
