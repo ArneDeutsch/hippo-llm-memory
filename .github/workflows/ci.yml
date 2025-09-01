@@ -41,12 +41,13 @@ jobs:
 
       - name: Smoke 7b
         run: bash scripts/smoke_7b.sh
-
       - name: Smoke 8a
         run: bash scripts/smoke_8a.sh
       - name: Smoke 8
         run: bash scripts/smoke_8.sh
-      - name: Smoke eval_model baseline
-        run: >-
-          python scripts/eval_model.py preset=baselines/core +run_matrix=true
-          +suites=[episodic] +n_values=[2] +seeds=[1337] dry_run=true date=20250101
+      - name: Smoke eval
+        run: bash scripts/smoke_eval.sh
+      - name: Smoke n50
+        run: bash scripts/smoke_n50.sh
+      - name: Smoke n seeds
+        run: bash scripts/smoke_n_seeds.sh
