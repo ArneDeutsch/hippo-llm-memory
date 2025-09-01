@@ -46,6 +46,7 @@ import logging
 import threading
 import time
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -584,7 +585,13 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
 
     # ------------------------------------------------------------------
     # Persistence
-    def save(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
+    def save(
+        self,
+        directory: str,
+        session_id: str,
+        fmt: str = "jsonl",
+        replay_samples: int = 0,
+    ) -> None:
         """Save all traces under ``directory/session_id``.
 
         Parameters
@@ -595,10 +602,23 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
             Subdirectory name for this session.
         fmt : str, optional
             ``"jsonl"`` (default) or ``"parquet"``.
+        replay_samples : int, optional
+            Number of replayed samples driving persistence.
         """
 
         path = Path(directory) / session_id
         path.mkdir(parents=True, exist_ok=True)
+
+        meta = {
+            "schema": "episodic.store_meta.v1",
+            "replay_samples": int(replay_samples),
+            "source": "replay" if replay_samples > 0 else "stub",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        io.atomic_write_json(path / "store_meta.json", meta)
+        if replay_samples <= 0:
+            return
+
         records = []
         for idx, value, key_vec, ts, salience in self.persistence.all():
             records.append(

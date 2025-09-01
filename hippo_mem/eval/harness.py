@@ -1015,11 +1015,17 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
             if "episodic" in modules:
-                modules["episodic"]["store"].save(str(session_dir), str(cfg.session_id))
+                modules["episodic"]["store"].save(
+                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                )
             if "relational" in modules:
-                modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
+                modules["relational"]["kg"].save(
+                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                )
             if "spatial" in modules:
-                modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
+                modules["spatial"]["map"].save(
+                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                )
         store_sizes, store_diags = _store_sizes(modules)
         if cfg.preset and not is_memory_preset(str(cfg.preset)):
             gate_registry.reset()
@@ -1044,11 +1050,17 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
             if "episodic" in modules:
-                modules["episodic"]["store"].save(str(session_dir), str(cfg.session_id))
+                modules["episodic"]["store"].save(
+                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                )
             if "relational" in modules:
-                modules["relational"]["kg"].save(str(session_dir), str(cfg.session_id))
+                modules["relational"]["kg"].save(
+                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                )
             if "spatial" in modules:
-                modules["spatial"]["map"].save(str(session_dir), str(cfg.session_id))
+                modules["spatial"]["map"].save(
+                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                )
 
         gate_snaps = gate_registry.all_snapshots()
 

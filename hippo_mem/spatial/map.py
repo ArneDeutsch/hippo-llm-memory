@@ -37,6 +37,7 @@ import math
 import threading
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -608,17 +609,34 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
 
     # ------------------------------------------------------------------
     # Persistence
-    def save(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
+    def save(
+        self,
+        directory: str,
+        session_id: str,
+        fmt: str = "jsonl",
+        replay_samples: int = 0,
+    ) -> None:
         """Save map under ``directory/session_id``."""
 
         path = Path(directory) / session_id
         path.mkdir(parents=True, exist_ok=True)
+
+        meta = {
+            "schema": "spatial.store_meta.v1",
+            "replay_samples": int(replay_samples),
+            "source": "replay" if replay_samples > 0 else "stub",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        io.atomic_write_json(path / "store_meta.json", meta)
+        if replay_samples <= 0:
+            return
+
         if fmt == "jsonl":
             file = path / "spatial.jsonl"
 
             def _write(tmp_path: Path) -> None:
                 with open(tmp_path, "w", encoding="utf-8") as fh:
-                    meta = {
+                    meta_rec = {
                         "schema": "spatial.v1",
                         "type": "meta",
                         "next_id": self._next_id,
@@ -627,7 +645,7 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                         "position": self._position,
                         "last_coord": self._last_coord,
                     }
-                    fh.write(json.dumps(meta) + "\n")
+                    fh.write(json.dumps(meta_rec) + "\n")
                     for context, place in self.encoder._cache.items():
                         fh.write(
                             json.dumps(

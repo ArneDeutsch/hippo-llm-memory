@@ -33,6 +33,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence
 
@@ -564,11 +565,28 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
 
     # ------------------------------------------------------------------
     # Persistence
-    def save(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
+    def save(
+        self,
+        directory: str,
+        session_id: str,
+        fmt: str = "jsonl",
+        replay_samples: int = 0,
+    ) -> None:
         """Save graph to ``directory/session_id``."""
 
         path = Path(directory) / session_id
         path.mkdir(parents=True, exist_ok=True)
+
+        meta = {
+            "schema": "relational.store_meta.v1",
+            "replay_samples": int(replay_samples),
+            "source": "replay" if replay_samples > 0 else "stub",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        io.atomic_write_json(path / "store_meta.json", meta)
+        if replay_samples <= 0:
+            return
+
         if fmt == "jsonl":
             file = path / "kg.jsonl"
 
