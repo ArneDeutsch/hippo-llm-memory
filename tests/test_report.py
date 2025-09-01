@@ -10,6 +10,7 @@ from scripts.report import (
     _missing_pre_suites,
     collect_gate_ablation,
     collect_gates,
+    collect_lineage,
     collect_metrics,
     collect_retrieval,
     summarise,
@@ -29,11 +30,12 @@ def _make_metrics(
     retrieval: dict | None = None,
     store: dict | None = None,
     bench: bool = False,
+    seed: int = 1337,
 ) -> None:
     path.mkdir(parents=True, exist_ok=True)
     content = {"metrics": {suite: metrics}}
     if bench:
-        content.update({"suite": suite, "preset": "baselines/core", "n": 50, "seed": 1337})
+        content.update({"suite": suite, "preset": "baselines/core", "n": 50, "seed": seed})
     if compute:
         content["metrics"]["compute"] = compute
     if gates:
@@ -98,6 +100,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
             "latency_ms_mean": 1.0,
         },
         gates_on,
+        bench=True,
+        seed=1337,
     )
     _make_metrics(
         runs_on / "50_2025",
@@ -112,6 +116,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
             "latency_ms_mean": 1.0,
         },
         gates_on,
+        bench=True,
+        seed=2025,
     )
     _make_metrics(
         runs_off / "50_4242",
@@ -126,13 +132,15 @@ def test_report_aggregation(tmp_path: Path) -> None:
             "latency_ms_mean": 1.0,
         },
         gates_off,
+        bench=True,
+        seed=4242,
     )
     # also create another suite to ensure per-suite report generation
     other = tmp_path / "runs" / "20250101" / "baselines" / "core" / "semantic"
     _make_metrics(
         other / "50_1337",
         "semantic",
-        {"f1": 0.4},
+        {"post_em": 0.4},
         {
             "input_tokens": 2,
             "generated_tokens": 3,
@@ -141,6 +149,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
             "time_ms_per_100": 1.0,
             "latency_ms_mean": 1.0,
         },
+        bench=True,
+        seed=1337,
     )
 
     base = tmp_path / "runs" / "20250101"
@@ -160,13 +170,23 @@ def test_report_aggregation(tmp_path: Path) -> None:
     retrieval = summarise_retrieval(collect_retrieval(base))
     gates = summarise_gates(collect_gates(base))
     gate_ablation = collect_gate_ablation(base)
+    lineage = collect_lineage(base)
 
     em_stats = summary["episodic"]["baselines/core/gate_on"][50]["em_raw"]
     assert em_stats[0] == 0.6
     assert round(em_stats[1], 3) == 0.196
 
     out = tmp_path / "reports" / "20250101"
-    paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
+    paths = write_reports(
+        summary,
+        retrieval,
+        gates,
+        gate_ablation,
+        out,
+        plots=False,
+        seed_count=1,
+        lineage=lineage,
+    )
     # per-suite summaries present
     assert set(paths.keys()) == {"episodic", "semantic"}
     md_path = paths["episodic"]
@@ -184,6 +204,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     # both presets appear as rows
     assert "| baselines/core/gate_on | 50 |" in text
     assert "| baselines/core/gate_off | 50 |" in text
+    assert "seeds:1337,2025,4242" in text
     # gate telemetry rendered
     assert "duplicate_rate" in text
     assert "nodes_per_1k" in text
@@ -198,6 +219,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
         assert col in header
     assert "[episodic](episodic/summary.md)" in idx_text
     assert "[semantic](semantic/summary.md)" in idx_text
+    assert "_missing_" in idx_text
+    assert "MissingPre" in idx_text
     # gate telemetry roll-up present
     assert "## Gate Telemetry" in idx_text
 

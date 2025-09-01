@@ -255,6 +255,41 @@ def collect_gate_ablation(base: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
     return data
 
 
+def collect_lineage(base: Path) -> Dict[str, Dict[str, set]]:
+    """Collect lineage fields grouped by suite.
+
+    The returned mapping includes sets for ``seeds``, ``sizes``,
+    ``profiles`` (dataset profiles), ``replay_samples`` and ``store_source``.
+    """
+
+    data: Dict[str, Dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    for metrics_path in base.rglob("metrics.json"):
+        try:
+            with metrics_path.open() as fh:
+                record = json.load(fh)
+        except json.JSONDecodeError:  # pragma: no cover - defensive
+            continue
+        suite = record.get("suite")
+        if not suite:
+            continue
+        entry = data[suite]
+        seed = record.get("seed")
+        if seed is not None:
+            entry.setdefault("seeds", set()).add(int(seed))
+        size = record.get("n")
+        if size is not None:
+            entry.setdefault("sizes", set()).add(int(size))
+        profile = record.get("dataset_profile", "default")
+        entry.setdefault("profiles", set()).add(str(profile))
+        replay_samples = record.get("replay", {}).get("samples")
+        if replay_samples is not None:
+            entry.setdefault("replay_samples", set()).add(int(replay_samples))
+        store_source = record.get("store", {}).get("source")
+        if store_source:
+            entry.setdefault("store_source", set()).add(str(store_source))
+    return data
+
+
 def summarise(
     data: Dict[Tuple[str, str, int], Iterable[MetricDict]],
 ) -> tuple[Summary, Dict[str, tuple[int, int]]]:
@@ -456,10 +491,36 @@ def _render_markdown_suite(
     retrieval: Dict[str, MetricDict] | None,
     gates: Dict[str, Dict[str, MetricDict]] | None,
     seed_count: int,
+    lineage: Dict[str, set] | None = None,
 ) -> str:
     """Return a Markdown table for a single suite."""
 
     lines: list[str] = [f"# {suite} Summary", ""]
+    if lineage:
+        pills: list[str] = []
+        seeds = lineage.get("seeds")
+        if seeds:
+            seeds_str = ",".join(str(s) for s in sorted(seeds))
+            pills.append(f"`seeds:{seeds_str}`")
+        sizes = lineage.get("sizes")
+        if sizes:
+            sizes_str = ",".join(str(s) for s in sorted(sizes))
+            pills.append(f"`sizes:{sizes_str}`")
+        profiles = lineage.get("profiles")
+        if profiles:
+            prof_str = ",".join(sorted(profiles))
+            pills.append(f"`profile:{prof_str}`")
+        replay_samples = lineage.get("replay_samples")
+        if replay_samples:
+            rep_str = ",".join(str(s) for s in sorted(replay_samples))
+            pills.append(f"`replay.samples:{rep_str}`")
+        store_src = lineage.get("store_source")
+        if store_src:
+            src_str = ",".join(sorted(store_src))
+            pills.append(f"`store:{src_str}`")
+        if pills:
+            lines.append("> " + " ".join(pills))
+            lines.append("")
     if presets:
         saturated = False
         for preset_stats in presets.values():
@@ -753,12 +814,12 @@ def _write_index(
 ) -> Path:
     """Write a top-level roll-up report and return its path."""
 
-    rollup: list[tuple[str, str, Dict[str, float]]] = []
+    rollup: list[tuple[str, str, Dict[str, float | None]]] = []
     metric_keys: set[str] = set()
     em_by_preset: Dict[str, list[float]] = defaultdict(list)
     for suite, presets in summary.items():
         for preset, sizes in presets.items():
-            agg: Dict[str, float] = {}
+            agg: Dict[str, float | None] = {}
             for key in {k for stats in sizes.values() for k in stats}:
                 vals = [
                     stats[key][0]
@@ -767,6 +828,8 @@ def _write_index(
                 ]
                 if vals:
                     agg[key] = sum(vals) / len(vals)
+                else:
+                    agg[key] = None
             rollup.append((suite, preset, agg))
             metric_keys.update(agg.keys())
             if suite == "semantic" and "em_raw" in agg:
@@ -805,12 +868,25 @@ def _write_index(
     else:
         lines.extend(["> single-seed run: CI bands unavailable", ""])
     if ordered:
-        header = "| Suite | Preset | " + " | ".join(display) + " |"
-        sep = "|---" * (len(ordered) + 2) + "|"
+        header = "| Suite | Preset | " + " | ".join(display) + " | ⚠️ |"
+        sep = "|---" * (len(ordered) + 3) + "|"
         lines.extend([header, sep])
         for suite, preset, metrics in rollup:
-            vals = [f"{metrics.get(k, float('nan')):.3f}" if k in metrics else "–" for k in ordered]
-            lines.append(f"| {suite} | {preset} | " + " | ".join(vals) + " |")
+            vals: list[str] = []
+            warn: list[str] = []
+            for k in ordered:
+                stat = metrics.get(k)
+                if stat is None:
+                    if k.startswith("pre_"):
+                        vals.append("_missing_")
+                        if "MissingPre" not in warn:
+                            warn.append("MissingPre")
+                    else:
+                        vals.append("–")
+                else:
+                    vals.append(f"{stat:.3f}")
+            note = "⚠️ " + ", ".join(warn) if warn else ""
+            lines.append(f"| {suite} | {preset} | " + " | ".join(vals) + " | " + note + " |")
         lines.append("")
 
     assets_dir = out_dir / "assets"
@@ -881,6 +957,7 @@ def write_reports(
     out_dir: Path,
     plots: bool,
     seed_count: int,
+    lineage: Dict[str, Dict[str, set]] | None = None,
 ) -> Dict[str, Path]:
     """Write per-suite reports and optional plots to ``out_dir``."""
 
@@ -896,6 +973,7 @@ def write_reports(
                 retrieval.get(suite),
                 gates.get(suite),
                 seed_count,
+                lineage.get(suite) if lineage else None,
             )
         )
         paths[suite] = md_path
@@ -942,6 +1020,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     retrieval_data = collect_retrieval(runs_path)
     gate_data = collect_gates(runs_path)
     gate_ablation_data = collect_gate_ablation(runs_path)
+    lineage_data = collect_lineage(runs_path)
     summary, missing_pre = summarise(metric_data)
     bad_pre = _missing_pre_suites(missing_pre)
     if bad_pre:
@@ -967,6 +1046,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
         out_dir,
         args.plots,
         seed_count,
+        lineage_data,
     )
     for suite, md_path in paths.items():
         log.info("wrote %s for %s", md_path, suite)
