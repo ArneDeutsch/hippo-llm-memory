@@ -53,6 +53,18 @@ MetricStats = Dict[str, MetricStat]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
 
 
+def load_metrics(path: Path) -> dict:
+    """Load a ``metrics.json`` file with backward compatibility."""
+
+    with path.open() as fh:
+        record = json.load(fh)
+    if "version" not in record:
+        record["version"] = 1
+    if "gating" not in record and "gates" in record:
+        record["gating"] = record.pop("gates")
+    return record
+
+
 def _format_stat(stat: tuple[float, float]) -> str:
     """Return a formatted statistic with 95% CI.
 
@@ -103,8 +115,7 @@ def collect_metrics(
             continue
         preset = "/".join(parts[:-3]) or "unknown"
         try:
-            with metrics_path.open() as fh:
-                record = json.load(fh)
+            record = load_metrics(metrics_path)
         except json.JSONDecodeError as exc:  # pragma: no cover - file is corrupt
             log.warning("failed to parse %s: %s", metrics_path, exc)
             continue
@@ -128,10 +139,10 @@ def collect_metrics(
         retrieval = record.get("retrieval", {})
         for mem, stats in retrieval.items():
             cleaned[f"retrieval_{mem}_requests"] = float(stats.get("requests", 0))
-        gates = record.get("gates", {})
-        if isinstance(gates, dict):
+        gating = record.get("gating") or record.get("gates", {})
+        if isinstance(gating, dict):
             cleaned["gate_attempts"] = float(
-                sum(float(m.get("attempts", 0)) for m in gates.values())
+                sum(float(m.get("attempts", 0)) for m in gating.values())
             )
         # derive delta_* metrics and normalise solitary pre_* keys
         for key in list(cleaned.keys()):
@@ -172,8 +183,7 @@ def collect_retrieval(base: Path) -> Dict[str, list[dict[str, MetricDict]]]:
             continue
         suite = parts[-3]
         try:
-            with metrics_path.open() as fh:
-                record = json.load(fh)
+            record = load_metrics(metrics_path)
         except json.JSONDecodeError as exc:  # pragma: no cover - file is corrupt
             log.warning("failed to parse %s: %s", metrics_path, exc)
             continue
@@ -204,12 +214,11 @@ def collect_gates(base: Path) -> Dict[str, Dict[str, list[dict[str, MetricDict]]
                 status = "on"
                 break
         try:
-            with metrics_path.open() as fh:
-                record = json.load(fh)
+            record = load_metrics(metrics_path)
         except json.JSONDecodeError as exc:  # pragma: no cover - file is corrupt
             log.warning("failed to parse %s: %s", metrics_path, exc)
             continue
-        gates = record.get("gates")
+        gates = record.get("gating")
         if isinstance(gates, dict):
             data[suite][status].append(gates)
     return data
@@ -240,12 +249,11 @@ def collect_gate_ablation(base: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
         if mem is None:
             continue
         try:
-            with metrics_path.open() as fh:
-                record = json.load(fh)
+            record = load_metrics(metrics_path)
         except json.JSONDecodeError:
             continue
         metrics = record.get("metrics", {}).get(suite, {})
-        gates = record.get("gates", {}).get(mem, {})
+        gates = (record.get("gating") or {}).get(mem, {})
         store_size = float(record.get("store", {}).get("size", 0))
         em = float(metrics.get("pre_em", metrics.get("em", 0.0)))
         entry = data.setdefault(mem, {}).setdefault(status, {})
@@ -265,8 +273,7 @@ def collect_lineage(base: Path) -> Dict[str, Dict[str, set]]:
     data: Dict[str, Dict[str, set]] = defaultdict(lambda: defaultdict(set))
     for metrics_path in base.rglob("metrics.json"):
         try:
-            with metrics_path.open() as fh:
-                record = json.load(fh)
+            record = load_metrics(metrics_path)
         except json.JSONDecodeError:  # pragma: no cover - defensive
             continue
         suite = record.get("suite")
@@ -1004,6 +1011,9 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     runs_root = Path(args.runs_dir)
     date = args.date or _find_latest_date(runs_root)
     runs_path = runs_root / date
+    if (runs_path / "INVALID").exists():
+        log.warning("run %s marked invalid; skipping", runs_path)
+        return
     metric_data = collect_metrics(runs_path)
     if args.strict:
         missing = _missing_post_metrics(metric_data)

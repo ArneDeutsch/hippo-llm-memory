@@ -654,6 +654,8 @@ def run_suite(
     store_sizes, store_diags = _store_sizes(modules)
     retrieval_snaps = registry.all_snapshots()
     metrics_dict = {
+        "version": 2,
+        "phase": str(getattr(cfg, "mode", "test")),
         "suite": cfg.suite,
         "n": cfg.n,
         "seed": cfg.seed,
@@ -670,7 +672,7 @@ def run_suite(
             },
         },
         "retrieval": retrieval_snaps,
-        "gates": gate_registry.all_snapshots(),
+        "gating": gate_registry.all_snapshots(),
         "replay": {"samples": replay_samples},
         "store": {
             "size": sum(store_sizes.values()),
@@ -699,7 +701,7 @@ def _write_outputs(
     """Persist metrics and metadata."""
 
     outdir.mkdir(parents=True, exist_ok=True)
-    is_test = str(cfg.get("mode")) in ("test", "teach")
+    is_test = str(getattr(cfg, "mode", "")) in ("test", "teach")
 
     # Metrics JSON - follow schema used by report.py
     suite_metrics: Dict[str, float | None] = {
@@ -740,6 +742,8 @@ def _write_outputs(
             if isinstance(pre_val, (int, float)) and isinstance(post_val, (int, float)):
                 suite_metrics[f"delta_{key}"] = post_val - pre_val
     metrics: Dict[str, object] = {
+        "version": 2,
+        "phase": str(getattr(cfg, "mode", "test")),
         "suite": cfg.suite,
         "n": cfg.n,
         "seed": cfg.seed,
@@ -747,7 +751,7 @@ def _write_outputs(
         "metrics": {cfg.suite: suite_metrics},
         "diagnostics": {cfg.suite: diagnostics},
         "retrieval": registry.all_snapshots(),
-        "gates": gate_registry.all_snapshots(),
+        "gating": gate_registry.all_snapshots(),
         "replay": {"samples": replay_samples},
         "store": {
             "size": sum((store_sizes or {}).values()),
@@ -790,8 +794,8 @@ def _write_outputs(
             for k, v in snap.items()
         }
         gate_fields = {
-            f"gates.{m}.{k}": v
-            for m, snap in metrics.get("gates", {}).items()
+            f"gating.{m}.{k}": v
+            for m, snap in metrics.get("gating", {}).items()
             for k, v in snap.items()
         }
         compute_cols = [k for k in ("time_ms_per_100", "rss_mb") if compute and k in compute]

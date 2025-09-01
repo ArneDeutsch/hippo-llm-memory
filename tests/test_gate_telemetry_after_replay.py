@@ -22,4 +22,4 @@ def test_gate_telemetry_after_replay(tmp_path: Path) -> None:
     subprocess.run(base_cmd + ["mode=teach", "persist=true"], check=True)
     subprocess.run(base_cmd + ["mode=replay", "persist=true", "replay.cycles=1"], check=True)
     data = json.loads((outdir / "metrics.json").read_text())
-    assert data["gates"]["episodic"]["attempts"] > 0
+    assert data["gating"]["episodic"]["attempts"] > 0
