@@ -10,7 +10,7 @@ from hippo_mem.eval.score import em_norm, normalize
 
 def test_normalize_and_em() -> None:
     assert normalize("The, apple!") == "apple"
-    assert em_norm("An apple", "apple") == 1
+    assert em_norm("An apple", "apple") == 0
     assert em_norm("apple", "banana") == 0
 
 

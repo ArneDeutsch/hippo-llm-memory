@@ -34,8 +34,11 @@ log = logging.getLogger(__name__)
 MetricDict = Dict[str, float]
 MetricStat = tuple[float, float] | None
 DISPLAY_NAMES = {
-    "em_norm": "EM (norm)",
     "em_raw": "EM (raw)",
+    "em_norm": (
+        '<span title="Normalized exact match (lowercase, no punctuation or '
+        'articles)">EM (norm)</span>'
+    ),
     "em": "EM",
     "pre_em": "EM (pre)",
     "post_em": "EM (post)",

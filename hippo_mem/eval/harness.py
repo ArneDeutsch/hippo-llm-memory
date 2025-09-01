@@ -40,7 +40,7 @@ from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.telemetry import gate_registry, registry, set_strict_telemetry
 from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
-from hippo_mem.eval.score import em_norm, em_raw, f1, spatial_kpis
+from hippo_mem.metrics.scoring import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.gating import SpatialGate
