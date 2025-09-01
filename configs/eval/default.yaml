@@ -33,6 +33,12 @@ gating_enabled: true
 strict_telemetry: false
 primary_em: norm
 
+# Control evaluation-time compute features.
+compute:
+  # Whether to calculate per-item metrics during the pre-replay sweep.
+  # Disable via ``--no-pre-metrics`` for quicker smoke tests.
+  pre_metrics: true
+
 # Report macro averaged scores in addition to micro scores.
 macro_scoring: true
 

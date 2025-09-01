@@ -194,6 +194,7 @@ class EvalConfig:
     eos_token_id: int | None = None
     primary_em: str = "norm"
     dataset_profile: str | None = None
+    pre_metrics: bool = True
 
 
 def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> Path:
@@ -626,10 +627,12 @@ def run_suite(
         suite=cfg.suite,
         retrieval_enabled=retrieval_enabled,
         long_context_enabled=long_ctx_enabled,
+        compute_metrics=cfg.pre_metrics,
     )
-    metrics["em"] = (
-        metrics.get("em_norm", 0.0) if cfg.primary_em == "norm" else metrics.get("em_raw", 0.0)
-    )
+    if cfg.pre_metrics:
+        metrics["em"] = (
+            metrics.get("em_norm", 0.0) if cfg.primary_em == "norm" else metrics.get("em_raw", 0.0)
+        )
     lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
 
     replay_samples = 0
@@ -688,19 +691,19 @@ def _write_outputs(
     is_test = str(cfg.get("mode")) in ("test", "teach")
 
     # Metrics JSON - follow schema used by report.py
-    suite_metrics: Dict[str, float] = {
-        "pre_em": pre_metrics.get("em", 0.0),
-        "pre_em_raw": pre_metrics.get("em_raw", 0.0),
-        "pre_em_norm": pre_metrics.get("em_norm", 0.0),
-        "pre_f1": pre_metrics.get("f1", 0.0),
-        "pre_refusal_rate": pre_metrics.get("refusal_rate", 0.0),
+    suite_metrics: Dict[str, float | None] = {
+        "pre_em": pre_metrics.get("em"),
+        "pre_em_raw": pre_metrics.get("em_raw"),
+        "pre_em_norm": pre_metrics.get("em_norm"),
+        "pre_f1": pre_metrics.get("f1"),
+        "pre_refusal_rate": pre_metrics.get("refusal_rate"),
     }
     for k in ("success_rate", "suboptimality_ratio", "steps_to_goal"):
         if k in pre_metrics:
             suite_metrics[f"pre_{k}"] = pre_metrics[k]
-    diagnostics: Dict[str, int] = {
-        "pre_overlong": pre_metrics.get("overlong", 0),
-        "pre_format_violation": pre_metrics.get("format_violation", 0),
+    diagnostics: Dict[str, int | None] = {
+        "pre_overlong": pre_metrics.get("overlong"),
+        "pre_format_violation": pre_metrics.get("format_violation"),
     }
     if post_metrics is not None:
         suite_metrics.update(
@@ -1135,6 +1138,7 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         )
         return
 
+    pre_compute = bool(cfg.get("compute", {}).get("pre_metrics", True))
     pre_rows, pre_metrics, pre_in_tokens, pre_gen_tokens, pre_time = _evaluate(
         tasks,
         modules,
@@ -1143,16 +1147,17 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
         int(cfg.max_new_tokens),
         use_chat_template=cfg.use_chat_template,
         system_prompt=cfg.system_prompt,
-        compute_metrics=True,
+        compute_metrics=pre_compute,
         suite=cfg.suite,
         retrieval_enabled=retrieval_enabled,
         long_context_enabled=long_ctx_enabled,
     )
-    pre_metrics["em"] = (
-        pre_metrics.get("em_norm", 0.0)
-        if cfg.primary_em == "norm"
-        else pre_metrics.get("em_raw", 0.0)
-    )
+    if pre_compute:
+        pre_metrics["em"] = (
+            pre_metrics.get("em_norm", 0.0)
+            if cfg.primary_em == "norm"
+            else pre_metrics.get("em_raw", 0.0)
+        )
     latencies = [row["latency_ms"] for row in pre_rows]
     total_in_tokens = pre_in_tokens
     total_gen_tokens = pre_gen_tokens

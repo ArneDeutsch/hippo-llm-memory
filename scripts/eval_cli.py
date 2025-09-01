@@ -23,6 +23,13 @@ def main() -> int:
         action="store_true",
         help="Fail fast on telemetry invariant violations",
     )
+    parser.add_argument(
+        "--pre-metrics",
+        dest="pre_metrics",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Compute per-item metrics during the pre phase",
+    )
     args, rest = parser.parse_known_args()
 
     overrides = list(args.overrides)
@@ -38,6 +45,8 @@ def main() -> int:
         overrides.append(f"session_id={session_id}")
     if args.strict_telemetry:
         overrides.append("strict_telemetry=true")
+    if args.pre_metrics is not None:
+        overrides.append(f"compute.pre_metrics={str(args.pre_metrics).lower()}")
 
     cmd = [sys.executable, "scripts/eval_model.py", *overrides, *rest]
     return subprocess.call(cmd)
