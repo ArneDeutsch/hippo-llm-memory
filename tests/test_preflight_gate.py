@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -45,6 +46,10 @@ def _setup_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, baseline: boo
         bdir = tmp_path.parent.parent / "baselines"
         bdir.mkdir(parents=True, exist_ok=True)
         (bdir / "metrics.csv").write_text("suite,em\n")
+    else:
+        bdir = tmp_path.parent.parent / "baselines"
+        if bdir.exists():
+            shutil.rmtree(bdir)
 
     return cfg
 
