@@ -30,6 +30,7 @@ from typing import Dict, Iterable, Tuple
 log = logging.getLogger(__name__)
 
 MetricDict = Dict[str, float]
+MetricStat = tuple[float, float] | None
 DISPLAY_NAMES = {
     "em_norm": "EM (norm)",
     "em_raw": "EM (raw)",
@@ -46,7 +47,7 @@ DISPLAY_NAMES = {
     "overlong": "overlong",
     "format_violation": "format_violation",
 }
-MetricStats = Dict[str, tuple[float, float]]
+MetricStats = Dict[str, MetricStat]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
 
 
@@ -250,27 +251,67 @@ def collect_gate_ablation(base: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
     return data
 
 
-def summarise(data: Dict[Tuple[str, str, int], Iterable[MetricDict]]) -> Summary:
-    """Average metrics for each ``(suite, preset, size)`` with 95% CI."""
+def summarise(
+    data: Dict[Tuple[str, str, int], Iterable[MetricDict]],
+) -> tuple[Summary, Dict[str, tuple[int, int]]]:
+    """Average metrics for each ``(suite, preset, size)`` with 95% CI.
+
+    Returns the summary and a mapping of ``suite`` to
+    ``(missing_pre, total_pre)`` counts so callers can guard against large
+    gaps in pre-phase metrics.
+    """
 
     summary: Summary = {}
+    missing_pre: Dict[str, tuple[int, int]] = defaultdict(lambda: (0, 0))
     for (suite, preset, size), metrics_list in data.items():
         if not metrics_list:
             continue
         # union of metric keys across records to be robust to missing fields
         keys: set[str] = set()
         for rec in metrics_list:
-            keys.update(rec.keys())
-        agg: Dict[str, tuple[float, float]] = {}
+            rec_keys = set(rec.keys())
+            keys.update(rec_keys)
+            for key in rec_keys:
+                if key.startswith("post_"):
+                    keys.add(f"pre_{key[5:]}")
+        agg: Dict[str, MetricStat] = {}
         for key in keys:
-            vals = [m.get(key, 0.0) for m in metrics_list]
+            vals = [m[key] for m in metrics_list if key in m and m[key] is not None]
+            missing = len(metrics_list) - len(vals)
+            if key.startswith("pre_"):
+                miss, total = missing_pre[suite]
+                missing_pre[suite] = (miss + missing, total + len(metrics_list))
+            if not vals:
+                agg[key] = None
+                continue
             count = len(vals)
             mval = mean(vals)
             sval = stdev(vals) if count > 1 else 0.0
             ci = 1.96 * sval / (count**0.5) if count > 1 else 0.0
             agg[key] = (mval, ci)
         summary.setdefault(suite, {}).setdefault(preset, {})[size] = agg
-    return summary
+    return summary, missing_pre
+
+
+def _missing_pre_suites(
+    missing_counts: Dict[str, tuple[int, int]], threshold: float = 0.2
+) -> list[str]:
+    """Return suites where ``pre_*`` metrics are missing beyond ``threshold``.
+
+    Parameters
+    ----------
+    missing_counts:
+        Mapping of suite to ``(missing, total)`` counts produced by
+        :func:`summarise`.
+    threshold:
+        Fraction of missing values above which suites should be flagged.
+    """
+
+    bad: list[str] = []
+    for suite, (missing, total) in missing_counts.items():
+        if total and missing / total > threshold:
+            bad.append(suite)
+    return bad
 
 
 def summarise_retrieval(
@@ -482,14 +523,19 @@ def _render_markdown_suite(
         warnings_summary: list[str] = []
         for _, preset, size, metrics in rows:
             vals: list[str] = []
+            warn: list[str] = []
             for key in ordered:
                 stat = metrics.get(key)
                 if stat is None:
-                    vals.append("–")
+                    if key.startswith("pre_"):
+                        vals.append("_missing_")
+                        if "MissingPre" not in warn:
+                            warn.append("MissingPre")
+                    else:
+                        vals.append("–")
                 else:
                     vals.append(_format_stat(stat))
             note: str = ""
-            warn: list[str] = []
             store_size = metrics.get("store_size", (0.0, 0.0))[0]
             retrieval_reqs = [
                 metrics.get(f"retrieval_{mem}_requests", (0.0, 0.0))[0]
@@ -707,8 +753,13 @@ def _write_index(
         for preset, sizes in presets.items():
             agg: Dict[str, float] = {}
             for key in {k for stats in sizes.values() for k in stats}:
-                vals = [stats[key][0] for stats in sizes.values() if key in stats]
-                agg[key] = sum(vals) / len(vals)
+                vals = [
+                    stats[key][0]
+                    for stats in sizes.values()
+                    if key in stats and stats[key] is not None
+                ]
+                if vals:
+                    agg[key] = sum(vals) / len(vals)
             rollup.append((suite, preset, agg))
             metric_keys.update(agg.keys())
             if suite == "semantic" and "em_raw" in agg:
@@ -884,7 +935,18 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     retrieval_data = collect_retrieval(runs_path)
     gate_data = collect_gates(runs_path)
     gate_ablation_data = collect_gate_ablation(runs_path)
-    summary = summarise(metric_data)
+    summary, missing_pre = summarise(metric_data)
+    bad_pre = _missing_pre_suites(missing_pre)
+    if bad_pre:
+        for suite in bad_pre:
+            miss, total = missing_pre[suite]
+            frac = miss / total if total else 0.0
+            log.error(
+                "pre_* metrics missing for suite=%s (%.0f%% of runs)",
+                suite,
+                frac * 100,
+            )
+        sys.exit(1)
     retrieval_summary = summarise_retrieval(retrieval_data)
     gate_summary = summarise_gates(gate_data)
     out_dir = Path(args.out_dir) / date
