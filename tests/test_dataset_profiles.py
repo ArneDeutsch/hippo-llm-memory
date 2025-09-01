@@ -44,3 +44,17 @@ def test_semantic_profile_injects_contradictions():
     hard = generate_semantic(5, 0, profile="hard")
     assert not any("However" in item["prompt"] for item in easy)
     assert any("However" in item["prompt"] for item in hard)
+
+
+def test_semantic_hard_profile_adds_distractors_and_entity_overlap():
+    easy = generate_semantic(5, 0, profile="easy")
+    hard = generate_semantic(5, 0, profile="hard")
+    # hard prompts contain extra distractor sentences
+    assert max(_count_sentences(t["prompt"]) for t in hard) > max(
+        _count_sentences(t["prompt"]) for t in easy
+    )
+    store_re = re.compile(r"at (Store[A-Z])")
+    easy_stores = {store_re.search(t["prompt"]).group(1) for t in easy}
+    hard_stores = {store_re.search(t["prompt"]).group(1) for t in hard}
+    # entity pool restriction reduces variety of store names
+    assert len(hard_stores) <= len(easy_stores)

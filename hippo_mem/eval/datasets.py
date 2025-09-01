@@ -244,6 +244,10 @@ def generate_semantic(
     hop_depth: int | None = None,
     inject_contradictions: bool | None = None,
     require_memory: bool = False,
+    distractors: int | None = None,
+    entity_pool: int | None = None,
+    paraphrase_prob: float | None = None,
+    ambiguity_prob: float | None = None,
     profile: str = "default",
 ) -> List[Dict[str, object]]:
     """Generate 2–3 hop fact chains linking people, items, stores and cities.
@@ -265,6 +269,18 @@ def generate_semantic(
         When ``True``, the prompt omits fact sentences, forcing models to
         retrieve them from memory.  Facts are still returned in ``facts`` for
         ingestion during teach mode.
+    distractors:
+        Number of distractor fact pairs prepended to the prompt. ``None``
+        derives the count from ``profile``.
+    entity_pool:
+        Maximum number of unique entities per category. Smaller pools increase
+        name overlap across tasks. ``None`` uses all available entities.
+    paraphrase_prob:
+        Probability of paraphrasing connective verbs (e.g., ``bought`` →
+        ``purchased``). ``None`` derives the rate from ``profile``.
+    ambiguity_prob:
+        Probability of replacing entity mentions with pronouns to introduce
+        ambiguity. ``None`` derives the rate from ``profile``.
     profile:
         Difficulty profile controlling default ``hop_depth`` and contradiction
         behaviour.
@@ -280,14 +296,34 @@ def generate_semantic(
         hop_depth = 2 if profile != "hard" else 3
     if inject_contradictions is None:
         inject_contradictions = profile in {"default", "hard"}
+    if distractors is None:
+        distractors = 0 if profile != "hard" else 2
+    if entity_pool is None:
+        entity_pool = 4 if profile != "hard" else 2
+    if paraphrase_prob is None:
+        paraphrase_prob = 0.0 if profile != "hard" else 0.3
+    if ambiguity_prob is None:
+        ambiguity_prob = 0.0 if profile != "hard" else 0.3
     if hop_depth not in {2, 3}:
         raise ValueError("hop_depth must be 2 or 3")
 
     rng = random.Random(seed)
-    people = ["Alice", "Bob", "Carol", "Dave"]
-    items = ["book", "apple", "ball", "coin"]
-    stores = ["StoreA", "StoreB", "StoreC"]
-    cities = ["Paris", "London", "Rome", "Berlin"]
+    people = ["Alice", "Bob", "Carol", "Dave"][:entity_pool]
+    items = ["book", "apple", "ball", "coin"][:entity_pool]
+    stores = ["StoreA", "StoreB", "StoreC"][:entity_pool]
+    cities = ["Paris", "London", "Rome", "Berlin"][:entity_pool]
+
+    def _buy_verb() -> str:
+        verbs = ["bought", "purchased"]
+        return rng.choice(verbs) if rng.random() < paraphrase_prob else verbs[0]
+
+    def _sold_phrase() -> str:
+        phrases = ["was sold at", "could be found at"]
+        return rng.choice(phrases) if rng.random() < paraphrase_prob else phrases[0]
+
+    def _is_in_phrase() -> str:
+        phrases = ["is in", "is located in"]
+        return rng.choice(phrases) if rng.random() < paraphrase_prob else phrases[0]
 
     tasks: List[Dict[str, object]] = []
     for _ in range(size):
@@ -298,28 +334,43 @@ def generate_semantic(
 
         parts: List[str] = []
         facts: List[Dict[str, object]] = []
+        for _ in range(distractors):
+            dwho = rng.choice(people)
+            ditem = rng.choice(items)
+            dstore = rng.choice(stores)
+            dcity = rng.choice(cities)
+            parts.append(f"{dwho} {_buy_verb()} a {ditem} at {dstore}.")
+            parts.append(f"{dstore} {_is_in_phrase()} {dcity}.")
         if hop_depth == 2:
-            sent = f"{who} bought a {item} at {store}."
+            sent = f"{who} {_buy_verb()} a {item} at {store}."
             if not require_memory:
                 parts.append(sent)
             facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
         else:  # hop_depth == 3
-            sent = f"{who} bought a {item}."
+            sent = f"{who} {_buy_verb()} a {item}."
             if not require_memory:
                 parts.append(sent)
             facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
-            sent = f"The {item} was sold at {store}."
+            sold = _sold_phrase()
+            sent = f"The {item} {sold} {store}."
+            if rng.random() < ambiguity_prob:
+                sent = f"It {sold} {store}."
             if not require_memory:
                 parts.append(sent)
             facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
-        sent = f"{store} is in {city}."
+        is_in = _is_in_phrase()
+        sent = f"{store} {is_in} {city}."
+        if rng.random() < ambiguity_prob:
+            sent = f"It {is_in} {city}."
         if not require_memory:
             parts.append(sent)
         facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
 
         if inject_contradictions:
             false_city = rng.choice([c for c in cities if c != city])
-            sent = f"However, others report {store} is in {false_city}."
+            sent = f"However, others report {store} {is_in} {false_city}."
+            if rng.random() < ambiguity_prob:
+                sent = f"However, others report it {is_in} {false_city}."
             if not require_memory:
                 parts.append(sent)
             facts.append({"text": sent, "schema_fit": False, "time": len(facts)})

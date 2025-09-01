@@ -10,6 +10,10 @@ episodic_capacity:
 semantic:
   hop_depth: 2
   inject_contradictions: false
+  distractors: 0
+  entity_pool: 4
+  paraphrase_prob: 0.0
+  ambiguity_prob: 0.0
 spatial:
   grid_size: 5
   obstacle_density: 0.2
