@@ -27,9 +27,14 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import Dict, Iterable, Tuple
 
+from jinja2 import Environment, FileSystemLoader
+
 from hippo_mem.common.telemetry import validate_retrieval_snapshot
 
 log = logging.getLogger(__name__)
+
+_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "reports" / "templates"
+_ENV = Environment(loader=FileSystemLoader(_TEMPLATE_DIR))
 
 MetricDict = Dict[str, float]
 MetricStat = tuple[float, float] | None
@@ -637,6 +642,8 @@ def _render_markdown_suite(
                 and (store_size > 0 or any(r > 0 for r in retrieval_reqs))
             ):
                 warn.append("GateNoOp")
+            if preset.startswith("memory/") and all(r == 0 for r in retrieval_reqs):
+                warn.append("NoRetrieval")
             if warn:
                 note = "⚠️ " + ", ".join(warn)
                 warnings_summary.append(f"{preset} {size}: {', '.join(warn)}")
@@ -649,29 +656,8 @@ def _render_markdown_suite(
                 lines.append(f"- {w}")
             lines.append("")
     if retrieval:
-        lines.append("## Retrieval Telemetry")
-        note_path = (
-            Path(__file__).resolve().parent.parent / "reports" / "templates" / "retrieval_note.md"
-        )
-        if note_path.exists():
-            lines.append(note_path.read_text().strip())
-        else:
-            lines.append(
-                "> Hits reflect actual recalled traces; cue-only fallbacks are excluded from telemetry."
-            )
-        lines.append(
-            "| mem | k | batch_size | requests | hits_at_k | hit_rate_at_k | tokens_returned | avg_latency_ms |"
-        )
-        lines.append("|---|---|---|---|---|---|---|---|")
-        for mem in sorted(retrieval):
-            stats = retrieval[mem]
-            row = (
-                f"| {mem} | {int(stats.get('k', 0))} | {int(stats.get('batch_size', 0))} | "
-                f"{int(stats['requests'])} | {int(stats.get('hits_at_k', stats.get('hits', 0)))} | "
-                f"{stats['hit_rate_at_k']:.3f} | {int(stats['tokens_returned'])} | "
-                f"{stats['avg_latency_ms']:.3f} |"
-            )
-            lines.append(row)
+        tmpl = _ENV.get_template("partials/retrieval.md.j2")
+        lines.append(tmpl.render(retrieval=retrieval).strip())
         lines.append("")
     if gates:
         lines.append("## Gate Telemetry")
@@ -751,7 +737,10 @@ def _render_markdown_suite(
 
 
 def _render_plots_suite(
-    suite: str, presets: Dict[str, Dict[int, MetricStats]], out_dir: Path
+    suite: str,
+    presets: Dict[str, Dict[int, MetricStats]],
+    out_dir: Path,
+    retrieval: Dict[str, MetricDict] | None = None,
 ) -> None:
     """Render simple bar plots for one suite if ``matplotlib`` is available."""
 
@@ -822,6 +811,14 @@ def _render_plots_suite(
         out_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(out_dir / "uplift.png")
         plt.close()
+
+    if retrieval:
+        try:  # pragma: no cover - optional plotting
+            from reports.plots.retrieval import plot_retrieval
+
+            plot_retrieval(retrieval, out_dir)
+        except Exception as exc:  # pragma: no cover - matplotlib missing
+            log.warning("failed to plot retrieval: %s", exc)
 
 
 def _write_index(
@@ -1019,7 +1016,7 @@ def write_reports(
         )
         paths[suite] = md_path
         if plots:
-            _render_plots_suite(suite, presets, suite_dir)
+            _render_plots_suite(suite, presets, suite_dir, retrieval.get(suite))
     idx = _write_index(summary, paths, gates, gate_ablation, out_dir, seed_count)
     log.info("wrote %s", idx)
     return paths

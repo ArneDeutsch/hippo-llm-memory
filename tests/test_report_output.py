@@ -79,6 +79,38 @@ def test_report_retrieval_section(tmp_path: Path) -> None:
     assert "actual recalled traces" in text
 
 
+def test_no_retrieval_badge(tmp_path: Path) -> None:
+    base = tmp_path / "runs" / "20250101" / "memory" / "hei_nw" / "episodic" / "50_1337"
+    base.mkdir(parents=True)
+    content = {
+        "metrics": {"episodic": {"pre_em_norm": 0.1}},
+        "retrieval": {
+            "episodic": {
+                "k": 1,
+                "batch_size": 1,
+                "requests": 0,
+                "hits_at_k": 0,
+                "hit_rate_at_k": 0.0,
+                "tokens_returned": 0,
+                "avg_latency_ms": 0.0,
+            }
+        },
+        "store": {"size": 0},
+    }
+    (base / "metrics.json").write_text(json.dumps(content))
+
+    runs = tmp_path / "runs" / "20250101"
+    metrics = collect_metrics(runs)
+    summary, _ = summarise(metrics)
+    retrieval = summarise_retrieval(collect_retrieval(runs))
+    gates = summarise_gates(collect_gates(runs))
+    gate_ablation = collect_gate_ablation(runs)
+    out = tmp_path / "reports" / "20250101"
+    write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
+    text = (out / "episodic" / "summary.md").read_text()
+    assert "NoRetrieval" in text
+
+
 def test_missing_pre_marked(tmp_path: Path) -> None:
     base = tmp_path / "runs" / "20250101" / "memory" / "hei_nw" / "episodic" / "50_1337"
     base.mkdir(parents=True)

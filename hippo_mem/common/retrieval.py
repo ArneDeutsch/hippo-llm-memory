@@ -16,8 +16,9 @@ import numpy as np
 import torch
 from torch import nn
 
+from hippo_mem.retrieval.telemetry import record_stats
+
 from . import MemoryTokens
-from .telemetry import record_stats
 
 
 def pad_and_project(
