@@ -89,6 +89,8 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         pruner: Optional[Pruner] = None,
         decayer: Optional[Decayer] = None,
         logger: Optional[EventLogger] = None,
+        key_noise: float = 0.0,
+        seed: int = 0,
     ) -> None:
         """Create a store with given key dimensionality.
 
@@ -124,6 +126,8 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         self.k_wta = k_wta
         self.index = index or FaissIndex(dim, index_str, train_threshold)
         self.persistence = persistence or TracePersistence(db_path)
+        self.key_noise = float(key_noise)
+        self._rng = np.random.default_rng(seed)
 
         # Hopfield parameter (inverse temperature)
         self.beta = 1.0
@@ -277,6 +281,9 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
             value = TraceValue(provenance=value)
 
         if isinstance(key, np.ndarray):
+            if self.key_noise > 0:
+                noise = self._rng.normal(0.0, self.key_noise, size=key.shape).astype("float32")
+                key = key + noise
             if self.k_wta > 0:
                 key = self.sparse_encode(key, self.k_wta)
             else:
@@ -284,6 +291,15 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
                 key = DGKey(
                     indices=idxs.astype("int64"), values=key[idxs].astype("float32"), dim=key.size
                 )
+
+        if value.tokens_span is None:
+            value.tokens_span = (0, 0)
+        if value.entity_slots is None:
+            value.entity_slots = {"provenance": value.provenance}
+        if value.state_sketch is None:
+            value.state_sketch = [value.provenance]
+        if not value.salience_tags:
+            value.salience_tags = [value.provenance or "auto"]
 
         key_arr = self._to_dense(key).reshape(1, -1)
         faiss.normalize_L2(key_arr)

@@ -24,9 +24,11 @@ class AsyncStoreWriter:
         self._thread = threading.Thread(target=self._worker, daemon=True)
         self._thread.start()
 
-    def enqueue(self, key: Union[np.ndarray, DGKey], value: TraceValue | str) -> None:
+    def enqueue(self, key: Union[np.ndarray, DGKey], value: TraceValue | str | dict) -> None:
         if isinstance(value, str):
             value = TraceValue(provenance=value)
+        elif isinstance(value, dict):
+            value = TraceValue(**value)
         self.stats["writes_enqueued"] += 1
         self.queue.put((key, value))
 
