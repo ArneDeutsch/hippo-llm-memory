@@ -36,3 +36,17 @@ def test_average_ignores_missing(tmp_path: Path) -> None:
     metrics = summary["episodic"]["baselines/core"][50]
     assert metrics["pre_em"][0] == 0.4
     assert metrics["post_em"][0] == pytest.approx(0.7)
+
+
+def test_collect_metrics_skips_none(tmp_path: Path) -> None:
+    base = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic" / "50_1337"
+    base.mkdir(parents=True, exist_ok=True)
+    content = {
+        "metrics": {"episodic": {"em": 0.5}},
+        "diagnostics": {"episodic": {"foo": None}},
+        "n": 5,
+    }
+    (base / "metrics.json").write_text(json.dumps(content))
+    data = collect_metrics(tmp_path / "runs" / "20250101")
+    record = data[("episodic", "baselines/core", 50)][0]
+    assert "foo" not in record
