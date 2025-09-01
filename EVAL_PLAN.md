@@ -15,7 +15,7 @@ This script performs baselines → memory (teach+replay) → report and fails if
 
 # 0.2) Decision criteria & stop-go gate
 
-A run is **meaningful** only if:
+A run is **meaningful** only if it satisfies the [Meaningful Run Contract](EVAL_PROTOCOL.md#meaningful-run-contract). At minimum:
 
 - Baseline EM for each suite falls within the expected ranges (see §1.2).
 - `metrics.json` for memory runs includes non-NaN `pre_*` fields.
@@ -96,7 +96,7 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
 Each suite provides a minimal `n=50` split for smoke and cross‑session experiments.
 
 Generators expose `profile` options forwarded via `dataset_profile`. Profiles
-tune difficulty and what the suite probes:
+tune difficulty, expected baseline EM, and memory uplift (see `EVAL_PROTOCOL.md` §Dataset profiles):
 
 | Suite   | `base` evaluates                  | `hard` adds to probe            |
 | ------- | --------------------------------- | ------------------------------- |
@@ -106,6 +106,9 @@ tune difficulty and what the suite probes:
 
 Select `dataset_profile=hard` when baselines exceed 0.98 EM or when running
 `episodic_cross`/`episodic_capacity` to avoid saturation.
+
+The **default** profile targets the baseline EM ranges in §1.2 and should show a memory uplift of roughly +0.2 EM.
+The **hard** profile drives baseline EM toward zero but still expects ≥ +0.2 uplift when memory is enabled.
 
 ## 3.1 Episodic suite (HEI‑NW)
 
