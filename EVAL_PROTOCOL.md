@@ -35,12 +35,12 @@ For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
 > **Profiles**
 > | Suite              | Recommended profile |
 > | ------------------ | ------------------ |
-> | episodic           | base               |
-> | episodic_multi     | base               |
+> | episodic           | default            |
+> | episodic_multi     | default            |
 > | episodic_cross     | hard               |
 > | episodic_capacity  | hard               |
-> | semantic           | base               |
-> | spatial            | base               |
+> | semantic           | default            |
+> | spatial            | default            |
 
 ```bash
 # Recommended flags for sensitive suites
@@ -113,17 +113,20 @@ python scripts/bench_gating_overhead.py
 
 ```bash
 # Build standard JSONL datasets for all suites/sizes/seeds
-make datasets DATE="$DATE"
-
-# In case you prefer explicit calls (equivalent to the Makefile target), e.g.:
-# python scripts/make_datasets.py --suite episodic --profile base --size 50  --seed 1337 --out data/episodic/50_1337.jsonl
-# python scripts/make_datasets.py --suite semantic --profile hard --size 200 --seed 2025 --out data/semantic_hard/200_2025.jsonl
-# python scripts/make_datasets.py --suite spatial  --profile base --size 1000 --seed 4242 --out data/spatial/1000_4242.jsonl
+for suite in episodic semantic spatial episodic_multi episodic_cross episodic_capacity; do
+  for size in 50 200 1000; do
+    for seed in 1337 2025 4242; do
+      python scripts/make_datasets.py --suite "$suite" --profile default --size "$size" --seed "$seed" --out "data/${suite}/${size}_${seed}.jsonl"
+      python scripts/make_datasets.py --suite "$suite" --profile hard --size "$size" --seed "$seed" --out "data/${suite}_hard/${size}_${seed}.jsonl"
+    done
+  done
+done
+python scripts/audit_datasets.py
 ```
 
-`--profile` selects a difficulty preset defined in `configs/datasets/`. The `datasets`
-Makefile target emits both `base` and `hard` variants; use `dataset_profile=hard`
-when running evaluations for suites such as `episodic_cross` or `episodic_capacity`
+`--profile` selects a difficulty preset defined in `configs/datasets/`. The loop
+above emits both `default` and `hard` variants; use `dataset_profile=hard` when
+running evaluations for suites such as `episodic_cross` or `episodic_capacity`
 to avoid saturation.
 
 ---
@@ -172,19 +175,19 @@ own `<algo>` subfolder and nests traces under the provided `--session_id`.
 
 ```bash
 SID="hei_${DATE}"  # session id for persistent store reuse
-# Base-profile suites
+# Default profile suites
 for suite in episodic episodic_multi; do
   for n in "${SIZES[@]}"; do
     for seed in "${SEEDS[@]}"; do
       OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
-      python scripts/eval_cli.py suite="$suite" dataset_profile=base preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
       # Validate persisted store layout
       python scripts/validate_store.py --algo hei_nw --kind episodic
       # Replay (3 cycles)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=base preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
       # Test (post‑replay)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=base preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
     done
   done
 done
