@@ -586,8 +586,8 @@ def _render_markdown_suite(
         if suite == "semantic":
             for preset, sizes in presets.items():
                 for size, metrics in sizes.items():
-                    em_raw = metrics.get("em_raw", (0.0, 0.0))[0]
-                    rows.append((em_raw, preset, size, metrics))
+                    em_raw_stat = metrics.get("em_raw") or (0.0, 0.0)
+                    rows.append((em_raw_stat[0], preset, size, metrics))
             rows.sort(key=lambda x: x[0], reverse=True)
         else:
             for preset in sorted(presets):
@@ -610,12 +610,14 @@ def _render_markdown_suite(
                 else:
                     vals.append(_format_stat(stat))
             note: str = ""
-            store_size = metrics.get("store_size", (0.0, 0.0))[0]
+            store_size_stat = metrics.get("store_size")
+            store_size = store_size_stat[0] if store_size_stat else 0.0
             retrieval_reqs = [
-                metrics.get(f"retrieval_{mem}_requests", (0.0, 0.0))[0]
+                (metrics.get(f"retrieval_{mem}_requests") or (0.0, 0.0))[0]
                 for mem in ("episodic", "relational", "spatial")
             ]
-            gate_attempts = metrics.get("gate_attempts", (0.0, 0.0))[0]
+            gate_stat = metrics.get("gate_attempts")
+            gate_attempts = gate_stat[0] if gate_stat else 0.0
             pre_norm_stat = metrics.get("pre_em_norm") or metrics.get("em_norm")
             pre_norm = pre_norm_stat[0] if pre_norm_stat else 0.0
             if preset.startswith("baselines/") and (
