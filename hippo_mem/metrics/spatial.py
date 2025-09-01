@@ -4,7 +4,7 @@ import re
 from collections import Counter
 from typing import List, Tuple
 
-from hippo_mem.eval.score import _MOVE_DIRS, _parse_coord, _parse_moves
+from hippo_mem.metrics.scoring import _MOVE_DIRS, _parse_coord, _parse_moves
 
 _WORD_TO_MOVE = {
     "UP": "U",
