@@ -2,6 +2,8 @@
 set -euo pipefail
 source "$(dirname "$0")/_env.sh"
 export MODEL=models/tiny-gpt2
+export HF_MODEL_PATH="$MODEL"
+export ALLOW_BENCH=1
 IFS=$'\n\t'
 
 RUN_ID=${RUN_ID}
@@ -40,7 +42,7 @@ for i in "${!suites[@]}"; do
     suite=$suite preset=$preset n=50 seed=1337 \
     outdir=$outdir store_dir=$STORES session_id=$session_id gating_enabled=true --strict-telemetry >/dev/null
   # Validate store layout before replay
-  python scripts/validate_store.py --algo=${algos[$i]} --kind=${kinds[$i]} >/dev/null
+  python scripts/validate_store.py --run_id "$RUN_ID" --algo=${algos[$i]} --kind=${kinds[$i]} >/dev/null
   # Replay phase with cycles=3
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
