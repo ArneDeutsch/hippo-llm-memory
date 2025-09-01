@@ -13,6 +13,16 @@ bash scripts/smoke_n50.sh
 This script performs baselines → memory (teach+replay) → report and fails if
 `post_*` metrics are missing.
 
+# 0.2) Decision criteria & stop-go gate
+
+A run is **meaningful** only if:
+
+- Baseline EM for each suite falls within the expected ranges (see §1.2).
+- `metrics.json` for memory runs includes non-NaN `pre_*` fields.
+- Persisted stores carry `store_meta.json` with `source != "stub"` and `replay.samples >= 1`.
+
+If any criterion fails, abort the run, fix the configuration, and re-run.
+
 # 1) Hypotheses (what we expect to improve)
 
 - **HEI‑NW (episodic):** one‑shot episodic recall from partial cues with durability after replay; lower interference than long‑context.
@@ -26,6 +36,18 @@ This script performs baselines → memory (teach+replay) → report and fails if
 - **semantic**: `EM(raw)` is the primary metric; `EM(norm)` is reported for
   context.
 - **other suites**: `EM(norm)` remains primary with `EM(raw)` optional.
+
+## 1.2) Expected baseline EM ranges
+
+Approximate EM ranges for `n=50` and `dataset_profile=default`:
+
+| Suite     | Expected EM range |
+|-----------|------------------|
+| episodic  | 0.20–0.40        |
+| semantic  | 0.30–0.70        |
+| spatial   | 0.05–0.20        |
+
+Runs outside these ranges likely indicate misconfiguration or saturated datasets.
 
 # 2) Baselines
 
