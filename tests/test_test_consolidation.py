@@ -14,6 +14,8 @@ def _write_store(base: Path) -> Path:
     (session / "episodic.jsonl").write_text(json.dumps(rec) + "\n")
     (session / "relational.jsonl").write_text("")
     (session / "spatial.jsonl").write_text("")
+    meta = {"replay_samples": 1, "source": "replay"}
+    (session / "store_meta.json").write_text(json.dumps(meta))
     return base
 
 

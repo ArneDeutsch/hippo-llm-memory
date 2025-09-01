@@ -43,6 +43,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 
 
+DEFAULT_MIN_EM_UPLIFT = {"episodic": 0.05, "semantic": 0.02}
+
+
 class Args(argparse.Namespace):
     phase: str
     suite: str
@@ -54,7 +57,7 @@ class Args(argparse.Namespace):
     pre_dir: Optional[str]
     allow_tiny_test_model: bool
     uplift_mode: str
-    min_uplift: float
+    min_em_uplift: Optional[float]
     alpha: float
 
 
@@ -84,13 +87,12 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
         "--uplift-mode",
         choices=["fixed", "ci"],
         default="fixed",
-        help="Gate mode: 'fixed' uses --min-uplift; 'ci' requires delta CI > 0",
+        help="Gate mode: 'fixed' uses --min-em-uplift; 'ci' requires delta CI > 0",
     )
     parser.add_argument(
-        "--min-uplift",
+        "--min-em-uplift",
         type=float,
-        default=0.0,
-        help="Minimum EM uplift required in fixed mode",
+        help="Minimum EM uplift required in fixed mode; defaults depend on suite",
     )
     parser.add_argument(
         "--alpha",
@@ -206,8 +208,39 @@ def _collect_deltas(root: Path) -> List[float]:
     return deltas
 
 
+def _assert_lineage(pre_metrics: Dict[str, Any], adapter: str) -> None:
+    """Raise ``RuntimeError`` if consolidation lineage is invalid."""
+
+    suite = pre_metrics.get("suite")
+    pre_suite = pre_metrics.get("metrics", {}).get(suite, {})
+    pre_em = pre_suite.get("pre_em")
+    if not isinstance(pre_em, (int, float)) or math.isnan(float(pre_em)):
+        raise RuntimeError("missing pre_em in pre metrics; run with pre-metrics enabled")
+
+    run_path = Path(adapter).resolve()
+    store_dir = None
+    for parent in [run_path] + list(run_path.parents):
+        candidate = parent / "stores"
+        if candidate.exists():
+            store_dir = candidate
+            break
+    if store_dir is None:
+        store_dir = run_path.parent / "stores"
+    metas = list(store_dir.rglob("store_meta.json"))
+    if not metas:
+        raise RuntimeError(f"missing store_meta.json under {store_dir}")
+    for meta_path in metas:
+        meta = io.read_json(meta_path)
+        if meta.get("source") == "stub":
+            raise RuntimeError(f"store {meta_path} marked as stub")
+        if int(meta.get("replay_samples", 0)) < 1:
+            raise RuntimeError(f"store {meta_path} has replay_samples < 1")
+
+
 def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
     args = _parse_args(argv)
+    if args.min_em_uplift is None:
+        args.min_em_uplift = DEFAULT_MIN_EM_UPLIFT.get(args.suite, 0.05)
     args.model = _resolve_model(getattr(args, "model", None), args.allow_tiny_test_model)
     model_path = args.model
     tmp_dir: Optional[tempfile.TemporaryDirectory] = None
@@ -224,6 +257,7 @@ def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
     data = io.read_json(result_path)
     if args.phase == "post":
         pre_metrics = io.read_json(Path(args.pre_dir) / "metrics.json")
+        _assert_lineage(pre_metrics, args.adapter)
         delta = _compute_delta(pre_metrics, data)
         data["delta"] = delta
         io.atomic_write_json(result_path, data)
@@ -253,9 +287,9 @@ def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
         else:
             if args.uplift_mode == "ci":
                 raise RuntimeError("--uplift-mode=ci requires at least two seeds")
-            if uplift < args.min_uplift:
+            if uplift < args.min_em_uplift:
                 raise RuntimeError(
-                    f"EM uplift < +{args.min_uplift:.2f} (got {uplift:.2f})",
+                    f"EM uplift < +{args.min_em_uplift:.2f} (got {uplift:.2f})",
                 )
     if tmp_dir is not None:
         tmp_dir.cleanup()
