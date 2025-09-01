@@ -52,9 +52,11 @@ def test_report_retrieval_section(tmp_path: Path) -> None:
         "metrics": {"episodic": {"em": 1.0}},
         "retrieval": {
             "episodic": {
+                "k": 2,
+                "batch_size": 1,
                 "requests": 2,
-                "hits": 1,
-                "hit_rate_at_k": 0.5,
+                "hits_at_k": 1,
+                "hit_rate_at_k": 0.25,
                 "tokens_returned": 4,
                 "avg_latency_ms": 0.1,
             }
@@ -71,9 +73,9 @@ def test_report_retrieval_section(tmp_path: Path) -> None:
     out = tmp_path / "reports" / "20250101"
     write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
     text = (out / "episodic" / "summary.md").read_text()
-    header = "| mem | requests | hits | hit_rate_at_k | tokens_returned | avg_latency_ms |"
+    header = "| mem | k | batch_size | requests | hits_at_k | hit_rate_at_k | tokens_returned | avg_latency_ms |"
     assert header in text
-    assert "| episodic | 2 | 1 | 0.500 | 4 | 0.100 |" in text
+    assert "| episodic | 2 | 1 | 2 | 1 | 0.250 | 4 | 0.100 |" in text
     assert "actual recalled traces" in text
 
 

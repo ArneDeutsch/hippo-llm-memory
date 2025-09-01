@@ -224,8 +224,10 @@ def test_report_warnings(tmp_path: Path) -> None:
         {"pre_em_norm": 0.0},
         retrieval={
             "episodic": {
+                "k": 1,
+                "batch_size": 1,
                 "requests": 1,
-                "hits": 0,
+                "hits_at_k": 0,
                 "hit_rate_at_k": 0.0,
                 "tokens_returned": 0,
                 "avg_latency_ms": 0.0,
@@ -240,8 +242,10 @@ def test_report_warnings(tmp_path: Path) -> None:
         gates={"episodic": {"attempts": 0}},
         retrieval={
             "episodic": {
+                "k": 1,
+                "batch_size": 1,
                 "requests": 5,
-                "hits": 0,
+                "hits_at_k": 0,
                 "hit_rate_at_k": 0.0,
                 "tokens_returned": 0,
                 "avg_latency_ms": 0.0,
@@ -255,8 +259,10 @@ def test_report_warnings(tmp_path: Path) -> None:
         {"pre_em_norm": 0.1},
         retrieval={
             "episodic": {
+                "k": 1,
+                "batch_size": 1,
                 "requests": 2,
-                "hits": 0,
+                "hits_at_k": 0,
                 "hit_rate_at_k": 0.0,
                 "tokens_returned": 0,
                 "avg_latency_ms": 0.0,
@@ -332,8 +338,10 @@ def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> N
     if telemetry:
         retrieval = {
             "episodic": {
+                "k": 1,
+                "batch_size": 1,
                 "requests": 1,
-                "hits": 0,
+                "hits_at_k": 0,
                 "hit_rate_at_k": 0.0,
                 "tokens_returned": 0,
                 "avg_latency_ms": 0.0,

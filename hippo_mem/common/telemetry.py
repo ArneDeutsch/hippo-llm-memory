@@ -17,25 +17,41 @@ class RetrievalStats:
     hits: int = 0
     tokens_returned: int = 0
     latency_ms_sum: float = 0.0
+    k: int = 0
+    batch_size: int = 0
 
-    def update(self, *, k: int, hits: int, tokens: int, latency_ms: float) -> None:
+    def update(
+        self,
+        *,
+        k: int,
+        batch_size: int,
+        hits: int,
+        tokens: int,
+        latency_ms: float,
+    ) -> None:
         """Add a retrieval observation."""
 
-        self.requests += 1
-        self.total_k += max(0, k)
+        self.requests += max(0, batch_size)
+        self.total_k += max(0, k) * max(0, batch_size)
         self.hits += max(0, hits)
-        self.tokens_returned += max(0, tokens)
-        self.latency_ms_sum += max(0.0, latency_ms)
+        self.tokens_returned += max(0, tokens) * max(0, batch_size)
+        self.latency_ms_sum += max(0.0, latency_ms) * max(0, batch_size)
+        self.k = k
+        self.batch_size = batch_size
 
     def snapshot(self) -> Dict[str, int | float]:
         """Return metrics with hit rate and average latency."""
 
-        avg_latency = (self.latency_ms_sum / self.requests) if self.requests else 0.0
-        hit_rate_at_k = (self.hits / self.total_k) if self.total_k else 0.0
+        requests = self.requests or 0
+        avg_latency = (self.latency_ms_sum / requests) if requests else 0.0
+        max_hits = self.k * requests
+        hit_rate_at_k = (self.hits / max_hits) if max_hits else 0.0
         return {
-            "requests": self.requests,
+            "k": self.k,
+            "batch_size": self.batch_size,
+            "requests": requests,
             "total_k": self.total_k,
-            "hits": self.hits,
+            "hits_at_k": self.hits,
             "hit_rate_at_k": hit_rate_at_k,
             "tokens_returned": self.tokens_returned,
             "avg_latency_ms": avg_latency,
@@ -71,15 +87,17 @@ def validate_retrieval_snapshot(
 
     if strict is None:
         strict = _STRICT
-    total_k = int(snap.get("total_k", 0))
-    hits = int(snap.get("hits", 0))
+    k = int(snap.get("k", 0))
+    requests = int(snap.get("requests", 0))
+    hits = int(snap.get("hits_at_k", snap.get("hits", 0)))
     rate = float(snap.get("hit_rate_at_k", 0.0))
+    max_hits = k * requests if k and requests else int(snap.get("total_k", 0))
     errors = []
-    if hits < 0 or total_k < 0:
+    if hits < 0 or k < 0 or requests < 0:
         errors.append("negative values")
-    if hits > total_k:
-        errors.append("hits > total_k")
-    expected = (hits / total_k) if total_k else 0.0
+    if max_hits and hits > max_hits:
+        errors.append("hits > k*requests")
+    expected = (hits / max_hits) if max_hits else 0.0
     if abs(rate - expected) > eps:
         errors.append("hit_rate mismatch")
     if errors:

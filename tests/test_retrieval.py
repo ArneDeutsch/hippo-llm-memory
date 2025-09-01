@@ -120,7 +120,7 @@ def test_build_meta_schema() -> None:
 
     start = time.perf_counter()
     meta = build_meta("kind", start, hits=2, k=3, bsz=1)
-    assert set(meta.keys()) == {"source", "k", "latency_ms", "hit_rate"}
+    assert set(meta.keys()) == {"source", "k", "batch_size", "latency_ms", "hit_rate"}
 
 
 def test_retrieve_and_pack_meta_schema() -> None:
@@ -138,4 +138,4 @@ def test_retrieve_and_pack_meta_schema() -> None:
         build_meta_fn=lambda start, hits, k, bsz: build_meta("kind", start, hits, k, bsz=bsz),
         telemetry_key="episodic",
     )
-    assert set(mem.meta.keys()) == {"source", "k", "latency_ms", "hit_rate"}
+    assert set(mem.meta.keys()) == {"source", "k", "batch_size", "latency_ms", "hit_rate"}

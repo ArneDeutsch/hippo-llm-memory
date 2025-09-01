@@ -54,7 +54,13 @@ def build_meta(
 
     latency_ms = (time.perf_counter() - start) * 1000
     hit_rate = hits / (bsz * k) if k > 0 and bsz > 0 else 0.0
-    meta = {"source": kind, "k": k, "latency_ms": latency_ms, "hit_rate": hit_rate}
+    meta = {
+        "source": kind,
+        "k": k,
+        "batch_size": bsz,
+        "latency_ms": latency_ms,
+        "hit_rate": hit_rate,
+    }
     meta.update(extra)
     return meta
 
@@ -96,7 +102,8 @@ def retrieve_and_pack_base(
 
     record_stats(
         telemetry_key,
-        k=k * bsz,
+        k=k,
+        batch_size=bsz,
         hits=hits_total,
         tokens=tokens.shape[1],
         latency_ms=meta.get("latency_ms", 0.0),

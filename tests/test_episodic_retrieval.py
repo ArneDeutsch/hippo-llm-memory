@@ -122,6 +122,6 @@ def test_empty_store_has_zero_hit_rate():
     spec = TraceSpec(source="episodic", k=k)
     episodic_retrieve_and_pack(batch_hidden, spec, store, nn.Identity())
     snap = registry.get("episodic").snapshot()
-    assert snap["hits"] == 0
+    assert snap["hits_at_k"] == 0
     assert snap["hit_rate_at_k"] == 0.0
     assert snap["tokens_returned"] == k
