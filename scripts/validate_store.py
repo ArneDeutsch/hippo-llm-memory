@@ -54,8 +54,21 @@ def main() -> None:
             if expected != 0:
                 raise ValueError("metrics report store entries but no file found")
         else:
+            actual = 0
             with path.open("r", encoding="utf-8") as fh:
-                actual = sum(1 for line in fh if line.strip())
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rec = json.loads(line)
+                    except json.JSONDecodeError:
+                        actual += 1
+                        continue
+                    val = rec.get("value")
+                    if isinstance(val, dict) and val.get("provenance") == "dummy":
+                        continue
+                    actual += 1
             if actual != expected:
                 raise ValueError(
                     f"{args.kind} store line count {actual} != metrics expectation {expected}"

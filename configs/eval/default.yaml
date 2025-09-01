@@ -31,6 +31,7 @@ persist: false
 memory_off: false
 gating_enabled: true
 strict_telemetry: false
+allow_dummy_stores: false
 primary_em: norm
 
 # Control evaluation-time compute features.
