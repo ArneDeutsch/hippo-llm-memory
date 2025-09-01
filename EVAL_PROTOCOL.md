@@ -71,11 +71,28 @@ Use `--strict-telemetry` to turn warnings into errors.
   zero.
 - Baselines MUST NOT be run with `persist=true`.
 
+### Pre-flight checklist
+
+Confirm before launching full runs:
+
+- `compute.pre_metrics=true` so baselines record `pre_*` metrics.
+- For memory presets, `replay.samples>=1` when `persist=true`.
+- Selected `dataset_profile` (`default` or `hard`) is explicit.
+- Baseline EM falls within expected ranges (see `EVAL_PLAN.md` §1.2).
+
 > **Troubleshooting (baseline retrieval > 0):**
 > - Ensure the preset starts with `baselines/`.
 > - Remove leftover store directories under `runs/$RUN_ID/stores`.
 > - Check `configs/eval/default.yaml` has no `memory:` root key.
 > - Re-run `pytest tests/test_baselines_have_no_memory.py`.
+>
+> **Troubleshooting (gating counters = 0):**
+> - Verify memory modules and gates are enabled.
+> - Check `metrics.json.gating.attempts` increments when memory is on.
+>
+> **Troubleshooting (spatial format mismatch):**
+> - Predictions must use the canonical move string format (`U/D/L/R`).
+> - If full paths appear, adjust prompts or normalize with helper scripts.
 
 ## 0) Shell prelude — environment & variables
 

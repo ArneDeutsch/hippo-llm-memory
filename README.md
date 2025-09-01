@@ -127,6 +127,20 @@ nested `--session_id` directory.
 
 **Note:** With Option B, presets no longer hardcode a model; pass `model=...` on the CLI.
 
+### Quick sanity run
+
+Verify the harness and scoring on a tiny slice before full runs:
+
+```bash
+# Baseline with pre metrics
+python scripts/eval_model.py suite=semantic preset=baselines/core n=5 seed=1337 compute.pre_metrics=true
+
+# Memory variant with replay and persistence
+python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=5 seed=1337 replay.samples=1 persist=true
+
+# Expect non-zero pre_em in metrics.json and store_meta.source == "replay".
+```
+
 ## Baselines
 
 Presets live under `configs/eval/baselines/`:
