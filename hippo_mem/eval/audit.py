@@ -13,13 +13,6 @@ SEEDS = [1337, 2025, 4242]
 
 SUITES = ["episodic", "semantic", "spatial"]
 
-EPISODIC_PATTERN = "episodic_{size}_{seed}.jsonl"
-SEMANTIC_PATTERNS = [
-    "semantic_h2_clean_{size}_{seed}.jsonl",
-    "semantic_h3_contradict_{size}_{seed}.jsonl",
-]
-SPATIAL_PATTERN = "spatial_{size}_{seed}.jsonl"
-
 MEMORY_CONFIGS = [
     Path("configs/eval/memory/hei_nw.yaml"),
     Path("configs/eval/memory/sgc_rss.yaml"),
@@ -33,49 +26,27 @@ BASELINE_CONFIGS = [
 ]
 
 
-def read_checksums(path: Path) -> Dict[str, str]:
-    """Parse a checksums file into a mapping of filename to digest."""
-    mapping: Dict[str, str] = {}
-    for line in path.read_text().splitlines():
-        if not line.strip():
-            continue
-        digest, filename = line.split(maxsplit=1)
-        mapping[filename.strip()] = digest
-    return mapping
-
-
 def audit(data_dir: Path | None = None) -> Tuple[bool, List[str]]:
-    """Verify datasets and configs exist with correct checksums and emit manifest.
-
-    Parameters
-    ----------
-    data_dir:
-        Directory containing dataset JSONL files and ``checksums.txt``.
-
-    Returns
-    -------
-    tuple[bool, list[str]]
-        ``True`` and an empty list if all checks pass; ``False`` and issue
-        descriptions otherwise.
-    """
+    """Verify datasets and configs exist with correct checksums and emit a manifest."""
 
     data_dir = data_dir or Path("data")
-    checksum_path = data_dir / "checksums.txt"
     issues: List[str] = []
-    if not checksum_path.exists():
-        return False, [f"Missing checksums file: {checksum_path}"]
 
-    checksum_map = read_checksums(checksum_path)
-
-    for size in SIZES:
-        for seed in SEEDS:
-            fname = EPISODIC_PATTERN.format(size=size, seed=seed)
-            verify_file(data_dir / fname, checksum_map, issues)
-            for pattern in SEMANTIC_PATTERNS:
-                fname = pattern.format(size=size, seed=seed)
-                verify_file(data_dir / fname, checksum_map, issues)
-            fname = SPATIAL_PATTERN.format(size=size, seed=seed)
-            verify_file(data_dir / fname, checksum_map, issues)
+    for suite in SUITES:
+        suite_dir = data_dir / suite
+        checksum_file = suite_dir / "checksums.json"
+        if not checksum_file.exists():
+            issues.append(f"Missing checksums file: {checksum_file}")
+            continue
+        try:
+            checksums = json.loads(checksum_file.read_text())
+        except json.JSONDecodeError:
+            issues.append(f"Invalid JSON: {checksum_file}")
+            continue
+        for size in SIZES:
+            for seed in SEEDS:
+                fname = f"{size}_{seed}.jsonl"
+                verify_file(suite_dir / fname, checksums, issues)
 
     for cfg in MEMORY_CONFIGS + BASELINE_CONFIGS:
         if not cfg.exists():

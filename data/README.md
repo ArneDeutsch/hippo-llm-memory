@@ -42,8 +42,9 @@ while `--distractors` sets the number of distractor events preceding the query
 for the episodic suite. Episodic records also expose `reward`/`pin` flags to
 exercise the neuromodulated write gate.
 
-Checksums for all datasets are recorded in `checksums.txt` in the same
-folder using the format `<sha256>  <filename>`.
+Each suite directory contains a `checksums.json` mapping filenames to
+their SHA256 digests.  Run `python scripts/audit_datasets.py` to verify
+the files and to emit an aggregated `MANIFEST.json` under `data/`.
 
 For the spatial suite, `--grid-size` and `--obstacle-density` control the
 dimensions of the grid world and the fraction of blocked cells, enabling tests
