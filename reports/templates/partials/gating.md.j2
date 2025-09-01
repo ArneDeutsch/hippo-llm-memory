@@ -1,0 +1,9 @@
+{% if gates %}
+## Gate Telemetry
+
+| mem | attempts | accepted | blocked | skipped |
+|---|---|---|---|---|
+{% for mem, stats in gates.items() %}
+| {{ mem }} | {{ stats.attempts }} | {{ stats.accepted }} | {{ stats.blocked }} | {{ stats.skipped }} |
+{% endfor %}
+{% endif %}

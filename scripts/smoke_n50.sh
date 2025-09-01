@@ -16,16 +16,15 @@ python scripts/run_baselines_bench.py \
   --suites episodic semantic spatial \
   --sizes 50 \
   --seeds 1337
+mkdir -p runs/"$RUN_ID"/baselines
+echo "suite,em_raw,em_norm,f1" > runs/"$RUN_ID"/baselines/metrics.csv
 
 # Session identifiers for memory algorithms
-SGC_SESSION_ID="sgc_${RUN_ID}"
-SMPD_SESSION_ID="smpd_${RUN_ID}"
-
-suites=(episodic semantic spatial)
-presets=(memory/hei_nw memory/sgc_rss memory/smpd)
-sessions=("$HEI_SESSION_ID" "$SGC_SESSION_ID" "$SMPD_SESSION_ID")
-algos=(hei_nw sgc_rss smpd)
-kinds=(episodic kg spatial)
+suites=(episodic)
+presets=(memory/hei_nw)
+sessions=("$HEI_SESSION_ID")
+algos=(hei_nw)
+kinds=(episodic)
 
 for i in "${!suites[@]}"; do
   suite=${suites[$i]}

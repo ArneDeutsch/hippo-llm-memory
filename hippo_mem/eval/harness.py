@@ -942,7 +942,7 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
     failures: list[str] = []
     if cfg.get("mode") != "teach":
         try:
-            baseline_metrics = outdir.parents[2] / "baselines" / "metrics.csv"
+            baseline_metrics = outdir.parents[3] / "baselines" / "metrics.csv"
         except IndexError:  # pragma: no cover - outdir too shallow
             baseline_metrics = Path()
         if not baseline_metrics.exists():

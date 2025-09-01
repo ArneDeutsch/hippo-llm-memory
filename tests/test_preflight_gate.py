@@ -42,7 +42,7 @@ def _setup_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, baseline: boo
     (store_path / "episodic.jsonl").write_text("")
 
     if baseline:
-        bdir = tmp_path.parent / "baselines"
+        bdir = tmp_path.parent.parent / "baselines"
         bdir.mkdir(parents=True, exist_ok=True)
         (bdir / "metrics.csv").write_text("suite,em\n")
 
