@@ -23,7 +23,7 @@ suites=(episodic semantic spatial)
 presets=(memory/hei_nw memory/sgc_rss memory/smpd)
 sessions=("$HEI_SESSION_ID" "$SGC_SESSION_ID" "$SMPD_SESSION_ID")
 algos=(hei_nw sgc_rss smpd)
-kinds=(episodic kg map)
+kinds=(episodic kg spatial)
 
 for i in "${!suites[@]}"; do
   suite=${suites[$i]}
@@ -34,18 +34,18 @@ for i in "${!suites[@]}"; do
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
     outdir=$outdir mode=teach persist=true \
-    store_dir=$STORES session_id=$session_id --strict-telemetry >/dev/null
+    store_dir=$STORES session_id=$session_id gating_enabled=true --strict-telemetry >/dev/null
   # Test phase to obtain pre metrics
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
-    outdir=$outdir store_dir=$STORES session_id=$session_id --strict-telemetry >/dev/null
+    outdir=$outdir store_dir=$STORES session_id=$session_id gating_enabled=true --strict-telemetry >/dev/null
   # Validate store layout before replay
   python scripts/validate_store.py --algo=${algos[$i]} --kind=${kinds[$i]} >/dev/null
   # Replay phase with cycles=3
   python scripts/eval_cli.py \
     suite=$suite preset=$preset n=50 seed=1337 \
     outdir=$outdir mode=replay persist=true replay.cycles=3 \
-    store_dir=$STORES session_id=$session_id --strict-telemetry >/dev/null
+    store_dir=$STORES session_id=$session_id gating_enabled=true --strict-telemetry >/dev/null
   # Verify post_* and delta_* metrics
   jq -e ".metrics[\"$suite\"] | has(\"post_em\") and has(\"delta_em\")" "$outdir/metrics.json" >/dev/null
 done

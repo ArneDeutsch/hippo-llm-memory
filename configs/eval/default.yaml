@@ -29,7 +29,7 @@ store_dir: null
 session_id: null
 persist: false
 memory_off: false
-gating_enabled: false
+gating_enabled: true
 strict_telemetry: false
 primary_em: norm
 

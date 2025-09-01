@@ -26,6 +26,7 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
         "replay.cycles=1",
         f"outdir={outdir}",
         "+ablate.memory.episodic.hopfield=false",
+        "gating_enabled=false",
         "dry_run=true",
     ]
     subprocess.run(cmd, check=True)
