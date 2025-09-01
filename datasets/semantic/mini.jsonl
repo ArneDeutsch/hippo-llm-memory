@@ -1,0 +1,2 @@
+{"prompt": "In which city did Alice buy the book?", "answer": "Paris", "facts": [{"text": "Alice bought a book at StoreA.", "schema_fit": true, "time": 0}, {"text": "StoreA is in Paris.", "schema_fit": true, "time": 1}]}
+{"prompt": "In which city did Bob buy the apple?", "answer": "London", "facts": [{"text": "Bob bought a apple at StoreB.", "schema_fit": true, "time": 0}, {"text": "StoreB is in London.", "schema_fit": true, "time": 1}]}
