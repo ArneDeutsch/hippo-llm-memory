@@ -18,9 +18,11 @@ import random
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Set
+from typing import Any, Dict, Iterable, List
 
 from omegaconf import OmegaConf
+
+from hippo_mem.tasks.spatial.generator import generate_spatial
 
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
@@ -328,128 +330,6 @@ def generate_semantic(
         text = " ".join(parts).strip()
         prompt = f"{text} {question}" if text else question
         tasks.append({"prompt": prompt, "answer": city, "facts": facts})
-
-    return tasks
-
-
-def generate_spatial(
-    size: int,
-    seed: int,
-    grid_size: int | None = None,
-    obstacle_density: float | None = None,
-    profile: str = "default",
-) -> List[Dict[str, object]]:
-    """Generate grid-world tasks with obstacles, macros and trajectories.
-
-    Defaults for ``grid_size`` and ``obstacle_density`` depend on ``profile``.
-
-    A third of the tasks ask for the shortest path length between two
-    coordinates while avoiding obstacles.  Another third repeat **macro paths**—
-    pre-computed shortest routes between fixed start/goal pairs—to encourage
-    procedural sequence learning.  The remaining tasks present random walk
-    trajectories and ask for the final coordinate to stress path integration.
-    """
-
-    from collections import deque
-
-    rng = random.Random(seed)
-
-    if grid_size is None:
-        grid_size = {"easy": 5, "default": 6, "hard": 7}[profile]
-    if obstacle_density is None:
-        obstacle_density = {"easy": 0.15, "default": 0.25, "hard": 0.3}[profile]
-
-    obstacles: Set[tuple[int, int]] = set()
-    for x in range(grid_size):
-        for y in range(grid_size):
-            if rng.random() < obstacle_density:
-                obstacles.add((x, y))
-
-    def bfs(start: tuple[int, int], goal: tuple[int, int]) -> List[str] | None:
-        queue: deque[tuple[tuple[int, int], List[str]]] = deque([(start, [])])
-        seen = {start}
-        moves = [(-1, 0, "L"), (1, 0, "R"), (0, -1, "U"), (0, 1, "D")]
-        while queue:
-            (x, y), path = queue.popleft()
-            if (x, y) == goal:
-                return path
-            for dx, dy, step in moves:
-                nx, ny = x + dx, y + dy
-                nxt = (nx, ny)
-                if (
-                    0 <= nx < grid_size
-                    and 0 <= ny < grid_size
-                    and nxt not in obstacles
-                    and nxt not in seen
-                ):
-                    queue.append((nxt, path + [step]))
-                    seen.add(nxt)
-        return None
-
-    def random_cell() -> tuple[int, int]:
-        return rng.randint(0, grid_size - 1), rng.randint(0, grid_size - 1)
-
-    macros: List[Dict[str, object]] = []
-    for _ in range(3):
-        while True:
-            start, goal = random_cell(), random_cell()
-            if start == goal or start in obstacles or goal in obstacles:
-                continue
-            path = bfs(start, goal)
-            if path:
-                macros.append({"start": start, "goal": goal, "steps": "".join(path)})
-                break
-
-    tasks: List[Dict[str, object]] = []
-    for i in range(size):
-        if i % 3 == 0:  # shortest path queries
-            while True:
-                start, goal = random_cell(), random_cell()
-                if start == goal or start in obstacles or goal in obstacles:
-                    continue
-                path = bfs(start, goal)
-                if path:
-                    prompt = (
-                        f"Grid {grid_size}x{grid_size} with obstacles {sorted(obstacles)}. "
-                        f"Start {start} goal {goal}. What is the shortest path length?"
-                    )
-                    tasks.append({"prompt": prompt, "answer": len(path)})
-                    break
-        elif i % 3 == 1:  # macro path sequences
-            macro = rng.choice(macros)
-            prompt = (
-                f"Grid {grid_size}x{grid_size} with obstacles {sorted(obstacles)}. "
-                f"What move sequence leads from {macro['start']} to {macro['goal']}?"
-            )
-            tasks.append({"prompt": prompt, "answer": macro["steps"]})
-        else:  # random walk trajectory
-            while True:
-                start = random_cell()
-                if start in obstacles:
-                    continue
-                pos = start
-                trajectory = [start]
-                moves = []
-                for _ in range(5):
-                    options = []
-                    for dx, dy, step in [(-1, 0, "L"), (1, 0, "R"), (0, -1, "U"), (0, 1, "D")]:
-                        nx, ny = pos[0] + dx, pos[1] + dy
-                        nxt = (nx, ny)
-                        if 0 <= nx < grid_size and 0 <= ny < grid_size and nxt not in obstacles:
-                            options.append((dx, dy, step))
-                    if not options:
-                        break
-                    dx, dy, step = rng.choice(options)
-                    pos = (pos[0] + dx, pos[1] + dy)
-                    trajectory.append(pos)
-                    moves.append(step)
-                if moves:
-                    prompt = (
-                        f"Grid {grid_size}x{grid_size} with obstacles {sorted(obstacles)}. "
-                        f"Start {start}. After moves {''.join(moves)} where do you end?"
-                    )
-                    tasks.append({"prompt": prompt, "answer": pos, "trajectory": trajectory})
-                    break
 
     return tasks
 

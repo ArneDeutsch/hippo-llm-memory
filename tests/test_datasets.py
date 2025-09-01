@@ -74,12 +74,11 @@ def test_semantic_fact_labels() -> None:
     assert facts and all("schema_fit" in f and "time" in f for f in facts)
 
 
-def test_spatial_trajectory() -> None:
-    """Spatial generator emits random walk trajectories for path integration."""
+def test_spatial_moves() -> None:
+    """Spatial generator emits canonical move string answers."""
 
-    items = build_datasets.generate_spatial(3, seed=0)
-    traj_items = [t for t in items if "trajectory" in t]
-    assert traj_items and traj_items[0]["trajectory"][-1] == traj_items[0]["answer"]
+    items = build_datasets.generate_spatial(4, seed=0)
+    assert all(set(item["answer"]) <= {"U", "D", "L", "R"} for item in items)
 
 
 def test_loader_rejects_corrupted_json(tmp_path: Path) -> None:
