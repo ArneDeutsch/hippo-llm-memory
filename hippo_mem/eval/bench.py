@@ -158,14 +158,18 @@ def _load_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
 
 
 def _init_modules(
-    memory: Optional[object], ablate: Dict[str, object]
+    memory: Optional[object],
+    ablate: Dict[str, object],
+    *,
+    allow_dummy_stores: bool = False,
 ) -> Dict[str, Dict[str, object]]:
     """Initialise memory modules based on ``memory`` config.
 
     ``memory`` may be a single name, list of names or a dict with keys
-    ``episodic``, ``relational`` and ``spatial``.  ``ablate`` contains flattened
+    ``episodic``, ``relational`` and ``spatial``. ``ablate`` contains flattened
     ablation flags which can disable optional components such as Hopfield or
-    product quantisation.
+    product quantisation. When ``allow_dummy_stores`` is ``False`` no placeholder
+    records are written during initialisation.
     """
 
     modules: Dict[str, Dict[str, object]] = {}
@@ -176,20 +180,23 @@ def _init_modules(
         hopfield = bool(ablate.get("memory.episodic.hopfield", True))
         pq = bool(ablate.get("memory.episodic.pq", True))
         store = EpisodicStore(dim=8, config={"hopfield": hopfield, "pq": pq})
-        store.write(np.ones(8, dtype="float32"), "dummy")
+        if allow_dummy_stores:
+            store.write(np.ones(8, dtype="float32"), "dummy")
         adapter_cfg = AdapterConfig(hidden_size=8, num_heads=1, enabled=True)
         modules["episodic"] = {"store": store, "adapter": EpisodicMemoryAdapter(adapter_cfg)}
 
     def _add_relational() -> None:
         kg = KnowledgeGraph()
-        kg.upsert("a", "rel", "b", "a rel b")
+        if allow_dummy_stores:
+            kg.upsert("a", "rel", "b", "a rel b")
         modules["relational"] = {"kg": kg, "adapter": RelationalMemoryAdapter()}
 
     def _add_spatial() -> None:
         g = PlaceGraph()
-        g.observe("a")
-        g.observe("b")
-        g.connect("a", "b")
+        if allow_dummy_stores:
+            g.observe("a")
+            g.observe("b")
+            g.connect("a", "b")
         spat_cfg = SpatialAdapterConfig(hidden_size=8, num_heads=1, enabled=True)
         modules["spatial"] = {"map": g, "adapter": SpatialMemoryAdapter(spat_cfg)}
 
@@ -398,7 +405,11 @@ def run_suite(
 
     tasks = _load_tasks(cfg.suite, cfg.n, cfg.seed)
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
-    modules = _init_modules(cfg.get("memory"), flat_ablate)
+    modules = _init_modules(
+        cfg.get("memory"),
+        flat_ablate,
+        allow_dummy_stores=bool(cfg.get("allow_dummy_stores", False)),
+    )
 
     retrieval_enabled = bool(cfg.get("retrieval", {}).get("enabled", False))
     long_ctx_enabled = bool(cfg.get("long_context", {}).get("enabled", False))

@@ -195,6 +195,7 @@ class EvalConfig:
     primary_em: str = "norm"
     dataset_profile: str | None = None
     pre_metrics: bool = True
+    allow_dummy_stores: bool = False
 
 
 def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> Path:
@@ -517,8 +518,11 @@ def _store_sizes(
         store = modules["episodic"]["store"]
         try:
             cur = store.persistence.db.conn.cursor()
-            cur.execute("SELECT COUNT(*) FROM traces")
-            sizes["episodic"] = int(cur.fetchone()[0])
+            cur.execute("SELECT value FROM traces")
+            rows = cur.fetchall()
+            sizes["episodic"] = sum(
+                1 for (val,) in rows if json.loads(val or "{}").get("provenance") != "dummy"
+            )
         except Exception:
             sizes["episodic"] = 0
     if "relational" in modules:
@@ -582,7 +586,11 @@ def run_suite(
 
     tasks = _load_tasks(_dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile), cfg.n)
     flat_ablate = _flatten_ablate(base_cfg.get("ablate"))
-    modules = _init_modules(base_cfg.get("memory"), flat_ablate)
+    modules = _init_modules(
+        base_cfg.get("memory"),
+        flat_ablate,
+        allow_dummy_stores=cfg.allow_dummy_stores,
+    )
     if cfg.preset and not is_memory_preset(str(cfg.preset)):
         modules = {}
 
@@ -934,7 +942,11 @@ def evaluate(cfg: DictConfig, outdir: Path) -> None:
                 if isinstance(gate_cfg, DictConfig):
                     with open_dict(gate_cfg):
                         gate_cfg.enabled = bool(flat_ablate["spatial.gate.enabled"])
-    modules = _init_modules(mem_cfg, flat_ablate)
+    modules = _init_modules(
+        mem_cfg,
+        flat_ablate,
+        allow_dummy_stores=bool(cfg.get("allow_dummy_stores", False)),
+    )
     if cfg.preset and not is_memory_preset(str(cfg.preset)):
         modules = {}
     if cfg.memory_off:
