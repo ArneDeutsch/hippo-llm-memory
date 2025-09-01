@@ -15,6 +15,6 @@ def test_spatial_gate_telemetry() -> None:
         replay_cycles=1,
     )
     _rows, metrics, _ = run_suite(cfg)
-    gates = metrics["gates"]["spatial"]
-    assert gates["attempts"] > 0
-    assert gates["accepted"] >= 0
+    gating = metrics["gating"]["spatial"]
+    assert gating["attempts"] > 0
+    assert gating["accepted"] >= 0

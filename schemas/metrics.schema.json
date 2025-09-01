@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "metrics",
+  "type": "object",
+  "required": [
+    "version",
+    "suite",
+    "n",
+    "seed",
+    "preset",
+    "phase",
+    "metrics"
+  ],
+  "properties": {
+    "version": {"type": ["integer", "string"]},
+    "suite": {"type": "string"},
+    "n": {"type": "integer"},
+    "seed": {"type": "integer"},
+    "preset": {"type": "string"},
+    "phase": {"type": "string"},
+    "metrics": {"type": "object"},
+    "diagnostics": {"type": "object"},
+    "retrieval": {"type": "object"},
+    "gating": {"type": "object"},
+    "replay": {"type": "object"},
+    "store": {"type": "object"}
+  }
+}

@@ -39,7 +39,7 @@ def _make_metrics(
     if compute:
         content["metrics"]["compute"] = compute
     if gates:
-        content["gates"] = gates
+        content["gating"] = gates
     if retrieval:
         content["retrieval"] = retrieval
     if store:

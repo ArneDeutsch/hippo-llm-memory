@@ -50,10 +50,10 @@ def test_gate_metrics_propagate(tmp_path: Path) -> None:
     )
     rows, metrics, _ = run_suite(cfg)
     assert rows
-    gates = metrics.get("gates")
-    assert gates is not None
-    assert "relational" in gates and "spatial" in gates
-    assert "accepted" in gates["relational"]
+    gating = metrics.get("gating")
+    assert gating is not None
+    assert "relational" in gating and "spatial" in gating
+    assert "accepted" in gating["relational"]
 
 
 def test_gate_counter_invariants() -> None:

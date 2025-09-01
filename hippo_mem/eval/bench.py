@@ -476,6 +476,8 @@ def run_suite(
     avg_latency = lat_sum / max(1, total_items)
     total_tokens = total_in_tokens + total_gen_tokens
     metrics = {
+        "version": 2,
+        "phase": str(getattr(cfg, "mode", "test")),
         "suite": cfg.suite,
         "n": cfg.n,
         "seed": cfg.seed,
@@ -492,6 +494,8 @@ def run_suite(
             },
         },
         "memory": mem_usage,
+        "retrieval": {},
+        "gating": {},
     }
     if post_metrics:
         metrics["post_replay"] = post_metrics
