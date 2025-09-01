@@ -1,3 +1,5 @@
+"""Spatial metric canonicalisation tests."""
+
 import pytest
 
 from hippo_mem.metrics.spatial import em, ensure_prediction_format, f1
@@ -13,6 +15,7 @@ CASES = [
     ("Up,Right,Down", "URD"),
     ("move: up up left", "UUL"),
     ("(0,0) → (1,0) → (1,1)", "RD"),
+    ("(0,0) -> (0,1).", "D"),
 ]
 
 
