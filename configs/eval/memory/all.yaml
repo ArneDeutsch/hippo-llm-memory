@@ -1,5 +1,9 @@
 # Combined memory preset using all stores.
 model: ???
+dataset_profile: hard
+replay:
+  cycles: 1
+  samples: 3
 memory:
   - hei_nw
   - sgc_rss

@@ -49,6 +49,7 @@ post_replay_cycles: 0
 # Replay evaluation options for ``eval_model`` (kept for backwards compat).
 replay:
   cycles: 0
+  samples: 3
 
 # Shortcut overrides folded into ``memory.*`` by the harness.
 # ``memory`` root key intentionally omitted so baselines don't load memories.

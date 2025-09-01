@@ -1,11 +1,13 @@
 # Spatial/procedural memory preset using SMPD store with replay and gating.
 gating_enabled: true
+dataset_profile: hard
 memory:
   spatial:
     gate:
       enabled: ${gating_enabled}
 replay:
   cycles: 1
+  samples: 3
 retrieval:
   enabled: true
 

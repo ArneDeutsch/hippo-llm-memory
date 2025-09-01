@@ -1,0 +1,6 @@
+# Ablation: disable gating for SGC-RSS relational memory.
+relational:
+  gate:
+    enabled: false
+compute:
+  pre_metrics: true
