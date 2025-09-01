@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname "$0")/_env.sh"
+export MODEL=models/tiny-gpt2
+export HF_MODEL_PATH="$MODEL"
+export ALLOW_BENCH=1
 IFS=$'\n\t'
 
 RUN_ID=${1:-$RUN_ID}
