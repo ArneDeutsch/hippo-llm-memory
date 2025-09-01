@@ -10,18 +10,18 @@
     2025,
     4242
   ],
-  "generator_version": "f96a80e682b5f6fd94cebc5655ce400f1f90cd14",
+  "generator_version": "d8994ea06af035f45ae6c932cc493c8dc0f42580",
   "files": {
-    "50_1337.jsonl": "03cdd48d64e34467e1aaf6024e8acf90ddee8fef1fed4880582d3f579d3489c8",
-    "50_2025.jsonl": "8c424eeebb5cfc5b7d2a90d4466fa74e759f4e30bf60d27111e7c03ec29c3f5b",
-    "50_4242.jsonl": "a0a1574e12458a0e6fa333b4bf61ebf7d88ee653f43a5a5faf0ca04d8152df7f",
-    "200_1337.jsonl": "e329b980fa03e574c1c6d6f394c1587b9515b04a2c0937af06b7bcbbe6cea51b",
-    "200_2025.jsonl": "b811f7ff8a6ee59f256de28cfdba2ca5e2ba622c4994dc9c6a3e176106d9ed08",
-    "200_4242.jsonl": "04399933ebb976feec254754da15dfaea94943a1ad951910fb12c0aa0d45983b",
-    "1000_1337.jsonl": "1e52a531e347f909de1a6d60a383899f61a6c8b5ae97ea6c156d695e8af4dfa3",
-    "1000_2025.jsonl": "9b463469951caf84372a7a5fd4b35a00bbbd8cd55bd9b897f445a86dbde04789",
-    "1000_4242.jsonl": "6ee4a5ea7b96881ddcf7fedfcefa4e5c868537f3a64957ce467b612353336368"
+    "50_1337.jsonl": "b41ddda867111739699fa6e907706d6a7d95cb84443c86f2c9bdc671d6c83088",
+    "50_2025.jsonl": "840ac98664ab0c36f5cb9c6f6f475ae3e6ef1a2415dbd9acfc5efb7eba2324ac",
+    "50_4242.jsonl": "f57c79f09d72c78accddc984822aa401558f5b1d930c76601f172838f6b50b8f",
+    "200_1337.jsonl": "a0ea0f87df322268958bbdb4a18523a8b6d6160b887e21eba69cb28b12b696a4",
+    "200_2025.jsonl": "cb48fa366e282d10132a19d60b3530c6d8e5cfe2277689f115ba0d8eb34fbcc3",
+    "200_4242.jsonl": "e07df901e9c4b25f75a0fad63298105134e838562b5f69cb592bad2e240ce1fa",
+    "1000_1337.jsonl": "13f016281f3d95b59c07dfc72ac8e3252537768523443636f8dc8ee683ebf982",
+    "1000_2025.jsonl": "68aa75eaac40e9e0e41940dc96754f9bb12f3332c23e0728f11cad5ab46045a0",
+    "1000_4242.jsonl": "65eb5e2e64d0b115f07e01b567e0096005af559691fc421e61e97f939d343897"
   },
-  "created_utc": "2025-08-27T10:42:58.696950+00:00",
-  "cli_example": "python scripts/build_datasets.py suite=episodic_multi size=<size> seed=<seed> out=data/episodic_multi/<size>_<seed>.jsonl"
+  "created_utc": "2025-09-01T07:00:48.170506+00:00",
+  "cli_example": "python scripts/make_datasets.py suite=episodic_multi size=<size> seed=<seed> out=data/episodic_multi/<size>_<seed>.jsonl"
 }

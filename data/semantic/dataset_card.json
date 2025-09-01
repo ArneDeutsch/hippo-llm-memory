@@ -10,18 +10,18 @@
     2025,
     4242
   ],
-  "generator_version": "79ed997faba9e6517aabfc342b803e76e90517bb",
+  "generator_version": "d8994ea06af035f45ae6c932cc493c8dc0f42580",
   "files": {
-    "50_1337.jsonl": "dcf80e5a743b6cbb76f3fe9c89470bf6b34af7ad8d0cbb252a98f43d4ae518f0",
-    "50_2025.jsonl": "60c0951915308fefbe59dc0254ed0981dd4aa70e4ed0420e5ee4d0741e3de795",
-    "50_4242.jsonl": "b256db19121aeb78a7ea637f00b588ca903fb9740b25a4daf27cb8727fb3d504",
-    "200_1337.jsonl": "9b7132ab7bc9a6a4f411f6a013528b29167a3a045cf2989934fe67b707aa6978",
-    "200_2025.jsonl": "e3cdcf0af4b28fe6ded41769c1c1bdb25c5cf439f89349d24552e7e2168cf1bf",
-    "200_4242.jsonl": "1cd31efa5947b04c2082df7bb66984f390917fc2380c6392cf4f5079fa0a07d8",
-    "1000_1337.jsonl": "bdda35ff67f1d69ffbf530100e123298f08583b923618fefd99bb193c44c2e1f",
-    "1000_2025.jsonl": "1aa5dc5c9bbe4ed83251ee62a52b35518daea19cb2ad55f14d909bc3402db987",
-    "1000_4242.jsonl": "b29ebd356673fe11fd9f228b3bded5bb17a4f98ba7e2ba63f2d78c2152ef90b6"
+    "50_1337.jsonl": "02a39393a1b6294bac8283a2ea8e5242a8e2cbb1fde27811a24a67d71e352b62",
+    "50_2025.jsonl": "441248697c964fb78a22f5a69b6a0d056c668540ce1bb52e967fd6eeb103650b",
+    "50_4242.jsonl": "d6aad160867246f629c801b7b58e60f83db076049ddb977d965352fb825c5e1b",
+    "200_1337.jsonl": "ca26d68be982c06d3b7d10b2bddcc23fc2f786f311f6f72b6f01b7929a5ce283",
+    "200_2025.jsonl": "1fd5e323040405f7ecf247d0eee18a42d3f5d271fe867b6e020ac4e6b904c641",
+    "200_4242.jsonl": "3860d8313653dbe56285256ce9e48f64c5c90f35a260e7238ba2fd9f91a520e1",
+    "1000_1337.jsonl": "68123eeb49cdd623daf7e2db59df89bc207ea55d917e871d267f3b46f0c71ce1",
+    "1000_2025.jsonl": "7c0d32c52a2f5401bb1a88f7225acfe5d4a941aa824b1fc273897e45170acd6f",
+    "1000_4242.jsonl": "84530765421ce7b8a845056a5a36ed1b22aec1d937809059dec2783aa4361756"
   },
-  "created_utc": "2025-08-22T12:30:03.283985+00:00",
-  "cli_example": "python scripts/build_datasets.py suite=semantic size=<size> seed=<seed> out=data/semantic/<size>_<seed>.jsonl"
+  "created_utc": "2025-09-01T06:58:33.522748+00:00",
+  "cli_example": "python scripts/make_datasets.py suite=semantic size=<size> seed=<seed> out=data/semantic/<size>_<seed>.jsonl"
 }

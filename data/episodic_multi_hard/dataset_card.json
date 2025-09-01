@@ -10,18 +10,18 @@
     2025,
     4242
   ],
-  "generator_version": "a1e20cd81303c5bf6d861523848dfa1c3807db82",
+  "generator_version": "d8994ea06af035f45ae6c932cc493c8dc0f42580",
   "files": {
-    "50_1337.jsonl": "03cdd48d64e34467e1aaf6024e8acf90ddee8fef1fed4880582d3f579d3489c8",
-    "50_2025.jsonl": "8c424eeebb5cfc5b7d2a90d4466fa74e759f4e30bf60d27111e7c03ec29c3f5b",
-    "50_4242.jsonl": "a0a1574e12458a0e6fa333b4bf61ebf7d88ee653f43a5a5faf0ca04d8152df7f",
-    "200_1337.jsonl": "e329b980fa03e574c1c6d6f394c1587b9515b04a2c0937af06b7bcbbe6cea51b",
-    "200_2025.jsonl": "b811f7ff8a6ee59f256de28cfdba2ca5e2ba622c4994dc9c6a3e176106d9ed08",
-    "200_4242.jsonl": "04399933ebb976feec254754da15dfaea94943a1ad951910fb12c0aa0d45983b",
-    "1000_1337.jsonl": "1e52a531e347f909de1a6d60a383899f61a6c8b5ae97ea6c156d695e8af4dfa3",
-    "1000_2025.jsonl": "9b463469951caf84372a7a5fd4b35a00bbbd8cd55bd9b897f445a86dbde04789",
-    "1000_4242.jsonl": "6ee4a5ea7b96881ddcf7fedfcefa4e5c868537f3a64957ce467b612353336368"
+    "50_1337.jsonl": "d8812671f9bd401ab141213012d277519391ee1713de3fe8b2164264f90ee3e8",
+    "50_2025.jsonl": "7cc45acab331edcf3ac1b8e20d86074c024ce0889931c984a503f85e0fa0d2e5",
+    "50_4242.jsonl": "bd5c42fbde0a4aaf1c775e74d0cc45b9f61e0eb63bec609d931976e0f7ffafbb",
+    "200_1337.jsonl": "ea8551b9b85cbfea4f6d4497e2db75e0414c19422fd71c9a85fda9e8ce0126fc",
+    "200_2025.jsonl": "271c40dbacf6016ffda788a6057e7dc4eb2647d33f2bd83d3cba46395e4b5a6b",
+    "200_4242.jsonl": "4c1733f74109e7789a9d136d53a98eb7f4c2d668e05e0313f1f43f6159598e77",
+    "1000_1337.jsonl": "f7d7928fec4fac69fe3b28f3e7e750a0f482d711100e657d6b7c2e58ddae4c93",
+    "1000_2025.jsonl": "98bb4a1ba95dce7413920c7cba9b666abc314039dfc0cbfcf48f703d15da2345",
+    "1000_4242.jsonl": "dbe2b7e2b8265daa7f453c07e7068328ab4fd430b9d63ede8a39f3e8e9c4d2fe"
   },
-  "created_utc": "2025-08-31T07:26:14.793850+00:00",
+  "created_utc": "2025-09-01T07:00:51.900426+00:00",
   "cli_example": "python scripts/make_datasets.py suite=episodic_multi size=<size> seed=<seed> out=data/episodic_multi/<size>_<seed>.jsonl"
 }
