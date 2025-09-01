@@ -1,0 +1,15 @@
+task,model,n,seed,em,f1,tokens,time_ms_per_100
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,,,3410,142.8032786217496
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,2025,,,3410,141.43118533714045
+episodic_cross,Qwen/Qwen2.5-1.5B-Instruct,50,1337,,,2382,213.0923005877869
+episodic_cross,Qwen/Qwen2.5-1.5B-Instruct,50,2025,,,2373,209.1778173620408
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,,,3410,137.4671019354198
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,2025,,,3412,129.6130603458543
+episodic_multi,Qwen/Qwen2.5-1.5B-Instruct,50,1337,,,6365,75.76389183031364
+episodic_multi,Qwen/Qwen2.5-1.5B-Instruct,50,2025,,,6380,79.04355603443669
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,,,6211,456.959902978581
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,2025,,,7594,256.09814267844223
+episodic_capacity,Qwen/Qwen2.5-1.5B-Instruct,50,1337,,,28289,56.91689150553877
+episodic_capacity,Qwen/Qwen2.5-1.5B-Instruct,50,2025,,,28283,56.76931309621359
+episodic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,,,3212,251.3710683063347
+episodic,Qwen/Qwen2.5-1.5B-Instruct,50,2025,,,3256,287.6244156019396
