@@ -35,9 +35,9 @@ def test_store_accounting(tmp_path, monkeypatch):
     store_dir = tmp_path / "runs" / "foo" / "stores"
     algo_dir = store_dir / "hei_nw"
     session_id = "hei_foo"
-    store.save(str(algo_dir), session_id)
-    kg.save(str(algo_dir), session_id)
-    g.save(str(algo_dir), session_id)
+    store.save(str(algo_dir), session_id, replay_samples=1)
+    kg.save(str(algo_dir), session_id, replay_samples=1)
+    g.save(str(algo_dir), session_id, replay_samples=1)
 
     metrics = {"store": {"size": sum(sizes.values()), "per_memory": sizes, "diagnostics": diags}}
     metrics_path = tmp_path / "metrics.json"

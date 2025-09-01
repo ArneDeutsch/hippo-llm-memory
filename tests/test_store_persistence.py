@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 
@@ -16,7 +18,7 @@ def test_episodic_save_load(tmp_path) -> None:
 
     trace1 = store.recall(vec1, k=1)[0]
     trace2 = store.recall(vec2, k=1)[0]
-    store.save(tmp_path, "s1")
+    store.save(tmp_path, "s1", replay_samples=1)
 
     new_store = EpisodicStore(dim=4)
     new_store.load(tmp_path, "s1")
@@ -33,7 +35,7 @@ def test_relational_save_load(tmp_path) -> None:
     kg = KnowledgeGraph()
     kg.upsert("alice", "knows", "bob", "ctx1", time="t1", provenance=1)
     kg.upsert("bob", "likes", "carol", "ctx2", time="t2", provenance=2)
-    kg.save(tmp_path, "r1")
+    kg.save(tmp_path, "r1", replay_samples=1)
 
     kg2 = KnowledgeGraph()
     kg2.load(tmp_path, "r1")
@@ -64,7 +66,7 @@ def test_spatial_save_load(tmp_path) -> None:
     a_id = pg._context_to_id["a"]
     b_id = pg._context_to_id["b"]
     edge_last_seen = pg.graph[a_id][b_id].last_seen
-    pg.save(tmp_path, "p1")
+    pg.save(tmp_path, "p1", replay_samples=1)
 
     pg2 = PlaceGraph()
     pg2.load(tmp_path, "p1")
@@ -74,3 +76,45 @@ def test_spatial_save_load(tmp_path) -> None:
     assert pg2.encoder._cache["b"].coord == coord_b
     assert pg2.encoder._cache["c"].coord == coord_c
     assert pg2.graph[a2_id][b2_id].last_seen == edge_last_seen
+
+
+@pytest.mark.parametrize(
+    "factory,writer,data_file,meta_schema",
+    [
+        (
+            lambda: EpisodicStore(dim=2),
+            lambda s: s.write(np.ones(2, dtype=np.float32), TraceValue(provenance="p")),
+            "episodic.jsonl",
+            "episodic.store_meta.v1",
+        ),
+        (
+            KnowledgeGraph,
+            lambda kg: kg.upsert("a", "rel", "b", "ctx"),
+            "kg.jsonl",
+            "relational.store_meta.v1",
+        ),
+        (
+            PlaceGraph,
+            lambda g: (g.observe("a"), g.observe("b")),
+            "spatial.jsonl",
+            "spatial.store_meta.v1",
+        ),
+    ],
+)
+def test_store_meta(tmp_path, factory, writer, data_file, meta_schema) -> None:
+    store = factory()
+    writer(store)
+    store.save(tmp_path, "stub", replay_samples=0)
+    stub_dir = tmp_path / "stub"
+    meta = json.loads((stub_dir / "store_meta.json").read_text())
+    assert meta["schema"] == meta_schema
+    assert meta["source"] == "stub"
+    assert meta["replay_samples"] == 0
+    assert not (stub_dir / data_file).exists()
+
+    store.save(tmp_path, "real", replay_samples=1)
+    real_dir = tmp_path / "real"
+    meta2 = json.loads((real_dir / "store_meta.json").read_text())
+    assert meta2["source"] == "replay"
+    assert meta2["replay_samples"] == 1
+    assert (real_dir / data_file).exists()
