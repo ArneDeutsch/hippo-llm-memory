@@ -51,3 +51,5 @@ jobs:
         run: bash scripts/smoke_n50.sh
       - name: Smoke n seeds
         run: bash scripts/smoke_n_seeds.sh
+      - name: Ablation smoke
+        run: python tests/fixtures/ci/ablation_smoke.py
