@@ -1,0 +1,6 @@
+task,model,n,seed,em,f1,tokens,time_ms_per_100
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.02,0.0,5591,571.4283557860864
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,2025,0.0,0.0,6998,322.27411243214067
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,5610,545.6470709090834
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.04,0.0,5523,526.3796463878209
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.02,0.0,5489,527.4766794680402

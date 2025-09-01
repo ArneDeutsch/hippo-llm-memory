@@ -1,0 +1,13 @@
+task,model,n,seed,em,f1,tokens,time_ms_per_100
+episodic_cross,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,2230,265.82115457396395
+episodic_cross,Qwen/Qwen2.5-1.5B-Instruct,50,2025,0.0,0.0,2222,247.8783521602258
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,3264,128.13225257353483
+semantic,Qwen/Qwen2.5-1.5B-Instruct,50,2025,0.0,0.0,3265,129.7186777948174
+episodic_multi,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,6263,102.487603608502
+episodic_multi,Qwen/Qwen2.5-1.5B-Instruct,50,2025,0.0,0.0,6278,108.85072175850974
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,5503,566.6864170997604
+spatial,Qwen/Qwen2.5-1.5B-Instruct,50,2025,0.0,0.0,7270,420.77136000000854
+episodic_capacity,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,28138,62.34131220058384
+episodic_capacity,Qwen/Qwen2.5-1.5B-Instruct,50,2025,0.0,0.0,28122,61.30638846810108
+episodic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,3074,309.98427914769366
+episodic,Qwen/Qwen2.5-1.5B-Instruct,50,2025,0.0,0.0,3157,334.6970532467619
