@@ -132,6 +132,8 @@ def collect_metrics(
         diag = diagnostics.get(suite, {})
         n_items = record.get("n", 0) or 0
         for key, val in diag.items():
+            if val is None:
+                continue
             if n_items:
                 cleaned[key] = float(val) / n_items
             else:
