@@ -32,15 +32,21 @@ For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
 > - `--persist`: write to `store_dir` during `mode=teach` or `mode=replay`
 > - `--mode`: `{teach,replay,test}` phase selector
 
-> **Profiles**
-> | Suite              | Recommended profile |
-> | ------------------ | ------------------ |
-> | episodic           | default            |
-> | episodic_multi     | default            |
-> | episodic_cross     | hard               |
-> | episodic_capacity  | hard               |
-> | semantic           | default            |
-> | spatial            | default            |
+### Dataset profiles
+
+Two difficulty profiles control task hardness and expected memory gains:
+
+- **default** – moderate difficulty; baseline EM should land within the ranges in [EVAL_PLAN.md §1.2](EVAL_PLAN.md#12-expected-baseline-em-ranges) and memory-enabled runs should improve EM by ≥ 0.2.
+- **hard** – adds distractors or contradictions so baseline EM ≈ 0.0; memory is expected to lift EM by ≥ 0.2. Use for `episodic_cross`, `episodic_capacity`, or when baselines saturate.
+
+| Suite              | Recommended profile |
+| ------------------ | ------------------ |
+| episodic           | default            |
+| episodic_multi     | default            |
+| episodic_cross     | hard               |
+| episodic_capacity  | hard               |
+| semantic           | default            |
+| spatial            | default            |
 
 ```bash
 # Recommended flags for sensitive suites
@@ -79,6 +85,17 @@ Confirm before launching full runs:
 - For memory presets, `replay.samples>=1` when `persist=true`.
 - Selected `dataset_profile` (`default` or `hard`) is explicit.
 - Baseline EM falls within expected ranges (see `EVAL_PLAN.md` §1.2).
+
+### Meaningful Run Contract
+
+A run counts as **meaningful** only if these conditions hold:
+
+- Baselines record non-NaN `pre_*` metrics and land within the expected ranges in `EVAL_PLAN.md` §1.2.
+- Each memory algorithm writes a non-stub store with `replay.samples ≥ 1`.
+- `gate.attempts > 0` and at least one write occurs during `mode=teach`.
+- Memory presets log `retrieval.requests > 0`.
+- Semantic and spatial suites show a ≥0.2 EM drop when their stores are ablated.
+- Metrics obey invariants (e.g., `em_norm == 0` when `em_raw == 0`).
 
 > **Troubleshooting (baseline retrieval > 0):**
 > - Ensure the preset starts with `baselines/`.
