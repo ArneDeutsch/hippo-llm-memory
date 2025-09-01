@@ -1,0 +1,10 @@
+{% if retrieval %}
+## Retrieval Telemetry
+
+> Hits reflect actual recalled traces; cue-only fallbacks are excluded from telemetry.
+
+| mem | k | batch_size | requests | hits_at_k | hit_rate_at_k | tokens_returned | avg_latency_ms |
+|---|---|---|---|---|---|---|---|
+{% for mem, stats in retrieval.items() %}| {{ mem }} | {{ stats.k|int }} | {{ stats.batch_size|int }} | {{ stats.requests|int }} | {{ stats.hits_at_k|int }} | {{ '%.3f'|format(stats.hit_rate_at_k) }} | {{ stats.tokens_returned|int }} | {{ '%.3f'|format(stats.avg_latency_ms) }} |
+{% endfor %}
+{% endif %}
