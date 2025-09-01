@@ -30,6 +30,7 @@ from typing import Dict, Iterable, Tuple
 from jinja2 import Environment, FileSystemLoader
 
 from hippo_mem.common.telemetry import validate_retrieval_snapshot
+from reports.health import Badge, render_panel
 
 log = logging.getLogger(__name__)
 
@@ -826,8 +827,11 @@ def _write_index(
     suite_paths: Dict[str, Path],
     gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
     gate_ablation: Dict[str, Dict[str, Dict[str, float]]],
+    retrieval: Dict[str, Dict[str, MetricDict]],
     out_dir: Path,
     seed_count: int,
+    lineage: Dict[str, Dict[str, set]] | None = None,
+    missing_pre: Dict[str, tuple[int, int]] | None = None,
 ) -> Path:
     """Write a top-level roll-up report and return its path."""
 
@@ -879,21 +883,21 @@ def _write_index(
         k for k in metric_keys if k not in preferred
     ]
     display = [DISPLAY_NAMES.get(k, k) for k in ordered]
-    lines: list[str] = ["# Overall Summary", ""]
+    body: list[str] = []
     run_dir = Path("runs") / out_dir.name
     failed = list(run_dir.rglob("failed_preflight.json"))
     if failed:
-        lines.extend([f"> ❌ Preflight failed in {len(failed)} run(s)", ""])
+        body.extend([f"> ❌ Preflight failed in {len(failed)} run(s)", ""])
     else:
-        lines.extend(["> ✅ Preflight passed", ""])
+        body.extend(["> ✅ Preflight passed", ""])
     if seed_count >= 2:
-        lines.extend([f"> aggregated over {seed_count} seeds (95% CI)", ""])
+        body.extend([f"> aggregated over {seed_count} seeds (95% CI)", ""])
     else:
-        lines.extend(["> single-seed run: CI bands unavailable", ""])
+        body.extend(["> single-seed run: CI bands unavailable", ""])
     if ordered:
         header = "| Suite | Preset | " + " | ".join(display) + " | ⚠️ |"
         sep = "|---" * (len(ordered) + 3) + "|"
-        lines.extend([header, sep])
+        body.extend([header, sep])
         for suite, preset, metrics in rollup:
             vals: list[str] = []
             warn: list[str] = []
@@ -909,8 +913,8 @@ def _write_index(
                 else:
                     vals.append(f"{stat:.3f}")
             note = "⚠️ " + ", ".join(warn) if warn else ""
-            lines.append(f"| {suite} | {preset} | " + " | ".join(vals) + " | " + note + " |")
-        lines.append("")
+            body.append(f"| {suite} | {preset} | " + " | ".join(vals) + " | " + note + " |")
+        body.append("")
 
     assets_dir = out_dir / "assets"
     try:  # pragma: no cover - optional dependency
@@ -927,25 +931,25 @@ def _write_index(
             plt.tight_layout()
             plt.savefig(assets_dir / "overall_em.png")
             plt.close()
-            lines.append("![Overall EM](assets/overall_em.png)")
-            lines.append("")
+            body.append("![Overall EM](assets/overall_em.png)")
+            body.append("")
     except Exception as exc:  # pragma: no cover - matplotlib missing
         log.warning("matplotlib unavailable: %s", exc)
 
     if gates:
-        lines.append("## Gate Telemetry")
+        body.append("## Gate Telemetry")
         agg = _aggregate_gates(gates)
         header = (
             "| status | mem | attempts | accepted | blocked | skipped | "
             "duplicate_rate | nodes_per_1k | edges_per_1k |"
         )
-        lines.extend([header, "|---|---|---|---|---|---|---|---|---|"])
+        body.extend([header, "|---|---|---|---|---|---|---|---|---|"])
         for status, mems in sorted(agg.items()):
             for mem, stats in sorted(mems.items()):
                 dr = stats.get("duplicate_rate", float("nan"))
                 npk = stats.get("nodes_per_1k", float("nan"))
                 epk = stats.get("edges_per_1k", float("nan"))
-                lines.append(
+                body.append(
                     "| {status} | {mem} | {att:.0f} | {acc:.0f} | {blk:.0f} | {skp:.0f} | {dr:.3f} | {npk:.3f} | {epk:.3f} |".format(
                         status=status,
                         mem=mem,
@@ -958,32 +962,61 @@ def _write_index(
                         epk=epk,
                     )
                 )
-        lines.append("")
+        body.append("")
 
     if gate_ablation:
-        lines.append("## Gate ON vs OFF")
-        lines.append("| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |")
-        lines.append("|---|---|---|---|---|---|")
+        body.append("## Gate ON vs OFF")
+        body.append("| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |")
+        body.append("|---|---|---|---|---|---|")
         for mem in sorted(gate_ablation):
             on = gate_ablation[mem].get("on", {})
             off = gate_ablation[mem].get("off", {})
             delta = on.get("em", 0.0) - off.get("em", 0.0)
-            lines.append(
+            body.append(
                 f"| {mem} | {on.get('store_size', 0):.0f} | {off.get('store_size', 0):.0f} | "
                 f"{on.get('accepted', 0):.0f} | {off.get('accepted', 0):.0f} | {delta:+.3f} |"
             )
-        lines.append("")
+        body.append("")
 
-    lines.append("## Per-suite summaries")
+    body.append("## Per-suite summaries")
     for suite in sorted(suite_paths):
-        lines.append(f"- [{suite}]({suite}/summary.md)")
+        body.append(f"- [{suite}]({suite}/summary.md)")
     smoke = out_dir / "smoke.md"
     if smoke.exists():
-        lines.append("")
-        lines.append("See also: [smoke.md](smoke.md)")
+        body.append("")
+        body.append("See also: [smoke.md](smoke.md)")
 
+    baseline_ok = True
+    if missing_pre:
+        baseline_ok = not _missing_pre_suites(missing_pre)
+    non_stub = True
+    if lineage:
+        for fields in lineage.values():
+            srcs = fields.get("store_source")
+            if srcs and "stub" in srcs:
+                non_stub = False
+                break
+    gating_active = any(
+        stats.get("attempts", 0) > 0
+        for variants in gates.values()
+        for mems in variants.values()
+        for stats in mems.values()
+    )
+    retrieval_active = any(
+        stats.get("requests", 0) > 0
+        for suite_stats in retrieval.values()
+        for stats in suite_stats.values()
+    )
+    badges = [
+        Badge("BaselinesOK", baseline_ok, str(run_dir / "baselines")),
+        Badge("NonStubStores", non_stub, str(run_dir / "stores")),
+        Badge("GatingActive", gating_active, str(run_dir / "gates")),
+        Badge("RetrievalActive", retrieval_active, str(run_dir / "retrieval")),
+    ]
+    tmpl = _ENV.get_template("index.md.j2")
+    content = tmpl.render(health_panel=render_panel(badges), body="\n".join(body))
     index_path = out_dir / "index.md"
-    index_path.write_text("\n".join(lines))
+    index_path.write_text(content)
     return index_path
 
 
@@ -996,6 +1029,7 @@ def write_reports(
     plots: bool,
     seed_count: int,
     lineage: Dict[str, Dict[str, set]] | None = None,
+    missing_pre: Dict[str, tuple[int, int]] | None = None,
 ) -> Dict[str, Path]:
     """Write per-suite reports and optional plots to ``out_dir``."""
 
@@ -1017,7 +1051,17 @@ def write_reports(
         paths[suite] = md_path
         if plots:
             _render_plots_suite(suite, presets, suite_dir, retrieval.get(suite))
-    idx = _write_index(summary, paths, gates, gate_ablation, out_dir, seed_count)
+    idx = _write_index(
+        summary,
+        paths,
+        gates,
+        gate_ablation,
+        retrieval,
+        out_dir,
+        seed_count,
+        lineage,
+        missing_pre,
+    )
     log.info("wrote %s", idx)
     return paths
 
@@ -1088,6 +1132,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
         args.plots,
         seed_count,
         lineage_data,
+        missing_pre,
     )
     for suite, md_path in paths.items():
         log.info("wrote %s for %s", md_path, suite)
