@@ -1,0 +1,5 @@
+| suite | preset | EM_raw | EM_norm | F1 |
+|:------|:-------|------:|-------:|----:|
+{% for row in rows %}
+| {{ row.suite }} | {{ row.preset }} | {{ '%.3f ± %.3f'|format(row.em_raw_mean|float, row.em_raw_ci|float) }} | {{ '%.3f ± %.3f'|format(row.em_norm_mean|float, row.em_norm_ci|float) }} | {{ '%.3f ± %.3f'|format(row.f1_mean|float, row.f1_ci|float) }} |
+{% endfor %}
