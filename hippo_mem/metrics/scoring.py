@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import heapq
 import re
 import string
-from collections import Counter, deque
+from collections import Counter
 from typing import List
 
 _ARTICLES = {"a", "an", "the"}
@@ -83,24 +84,32 @@ def _parse_moves(text: str) -> list[str]:
     return [ch for ch in text if ch in _MOVE_DIRS]
 
 
-def _bfs(
+def _astar(
     start: tuple[int, int],
     goal: tuple[int, int],
     size: int,
     obstacles: set[tuple[int, int]],
 ) -> list[str] | None:
-    queue: deque[tuple[tuple[int, int], list[str]]] = deque([(start, [])])
-    seen = {start}
-    while queue:
-        (x, y), path = queue.popleft()
+    """A* search for unit-cost grid worlds."""
+
+    def heuristic(a: tuple[int, int], b: tuple[int, int]) -> int:
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    open_set: list[tuple[int, int, tuple[int, int], list[str]]] = []
+    heapq.heappush(open_set, (heuristic(start, goal), 0, start, []))
+    seen: dict[tuple[int, int], int] = {start: 0}
+    while open_set:
+        _f, g, (x, y), path = heapq.heappop(open_set)
         if (x, y) == goal:
             return path
         for step, (dx, dy) in _MOVE_DIRS.items():
             nx, ny = x + dx, y + dy
             nxt = (nx, ny)
-            if 0 <= nx < size and 0 <= ny < size and nxt not in obstacles and nxt not in seen:
-                queue.append((nxt, path + [step]))
-                seen.add(nxt)
+            if 0 <= nx < size and 0 <= ny < size and nxt not in obstacles:
+                ng = g + 1
+                if ng < seen.get(nxt, float("inf")):
+                    seen[nxt] = ng
+                    heapq.heappush(open_set, (ng + heuristic(nxt, goal), ng, nxt, path + [step]))
     return None
 
 
@@ -112,7 +121,12 @@ _MOVES_RE = re.compile(r"After moves ([LRUD]+)", re.IGNORECASE)
 
 
 def spatial_kpis(tasks, rows):
-    """Update ``rows`` with spatial metrics and return aggregates."""
+    """Update ``rows`` with spatial metrics and return aggregates.
+
+    Paths are marked successful when they reach the goal without
+    hitting obstacles and require no more than ``1.2`` times the
+    optimal number of steps.
+    """
     total = len(rows)
     success = 0
     subopt_sum = 0.0
@@ -162,7 +176,7 @@ def spatial_kpis(tasks, rows):
             counted += 1
             continue
         if start is not None and goal is not None:
-            opt_path = _bfs(start, goal, size, obstacles) or []
+            opt_path = _astar(start, goal, size, obstacles) or []
             opt_len = len(opt_path)
             pred_moves: List[str] = []
             if "shortest path length" in prompt.lower():
@@ -188,7 +202,7 @@ def spatial_kpis(tasks, rows):
                         valid = False
                         break
                     pos = (nx, ny)
-                row["success"] = valid and pos == goal
+                row["success"] = valid and pos == goal and row["suboptimality"] <= 1.2
             success += int(row["success"])
             subopt_sum += row["suboptimality"]
             steps_sum += row["steps_pred"]
