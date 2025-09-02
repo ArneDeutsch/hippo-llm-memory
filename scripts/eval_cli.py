@@ -7,7 +7,16 @@ import sys
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Legacy CLI for eval_model.py")
+    parser = argparse.ArgumentParser(
+        description="Legacy CLI for eval_model.py",
+        epilog=(
+            "Run baselines first: python scripts/run_baselines.py --run-id <RID>\n"
+            "RUN_ID may include underscores; preflight also checks the digits-only form.\n"
+            "store_dir: runs/<RID>/stores (recommended) or runs/<RID>/stores/<algo>.\n"
+            "Replay cycles: pass replay_cycles=N or replay.cycles=N."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("overrides", nargs="*", help="Hydra-style key=value overrides")
     parser.add_argument("--mode", help="Phase: teach, replay, or test")
     parser.add_argument("--persist", help="Write to store_dir during teach/replay")

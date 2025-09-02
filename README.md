@@ -132,11 +132,14 @@ nested `--session_id` directory.
 Verify the harness and scoring on a tiny slice before full runs:
 
 ```bash
+RUN_ID=test_$(date +%s); SID=test
 # Baseline with pre metrics
-python scripts/eval_model.py suite=semantic preset=baselines/core n=5 seed=1337 compute.pre_metrics=true
+python scripts/eval_model.py suite=semantic preset=baselines/core run_id=$RUN_ID n=5 seed=1337 compute.pre_metrics=true
+python scripts/run_baselines.py --run-id $RUN_ID
 
 # Memory variant with replay and persistence
-python scripts/eval_model.py suite=semantic preset=memory/sgc_rss n=5 seed=1337 replay.samples=1 persist=true
+python scripts/eval_model.py suite=semantic preset=memory/sgc_rss run_id=$RUN_ID n=5 seed=1337 \
+  replay_cycles=1 persist=true store_dir=runs/$RUN_ID/stores session_id=$SID
 
 # Expect non-zero pre_em in metrics.json and store_meta.source == "replay".
 ```
@@ -151,6 +154,13 @@ Presets live under `configs/eval/baselines/`:
 - `span_short` – chat templates on with a short-span decoding profile for exact-match metrics.
 >
 > <span style="color:red;font-weight:bold">MUST:</span> Use a `RUN_ID` slug consistently across all commands. Valid slugs match `^[A-Za-z0-9._-]{3,64}$`.
+> Preflight also checks the digits-only form, so `20250902_50_1337_2025` and `202509025013372025` are equivalent.
+
+Before any memory run, generate baseline metrics:
+
+```bash
+python scripts/run_baselines.py --run-id "$RUN_ID"
+```
 
 **Quickstart**
 
@@ -182,9 +192,10 @@ Memory stores can persist across processes. `scripts/eval_model.py` accepts over
 an optional second run can **replay**, and a fresh process can **test** delayed recall. See
 `MILESTONE_9_5_PLAN.md` for the protocol.
 
-Pass the base stores directory (e.g., `runs/$RUN_ID/stores`) via `--store_dir`; wrappers create the
-algorithm subfolder automatically. For convenience, `scripts/eval_cli.py` translates legacy
-`--mode`-style flags into these overrides.
+Pass either `--store_dir=runs/$RUN_ID/stores` (recommended; algo inferred) or
+`--store_dir=runs/$RUN_ID/stores/hei_nw` for an explicit algorithm subfolder. Preflight resolves both
+forms. To run multiple replay passes, use `replay_cycles=N` (or `replay.cycles=N`). For convenience,
+`scripts/eval_cli.py` translates legacy `--mode`-style flags into these overrides.
 
 ## Key artifacts
 

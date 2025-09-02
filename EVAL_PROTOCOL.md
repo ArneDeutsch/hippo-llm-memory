@@ -25,6 +25,9 @@ export RUN_ID="$(date -u +%Y%m%d_%H%M)-$(git rev-parse --short HEAD 2>/dev/null 
 
 All outputs (runs, reports, stores, adapters) will use this `RUN_ID`.
 
+Preflight strips underscores when resolving baselines, so it also checks the
+digits-only form `${RUN_ID//_/}`.
+
 > <span style="color:red;font-weight:bold">MUST:</span> Use the same `run_id` for every command. Valid slugs match `^[A-Za-z0-9._-]{3,64}$`.
 
 > **Parameter reference**
@@ -32,6 +35,17 @@ All outputs (runs, reports, stores, adapters) will use this `RUN_ID`.
 > - `--session_id`: logical key nested under each algorithm's subfolder
 > - `--persist`: write to `store_dir` during `mode=teach` or `mode=replay`
 > - `--mode`: `{teach,replay,test}` phase selector
+
+#### Baseline metrics
+
+Run the baseline aggregator once before any memory runs:
+
+```bash
+python scripts/run_baselines.py --run-id "$RUN_ID"
+```
+
+Preflight accepts baseline metrics from either
+`runs/$RUN_ID/baselines/metrics.csv` or `runs/${RUN_ID//_/}/baselines/metrics.csv`.
 
 #### Minimal end-to-end example
 
@@ -44,6 +58,13 @@ python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID 
 python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID n=50 seed=1337 mode=test store_dir=$STORES session_id=$HEI_SESSION_ID model=$MODEL
 python scripts/report.py --run-id $RUN_ID
 ```
+
+> **Store directory patterns**\
+> Recommended: `store_dir=runs/$RUN_ID/stores` (algo inferred).\
+> Explicit: `store_dir=runs/$RUN_ID/stores/hei_nw` (manual algo subdir).\
+> Both resolve in preflight.
+
+To control replay loops, pass `replay_cycles=<n>` or `replay.cycles=<n>`.
 
 ### Dataset profiles
 
