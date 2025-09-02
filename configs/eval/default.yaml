@@ -19,6 +19,7 @@ dry_run: false
 model: ???
 dataset_profile: default
 max_new_tokens: null
+replay_cycles: 0
 use_chat_template: null
 system_prompt: null
 pad_token_id: null

@@ -94,6 +94,26 @@ def _date_str(value: object | None) -> str:
     return date
 
 
+def get_replay_cycles(cfg: object) -> int:
+    """Return replay cycles from ``cfg`` with nested fallback."""
+
+    if hasattr(cfg, "get"):
+        val = cfg.get("replay_cycles", 0)
+        if val in (None, 0):
+            val = (cfg.get("replay") or {}).get("cycles", 0)
+    else:
+        val = getattr(cfg, "replay_cycles", 0)
+        if val in (None, 0):
+            nested = getattr(cfg, "replay", None) or {}
+            val = getattr(
+                nested, "cycles", nested.get("cycles", 0) if hasattr(nested, "get") else 0
+            )
+    try:
+        return int(val)
+    except Exception:
+        return 0
+
+
 def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
     """Populate model-related fields on ``cfg`` if missing."""
     with open_dict(cfg):
@@ -139,14 +159,7 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
             cfg.use_chat_template = False
         if cfg.get("dry_run"):
             cfg.n = min(cfg.n, 5)
-        # Normalize replay cycles key from nested config
-        rc = cfg.get("replay_cycles")
-        if rc in (None, 0):
-            nested = cfg.get("replay") or {}
-            try:
-                cfg.replay_cycles = int(nested.get("cycles", 0))
-            except Exception:
-                cfg.replay_cycles = 0
+        cfg.replay_cycles = get_replay_cycles(cfg)
     _merge_memory_overrides(cfg)
     return cfg
 
@@ -662,7 +675,7 @@ def run_suite(
     lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
 
     replay_samples = 0
-    for _ in range(int(cfg.replay_cycles)):
+    for _ in range(get_replay_cycles(cfg)):
         replay_samples += _run_replay(base_cfg, modules, tasks)
 
     total_tokens = in_tokens + gen_tokens
@@ -898,7 +911,7 @@ def _write_outputs(
         "config_hash": _config_hash(cfg),
         "ablate": flat_ablate,
         "seed": cfg.seed,
-        "replay_cycles": cfg.get("replay_cycles", cfg.get("replay", {}).get("cycles", 0)),
+        "replay_cycles": get_replay_cycles(cfg),
         "gating_enabled": gating_enabled,
         "mode": cfg.get("mode"),
         "store_dir": cfg.get("store_dir"),
@@ -1163,7 +1176,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         return
 
     if cfg.mode == "replay":
-        for _ in range(int(cfg.replay_cycles)):
+        for _ in range(get_replay_cycles(cfg)):
             replay_samples += _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
@@ -1302,7 +1315,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         "rss_mb": _rss_mb(),
         "latency_ms_mean": sum(latencies) / max(1, len(latencies)),
     }
-    for _ in range(int(cfg.replay_cycles)):
+    for _ in range(get_replay_cycles(cfg)):
         replay_samples += _run_replay(cfg, modules, tasks)
     store_sizes, store_diags = _store_sizes(modules)
     if cfg.preset and not is_memory_preset(str(cfg.preset)):
