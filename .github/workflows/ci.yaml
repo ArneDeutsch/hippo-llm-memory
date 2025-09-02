@@ -45,8 +45,8 @@ jobs:
         run: bash scripts/smoke_8a.sh
       - name: Smoke 8
         run: bash scripts/smoke_8.sh
-      - name: Smoke eval
-        run: bash scripts/smoke_eval.sh
+      - name: CI smoke eval
+        run: bash scripts/ci_smoke_eval.sh
       - name: Smoke n50
         run: bash scripts/smoke_n50.sh
       - name: Smoke n seeds
