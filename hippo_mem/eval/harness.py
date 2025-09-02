@@ -956,11 +956,17 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
 
     failures: list[str] = []
     if cfg.get("mode") != "teach":
-        baseline_metrics = Path("runs") / str(cfg.get("run_id")) / "baselines" / "metrics.csv"
-        if not baseline_metrics.exists():
+        rid = str(cfg.get("run_id"))
+        digits = rid.replace("_", "")
+        candidates = [Path("runs") / rid / "baselines" / "metrics.csv"]
+        if digits != rid:
+            candidates.append(Path("runs") / digits / "baselines" / "metrics.csv")
+        if not any(p.exists() for p in candidates):
+            shown = " or ".join(str(p) for p in candidates)
             failures.append(
-                "missing baseline metrics: "
-                f"{baseline_metrics} — generate via: python scripts/run_baselines.py --run-id {cfg.get('run_id')}"
+                f"missing baseline metrics: {shown} — generate via: "
+                f"python scripts/run_baselines.py --run-id {rid}"
+                f" (or {digits})"
             )
 
     store_dir = cfg.get("store_dir")
