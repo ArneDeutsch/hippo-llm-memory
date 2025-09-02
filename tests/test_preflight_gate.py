@@ -17,15 +17,17 @@ def _setup_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, baseline: boo
     data_file.write_text(json.dumps({"prompt": "p", "answer": "a"}) + "\n")
     monkeypatch.setattr(harness, "_dataset_path", lambda s, n, seed, profile=None: data_file)
 
-    cfg = OmegaConf.load("configs/eval/default.yaml")
+    repo_root = Path(__file__).resolve().parents[1]
+    cfg = OmegaConf.load(repo_root / "configs" / "eval" / "default.yaml")
     cfg.suite = "episodic"
     cfg.preset = "memory/hei_nw"
-    cfg.model = "models/tiny-gpt2"
+    cfg.model = str(repo_root / "models" / "tiny-gpt2")
     cfg.n = 0
     cfg.seed = 0
     cfg.mode = "test"
     cfg.store_dir = str(tmp_path / "stores" / "hei_nw")
     cfg.session_id = "sid"
+    cfg.run_id = "testrun"
     cfg = harness._load_preset(cfg)
     cfg = harness._apply_model_defaults(cfg)
 
@@ -42,14 +44,13 @@ def _setup_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, baseline: boo
     )
     (store_path / "episodic.jsonl").write_text("")
 
+    bdir = Path("runs") / cfg.run_id / "baselines"
     if baseline:
-        bdir = tmp_path.parent.parent / "baselines"
         bdir.mkdir(parents=True, exist_ok=True)
         (bdir / "metrics.csv").write_text("suite,em\n")
     else:
-        bdir = tmp_path.parent.parent / "baselines"
-        if bdir.exists():
-            shutil.rmtree(bdir)
+        if bdir.parent.exists():
+            shutil.rmtree(bdir.parent)
 
     return cfg
 
@@ -57,13 +58,34 @@ def _setup_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, baseline: boo
 def test_preflight_fails_without_baseline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cfg = _setup_cfg(tmp_path, monkeypatch, baseline=False)
     outdir = tmp_path / "mem" / "episodic"
-    with pytest.raises(RuntimeError):
-        harness.evaluate(cfg, outdir, preflight=True)
-    assert (outdir / "failed_preflight.json").exists()
+    try:
+        with pytest.raises(RuntimeError):
+            harness.evaluate(cfg, outdir, preflight=True)
+        assert (outdir / "failed_preflight.json").exists()
+    finally:
+        shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
 
 
 def test_preflight_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     cfg = _setup_cfg(tmp_path, monkeypatch, baseline=True)
     outdir = tmp_path / "mem" / "episodic"
-    harness.preflight_check(cfg, outdir)
-    assert not (outdir / "failed_preflight.json").exists()
+    try:
+        harness.preflight_check(cfg, outdir)
+        assert not (outdir / "failed_preflight.json").exists()
+    finally:
+        shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
+
+
+def test_preflight_missing_baseline_hints_command(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg = _setup_cfg(tmp_path, monkeypatch, baseline=False)
+    outdir = tmp_path / "mem" / "episodic"
+    try:
+        with pytest.raises(RuntimeError):
+            harness.evaluate(cfg, outdir, preflight=True)
+        fail_msg = json.loads((outdir / "failed_preflight.json").read_text())["errors"][0]
+        assert f"runs/{cfg.run_id}/baselines/metrics.csv" in fail_msg
+        assert f"python scripts/run_baselines.py --run-id {cfg.run_id}" in fail_msg
+    finally:
+        shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
