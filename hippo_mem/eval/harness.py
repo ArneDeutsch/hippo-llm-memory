@@ -1158,17 +1158,29 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         replay_samples = _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
+            epi_attempts = gate_registry.get("episodic").attempts
+            rel_attempts = gate_registry.get("relational").attempts
+            spat_attempts = gate_registry.get("spatial").attempts
             if "episodic" in modules:
                 modules["episodic"]["store"].save(
-                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                    str(session_dir),
+                    str(cfg.session_id),
+                    replay_samples=replay_samples,
+                    gate_attempts=epi_attempts,
                 )
             if "relational" in modules:
                 modules["relational"]["kg"].save(
-                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                    str(session_dir),
+                    str(cfg.session_id),
+                    replay_samples=replay_samples,
+                    gate_attempts=rel_attempts,
                 )
             if "spatial" in modules:
                 modules["spatial"]["map"].save(
-                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                    str(session_dir),
+                    str(cfg.session_id),
+                    replay_samples=replay_samples,
+                    gate_attempts=spat_attempts,
                 )
         store_sizes, store_diags = _store_sizes(modules)
         if cfg.preset and not is_memory_preset(str(cfg.preset)):
@@ -1193,17 +1205,29 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             replay_samples += _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
+            epi_attempts = gate_registry.get("episodic").attempts
+            rel_attempts = gate_registry.get("relational").attempts
+            spat_attempts = gate_registry.get("spatial").attempts
             if "episodic" in modules:
                 modules["episodic"]["store"].save(
-                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                    str(session_dir),
+                    str(cfg.session_id),
+                    replay_samples=replay_samples,
+                    gate_attempts=epi_attempts,
                 )
             if "relational" in modules:
                 modules["relational"]["kg"].save(
-                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                    str(session_dir),
+                    str(cfg.session_id),
+                    replay_samples=replay_samples,
+                    gate_attempts=rel_attempts,
                 )
             if "spatial" in modules:
                 modules["spatial"]["map"].save(
-                    str(session_dir), str(cfg.session_id), replay_samples=replay_samples
+                    str(session_dir),
+                    str(cfg.session_id),
+                    replay_samples=replay_samples,
+                    gate_attempts=spat_attempts,
                 )
 
         gate_snaps = gate_registry.all_snapshots()

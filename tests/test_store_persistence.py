@@ -123,3 +123,11 @@ def test_store_meta(tmp_path, factory, writer, data_file, meta_schema) -> None:
     assert meta2["source"] == "replay"
     assert meta2["replay_samples"] == 1
     assert (real_dir / data_file).exists()
+
+
+def test_store_meta_teach_source(tmp_path) -> None:
+    store = EpisodicStore(dim=2)
+    store.save(tmp_path, "teach", replay_samples=0, gate_attempts=5)
+    meta = json.loads((tmp_path / "teach" / "store_meta.json").read_text())
+    assert meta["source"] == "teach"
+    assert meta["replay_samples"] == 0

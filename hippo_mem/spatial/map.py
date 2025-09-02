@@ -615,6 +615,7 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         session_id: str,
         fmt: str = "jsonl",
         replay_samples: int = 0,
+        gate_attempts: int = 0,
     ) -> None:
         """Save map under ``directory/session_id``."""
 
@@ -624,7 +625,9 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         meta = {
             "schema": "spatial.store_meta.v1",
             "replay_samples": int(replay_samples),
-            "source": "replay" if replay_samples > 0 else "stub",
+            "source": (
+                "replay" if replay_samples > 0 else "teach" if gate_attempts > 0 else "stub"
+            ),
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         io.atomic_write_json(path / "store_meta.json", meta)

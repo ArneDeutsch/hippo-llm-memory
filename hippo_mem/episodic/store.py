@@ -607,6 +607,7 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         session_id: str,
         fmt: str = "jsonl",
         replay_samples: int = 0,
+        gate_attempts: int = 0,
     ) -> None:
         """Save all traces under ``directory/session_id``.
 
@@ -620,6 +621,8 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
             ``"jsonl"`` (default) or ``"parquet"``.
         replay_samples : int, optional
             Number of replayed samples driving persistence.
+        gate_attempts : int, optional
+            Gate attempts during teach; marks source as ``"teach"`` when positive.
         """
 
         path = Path(directory) / session_id
@@ -628,7 +631,9 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         meta = {
             "schema": "episodic.store_meta.v1",
             "replay_samples": int(replay_samples),
-            "source": "replay" if replay_samples > 0 else "stub",
+            "source": (
+                "replay" if replay_samples > 0 else "teach" if gate_attempts > 0 else "stub"
+            ),
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         io.atomic_write_json(path / "store_meta.json", meta)
