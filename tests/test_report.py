@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from scripts.report import (
     collect_lineage,
     collect_metrics,
     collect_retrieval,
+    main,
     summarise,
     summarise_gates,
     summarise_retrieval,
@@ -316,6 +318,25 @@ def test_find_latest_run_id(tmp_path: Path) -> None:
     (base / "20240101").mkdir(parents=True)
     (base / "20250102").mkdir()
     assert _find_latest_run_id(base) == "20250102"
+
+
+def test_report_paths_run_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    run_id = "RID123"
+    metrics_dir = tmp_path / "runs" / run_id / "baselines" / "core" / "episodic" / "50_1337"
+    metrics_dir.mkdir(parents=True)
+    (metrics_dir / "metrics.json").write_text(json.dumps({"metrics": {"episodic": {"em": 1.0}}}))
+    args = [
+        "report",
+        "--runs-dir",
+        str(tmp_path / "runs"),
+        "--out-dir",
+        str(tmp_path / "reports"),
+        "--run-id",
+        run_id,
+    ]
+    monkeypatch.setattr(sys, "argv", args)
+    main()
+    assert (tmp_path / "reports" / run_id / "index.md").exists()
 
 
 def test_smoke_report(tmp_path: Path) -> None:
