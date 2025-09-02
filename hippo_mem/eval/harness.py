@@ -1093,7 +1093,9 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     replay_samples = 0
 
     if cfg.mode == "teach":
-        pre_rows, _, in_tok, gen_tok, elapsed = _evaluate(
+        preset = str(cfg.get("preset", ""))
+        compute_metrics = preset.startswith("baselines/")
+        pre_rows, pre_metrics, in_tok, gen_tok, elapsed = _evaluate(
             tasks,
             modules,
             tokenizer,
@@ -1101,11 +1103,17 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             int(cfg.max_new_tokens),
             use_chat_template=cfg.use_chat_template,
             system_prompt=cfg.system_prompt,
-            compute_metrics=False,
+            compute_metrics=compute_metrics,
             suite=cfg.suite,
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
         )
+        if compute_metrics:
+            pre_metrics["em"] = (
+                pre_metrics.get("em_norm", 0.0)
+                if cfg.primary_em == "norm"
+                else pre_metrics.get("em_raw", 0.0)
+            )
         total_tokens = in_tok + gen_tok
         compute = {
             "input_tokens": in_tok,
@@ -1136,7 +1144,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         _write_outputs(
             outdir,
             pre_rows,
-            {},
+            pre_metrics if compute_metrics else {},
             None,
             None,
             cfg,
