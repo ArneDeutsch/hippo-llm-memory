@@ -956,12 +956,12 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
 
     failures: list[str] = []
     if cfg.get("mode") != "teach":
-        try:
-            baseline_metrics = outdir.parents[3] / "baselines" / "metrics.csv"
-        except IndexError:  # pragma: no cover - outdir too shallow
-            baseline_metrics = Path()
+        baseline_metrics = Path("runs") / str(cfg.get("run_id")) / "baselines" / "metrics.csv"
         if not baseline_metrics.exists():
-            failures.append(f"missing baseline metrics: {baseline_metrics}")
+            failures.append(
+                "missing baseline metrics: "
+                f"{baseline_metrics} — generate via: python scripts/run_baselines.py --run-id {cfg.get('run_id')}"
+            )
 
     store_dir = cfg.get("store_dir")
     session_id = cfg.get("session_id")
