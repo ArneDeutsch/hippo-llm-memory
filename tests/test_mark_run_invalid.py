@@ -24,7 +24,7 @@ def test_mark_run_invalid_skips_report(tmp_path: Path) -> None:
             str(tmp_path / "runs"),
             "--out-dir",
             str(reports_dir),
-            "--date",
+            "--run-id",
             "20250101",
         ],
         check=True,

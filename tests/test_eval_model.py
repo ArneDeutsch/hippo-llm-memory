@@ -188,8 +188,8 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         ("memory/hei_nw", ["hei_nw"]),
     ],
 )
-def test_date_parameter_controls_outdir(tmp_path: Path, preset: str, expected: list[str]) -> None:
-    """CLI ``date`` parameter selects the run subdirectory."""
+def test_run_id_parameter_controls_outdir(tmp_path: Path, preset: str, expected: list[str]) -> None:
+    """CLI ``run_id`` parameter selects the run subdirectory."""
 
     repo_root = Path(__file__).resolve().parent.parent
     # provide data and model via symlinks so harness can resolve them
@@ -204,15 +204,15 @@ def test_date_parameter_controls_outdir(tmp_path: Path, preset: str, expected: l
         "n=2",
         "seed=1337",
         "model=models/tiny-gpt2",
-        "date=20250101_0101",
+        "run_id=RID0101",
         "dry_run=true",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path)
 
-    run_dir = tmp_path / "runs" / "20250101_0101"
+    run_dir = tmp_path / "runs" / "RID0101"
     for part in expected:
         run_dir /= part
     run_dir /= "episodic"
     assert (run_dir / "meta.json").exists()
     meta = json.loads((run_dir / "meta.json").read_text())
-    assert meta["date"] == "20250101_0101"
+    assert meta["run_id"] == "RID0101"

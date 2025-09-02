@@ -72,10 +72,10 @@ def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
         "+seeds=[1337]",
         "model=models/tiny-gpt2",
         "dry_run=true",
-        "date=20250824",
+        "run_id=RID824",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path, env=env)
-    expected = tmp_path / "runs" / "20250824" / "hei_nw" / "episodic" / "2_1337" / "metrics.json"
+    expected = tmp_path / "runs" / "RID824" / "hei_nw" / "episodic" / "2_1337" / "metrics.json"
     assert expected.exists()
 
 
@@ -97,18 +97,11 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
         "+seeds=[1337]",
         "model=models/tiny-gpt2",
         "dry_run=true",
-        "date=20250824",
+        "run_id=RID824",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path, env=env)
     expected = (
-        tmp_path
-        / "runs"
-        / "20250824"
-        / "baselines"
-        / "core"
-        / "episodic"
-        / "2_1337"
-        / "metrics.json"
+        tmp_path / "runs" / "RID824" / "baselines" / "core" / "episodic" / "2_1337" / "metrics.json"
     )
     assert expected.exists()
 
@@ -131,12 +124,10 @@ def test_eval_model_run_matrix_date_time(tmp_path: Path) -> None:
         "+seeds=[1337]",
         "model=models/tiny-gpt2",
         "dry_run=true",
-        "date=20250829_0841",
+        "run_id=RID2890841",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path, env=env)
-    expected = (
-        tmp_path / "runs" / "20250829_0841" / "hei_nw" / "episodic" / "2_1337" / "metrics.json"
-    )
+    expected = tmp_path / "runs" / "RID2890841" / "hei_nw" / "episodic" / "2_1337" / "metrics.json"
     assert expected.exists()
 
 

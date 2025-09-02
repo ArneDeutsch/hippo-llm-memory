@@ -1,16 +1,16 @@
 """Aggregate evaluation metrics into Markdown tables and plots.
 
-This script scans evaluation runs under ``runs/<date>/`` and summarises
+This script scans evaluation runs under ``runs/<run_id>/`` and summarises
 the metrics for each suite/preset pair.  For every suite a Markdown
-report is written to ``reports/<date>/<suite>/summary.md`` and, if
+report is written to ``reports/<run_id>/<suite>/summary.md`` and, if
 ``matplotlib`` is available, accompanying bar plots are produced.  The
 reports include compute and memory columns when present in the metrics
-files.  A top-level roll-up ``reports/<date>/index.md`` is also emitted
+files.  A top-level roll-up ``reports/<run_id>/index.md`` is also emitted
 with an overall matrix table and links to per-suite summaries.
 
 Example usage from the command line::
 
-    python scripts/report.py --date 20250101
+    python scripts/report.py --run-id 20250101
 
 The script assumes the directory layout created by
 :mod:`scripts.eval_bench`.
@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -33,6 +34,8 @@ from hippo_mem.common.telemetry import validate_retrieval_snapshot
 from reports.health import Badge, render_panel
 
 log = logging.getLogger(__name__)
+
+SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
 
 _TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "reports" / "templates"
 _ENV = Environment(loader=FileSystemLoader(_TEMPLATE_DIR))
@@ -88,20 +91,20 @@ def _format_stat(stat: tuple[float, float]) -> str:
     return f"{mean_val:.3f} ± {ci:.3f}"
 
 
-def _find_latest_date(root: Path) -> str:
-    """Return the latest run date available under ``root``.
+def _find_latest_run_id(root: Path) -> str:
+    """Return the latest run identifier available under ``root``.
 
     Parameters
     ----------
     root:
-        Directory containing dated subdirectories.
+        Directory containing run subdirectories.
     """
 
-    dates = sorted(p.name for p in root.iterdir() if p.is_dir())
-    if not dates:
+    ids = sorted(p.name for p in root.iterdir() if p.is_dir())
+    if not ids:
         msg = f"no run directories found under {root}"
         raise FileNotFoundError(msg)
-    return dates[-1]
+    return ids[-1]
 
 
 def collect_metrics(
@@ -1071,9 +1074,8 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     parser.add_argument("--runs-dir", default="runs", help="directory containing run outputs")
     parser.add_argument("--out-dir", default="reports", help="directory to write reports to")
     parser.add_argument("--data-dir", default="data", help="dataset directory for smoke report")
-    parser.add_argument(
-        "--date", default=None, help="run date in YYYYMMDD format; latest if omitted"
-    )
+    parser.add_argument("--run-id", dest="run_id", default=None, help="run identifier")
+    parser.add_argument("--date", dest="date", default=None, help="deprecated run date")
     parser.add_argument("--plots", action="store_true", help="render bar plots using matplotlib")
     parser.add_argument("--smoke", action="store_true", help="also write smoke.md with sample rows")
     parser.add_argument(
@@ -1084,8 +1086,15 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     args = parser.parse_args()
 
     runs_root = Path(args.runs_dir)
-    date = args.date or _find_latest_date(runs_root)
-    runs_path = runs_root / date
+    run_id = args.run_id
+    if not run_id and args.date:
+        run_id = args.date
+        log.warning("`--date` is deprecated; use --run-id")
+    if not run_id:
+        run_id = _find_latest_run_id(runs_root)
+    if not SLUG_RE.match(run_id):
+        raise ValueError("run_id must match ^[A-Za-z0-9._-]{3,64}$")
+    runs_path = runs_root / run_id
     if (runs_path / "INVALID").exists():
         log.warning("run %s marked invalid; skipping", runs_path)
         return
@@ -1120,7 +1129,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
         sys.exit(1)
     retrieval_summary = summarise_retrieval(retrieval_data)
     gate_summary = summarise_gates(gate_data)
-    out_dir = Path(args.out_dir) / date
+    out_dir = Path(args.out_dir) / run_id
     if args.smoke:
         write_smoke(Path(args.data_dir), out_dir / "smoke.md")
     paths = write_reports(

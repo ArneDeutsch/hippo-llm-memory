@@ -12,7 +12,8 @@ suite: ${task}
 preset: baselines/core
 n: 5
 seed: 0
-date: ${oc.env:RUN_ID,${oc.env:DATE,null}}
+run_id: ${oc.env:RUN_ID,${oc.env:DATE,null}}
+date: ${oc.env:DATE,null}
 outdir: null
 dry_run: false
 model: ???

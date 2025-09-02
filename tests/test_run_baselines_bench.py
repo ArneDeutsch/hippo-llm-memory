@@ -31,17 +31,17 @@ def test_baselines_matrix_includes_new_suites() -> None:
 
 @pytest.mark.slow
 @pytest.mark.parametrize("presets,seeds", CASES)
-def test_run_baselines_accepts_date(presets: list[str], seeds: list[int]) -> None:
+def test_run_baselines_accepts_run_id(presets: list[str], seeds: list[int]) -> None:
     """``run_baselines_bench.py`` emits metrics/meta for all combinations."""
 
     repo_root = Path(__file__).resolve().parents[1]
     script = repo_root / "scripts" / "run_baselines_bench.py"
-    date = "20250101"
+    run_id = "20250101"
     cmd = [
         sys.executable,
         str(script),
-        "--date",
-        date,
+        "--run-id",
+        run_id,
         "--presets",
         *presets,
         "--suites",
@@ -53,7 +53,7 @@ def test_run_baselines_accepts_date(presets: list[str], seeds: list[int]) -> Non
     ]
     env = {**os.environ, "ALLOW_BENCH": "1"}
     subprocess.run(cmd, check=True, cwd=repo_root, env=env)
-    base = repo_root / "runs" / date
+    base = repo_root / "runs" / run_id
     try:
         for preset, seed in itertools.product(presets, seeds):
             out = base / preset / "episodic" / f"50_{seed}"
