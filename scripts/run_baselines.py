@@ -9,6 +9,7 @@ import json
 import math
 import re
 import warnings
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, pstdev
 from typing import Dict, Iterable, List
@@ -39,47 +40,55 @@ def collect_baseline_metrics(root: Path) -> List[Dict[str, float]]:
     """
 
     rows: List[Dict[str, float]] = []
-    for preset_dir in root.iterdir():
-        if not preset_dir.is_dir():
-            continue
-        preset = preset_dir.name
-        for suite_dir in preset_dir.iterdir():
-            if not suite_dir.is_dir():
+    try:
+        for preset_dir in root.iterdir():
+            if not preset_dir.is_dir():
                 continue
-            suite = suite_dir.name
-            em_raw_vals: List[float] = []
-            em_norm_vals: List[float] = []
-            f1_vals: List[float] = []
-            for run_dir in suite_dir.iterdir():
-                metrics_path = run_dir / "metrics.json"
-                if not metrics_path.exists():
+            preset = preset_dir.name
+            for suite_dir in preset_dir.iterdir():
+                if not suite_dir.is_dir():
                     continue
-                with metrics_path.open("r", encoding="utf-8") as fh:
-                    record = json.load(fh)
-                suite_metrics = record.get("metrics", {}).get(suite, {})
-                em_raw = suite_metrics.get("pre_em_raw")
-                em_norm = suite_metrics.get("pre_em_norm")
-                f1 = suite_metrics.get("pre_f1")
-                if None in (em_raw, em_norm, f1):
-                    continue
-                em_raw_vals.append(float(em_raw))
-                em_norm_vals.append(float(em_norm))
-                f1_vals.append(float(f1))
-            if em_raw_vals and em_norm_vals and f1_vals:
-                rows.append(
-                    {
-                        "suite": suite,
-                        "preset": preset,
-                        "em_raw_mean": mean(em_raw_vals),
-                        "em_raw_ci": _ci95(em_raw_vals),
-                        "em_norm_mean": mean(em_norm_vals),
-                        "em_norm_ci": _ci95(em_norm_vals),
-                        "f1_mean": mean(f1_vals),
-                        "f1_ci": _ci95(f1_vals),
-                    }
-                )
+                suite = suite_dir.name
+                em_raw_vals: List[float] = []
+                em_norm_vals: List[float] = []
+                f1_vals: List[float] = []
+                for run_dir in suite_dir.iterdir():
+                    metrics_path = run_dir / "metrics.json"
+                    if not metrics_path.exists():
+                        continue
+                    with metrics_path.open("r", encoding="utf-8") as fh:
+                        record = json.load(fh)
+                    suite_metrics = record.get("metrics", {}).get(suite, {})
+                    em_raw = suite_metrics.get("pre_em_raw")
+                    em_norm = suite_metrics.get("pre_em_norm")
+                    f1 = suite_metrics.get("pre_f1")
+                    if None in (em_raw, em_norm, f1):
+                        continue
+                    em_raw_vals.append(float(em_raw))
+                    em_norm_vals.append(float(em_norm))
+                    f1_vals.append(float(f1))
+                if em_raw_vals and em_norm_vals and f1_vals:
+                    rows.append(
+                        {
+                            "suite": suite,
+                            "preset": preset,
+                            "em_raw_mean": mean(em_raw_vals),
+                            "em_raw_ci": _ci95(em_raw_vals),
+                            "em_norm_mean": mean(em_norm_vals),
+                            "em_norm_ci": _ci95(em_norm_vals),
+                            "f1_mean": mean(f1_vals),
+                            "f1_ci": _ci95(f1_vals),
+                        }
+                    )
+    except FileNotFoundError:
+        rows = []
     if not rows:  # post: at least one row expected
-        msg = f"no baseline metrics found under {root}"
+        runs_dir = root.parent.parent
+        candidates = (
+            ", ".join(sorted(p.name for p in runs_dir.glob("*") if (p / "baselines").exists()))
+            or "<none>"
+        )
+        msg = f"no baseline metrics under {root}; found: {candidates}"
         raise FileNotFoundError(msg)
     return rows
 
@@ -110,6 +119,17 @@ def write_metrics(rows: List[Dict[str, float]], out_dir: Path) -> Path:
 SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
 
 
+def _date_str(value: object | None) -> str:
+    """Return a normalized date string."""
+
+    if value is None:
+        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    date = str(value)
+    if "_" not in date and date.isdigit() and len(date) > 8:
+        return f"{date[:8]}_{date[8:]}"
+    return date
+
+
 def main(argv: Iterable[str] | None = None) -> None:
     """CLI entry point."""
 
@@ -121,7 +141,7 @@ def main(argv: Iterable[str] | None = None) -> None:
 
     run_id = args.run_id
     if not run_id and args.date:
-        run_id = args.date
+        run_id = _date_str(args.date)
         warnings.warn("`--date` is deprecated; use --run-id", DeprecationWarning)
     if not run_id:
         raise ValueError("--run-id is required")
@@ -131,6 +151,7 @@ def main(argv: Iterable[str] | None = None) -> None:
     root = Path(args.runs_dir) / run_id / "baselines"
     rows = collect_baseline_metrics(root)
     write_metrics(rows, root)
+    print(f"aggregated {len(rows)} baseline rows under {root}")
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
