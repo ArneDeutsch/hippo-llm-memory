@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname "$0")/_env.sh"
+export RUN_ID DATE
 export MODEL=models/tiny-gpt2
 export HF_MODEL_PATH="$MODEL"
 export ALLOW_BENCH=1
@@ -11,7 +12,7 @@ DATE="$RUN_ID"
 
 # Baseline runs for core preset on key suites
 python scripts/run_baselines_bench.py \
-  --date "$RUN_ID" \
+  --run-id "$RUN_ID" \
   --presets baselines/core \
   --suites episodic semantic spatial \
   --sizes 50 \
@@ -51,6 +52,6 @@ for i in "${!suites[@]}"; do
   jq -e ".metrics[\"$suite\"] | has(\"post_em\") and has(\"delta_em\")" "$outdir/metrics.json" >/dev/null
 done
 
-python scripts/report.py --date "$RUN_ID"
+python scripts/report.py --run-id "$RUN_ID"
 
 echo "Smoke n50 pipeline finished for RUN_ID=$RUN_ID"

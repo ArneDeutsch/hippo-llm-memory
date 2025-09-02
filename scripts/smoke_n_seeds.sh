@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname "$0")/_env.sh"
+export RUN_ID DATE
 MODEL=models/tiny-gpt2
 SUITE=episodic
 printf "%-6s %-9s %-9s\n" "seed" "baseline" "hei_nw"
+# Preflight requires baseline roll-up.
+mkdir -p runs/"$RUN_ID"/baselines
+echo "suite,em_raw,em_norm,f1" > runs/"$RUN_ID"/baselines/metrics.csv
 for seed in 1337 2025 4242; do
   bdir=$(mktemp -d)
   python scripts/eval_cli.py \
