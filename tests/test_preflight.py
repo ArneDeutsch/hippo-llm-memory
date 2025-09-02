@@ -72,6 +72,31 @@ def test_preflight_missing_baselines_lists_both_paths(
         fail_msg = json.loads((outdir / "failed_preflight.json").read_text())["errors"][0]
         assert f"runs/{rid_u}/baselines/metrics.csv" in fail_msg
         assert f"runs/{rid_d}/baselines/metrics.csv" in fail_msg
+        assert f"python scripts/run_baselines.py --run-id {rid_u}" in fail_msg
+        assert f"python scripts/run_baselines.py --run-id {rid_d}" in fail_msg
     finally:
         shutil.rmtree(Path("runs") / rid_u, ignore_errors=True)
         shutil.rmtree(Path("runs") / rid_d, ignore_errors=True)
+
+
+def test_preflight_missing_store_meta_lists_both_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rid = "2025_09_02_50_1337_2025"
+    cfg = _setup_cfg(tmp_path, monkeypatch, run_id=rid)
+    bdir = Path("runs") / rid / "baselines"
+    bdir.mkdir(parents=True, exist_ok=True)
+    (bdir / "metrics.csv").write_text("suite,em\n")
+    store_dir = Path(cfg.store_dir)
+    meta_algo = store_dir / cfg.session_id / "store_meta.json"
+    meta_algo.unlink()
+    outdir = tmp_path / "out"
+    try:
+        with pytest.raises(RuntimeError):
+            harness.evaluate(cfg, outdir, preflight=True)
+        fail_msg = json.loads((outdir / "failed_preflight.json").read_text())["errors"][0]
+        meta_base = store_dir / "hei_nw" / cfg.session_id / "store_meta.json"
+        assert str(meta_algo) in fail_msg
+        assert str(meta_base) in fail_msg
+    finally:
+        shutil.rmtree(Path("runs") / rid, ignore_errors=True)
