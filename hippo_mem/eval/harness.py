@@ -981,22 +981,26 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
             candidates.append(Path("runs") / digits / "baselines" / "metrics.csv")
         if not any(p.exists() for p in candidates):
             shown = " or ".join(str(p) for p in candidates)
+            cmds = [f"python scripts/run_baselines.py --run-id {rid}"]
+            if digits != rid:
+                cmds.append(f"python scripts/run_baselines.py --run-id {digits}")
             failures.append(
-                f"missing baseline metrics: {shown} — generate via: "
-                f"python scripts/run_baselines.py --run-id {rid}"
-                f" (or {digits})"
+                f"missing baseline metrics: {shown} — generate via:\n  " + "\n  ".join(cmds)
             )
 
     store_dir = cfg.get("store_dir")
     session_id = cfg.get("session_id")
     if store_dir and session_id and cfg.get("mode") in ("test", "replay"):
-        meta_path = resolve_store_meta_path(
-            str(cfg.get("preset", "")),
-            Path(to_absolute_path(str(store_dir))),
-            str(session_id),
-        )
-        if not meta_path.exists():
-            failures.append(f"missing store_meta.json: {meta_path}")
+        sd = Path(to_absolute_path(str(store_dir)))
+        algo = str(cfg.get("preset", "")).split("/")[-1]
+        candidates = [
+            sd / str(session_id) / "store_meta.json",
+            sd / algo / str(session_id) / "store_meta.json",
+        ]
+        meta_path = next((p for p in candidates if p.exists()), None)
+        if meta_path is None:
+            shown = " or ".join(str(p) for p in candidates)
+            failures.append(f"missing store_meta.json: {shown}")
         else:
             try:
                 meta = json.loads(meta_path.read_text())
