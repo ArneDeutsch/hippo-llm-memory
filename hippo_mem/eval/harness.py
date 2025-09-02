@@ -65,6 +65,18 @@ FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
 
 
+def _ensure_list(name: str, val: object | None) -> object | None:
+    """Validate that Hydra list inputs are proper sequences.
+
+    Hydra treats quoted lists like "[a,b]" as strings; this guard raises with
+    an actionable hint before iteration.
+    """
+
+    if isinstance(val, str):
+        raise TypeError(f"{name} must be a list: use {name}=[a,b], not a quoted string")
+    return val
+
+
 def _date_str(value: object | None) -> str:
     """Return a normalized date string.
 
@@ -1302,11 +1314,15 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
 def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
     """Run evaluation over a grid of tasks, sizes and seeds."""
 
-    tasks = cfg.get("tasks")
+    tasks = _ensure_list("tasks", cfg.get("tasks"))
     if not tasks:
-        tasks = cfg.get("suites", ["episodic", "semantic", "spatial"])
-    n_values = cfg.get("n_values", [50, 200, 1000])
-    seeds = cfg.get("seeds", [1337, 2025, 4242])
+        tasks = _ensure_list("suites", cfg.get("suites")) or [
+            "episodic",
+            "semantic",
+            "spatial",
+        ]
+    n_values = _ensure_list("n_values", cfg.get("n_values")) or [50, 200, 1000]
+    seeds = _ensure_list("seeds", cfg.get("seeds")) or [1337, 2025, 4242]
     combos = list(itertools.product(tasks, n_values, seeds))
     total = len(combos)
     base_cfg = OmegaConf.to_container(cfg, resolve=True)
@@ -1341,7 +1357,7 @@ def main(cfg: DictConfig) -> None:
     base_cfg = cfg
     outdir_cfg = cfg.get("outdir")
     if cfg.get("run_matrix"):
-        presets = cfg.get("presets")
+        presets = _ensure_list("presets", cfg.get("presets"))
         if presets:
             if outdir_cfg is not None:
                 base_outdir = Path(to_absolute_path(str(outdir_cfg)))
