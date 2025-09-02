@@ -18,6 +18,7 @@ def test_validate_store_ok(tmp_path, monkeypatch, capsys):
     store = layout.algo_dir / layout.session_id / "episodic.jsonl"
     store.parent.mkdir(parents=True)
     store.write_text("{}")
+    (store.parent / "store_meta.json").write_text("{}")
     run_validator(monkeypatch, ["--algo", "hei_nw"])
     out = capsys.readouterr().out
     assert "OK:" in out
