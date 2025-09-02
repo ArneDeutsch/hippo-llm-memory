@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from scripts.report import (
-    _find_latest_date,
+    _find_latest_run_id,
     _missing_pre_suites,
     collect_gate_ablation,
     collect_gates,
@@ -311,11 +311,11 @@ def test_report_warnings(tmp_path: Path) -> None:
     assert (out / "index.md").exists()
 
 
-def test_find_latest_date(tmp_path: Path) -> None:
+def test_find_latest_run_id(tmp_path: Path) -> None:
     base = tmp_path / "runs"
     (base / "20240101").mkdir(parents=True)
     (base / "20250102").mkdir()
-    assert _find_latest_date(base) == "20250102"
+    assert _find_latest_run_id(base) == "20250102"
 
 
 def test_smoke_report(tmp_path: Path) -> None:

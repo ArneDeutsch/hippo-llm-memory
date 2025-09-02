@@ -15,9 +15,9 @@ For a complete sweep across suites, dataset sizes and seeds use::
     python scripts/eval_bench.py +run_matrix=true preset=memory/hei_nw
 
 The resulting ``metrics.json``/``metrics.csv``/``meta.json`` files are written
-to ``runs/<date>/<preset>/<suite>/`` for baseline presets such as
+to ``runs/<run_id>/<preset>/<suite>/`` for baseline presets such as
 ``baselines/core``.  For memory presets (``memory/hei_nw`` etc.) the files are
-stored under ``runs/<date>/<preset_name>/<suite>/`` where ``preset_name`` is the
+stored under ``runs/<run_id>/<preset_name>/<suite>/`` where ``preset_name`` is the
 final path component.  A custom root directory can be supplied via
 ``outdir=...``.
 """
@@ -27,6 +27,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import logging
 import os
 import platform
 import re
@@ -75,6 +76,11 @@ def _date_str(value: object | None) -> str:
 
 
 FORMAT_VIOL_RE = re.compile(r"\n|\.$")
+
+SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 def _git_sha() -> str:
@@ -658,9 +664,18 @@ def main(cfg: DictConfig) -> None:
     cfg.n = cfg.get("n", 5)
     if cfg.get("dry_run"):
         cfg.n = min(cfg.n, 5)
-    date = _date_str(cfg.get("date"))
+    run_id = cfg.get("run_id")
+    if not run_id and cfg.get("date"):
+        run_id = _date_str(cfg.get("date"))
+        log.warning("`date` is deprecated for IO; using run_id=%s", run_id)
+    if not run_id:
+        run_id = _date_str(None)
+    run_id = str(run_id)
+    if not SLUG_RE.match(run_id):
+        raise ValueError("run_id must match ^[A-Za-z0-9._-]{3,64}$")
     with open_dict(cfg):
-        cfg.date = date
+        cfg.run_id = run_id
+        cfg.date = cfg.get("date")
     outdir: Optional[str] = cfg.get("outdir")
     preset_path = Path(str(cfg.preset))
     if cfg.get("run_matrix"):
@@ -668,9 +683,9 @@ def main(cfg: DictConfig) -> None:
             root_outdir = Path(to_absolute_path(outdir))
         else:
             if preset_path.parts and preset_path.parts[0] == "baselines":
-                root_outdir = Path("runs") / date / preset_path.parts[0] / preset_path.name
+                root_outdir = Path("runs") / run_id / preset_path.parts[0] / preset_path.name
             else:
-                root_outdir = Path("runs") / date / preset_path.name
+                root_outdir = Path("runs") / run_id / preset_path.name
         evaluate_matrix(cfg, root_outdir)
     else:
         if outdir is not None:
@@ -678,10 +693,10 @@ def main(cfg: DictConfig) -> None:
         else:
             if preset_path.parts and preset_path.parts[0] == "baselines":
                 outdir_path = (
-                    Path("runs") / date / preset_path.parts[0] / preset_path.name / cfg.suite
+                    Path("runs") / run_id / preset_path.parts[0] / preset_path.name / cfg.suite
                 )
             else:
-                outdir_path = Path("runs") / date / preset_path.name / cfg.suite
+                outdir_path = Path("runs") / run_id / preset_path.name / cfg.suite
         evaluate(cfg, outdir_path)
 
 
