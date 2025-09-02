@@ -149,28 +149,30 @@ Presets live under `configs/eval/baselines/`:
 - `rag` – nearest-neighbour retrieval with concatenated context.
 - `longctx` – longest feasible context window without retrieval.
 - `span_short` – chat templates on with a short-span decoding profile for exact-match metrics.
+>
+> <span style="color:red;font-weight:bold">MUST:</span> Use a `RUN_ID` slug consistently across all commands. Valid slugs match `^[A-Za-z0-9._-]{3,64}$`.
 
 **Quickstart**
 
 ```bash
 # 1) Teach: write experiences to stores (persist across runs)
-DATE=$(date +%Y%m%d_%H%M); SID=seed1337
+RUN_ID=20250902_50_1337_2025; SID=seed1337
 python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337 \
-  mode=teach persist=true store_dir=runs/$DATE/stores session_id=$SID \
-  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
+  mode=teach persist=true store_dir=runs/$RUN_ID/stores session_id=$SID \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$RUN_ID/memory/teach
 
 # 2) Pre-consolidation baseline (memory OFF)
 python scripts/test_consolidation.py --phase pre   --suite episodic --n 50 --seed 1337 \
-  --model Qwen/Qwen2.5-1.5B-Instruct   --outdir runs/$DATE/consolidation/pre
+  --model Qwen/Qwen2.5-1.5B-Instruct   --outdir runs/$RUN_ID/consolidation/pre
 
 # 3) Consolidate via replay → LoRA
-python scripts/replay_consolidate.py   --store_dir runs/$DATE/stores --session_id $SID \
-  --config configs/consolidation/lora_small.yaml   --outdir runs/$DATE/consolidation/lora
+python scripts/replay_consolidate.py   --store_dir runs/$RUN_ID/stores --session_id $SID \
+  --config configs/consolidation/lora_small.yaml   --outdir runs/$RUN_ID/consolidation/lora
 
 # 4) Post-consolidation test (memory OFF)
 python scripts/test_consolidation.py --phase post   --suite episodic --n 50 --seed 1337 \
-  --model Qwen/Qwen2.5-1.5B-Instruct   --adapter runs/$DATE/consolidation/lora \
-  --pre_dir runs/$DATE/consolidation/pre   --outdir runs/$DATE/consolidation/post
+  --model Qwen/Qwen2.5-1.5B-Instruct   --adapter runs/$RUN_ID/consolidation/lora \
+  --pre_dir runs/$RUN_ID/consolidation/pre   --outdir runs/$RUN_ID/consolidation/post
 ```
 
 ## Cross-session runs
@@ -180,7 +182,7 @@ Memory stores can persist across processes. `scripts/eval_model.py` accepts over
 an optional second run can **replay**, and a fresh process can **test** delayed recall. See
 `MILESTONE_9_5_PLAN.md` for the protocol.
 
-Pass the base stores directory (e.g., `runs/$DATE/stores`) via `--store_dir`; wrappers create the
+Pass the base stores directory (e.g., `runs/$RUN_ID/stores`) via `--store_dir`; wrappers create the
 algorithm subfolder automatically. For convenience, `scripts/eval_cli.py` translates legacy
 `--mode`-style flags into these overrides.
 
@@ -205,7 +207,7 @@ algorithm subfolder automatically. For convenience, `scripts/eval_cli.py` transl
 
 ## How to read reports
 
-Reports live under `reports/<DATE>/index.md` with per‑suite summaries. Rows carry
+Reports live under `reports/<RUN_ID>/index.md` with per‑suite summaries. Rows carry
 ⚠️ warnings when invariants are violated:
 
 - Baselines must show `retrieval.*.requests == 0` and `store.size == 0`.
