@@ -24,6 +24,7 @@ import logging
 import re
 import sys
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, stdev
 from typing import Dict, Iterable, Tuple
@@ -36,6 +37,18 @@ from reports.health import Badge, render_panel
 log = logging.getLogger(__name__)
 
 SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
+
+
+def _date_str(value: object | None) -> str:
+    """Return a normalized date string."""
+
+    if value is None:
+        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    date = str(value)
+    if "_" not in date and date.isdigit() and len(date) > 8:
+        return f"{date[:8]}_{date[8:]}"
+    return date
+
 
 _TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "reports" / "templates"
 _ENV = Environment(loader=FileSystemLoader(_TEMPLATE_DIR))
@@ -1088,7 +1101,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     runs_root = Path(args.runs_dir)
     run_id = args.run_id
     if not run_id and args.date:
-        run_id = args.date
+        run_id = _date_str(args.date)
         log.warning("`--date` is deprecated; use --run-id")
     if not run_id:
         run_id = _find_latest_run_id(runs_root)
