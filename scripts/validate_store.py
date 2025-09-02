@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+from hippo_mem.eval.store_utils import resolve_store_meta_path
 from hippo_mem.utils.stores import validate_store
 
 
@@ -32,6 +33,14 @@ def main() -> None:
     except (FileExistsError, FileNotFoundError) as err:  # pragma: no cover - tested via CLI
         print(err, file=sys.stderr)
         raise SystemExit(1) from err
+    if path is not None:
+        session_id = path.parent.name
+        store_dir = path.parents[2]
+        preset = args.preset or f"memory/{args.algo}"
+        meta = resolve_store_meta_path(preset, store_dir, session_id)
+        if not meta.exists():
+            raise FileNotFoundError(f"missing store_meta.json: {meta}")
+
     if args.metrics:
         with Path(args.metrics).open("r", encoding="utf-8") as fh:
             metrics = json.load(fh)

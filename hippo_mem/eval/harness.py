@@ -50,6 +50,7 @@ from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 from .bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 from .encode import encode_prompt
 from .models import load_model_config
+from .store_utils import resolve_store_meta_path
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -793,7 +794,11 @@ def _write_outputs(
     store_dir = cfg.get("store_dir")
     session_id = cfg.get("session_id")
     if store_dir and session_id:
-        meta_path = Path(to_absolute_path(str(store_dir))) / str(session_id) / "store_meta.json"
+        meta_path = resolve_store_meta_path(
+            str(cfg.get("preset", "")),
+            Path(to_absolute_path(str(store_dir))),
+            str(session_id),
+        )
         try:
             with meta_path.open("r", encoding="utf-8") as f:
                 store_meta = json.load(f)
@@ -985,7 +990,11 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
     store_dir = cfg.get("store_dir")
     session_id = cfg.get("session_id")
     if store_dir and session_id and cfg.get("mode") in ("test", "replay"):
-        meta_path = Path(to_absolute_path(str(store_dir))) / str(session_id) / "store_meta.json"
+        meta_path = resolve_store_meta_path(
+            str(cfg.get("preset", "")),
+            Path(to_absolute_path(str(store_dir))),
+            str(session_id),
+        )
         if not meta_path.exists():
             failures.append(f"missing store_meta.json: {meta_path}")
         else:
