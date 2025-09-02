@@ -3,6 +3,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+from omegaconf import OmegaConf
+
+from hippo_mem.eval import harness
+
 
 def _run_eval(tmp_path: Path, *overrides: str):
     repo_root = Path(__file__).resolve().parents[1]
@@ -44,3 +49,9 @@ def test_date_backcompat_warns(tmp_path: Path) -> None:
     assert "date` is deprecated" in (result.stdout + result.stderr)
     outdir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
     assert (outdir / "metrics.json").exists()
+
+
+def test_invalid_run_id_rejected() -> None:
+    cfg = OmegaConf.create({"run_matrix": True, "presets": ["foo"], "run_id": "bad id"})
+    with pytest.raises(ValueError, match="run_id must match"):
+        harness.main(cfg)
