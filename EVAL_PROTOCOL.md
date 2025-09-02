@@ -17,20 +17,33 @@ This protocol executes a **complete, reproducible** validation run across **base
 Set a stable session id once before running the protocol:
 
 ```bash
-# Example: timestamp + short git sha
+# Example slug
+export RUN_ID=20250902_50_1337_2025
+# or derive one dynamically
 export RUN_ID="$(date -u +%Y%m%d_%H%M)-$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
-# or a human label, e.g.
-export RUN_ID="ablation-aug29"
 ```
 
-All outputs (runs, reports, stores, adapters) and `meta.json.date` will use this `RUN_ID`.
-For backward compatibility, `DATE` is set equal to `RUN_ID` inside the protocol.
+All outputs (runs, reports, stores, adapters) will use this `RUN_ID`.
+
+> <span style="color:red;font-weight:bold">MUST:</span> Use the same `run_id` for every command. Valid slugs match `^[A-Za-z0-9._-]{3,64}$`.
 
 > **Parameter reference**
 > - `--store_dir`: base directory for persistent stores, typically `$STORES`
 > - `--session_id`: logical key nested under each algorithm's subfolder
 > - `--persist`: write to `store_dir` during `mode=teach` or `mode=replay`
 > - `--mode`: `{teach,replay,test}` phase selector
+
+#### Minimal end-to-end example
+
+```bash
+RUN_ID=20250902_50_1337_2025
+source scripts/_env.sh
+python scripts/eval_model.py +run_matrix=true run_id=$RUN_ID presets=[baselines/core] tasks=[episodic] n_values=[50] seeds=[1337] model=$MODEL
+python scripts/run_baselines.py --run-id $RUN_ID
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID n=50 seed=1337 mode=teach persist=true store_dir=$STORES session_id=$HEI_SESSION_ID model=$MODEL
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID n=50 seed=1337 mode=test store_dir=$STORES session_id=$HEI_SESSION_ID model=$MODEL
+python scripts/report.py --run-id $RUN_ID
+```
 
 ### Dataset profiles
 
@@ -176,17 +189,17 @@ to avoid saturation.
 NV=$(IFS=,; echo "${SIZES[*]}")
 SD=$(IFS=,; echo "${SEEDS[*]}")
 
-python scripts/eval_model.py +run_matrix=true date="$DATE" \
-  presets="[baselines/core,baselines/span_short,baselines/rag,baselines/longctx]" \
-  tasks="[episodic,semantic,spatial,episodic_multi]" \
-  n_values="[$NV]" seeds="[$SD]" \
+python scripts/eval_model.py +run_matrix=true run_id="$RUN_ID" \
+  presets=[baselines/core,baselines/span_short,baselines/rag,baselines/longctx] \
+  tasks=[episodic,semantic,spatial,episodic_multi] \
+  n_values=[$NV] seeds=[$SD] \
   mode=teach model="$MODEL" outdir="$RUNS"
 
 # Hard profiles for suites prone to saturation
-python scripts/eval_model.py +run_matrix=true date="$DATE" \
-  presets="[baselines/core,baselines/span_short,baselines/rag,baselines/longctx]" \
-  tasks="[episodic_cross,episodic_capacity]" dataset_profile=hard \
-  n_values="[$NV]" seeds="[$SD]" \
+python scripts/eval_model.py +run_matrix=true run_id="$RUN_ID" \
+  presets=[baselines/core,baselines/span_short,baselines/rag,baselines/longctx] \
+  tasks=[episodic_cross,episodic_capacity] dataset_profile=hard \
+  n_values=[$NV] seeds=[$SD] \
   mode=teach model="$MODEL" outdir="$RUNS"
 ```
 
@@ -202,26 +215,26 @@ Notes:
 ## 4) Memory grids with teach → replay → test
 
 We evaluate each algorithm with **pre‑replay** and **post‑replay** phases. Outputs are written under
-`runs/$DATE/memory/<algo>/<suite>/<n>_<seed>/`. Pass `--store_dir "$STORES"`; each wrapper appends its
+`runs/$RUN_ID/memory/<algo>/<suite>/<n>_<seed>/`. Pass `--store_dir "$STORES"`; each wrapper appends its
 own `<algo>` subfolder and nests traces under the provided `--session_id`.
 
 ### 4.1) HEI‑NW (episodic + variants)
 
 ```bash
-SID="hei_${DATE}"  # session id for persistent store reuse
+SID="hei_${RUN_ID}"  # session id for persistent store reuse
 # Default profile suites
 for suite in episodic episodic_multi; do
   for n in "${SIZES[@]}"; do
     for seed in "${SEEDS[@]}"; do
       OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
-      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
       # Validate persisted store layout
       python scripts/validate_store.py --algo hei_nw --kind episodic
       # Replay (3 cycles)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
       # Test (post‑replay)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
     done
   done
 done
@@ -232,13 +245,13 @@ for suite in episodic_cross episodic_capacity; do
     for seed in "${SEEDS[@]}"; do
       OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
       # Teach & persist
-      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
       # Validate persisted store layout
       python scripts/validate_store.py --algo hei_nw --kind episodic
       # Replay (3 cycles)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
       # Test (post‑replay)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" date="$DATE" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
     done
   done
 done
@@ -253,16 +266,16 @@ ls -l "runs/$RUN_ID/stores/hei_nw/hei_${RUN_ID}/episodic.jsonl"
 ### 4.2) SGC‑RSS (semantic)
 
 ```bash
-SID="sgc_${DATE}"
+SID="sgc_${RUN_ID}"
 suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/sgc_rss/$suite/${n}_${seed}"
-    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
     # Validate persisted store layout
     python scripts/validate_store.py --algo sgc_rss --kind kg
-    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
-    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
   done
 done
 ```
@@ -270,16 +283,16 @@ done
 ### 4.3) SMPD (spatial)
 
 ```bash
-SID="smpd_${DATE}"
+SID="smpd_${RUN_ID}"
 suite=spatial
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/memory/smpd/$suite/${n}_${seed}"
-    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
     # Validate persisted store layout
     python scripts/validate_store.py --algo smpd --kind spatial
-    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
-    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" date="$DATE"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
   done
 done
 ```
@@ -293,12 +306,12 @@ identifiers from §4 and iterate over the same `SIZES` and `SEEDS` arrays:
 
 ```bash
 # Disable relational gating to quantify its impact
-SID="sgc_${DATE}"
+SID="sgc_${RUN_ID}"
 suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/ablate/sgc_rss_no_gate/$suite/${n}_${seed}"
-      python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" date="$DATE" \
+      python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID" \
         model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" \
         gating_enabled=false outdir="$OUT" --strict-telemetry
   done
@@ -309,7 +322,7 @@ suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
     OUT="$RUNS/ablate/longctx_no_retrieval/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=baselines/longctx n="$n" seed="$seed" date="$DATE" \
+    python scripts/eval_model.py suite="$suite" preset=baselines/longctx n="$n" seed="$seed" run_id="$RUN_ID" \
       model="$MODEL" mode=teach outdir="$OUT"
   done
 done
@@ -332,14 +345,14 @@ SWEEP_SIZES=(50)
 SWEEP_SEEDS=(1337 2025)
 
 # Reuse persisted stores from §4
-SID_HEI="hei_${DATE}"
-SID_SGC="sgc_${DATE}"
-SID_SMPD="smpd_${DATE}"
+SID_HEI="hei_${RUN_ID}"
+SID_SGC="sgc_${RUN_ID}"
+SID_SMPD="smpd_${RUN_ID}"
 
 # HEI‑NW taus
 for tau in "${EPISODIC_TAUS[@]}"; do
   python scripts/eval_cli.py suite=episodic preset=memory/hei_nw \
-    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE" \
+    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" run_id="$RUN_ID" \
     model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_HEI" \
     episodic.gate.tau="$tau" outdir="$RUNS/sweeps/hei_nw_tau_${tau}" --strict-telemetry
 done
@@ -347,7 +360,7 @@ done
 # SGC‑RSS relational thresholds
 for thr in "${RELATIONAL_THRESHOLDS[@]}"; do
   python scripts/eval_cli.py suite=semantic preset=memory/sgc_rss \
-    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE" \
+    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" run_id="$RUN_ID" \
     model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_SGC" \
     relational.gate.threshold="$thr" \
     outdir="$RUNS/sweeps/sgc_rss_thr_${thr}" --strict-telemetry
@@ -356,7 +369,7 @@ done
 # SMPD spatial thresholds
 for thr in "${SPATIAL_BLOCK_THRESHOLDS[@]}"; do
   python scripts/eval_cli.py suite=spatial preset=memory/smpd \
-    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" date="$DATE" \
+    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" run_id="$RUN_ID" \
     model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_SMPD" \
     spatial.gate.block_threshold="$thr" \
     outdir="$RUNS/sweeps/smpd_thr_${thr}" --strict-telemetry
@@ -372,7 +385,7 @@ done
 python scripts/summarize_runs.py "$RUNS" --out "$RUNS/summaries"
 
 # Markdown reports and plots
-python scripts/report.py --date "$DATE" --runs-dir runs --out-dir reports --data-dir data --plots
+python scripts/report.py --run-id "$RUN_ID" --runs-dir runs --out-dir reports --data-dir data --plots
 ```
 
 ---
