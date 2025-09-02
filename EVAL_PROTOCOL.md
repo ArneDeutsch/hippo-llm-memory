@@ -36,17 +36,6 @@ digits-only form `${RUN_ID//_/}`.
 > - `--persist`: write to `store_dir` during `mode=teach` or `mode=replay`
 > - `--mode`: `{teach,replay,test}` phase selector
 
-#### Baseline metrics
-
-Run the baseline aggregator once before any memory runs:
-
-```bash
-python scripts/run_baselines.py --run-id "$RUN_ID"
-```
-
-Preflight accepts baseline metrics from either
-`runs/$RUN_ID/baselines/metrics.csv` or `runs/${RUN_ID//_/}/baselines/metrics.csv`.
-
 #### Minimal end-to-end example
 
 ```bash
@@ -222,6 +211,8 @@ python scripts/eval_model.py +run_matrix=true run_id="$RUN_ID" \
   tasks=[episodic_cross,episodic_capacity] dataset_profile=hard \
   n_values=[$NV] seeds=[$SD] \
   mode=teach model="$MODEL" outdir="$RUNS"
+
+python scripts/run_baselines.py --run-id "${RUN_ID}"
 ```
 
 Notes:
