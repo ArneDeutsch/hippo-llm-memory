@@ -163,30 +163,7 @@ creates `runs/my_exp/baselines/metrics.csv` and no other variant.
 
 ---
 
-## Task 8 — Migration helper (one-shot)
-**Files:** `scripts/tools/migrate_run_id.py` (new)
-
-A small script to **rename or symlink** old runs to a new canonical ID.
-
-Usage:
-```bash
-python scripts/tools/migrate_run_id.py --from 20250902_50_1337_2025 --to exp_2025_09_02
-# or create a symlink instead of moving:
-python scripts/tools/migrate_run_id.py --from 202509025013372025 --to exp_2025_09_02 --symlink
-```
-
-Behavior:
-- Validates both IDs.
-- If `runs/<from>/` exists and `runs/<to>/` does not:
-  - `--symlink`: create `runs/<to>` symlink → `runs/<from>`
-  - default: `git mv runs/<from> runs/<to>` if under Git, else `shutil.move`.
-- Rewrites `reports/<from> → <to>` similarly if present.
-
-**Acceptance:** Manual test on a temp repo moves or symlinks correctly. No code path depends on the digits-only name afterward.
-
----
-
-## Task 9 — Documentation sweep
+## Task 8 — Documentation sweep
 **Files:** `README.md`, `EVAL_PROTOCOL.md`, `docs/EVAL_PROTOCOL.md`, `docs/baselines.md`, any `review/*.md` that still prescribes DATE/digits.
 
 - Replace examples to always use a simple `RUN_ID` slug (e.g., `dev`, `m9_eval`, `exp_42`).
@@ -194,13 +171,6 @@ Behavior:
 - Add a short “RUN_ID contract” box.
 
 **Acceptance:** `grep -R "digits-only\|DATE" docs README.md EVAL_PROTOCOL.md` returns nothing relevant.
-
----
-
-## Task 10 — CHANGELOG entry
-**Files:** `CHANGELOG.md` (new or updated)
-
-Document the breaking change and the migration helper.
 
 ---
 
