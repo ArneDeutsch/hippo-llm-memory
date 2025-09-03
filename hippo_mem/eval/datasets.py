@@ -199,6 +199,7 @@ def generate_episodic_cross(
     size: int,
     seed: int,
     entity_pool: int | None = None,
+    distractors: int | None = None,
     profile: str = "default",
 ) -> List[Dict[str, object]]:
     """Cross-episode recall after a flush marker.
@@ -218,13 +219,19 @@ def generate_episodic_cross(
         Number of unique people/places to sample from. Increasing this raises
         task difficulty by reducing memorisation of a small fixed set. When
         ``None`` the value is derived from ``profile``.
+    distractors:
+        Number of distractor sentences inserted *after* the ``FLUSH`` token.
+        ``None`` derives the count from ``profile``.
     profile:
-        Difficulty profile controlling the default ``entity_pool`` size.
+        Difficulty profile controlling the defaults for ``entity_pool`` and
+        ``distractors``.
     """
 
     rng = random.Random(seed)
     if entity_pool is None:
         entity_pool = {"easy": 8, "default": 12, "hard": 16}[profile]
+    if distractors is None:
+        distractors = {"easy": 1, "default": 2, "hard": 4}[profile]
     base_people = [
         "Alice",
         "Bob",
@@ -287,15 +294,15 @@ def generate_episodic_cross(
         seen.add(key)
         fact = f"{who} {verb} to the {where} {when}."
         post_sents: List[str] = []
-        for _ in range(rng.randint(1, 2)):
+        for _ in range(distractors):
             dwho = rng.choice([p for p in people if p != who])
             dwhere = rng.choice([pl for pl in places if pl != where])
             dverb = rng.choice(verbs)
             dwhen = rng.choice(times)
             post_sents.append(f"{dwho} {dverb} to the {dwhere} {dwhen}.")
-        distractors = " ".join(post_sents)
+        distractor_text = " ".join(post_sents)
         prompt = (
-            f"{fact} --- FLUSH --- {distractors} Where did {who} go? "
+            f"{fact} --- FLUSH --- {distractor_text} Where did {who} go? "
             "Answer with the location name only."
         )
         tasks.append({"prompt": prompt, "answer": where})
@@ -642,7 +649,7 @@ def main() -> None:
         "--distractors",
         type=int,
         default=0,
-        help="Number of distractor sentences for episodic suite",
+        help="Number of distractor sentences for episodic, episodic_cross or semantic suites",
     )
     parser.add_argument(
         "--grid-size",
@@ -677,7 +684,19 @@ def main() -> None:
         "--entity-pool",
         type=int,
         default=4,
-        help="Number of unique entities for episodic_cross suite",
+        help="Number of unique entities for episodic_cross or semantic suites",
+    )
+    parser.add_argument(
+        "--paraphrase-prob",
+        type=float,
+        default=0.0,
+        help="Paraphrase probability for semantic suite",
+    )
+    parser.add_argument(
+        "--ambiguity-prob",
+        type=float,
+        default=0.0,
+        help="Pronoun ambiguity probability for semantic suite",
     )
     args = parser.parse_args()
     profile_cfg = _load_profile(args.profile).get(args.suite, {})
@@ -713,6 +732,7 @@ def main() -> None:
             args.size,
             args.seed,
             entity_pool=profile_cfg.get("entity_pool", args.entity_pool),
+            distractors=profile_cfg.get("distractors", args.distractors or None),
             **common,
         )
     elif args.suite == "episodic_capacity":
@@ -728,6 +748,10 @@ def main() -> None:
             args.seed,
             hop_depth=profile_cfg.get("hop_depth", args.hop_depth),
             inject_contradictions=profile_cfg.get("inject_contradictions", args.contradict),
+            distractors=profile_cfg.get("distractors", args.distractors),
+            entity_pool=profile_cfg.get("entity_pool", args.entity_pool),
+            paraphrase_prob=profile_cfg.get("paraphrase_prob", args.paraphrase_prob),
+            ambiguity_prob=profile_cfg.get("ambiguity_prob", args.ambiguity_prob),
             **common,
         )
     else:

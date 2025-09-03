@@ -566,7 +566,7 @@ def _render_markdown_suite(
             if saturated:
                 break
         if saturated:
-            lines.extend(["> ⚠️ saturated: pre_em_norm ≥ 0.98", ""])
+            lines.extend(["> ⚠️ non-informative for uplift: pre_em_norm ≥ 0.98", ""])
 
         metric_keys = sorted(
             {

@@ -39,15 +39,20 @@ If any criterion fails, abort the run, fix the configuration, and re-run.
 
 ## 1.2) Expected baseline EM ranges
 
-Approximate EM ranges for `n=50` and `dataset_profile=default`:
+Approximate EM ranges for `n=50`. The default `semantic` and `episodic_cross`
+splits saturate and are kept only as smoke tests. Use their `hard` variants for
+meaningful evaluation:
 
-| Suite     | Expected EM range |
-|-----------|------------------|
-| episodic  | 0.20–0.40        |
-| semantic  | 0.30–0.70        |
-| spatial   | 0.05–0.20        |
+| Suite            | Expected EM range |
+|------------------|------------------|
+| episodic         | 0.20–0.40        |
+| semantic (hard)  | 0.55–0.80        |
+| spatial          | 0.05–0.20        |
 
 Runs outside these ranges likely indicate misconfiguration or saturated datasets.
+
+The legacy `semantic` and `episodic_cross` splits remain in `data/` for quick
+smoke tests but are marked “non-informative for uplift”.
 
 # 2) Baselines
 
@@ -98,14 +103,16 @@ Each suite provides a minimal `n=50` split for smoke and cross‑session experim
 Generators expose `profile` options forwarded via `dataset_profile`. Profiles
 tune difficulty, expected baseline EM, and memory uplift (see `EVAL_PROTOCOL.md` §Dataset profiles):
 
-| Suite   | `base` evaluates                  | `hard` adds to probe            |
-| ------- | --------------------------------- | ------------------------------- |
-| episodic | single‑hop recall                | extra distractors and swaps     |
-| semantic | schema‑fit triples              | near‑miss relations, contradictions |
-| spatial  | simple grids and paths           | dead‑ends and alternative routes |
+| Suite          | `base` evaluates                      | `hard` adds to probe                       |
+| -------------- | ------------------------------------- | ------------------------------------------ |
+| episodic       | single‑hop recall                     | extra distractors and swaps                |
+| episodic_cross | flush‑delimited recall                | extra distractors, limited entity pool     |
+| semantic       | schema‑fit triples                   | near‑miss relations, contradictions       |
+| spatial        | simple grids and paths                | dead‑ends and alternative routes          |
 
-Select `dataset_profile=hard` when baselines exceed 0.98 EM or when running
-`episodic_cross`/`episodic_capacity` to avoid saturation.
+Select `dataset_profile=hard` when baselines exceed 0.98 EM. `semantic` and
+`episodic_cross` defaults already saturate; their easy splits remain only for
+smoke tests.
 
 The **default** profile targets the baseline EM ranges in §1.2 and should show a memory uplift of roughly +0.2 EM.
 The **hard** profile drives baseline EM toward zero but still expects ≥ +0.2 uplift when memory is enabled.

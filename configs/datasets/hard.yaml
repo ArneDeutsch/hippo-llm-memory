@@ -5,6 +5,7 @@ episodic_multi:
   corrections: true
 episodic_cross:
   entity_pool: 8
+  distractors: 4
 episodic_capacity:
   context_budget: 512
 semantic:

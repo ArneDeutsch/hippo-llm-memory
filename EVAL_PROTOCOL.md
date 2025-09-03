@@ -55,7 +55,7 @@ To control replay loops, pass `replay_cycles=<n>` or `replay.cycles=<n>`.
 Two difficulty profiles control task hardness and expected memory gains:
 
 - **default** – moderate difficulty; baseline EM should land within the ranges in [EVAL_PLAN.md §1.2](EVAL_PLAN.md#12-expected-baseline-em-ranges) and memory-enabled runs should improve EM by ≥ 0.2.
-- **hard** – adds distractors or contradictions so baseline EM ≈ 0.0; memory is expected to lift EM by ≥ 0.2. Use for `episodic_cross`, `episodic_capacity`, or when baselines saturate.
+- **hard** – adds distractors or contradictions so baseline EM drops well below 1.0; memory is expected to lift EM by ≥ 0.2. Use when baselines saturate. The easy `semantic` and `episodic_cross` splits saturate and are retained only as smoke tests.
 
 | Suite              | Recommended profile |
 | ------------------ | ------------------ |
@@ -63,13 +63,14 @@ Two difficulty profiles control task hardness and expected memory gains:
 | episodic_multi     | default            |
 | episodic_cross     | hard               |
 | episodic_capacity  | hard               |
-| semantic           | default            |
+| semantic           | hard               |
 | spatial            | default            |
 
 ```bash
 # Recommended flags for sensitive suites
 suite=episodic_cross dataset_profile=hard --strict-telemetry
 suite=episodic_capacity dataset_profile=hard --strict-telemetry
+suite=semantic       dataset_profile=hard --strict-telemetry
 ```
 
 ### Telemetry invariants

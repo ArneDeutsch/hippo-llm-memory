@@ -1,7 +1,9 @@
 """Wrapper around :mod:`hippo_mem.eval.datasets` for CLI use.
 
-This script preserves the original ``scripts`` entry point while routing all
-functionality to :mod:`hippo_mem.eval.datasets`.
+Expose dataset profiles including "hard" variants for ``semantic`` and
+``episodic_cross`` to avoid baseline saturation.  This script preserves the
+original ``scripts`` entry point while routing all functionality to
+``hippo_mem.eval.datasets``.
 """
 
 import sys

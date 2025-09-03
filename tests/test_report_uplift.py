@@ -30,7 +30,7 @@ def test_markdown_includes_ci_and_saturation(tmp_path: Path) -> None:
         seed_count=2,
     )
     assert "0.500 ± 0.020" in text
-    assert "saturated" in text.lower()
+    assert "non-informative" in text.lower()
 
 
 def test_markdown_includes_zero_ci_and_note_single_seed() -> None:
