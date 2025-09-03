@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       STRICT_TELEMETRY: "1"
+      RUN_ID: ci_${{ github.run_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

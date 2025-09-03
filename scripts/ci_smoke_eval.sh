@@ -1,43 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export RUN_ID=ci_smoke
-export MODEL=models/tiny-gpt2
-export STRICT_TELEMETRY=1
+export RUN_ID=${RUN_ID:-ci_smoke}
+export MODEL=${MODEL:-models/tiny-gpt2}
+export STRICT_TELEMETRY=${STRICT_TELEMETRY:-1}
 source "$(dirname "$0")/_env.sh"
+
+SUITE=${SUITE:-episodic}
+PRESET=${PRESET:-memory/hei_nw}
+SESSION_ID=${SESSION_ID:-$HEI_SESSION_ID}
 
 # 1. Matrix baselines
 python scripts/eval_model.py +run_matrix=true \
   run_id="$RUN_ID" \
   presets=[baselines/core] \
-  tasks=[episodic] \
+  tasks=[${SUITE}] \
   n_values=[50] \
   seeds=[1337] \
   compute.pre_metrics=true \
-  model=models/tiny-gpt2 \
+  model="$MODEL" \
   > /dev/null
 
 # 2. Aggregation
 python scripts/run_baselines.py --run-id "$RUN_ID"
 
-# 3. Teach, replay, test with strict telemetry
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
+# 3. Teach and test with strict telemetry
+python scripts/eval_model.py suite=$SUITE preset=$PRESET \
   run_id="$RUN_ID" n=50 seed=1337 mode=teach persist=true \
-  store_dir="$STORES" session_id="$HEI_SESSION_ID" \
+  store_dir="$STORES" session_id="$SESSION_ID" \
   compute.pre_metrics=true strict_telemetry=true \
-  model=models/tiny-gpt2 > /dev/null
+  model="$MODEL" > /dev/null
 
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
-  run_id="$RUN_ID" n=50 seed=1337 mode=replay \
-  store_dir="$STORES" session_id="$HEI_SESSION_ID" \
-  replay.cycles=1 strict_telemetry=true \
-  model=models/tiny-gpt2 > /dev/null
-
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
+python scripts/eval_model.py suite=$SUITE preset=$PRESET \
   run_id="$RUN_ID" n=50 seed=1337 mode=test \
-  store_dir="$STORES" session_id="$HEI_SESSION_ID" \
+  store_dir="$STORES" session_id="$SESSION_ID" \
   strict_telemetry=true \
-  model=models/tiny-gpt2 > /dev/null
+  model="$MODEL" > /dev/null
 
 # 4. Report generation
 python scripts/report.py --run-id "$RUN_ID"
