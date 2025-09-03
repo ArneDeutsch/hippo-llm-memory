@@ -7,11 +7,16 @@ import argparse
 import csv
 import json
 import math
+import sys
 from pathlib import Path
 from statistics import mean, pstdev
 from typing import Dict, Iterable, List
 
-from hippo_mem.utils import validate_run_id
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:  # pragma: no branch - idempotent
+    sys.path.insert(0, str(ROOT))
+
+from hippo_mem.utils import validate_run_id  # noqa: E402
 
 
 def _ci95(values: List[float]) -> float:
