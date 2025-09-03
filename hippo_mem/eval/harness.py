@@ -323,6 +323,10 @@ def _evaluate(
     t0 = time.perf_counter()
     for idx, item in enumerate(task_list, 1):
         item_t0 = time.perf_counter()
+        mem_hit = False
+        mem_latency = 0.0
+        router_path: List[str] = []
+        topk_keys: List[str] = []
         if retrieval_enabled and modules:
             hidden = torch.zeros(1, 1, 8)
             mems: List[MemoryTokens] = []
@@ -332,7 +336,12 @@ def _evaluate(
                 proj = getattr(adapter, "proj", nn.Linear(store.dim, 8))
                 adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="episodic", k=1)
-                mems.append(episodic_retrieve_and_pack(hidden, spec, store, proj))
+                mem = episodic_retrieve_and_pack(hidden, spec, store, proj)
+                mems.append(mem)
+                mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
+                mem_latency += float(mem.meta.get("latency_ms", 0.0))
+                router_path.append("episodic")
+                topk_keys.extend(mem.meta.get("trace_ids", []) or [])
             if "relational" in modules:
                 kg = modules["relational"]["kg"]
                 adapter = modules["relational"]["adapter"]
@@ -341,14 +350,24 @@ def _evaluate(
                 proj = getattr(adapter, "proj", nn.Linear(in_dim, hidden_dim))
                 adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="relational", k=1)
-                mems.append(relational_retrieve_and_pack(hidden, spec, kg, proj))
+                mem = relational_retrieve_and_pack(hidden, spec, kg, proj)
+                mems.append(mem)
+                mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
+                mem_latency += float(mem.meta.get("latency_ms", 0.0))
+                router_path.append("relational")
+                topk_keys.extend(mem.meta.get("trace_ids", []) or [])
             if "spatial" in modules:
                 graph = modules["spatial"]["map"]
                 adapter = modules["spatial"]["adapter"]
                 proj = getattr(adapter, "proj", nn.Linear(4, 8))
                 adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="spatial")
-                mems.append(spatial_retrieve_and_pack("origin", spec, graph, proj))
+                mem = spatial_retrieve_and_pack("origin", spec, graph, proj)
+                mems.append(mem)
+                mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
+                mem_latency += float(mem.meta.get("latency_ms", 0.0))
+                router_path.append("spatial")
+                topk_keys.extend(mem.meta.get("trace_ids", []) or [])
             if mems:
                 tokens = torch.cat([m.tokens for m in mems], dim=1)
                 mask = torch.cat([m.mask for m in mems], dim=1)
@@ -455,6 +474,12 @@ def _evaluate(
                 "overlong": overlong,
                 "format_violation": fmt,
                 "latency_ms": latency_ms,
+                "memory_hit": int(mem_hit),
+                "retrieval_latency_ms": mem_latency,
+                "router_path": router_path or None,
+                "topk_keys": topk_keys or None,
+                "distance": None,
+                "justification": None,
             }
         )
         if idx % progress_interval == 0 or idx == total:
@@ -791,6 +816,11 @@ def _write_outputs(
         "pre_overlong": pre_metrics.get("overlong"),
         "pre_format_violation": pre_metrics.get("format_violation"),
     }
+    if pre_rows:
+        hits = sum(int(r.get("memory_hit", 0)) for r in pre_rows)
+        lat_delta = sum(float(r.get("retrieval_latency_ms", 0.0)) for r in pre_rows)
+        suite_metrics["memory_hit_rate"] = hits / max(1, len(pre_rows))
+        suite_metrics["latency_ms_delta"] = lat_delta / max(1, len(pre_rows))
     if post_metrics is not None:
         suite_metrics.update(
             {
@@ -908,6 +938,12 @@ def _write_outputs(
             "overlong",
             "format_violation",
             "latency_ms",
+            "memory_hit",
+            "retrieval_latency_ms",
+            "router_path",
+            "topk_keys",
+            "distance",
+            "justification",
             "success",
             "steps_pred",
             "steps_opt",
@@ -933,6 +969,10 @@ def _write_outputs(
                     "prompt": str(row["prompt"])[:2000],
                     "answer": str(row["answer"])[:2000],
                     "pred": str(row["pred"])[:2000],
+                    "router_path": row.get("router_path"),
+                    "topk_keys": row.get("topk_keys"),
+                    "distance": row.get("distance"),
+                    "justification": row.get("justification"),
                 }
             )
         with (outdir / "audit_sample.jsonl").open("w", encoding="utf-8") as f:

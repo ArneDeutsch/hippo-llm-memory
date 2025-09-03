@@ -1,3 +1,4 @@
+import csv
 import json
 import subprocess
 import sys
@@ -50,7 +51,14 @@ def test_dry_run_smoke(tmp_path: Path, preset: str, suite: str) -> None:
     compute = metrics["metrics"]["compute"]
     assert compute["time_ms_per_100"] > 0
     assert compute["latency_ms_mean"] > 0
-    assert "em_raw" in metrics["metrics"][suite]
+    suite_metrics = metrics["metrics"][suite]
+    assert "em_raw" in suite_metrics
+    assert "memory_hit_rate" in suite_metrics
+    assert "latency_ms_delta" in suite_metrics
+    with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        assert "memory_hit" in reader.fieldnames
+        assert "retrieval_latency_ms" in reader.fieldnames
 
     assert meta["preset"] == preset
     assert meta["suite"] == suite

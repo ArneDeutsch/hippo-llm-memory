@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from omegaconf import DictConfig, OmegaConf
 
+from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.eval import harness
 
 
@@ -77,6 +78,10 @@ def test_preflight_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     try:
         harness.preflight_check(cfg, outdir)
         assert not (outdir / "failed_preflight.json").exists()
+        attempts = sum(
+            gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
+        )
+        assert attempts > 0
     finally:
         shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
 
@@ -92,6 +97,10 @@ def test_preflight_missing_baseline_hints_command(
         fail_msg = json.loads((outdir / "failed_preflight.json").read_text())["errors"][0]
         assert f"runs/{cfg.run_id}/baselines/metrics.csv" in fail_msg
         assert f"python scripts/run_baselines.py --run-id {cfg.run_id}" in fail_msg
+        attempts = sum(
+            gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
+        )
+        assert attempts > 0
     finally:
         shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
 
@@ -108,6 +117,10 @@ def test_preflight_empty_store_hints_command(
         assert "empty store" in fail_msg
         assert "python scripts/eval_model.py --mode teach" in fail_msg
         assert f"--run-id {cfg.run_id}" in fail_msg
+        attempts = sum(
+            gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
+        )
+        assert attempts > 0
     finally:
         shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
 

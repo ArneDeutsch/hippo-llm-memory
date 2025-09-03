@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from omegaconf import DictConfig, OmegaConf
 
+from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.eval import harness
 
 
@@ -54,6 +55,10 @@ def test_preflight_missing_baselines_lists_both_paths(
         expect = f"runs/{rid}/baselines/metrics.csv"
         assert expect in fail_msg
         assert f"python scripts/run_baselines.py --run-id {rid}" in fail_msg
+        attempts = sum(
+            gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
+        )
+        assert attempts > 0
     finally:
         shutil.rmtree(Path("runs") / rid, ignore_errors=True)
 
@@ -77,5 +82,9 @@ def test_preflight_missing_store_meta_lists_both_paths(
         meta_base = store_dir / "hei_nw" / cfg.session_id / "store_meta.json"
         assert str(meta_algo) in fail_msg
         assert str(meta_base) in fail_msg
+        attempts = sum(
+            gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
+        )
+        assert attempts > 0
     finally:
         shutil.rmtree(Path("runs") / rid, ignore_errors=True)
