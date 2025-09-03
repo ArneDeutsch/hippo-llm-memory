@@ -31,6 +31,13 @@ def test_generate_episodic_cross_flush() -> None:
     assert any("FLUSH" in it["prompt"] for it in items1)
 
 
+def test_generate_episodic_cross_single_token_answer() -> None:
+    items = build_datasets.generate_episodic_cross(size=5, seed=0)
+    for item in items:
+        assert "location name only" in item["prompt"]
+        assert len(item["answer"].split()) == 1
+
+
 def test_generate_episodic_capacity_longer_than_budget() -> None:
     items1 = build_datasets.generate_episodic_capacity(size=1, seed=0, context_budget=16)
     items2 = build_datasets.generate_episodic_capacity(size=1, seed=0, context_budget=16)

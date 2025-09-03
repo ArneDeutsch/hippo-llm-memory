@@ -236,8 +236,8 @@ def generate_episodic_cross(
         who = rng.choice(people)
         where = rng.choice(places)
         fact = f"{who} went to the {where}."
-        prompt = f"{fact} --- FLUSH --- Where did {who} go?"
-        tasks.append({"prompt": prompt, "answer": f"the {where}"})
+        prompt = f"{fact} --- FLUSH --- Where did {who} go? " "Answer with the location name only."
+        tasks.append({"prompt": prompt, "answer": where})
     return tasks
 
 
