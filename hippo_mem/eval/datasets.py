@@ -27,6 +27,17 @@ from hippo_mem.tasks.spatial.generator import generate_spatial
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
 
+_CAPACITY_FILLER_SENTENCES = [
+    "The sky is blue.",
+    "Birds sing at dawn.",
+    "She closed the door.",
+    "Rain pattered softly.",
+    "A cat napped nearby.",
+    "Wind rustled the leaves.",
+    "They walked along quietly.",
+    "Stars twinkled above.",
+]
+
 
 def generate_episodic(
     size: int,
@@ -246,10 +257,23 @@ def generate_episodic_capacity(
     seed: int,
     context_budget: int | None = None,
     profile: str = "default",
+    target_length: int | None = None,
 ) -> List[Dict[str, object]]:
     """Episodes exceeding the decoding context budget.
 
-    ``context_budget`` defaults depend on ``profile``.
+    Parameters
+    ----------
+    size
+        Number of items to generate.
+    seed
+        RNG seed.
+    context_budget
+        Base context budget in tokens. Defaults depend on ``profile``.
+    profile
+        Difficulty profile (``easy``/``default``/``hard``).
+    target_length
+        Total prompt length in tokens. When ``None`` the value becomes
+        ``context_budget`` plus the fact/question length and a 10 token buffer.
     """
 
     rng = random.Random(seed)
@@ -262,9 +286,18 @@ def generate_episodic_capacity(
         who = rng.choice(people)
         where = rng.choice(places)
         fact = f"{who} went to the {where}."
-        filler = " ".join("filler" for _ in range(context_budget + 10))
         question = f"Where did {who} go?"
-        prompt = f"{fact} {filler} {question}"
+        base_tokens = len(fact.split()) + len(question.split())
+        if target_length is None:
+            target = context_budget + base_tokens + 10
+        else:
+            target = target_length
+        filler_tokens_needed = max(target - base_tokens, 0)
+        filler_tokens: List[str] = []
+        while len(filler_tokens) < filler_tokens_needed:
+            filler_tokens.extend(rng.choice(_CAPACITY_FILLER_SENTENCES).split())
+        filler_text = " ".join(filler_tokens[:filler_tokens_needed])
+        prompt = f"{fact} {filler_text} {question}"
         tasks.append({"prompt": prompt, "answer": f"the {where}"})
     return tasks
 
