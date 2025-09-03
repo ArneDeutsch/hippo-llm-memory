@@ -84,7 +84,8 @@ class RelationalGate:
         stats = gate_registry.get("relational")
         stats.attempts += 1
 
-        head, rel, tail, *_rest, conf, _prov = tup
+        head, rel, tail = tup[:3]
+        conf = tup[5] if len(tup) > 5 else 1.0
 
         novelty = self._novelty(head, rel, tail, kg)
         deg_pen = self._degree_penalty(head, tail, kg)

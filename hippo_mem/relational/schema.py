@@ -29,6 +29,16 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 from .tuples import TupleType
 
+
+def _pad_tuple(tup: TupleType | tuple) -> TupleType:
+    """Return ``tup`` with default types when missing."""
+
+    if len(tup) == 7:
+        head, relation, tail, context, time, conf, prov = tup
+        return (head, relation, tail, context, time, conf, prov, "entity", "entity")
+    return tup  # type: ignore
+
+
 if TYPE_CHECKING:  # pragma: no cover
     from .kg import KnowledgeGraph
 
@@ -146,14 +156,16 @@ class SchemaIndex:
             s = self.score(schema, tup)
             if s > best_score:
                 best_score = s
+        orig = tup
+        tup = _pad_tuple(tup)
         if best_score >= self.threshold and tup[5] >= self.threshold:
-            head, relation, tail, context, time, conf, prov = tup
-            kg.upsert(head, relation, tail, context, time, conf, prov)
+            head, relation, tail, context, time, conf, prov, head_type, tail_type = tup
+            kg.upsert(head, relation, tail, context, head_type, tail_type, time, conf, prov)
             # why: flushing handles newly qualified buffered tuples
             self.flush(kg)
             return True
         # why: keep low-confidence tuples for episodic replay
-        self.episodic_buffer.append(tup)
+        self.episodic_buffer.append(orig)
         return False
 
     def flush(self, kg: KnowledgeGraph) -> None:
@@ -172,9 +184,10 @@ class SchemaIndex:
                 s = self.score(schema, tup)
                 if s > best_score:
                     best_score = s
-            if best_score >= self.threshold and tup[5] >= self.threshold:
-                head, relation, tail, context, time, conf, prov = tup
-                kg.upsert(head, relation, tail, context, time, conf, prov)
+            padded = _pad_tuple(tup)
+            if best_score >= self.threshold and padded[5] >= self.threshold:
+                head, relation, tail, context, time, conf, prov, head_type, tail_type = padded
+                kg.upsert(head, relation, tail, context, head_type, tail_type, time, conf, prov)
             else:
                 remaining.append(tup)
         self.episodic_buffer = remaining

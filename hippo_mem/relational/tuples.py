@@ -3,9 +3,10 @@
 Summary
 -------
 Provide lightweight tuple extraction for SGC-RSS. Each sentence is parsed
-into ``(head, relation, tail, context, time, conf, provenance)`` with
-rudimentary heuristics. Precision reaches ≈0.9 when ``threshold >= 0.5``
-as verified in unit tests.
+into ``(head, relation, tail, context, time, conf, provenance, head_type, tail_type)``
+with rudimentary heuristics. Types default to ``"entity"`` and allow the
+semantic store to track heterogeneous nodes. Precision reaches ≈0.9 when
+``threshold >= 0.5`` as verified in unit tests.
 Complexity
 ----------
 All helpers operate in ``O(n)`` time where ``n`` is the number of
@@ -28,7 +29,7 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Tuple
 
-TupleType = Tuple[str, str, str, str, Optional[str], float, int]
+TupleType = Tuple[str, str, str, str, Optional[str], float, int, str, str]
 
 
 def split_sentences(text: str) -> List[str]:
@@ -207,7 +208,7 @@ def extract_tuples(text: str, threshold: float = 0.0) -> List[TupleType]:
     Returns
     -------
     List[TupleType]
-        ``(head, relation, tail, context, time, conf, provenance)`` tuples.
+        ``(head, relation, tail, context, time, conf, provenance, head_type, tail_type)`` tuples.
     Complexity
     ----------
     Linear in number of sentences.
@@ -234,7 +235,7 @@ def extract_tuples(text: str, threshold: float = 0.0) -> List[TupleType]:
             continue
 
         # why: sentence index serves as minimal provenance for rollback
-        tuples.append((head, relation, tail, sent.strip(), time, conf, idx))
+        tuples.append((head, relation, tail, sent.strip(), time, conf, idx, "entity", "entity"))
 
     return tuples
 

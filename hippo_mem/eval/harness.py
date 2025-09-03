@@ -584,7 +584,12 @@ def _store_sizes(
     if "relational" in modules:
         kg = modules["relational"]["kg"]
         sizes["relational"] = int(kg.graph.number_of_edges())
-        diags["relational"] = {"nodes_added": int(kg.graph.number_of_nodes())}
+        status = kg.log_status()
+        diags["relational"] = {
+            "nodes_added": int(status.get("nodes_added", kg.graph.number_of_nodes())),
+            "edges_added": int(status.get("edges_added", kg.graph.number_of_edges())),
+            "coref_merges": int(status.get("coref_merges", 0)),
+        }
     if "spatial" in modules:
         g = modules["spatial"].get("map")
         nodes = len(getattr(g, "_context_to_id", {}))
