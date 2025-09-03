@@ -346,8 +346,8 @@ def generate_semantic(
         Probability of replacing entity mentions with pronouns to introduce
         ambiguity. ``None`` derives the rate from ``profile``.
     profile:
-        Difficulty profile controlling default ``hop_depth`` and contradiction
-        behaviour.
+        Difficulty profile. ``hard`` enables 3-hop chains, paraphrasing,
+        pronoun ambiguity and prepended distractor fact pairs.
 
     Returns
     -------
@@ -403,8 +403,17 @@ def generate_semantic(
             ditem = rng.choice(items)
             dstore = rng.choice(stores)
             dcity = rng.choice(cities)
-            parts.append(f"{dwho} {_buy_verb()} a {ditem} at {dstore}.")
-            parts.append(f"{dstore} {_is_in_phrase()} {dcity}.")
+            sent = f"{dwho} {_buy_verb()} a {ditem} at {dstore}."
+            if not require_memory:
+                parts.append(sent)
+            facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
+            is_in = _is_in_phrase()
+            sent = f"{dstore} {is_in} {dcity}."
+            if rng.random() < ambiguity_prob:
+                sent = f"It {is_in} {dcity}."
+            if not require_memory:
+                parts.append(sent)
+            facts.append({"text": sent, "schema_fit": True, "time": len(facts)})
         if hop_depth == 2:
             sent = f"{who} {_buy_verb()} a {item} at {store}."
             if not require_memory:
