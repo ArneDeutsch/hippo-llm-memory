@@ -24,6 +24,7 @@ def test_subgraph_packing_and_mask() -> None:
     assert mem.mask.shape == (1, 7)
     assert mem.mask[0, :5].all()
     assert not mem.mask[0, 5:].any()
+    assert mem.meta["hint"] == "go to a"
 
     nodes, edges = g.local("b", radius=1)
     feats = []
@@ -31,7 +32,7 @@ def test_subgraph_packing_and_mask() -> None:
         ctx = g._id_to_context[n]
         p = g.encoder.encode(ctx)
         feats.append(torch.tensor([p.coord[0], p.coord[1], float(p.last_seen), 1.0]))
-    for u, v in edges:
+    for u, v, _ in edges:
         e = g.graph[u][v]
         feats.append(torch.tensor([e.cost, e.success, float(e.last_seen), 0.0]))
     expected = torch.stack(feats).unsqueeze(0)

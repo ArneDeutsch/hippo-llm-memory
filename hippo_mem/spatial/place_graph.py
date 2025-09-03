@@ -20,7 +20,7 @@ from .map import PlaceGraph as _PlaceGraph
 class PlaceGraph(_PlaceGraph):
     """PlaceGraph with a ``local`` query for radius-based subgraphs."""
 
-    def local(self, context: str, radius: int = 1) -> Tuple[List[int], List[Tuple[int, int]]]:
+    def local(self, context: str, radius: int = 1) -> Tuple[List[int], List[Tuple[int, int, str]]]:
         """Return node ids and directed edges within ``radius`` hops.
 
         Parameters
@@ -32,15 +32,15 @@ class PlaceGraph(_PlaceGraph):
 
         Returns
         -------
-        tuple[list[int], list[tuple[int, int]]]
-            Node identifiers and ``(src, dst)`` edge pairs.
+        tuple[list[int], list[tuple[int, int, str]]]
+            Node identifiers and ``(src, dst, kind)`` edge triples.
         """
 
         if context not in self._context_to_id:
             return [], []
         start = self._context_to_id[context]
         nodes = [start]
-        edges: List[Tuple[int, int]] = []
+        edges: List[Tuple[int, int, str]] = []
         visited = {start}
         q: deque[Tuple[int, int]] = deque([(start, 0)])
         while q:
@@ -48,7 +48,8 @@ class PlaceGraph(_PlaceGraph):
             if dist == radius:
                 continue
             for nbr in sorted(self.graph.get(node, {})):
-                edges.append((node, nbr))
+                kind = getattr(self.graph[node][nbr], "kind", "generic")
+                edges.append((node, nbr, kind))
                 if nbr not in visited:
                     visited.add(nbr)
                     nodes.append(nbr)
