@@ -101,17 +101,33 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         self.gate = gate
         self._episodic_queue: list[TupleType] = []
         self._maintenance = maintenance or MaintenanceManager(self)
+        self.counters = {"nodes_added": 0, "edges_added": 0, "coref_merges": 0}
+        self._coref_index: Dict[str, str] = {}
         StoreLifecycleMixin.__init__(self)
         RollbackMixin.__init__(self, int(self.config.get("max_undo", 5)))
 
     # ------------------------------------------------------------------
     # Graph manipulation
+    def _resolve_name(self, name: str) -> str:
+        """Return canonical form for ``name`` and count merges."""
+
+        key = name.lower()
+        canon = self._coref_index.get(key)
+        if canon is not None:
+            if canon != name:
+                self.counters["coref_merges"] += 1
+            return canon
+        self._coref_index[key] = name
+        return name
+
     def upsert(
         self,
         head: str,
         relation: str,
         tail: str,
         context: str,
+        head_type: str = "entity",
+        tail_type: str = "entity",
         time: Optional[str] = None,
         conf: float = 1.0,
         provenance: Optional[int] = None,
@@ -149,8 +165,14 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         ingest
         """
 
-        self.graph.add_node(head)
-        self.graph.add_node(tail)
+        head = self._resolve_name(head)
+        tail = self._resolve_name(tail)
+        if head not in self.graph:
+            self.graph.add_node(head, type=head_type)
+            self.counters["nodes_added"] += 1
+        if tail not in self.graph:
+            self.graph.add_node(tail, type=tail_type)
+            self.counters["nodes_added"] += 1
 
         # why: persist tuple and provenance for rollback
         self.backend.exec(
@@ -186,6 +208,7 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
             conf=conf,
             provenance=provenance,
         )
+        self.counters["edges_added"] += 1
         if edge_embedding is not None:
             self.graph[head][tail][edge_id]["embedding"] = np.asarray(
                 list(edge_embedding), dtype=float
@@ -235,14 +258,19 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         --------
         SchemaIndex.fast_track
         """
+        padded = tup
+        if len(padded) == 7:
+            head, rel, tail, ctx, time_str, conf, prov = padded
+            padded = (head, rel, tail, ctx, time_str, conf, prov, "entity", "entity")
+
         decision = GateDecision("insert", "no_gate")
         if self.gate:
-            decision = self.gate.decide(tup, self)
+            decision = self.gate.decide(padded, self)
 
         if decision.action == "insert":
             self.schema_index.fast_track(tup, self)
         elif decision.action == "aggregate":
-            self.aggregate_duplicate(tup)
+            self.aggregate_duplicate(padded)
         elif decision.action == "route_to_episodic":
             self.route_to_episodic(tup)
         return decision
@@ -250,7 +278,7 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
     def aggregate_duplicate(self, tup: TupleType) -> None:
         """Increase edge evidence for an existing tuple."""
 
-        head, rel, tail, ctx, time_str, conf, prov = tup
+        head, rel, tail, ctx, time_str, conf, prov, *_ = tup
         data = self.graph.get_edge_data(head, tail) or {}
         for edge_id, edge in data.items():
             if edge.get("relation") == rel:
@@ -516,15 +544,16 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
                 self._restore_edge(op["data"])
         self._log_event("rollback", {"op": "prune"})
 
-    def _restore_node(self, data: tuple[str, Optional[np.ndarray]]) -> None:
+    def _restore_node(self, data: tuple) -> None:
         """Recreate a single node from ``rollback`` data."""
 
         self._seen_nodes: set[str] = getattr(self, "_seen_nodes", set())
-        name, emb = data
+        name, emb, *rest = data
+        node_type = rest[0] if rest else None
         if name in self._seen_nodes:
             return
         self._seen_nodes.add(name)
-        self.graph.add_node(name)
+        self.graph.add_node(name, type=node_type)
         self.backend.exec(
             "INSERT OR IGNORE INTO nodes(name, embedding) VALUES (?, ?)",
             (name, self._to_json(emb)),
@@ -582,24 +611,20 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         }
         io.atomic_write_json(path / "store_meta.json", meta)
         file = path / "kg.jsonl"
-        if replay_samples <= 0:
-            # Create an empty placeholder so downstream checks pass even when no
-            # relational facts were written during the teach phase.
-            io.atomic_write_file(file, lambda tmp: open(tmp, "w", encoding="utf-8").write(""))
-            return
-
         if fmt == "jsonl":
 
             def _write(tmp_path: Path) -> None:
                 with open(tmp_path, "w", encoding="utf-8") as fh:
                     for name in self.graph.nodes:
                         emb = self.node_embeddings.get(name)
+                        node_type = self.graph.nodes[name].get("type")
                         fh.write(
                             json.dumps(
                                 {
                                     "schema": "relational.v1",
                                     "type": "node",
                                     "name": name,
+                                    "node_type": node_type,
                                     "embedding": emb.tolist() if emb is not None else None,
                                 }
                             )
@@ -635,7 +660,13 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
             nodes = []
             for name in self.graph.nodes:
                 emb = self.node_embeddings.get(name)
-                nodes.append({"name": name, "embedding": emb.tolist() if emb is not None else None})
+                nodes.append(
+                    {
+                        "name": name,
+                        "node_type": self.graph.nodes[name].get("type"),
+                        "embedding": emb.tolist() if emb is not None else None,
+                    }
+                )
             edges = []
             for src, dst, key, data in self.graph.edges(data=True, keys=True):
                 emb = data.get("embedding")
@@ -678,7 +709,8 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
                         if rec.get("embedding") is not None
                         else None
                     )
-                    self._restore_node((rec["name"], emb))
+                    node_type = rec.get("node_type")
+                    self._restore_node((rec["name"], emb, node_type))
                 elif rec.get("type") == "edge":
                     emb_json = (
                         json.dumps(rec.get("embedding"))
@@ -707,7 +739,7 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
                     if rec.get("embedding") is not None
                     else None
                 )
-                self._restore_node((rec["name"], emb))
+                self._restore_node((rec["name"], emb, rec.get("node_type")))
             for rec in edges_df.to_dict(orient="records"):
                 emb_json = (
                     json.dumps(rec.get("embedding")) if rec.get("embedding") is not None else None
@@ -727,6 +759,14 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
                 )
         else:  # pragma: no cover - defensive
             raise ValueError(f"Unsupported format: {fmt}")
+
+        self.counters["nodes_added"] = self.graph.number_of_nodes()
+        self.counters["edges_added"] = self.graph.number_of_edges()
+
+    def log_status(self) -> dict[str, int]:  # pragma: no cover - simple accessor
+        """Return diagnostic counters for this graph."""
+
+        return {**self._log, **self.counters}
 
 
 __all__ = ["KnowledgeGraph"]

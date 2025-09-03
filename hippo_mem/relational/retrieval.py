@@ -97,6 +97,7 @@ def relational_retrieve_and_pack(
     dtype = batch_hidden.dtype
     pooler = pooler or NodePooler()
     base_dim = kg.dim or batch_hidden.size(-1)
+    names: list[list[str]] = []
 
     def iter_retrieve():
         for i in range(bsz):
@@ -104,12 +105,13 @@ def relational_retrieve_and_pack(
             sub, nodes = _retrieve_subgraph(kg, query, seeds, hops, limit)
             vecs = [pooler(kg, sub, n, base_dim) for n in nodes]
             arr = np.stack(vecs) if vecs else np.zeros((0, base_dim), dtype=np.float32)
+            names.append(nodes)
             yield arr, len(nodes)
 
     def meta_fn(start: float, hits: int, k: int, bsz: int) -> dict[str, float]:
         return build_meta("relational", start, hits, k, bsz=bsz, hops=hops, seeds=seeds)
 
-    return retrieve_and_pack_base(
+    mem = retrieve_and_pack_base(
         iter_retrieve,
         k=limit,
         device=device,
@@ -118,6 +120,8 @@ def relational_retrieve_and_pack(
         build_meta_fn=meta_fn,
         telemetry_key="relational",
     )
+    mem.meta["nodes"] = names
+    return mem
 
 
 __all__ = ["NodePooler", "relational_retrieve_and_pack"]

@@ -43,6 +43,8 @@ class RelationalMemoryAdapter(nn.Module):
         present, the operation is **gated off** and a zero residual is emitted.
         This Python implementation is CPU bound and meant purely as a
         placeholder until a fused, batched attention kernel is integrated.
+        ``memory.meta.get("nodes")`` may list the corresponding KG node names
+        for debugging but is otherwise unused by the adapter.
         """
         if memory is None or not torch.any(memory.mask):
             return torch.zeros_like(hidden_states)
