@@ -10,6 +10,7 @@ from typing import List
 
 _ARTICLES = {"a", "an", "the"}
 _PUNCT_RE = re.compile(f"[{re.escape(string.punctuation)}]")
+_MOVE_SET = {"U", "D", "L", "R"}
 
 
 def normalize(s: str) -> str:
@@ -28,10 +29,18 @@ def em_raw(pred: str, gold: str) -> int:
 def em_norm(pred: str, gold: str) -> int:
     """Exact match after :func:`normalize`.
 
-    ``em_norm`` is constrained so that a raw mismatch cannot yield a
-    normalized match.  This prevents cases where ``em_raw`` is ``0`` but
-    ``em_norm`` is ``1``.
+    Non ``UDLR`` characters are stripped from both strings when the gold
+    answer encodes a move sequence. This accepts comma or whitespace
+    separated paths so evaluation reflects planning, not formatting.
+
+    ``em_norm`` is otherwise constrained so that a raw mismatch cannot
+    yield a normalized match.
     """
+    pm = "".join(ch for ch in pred.upper() if ch in _MOVE_SET)
+    gm = "".join(ch for ch in gold.upper() if ch in _MOVE_SET)
+    allowed = _MOVE_SET | set(string.whitespace) | set(string.punctuation)
+    if gm and all(ch in allowed for ch in gold.upper()):
+        return int(pm == gm)
     if not em_raw(pred, gold):
         return 0
     return int(normalize(pred) == normalize(gold))

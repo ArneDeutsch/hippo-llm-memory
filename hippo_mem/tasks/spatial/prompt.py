@@ -15,5 +15,5 @@ def make_prompt(
     return (
         f"Grid {grid_size}x{grid_size} with obstacles {obs_list}. "
         f"Start {start} goal {goal}. "
-        "Respond with moves using U, D, L, R only, no spaces."
+        "Respond with moves using U, D, L, R only, no spaces (e.g., UDLR)."
     )
