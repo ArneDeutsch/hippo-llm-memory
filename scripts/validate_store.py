@@ -40,6 +40,17 @@ def main() -> None:
         meta = resolve_store_meta_path(preset, store_dir, session_id)
         if not meta.exists():
             raise FileNotFoundError(f"missing store_meta.json: {meta}")
+        has_data = False
+        with path.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                if line.strip():
+                    has_data = True
+                    break
+        if not has_data:
+            raise ValueError(
+                "empty store: "
+                f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {args.run_id}"
+            )
 
     if args.metrics:
         with Path(args.metrics).open("r", encoding="utf-8") as fh:

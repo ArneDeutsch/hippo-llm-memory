@@ -96,7 +96,23 @@ def main(cfg: DictConfig) -> None:
             layout = StoreLayout(
                 base_dir=base_dir, algo_dir=Path(cfg.store_dir), session_id=str(cfg.session_id)
             )
-        assert_store_exists(str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind)
+        store_path = assert_store_exists(
+            str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind
+        )
+        if store_path is not None:
+            has_data = False
+            if store_path.exists():
+                with store_path.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        if line.strip():
+                            has_data = True
+                            break
+            if not has_data:
+                raise FileNotFoundError(
+                    "empty store: "
+                    f"{store_path} — populate via:\n  "
+                    f"python scripts/eval_model.py --mode teach +suite={cfg.suite} --run-id {cfg.run_id}"
+                )
     elif cfg.mode == "test" and (
         getattr(cfg, "store_dir", None) or getattr(cfg, "session_id", None)
     ):
@@ -113,7 +129,23 @@ def main(cfg: DictConfig) -> None:
                 cfg.store_dir = str(layout.algo_dir)
             if getattr(cfg, "session_id", None) is None:
                 cfg.session_id = layout.session_id
-        assert_store_exists(str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind)
+        store_path = assert_store_exists(
+            str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind
+        )
+        if store_path is not None:
+            has_data = False
+            if store_path.exists():
+                with store_path.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        if line.strip():
+                            has_data = True
+                            break
+            if not has_data:
+                raise FileNotFoundError(
+                    "empty store: "
+                    f"{store_path} — populate via:\n  "
+                    f"python scripts/eval_model.py --mode teach +suite={cfg.suite} --run-id {cfg.run_id}"
+                )
     elif getattr(cfg, "store_dir", None):
         root = Path(str(cfg.store_dir))
         cfg.store_dir = str(root if root.name == algo else root / algo)
