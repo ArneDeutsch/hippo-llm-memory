@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 : "${RUN_ID:?Set RUN_ID (simple slug like 'dev' or 'exp_42')}"
 RUNS="runs/$RUN_ID"
 REPORTS="reports/$RUN_ID"
