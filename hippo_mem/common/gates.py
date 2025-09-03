@@ -28,9 +28,21 @@ class GateDecision:
 GateResult = GateDecision
 
 
+@dataclass
+class GateCounters:
+    """Minimal gate telemetry for metrics."""
+
+    attempts: int = 0
+    accepted: int = 0
+    skipped: int = 0
+
+
 class MemoryGate(Protocol):
     """Protocol for gate objects."""
 
     def decide(self, *args, **kwargs) -> GateDecision:  # pragma: no cover - Protocol
         """Return a :class:`GateDecision`."""
         ...
+
+
+__all__ = ["GateDecision", "GateResult", "GateCounters", "MemoryGate"]

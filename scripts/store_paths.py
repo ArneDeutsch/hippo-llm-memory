@@ -1,4 +1,4 @@
-"""Backward-compatible re-exports for store helpers."""
+"""Re-exports store layout helpers for TEACH→TEST handoff."""
 
 from hippo_mem.utils.stores import (
     StoreLayout,
