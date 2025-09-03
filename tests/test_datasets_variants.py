@@ -44,3 +44,10 @@ def test_generate_episodic_capacity_longer_than_budget() -> None:
     assert items1 == items2
     assert len(items1) == 1
     assert len(items1[0]["prompt"].split()) > 16
+
+
+def test_generate_episodic_capacity_respects_target_length() -> None:
+    target = 50
+    items = build_datasets.generate_episodic_capacity(size=1, seed=0, target_length=target)
+    assert len(items) == 1
+    assert len(items[0]["prompt"].split()) == target
