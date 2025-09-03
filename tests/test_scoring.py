@@ -13,3 +13,9 @@ def test_em_norm_matches_raw_when_exact() -> None:
     gold = "answer"
     assert em_raw(pred, gold) == 1
     assert em_norm(pred, gold) == 1
+
+
+def test_em_norm_strips_non_moves() -> None:
+    pred = "U, D, L, R"
+    gold = "U D L R"
+    assert em_norm(pred, gold) == 1
