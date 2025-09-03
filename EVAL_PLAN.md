@@ -54,6 +54,13 @@ Runs outside these ranges likely indicate misconfiguration or saturated datasets
 The legacy `semantic` and `episodic_cross` splits remain in `data/` for quick
 smoke tests but are marked “non-informative for uplift”.
 
+## 1.3) Success bars
+
+- **episodic:** `ΔEM(core→memory) ≥ 0.10` and `EM(memory) ≥ EM(longctx)` with
+  `memory_hit_rate ≥ 0.3`.
+- **semantic:** EM uplift over `baselines/longctx` on the `semantic(hard)` split.
+- **spatial:** `EM ≥ 0.10` or `steps_to_goal` reduced by ≥20%.
+
 # 2) Baselines
 
 Define four presets under `configs/eval/baselines/`:

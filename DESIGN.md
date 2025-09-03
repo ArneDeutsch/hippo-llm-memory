@@ -262,6 +262,37 @@ class SpatialGate:
 * **Ablations:** −DG sparsity, −Hopfield, −gate, −replay scheduler, −schema fast-track, −path-integration, −macros.
 * **Compute:** FLOPs saved vs. long-context; KV memory with/without MQA/GQA.
 
+## 10.1 Teach→test protocol and success bars
+
+```bash
+export RUN_ID=my_experiment
+export STORES=runs/$RUN_ID/stores
+export SID=hei_$RUN_ID
+# Teach then test episodic memory
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
+  run_id=$RUN_ID mode=teach persist=true store_dir=$STORES session_id=$SID
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
+  run_id=$RUN_ID mode=test store_dir=$STORES session_id=$SID
+```
+
+Store layout:
+
+```
+runs/$RUN_ID/stores/
+  hei_nw/$SID/episodic.jsonl
+  sgc_rss/sgc_$RUN_ID/kg.jsonl
+  smpd/smpd_$RUN_ID/spatial.jsonl
+```
+
+Success bars:
+
+- episodic: `ΔEM(core→memory) ≥ 0.10` and `EM(memory) ≥ EM(longctx)` with
+  `memory_hit_rate ≥ 0.3`.
+- semantic: EM uplift over `baselines/longctx` on the `semantic(hard)` split.
+- spatial: `EM ≥ 0.10` or `steps_to_goal` reduced by ≥20%.
+
+`semantic(default)` and `episodic_cross(default)` act as **smoke tests** only.
+
 # 11) Ops: logging, provenance, rollback, and maintenance
 
 * Every write records `{text_span, doc_id, time, conf, source}`; **delete\_by\_provenance()** and snapshot/restore for all stores.

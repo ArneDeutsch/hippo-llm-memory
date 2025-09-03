@@ -78,6 +78,73 @@ DISPLAY_NAMES = {
     "uplift_vs_longctx_em": "ΔEM vs longctx",
     "uplift_vs_longctx_f1": "ΔF1 vs longctx",
 }
+
+
+def _load_suite_metrics(base: Path) -> Dict[str, dict]:
+    """Return metrics.json records keyed by suite."""
+
+    data: Dict[str, dict] = {}
+    if not base.exists():
+        return data
+    for metrics_path in base.rglob("metrics.json"):
+        try:
+            with metrics_path.open("r", encoding="utf-8") as f:
+                record = json.load(f)
+        except json.JSONDecodeError:
+            continue
+        suite = record.get("suite") or metrics_path.parent.parent.name
+        data[suite] = record
+    return data
+
+
+def _suite_metric(records: Dict[str, dict], suite: str, key: str) -> float:
+    """Extract a metric value for ``suite`` from loaded ``records``."""
+
+    return float(records.get(suite, {}).get("metrics", {}).get(suite, {}).get(key, 0.0))
+
+
+def sanity_sweep(runs_dir: Path, run_id: str) -> None:
+    """Print store sizes, gate stats, hit rates and EM/F1 deltas for ``run_id``."""
+
+    run_path = runs_dir / run_id
+    core = _load_suite_metrics(run_path / "baselines" / "core")
+    longctx = _load_suite_metrics(run_path / "baselines" / "longctx")
+    memory = _load_suite_metrics(run_path / "memory")
+    kind_map = {"episodic": "episodic", "semantic": "relational", "spatial": "spatial"}
+    header = (
+        f"{'suite':12} {'store':>5} {'gate':>7} {'hit':>5} "
+        f"{'EM(core/long/mem)':>23} {'F1(core/long/mem)':>23}"
+    )
+    print(header)
+    flags: list[str] = []
+    for suite, record in sorted(memory.items()):
+        kind = kind_map.get(suite, suite)
+        store = int(record.get("store", {}).get("size", 0))
+        gate = record.get("gating", {}).get(kind, {})
+        attempts = int(gate.get("attempts", 0))
+        accepted = int(gate.get("accepted", 0))
+        hit = float(record.get("retrieval", {}).get(kind, {}).get("hit_rate_at_k", 0.0))
+        em = _suite_metric(memory, suite, "pre_em")
+        f1 = _suite_metric(memory, suite, "pre_f1")
+        core_em = _suite_metric(core, suite, "pre_em")
+        long_em = _suite_metric(longctx, suite, "pre_em")
+        core_f1 = _suite_metric(core, suite, "pre_f1")
+        long_f1 = _suite_metric(longctx, suite, "pre_f1")
+        print(
+            f"{suite:12} {store:5d} {attempts:3d}/{accepted:<3d} {hit:5.2f} "
+            f"{core_em:5.2f}/{long_em:5.2f}/{em:5.2f} "
+            f"{core_f1:5.2f}/{long_f1:5.2f}/{f1:5.2f}"
+        )
+        if store == 0 or attempts == 0 or hit == 0.0:
+            flags.append(f"{suite} memory inert")
+        if long_em >= 0.98:
+            flags.append(f"{suite} baseline saturated (longctx EM {long_em:.2f})")
+    if flags:
+        print("\nRed flags:")
+        for msg in flags:
+            print(f"- {msg}")
+
+
 MetricStats = Dict[str, MetricStat]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
 

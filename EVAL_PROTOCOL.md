@@ -43,6 +43,32 @@ python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID 
 python scripts/report.py --run-id $RUN_ID
 ```
 
+### Teach→test recipe
+
+```bash
+# Shared environment
+export RUN_ID=my_experiment
+export STORES=runs/$RUN_ID/stores
+export HEI_SESSION=hei_$RUN_ID      # per-algorithm session ids
+
+# 1) Teach – write experiences
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
+  run_id=$RUN_ID mode=teach persist=true store_dir=$STORES session_id=$HEI_SESSION
+
+# 2) Test – read from the same store
+python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
+  run_id=$RUN_ID mode=test store_dir=$STORES session_id=$HEI_SESSION
+```
+
+Store layout:
+
+```
+runs/$RUN_ID/stores/
+  hei_nw/$HEI_SESSION/episodic.jsonl
+  sgc_rss/$SGC_SESSION/kg.jsonl
+  smpd/$SMPD_SESSION/spatial.jsonl
+```
+
 > **Store directory patterns**\
 > Recommended: `store_dir=runs/$RUN_ID/stores` (algo inferred).\
 > Explicit: `store_dir=runs/$RUN_ID/stores/hei_nw` (manual algo subdir).\
@@ -72,6 +98,17 @@ suite=episodic_cross dataset_profile=hard --strict-telemetry
 suite=episodic_capacity dataset_profile=hard --strict-telemetry
 suite=semantic       dataset_profile=hard --strict-telemetry
 ```
+
+### Success bars
+
+- **episodic**: `ΔEM(core→memory) ≥ 0.10` and `EM(memory) ≥ EM(longctx)` with
+  `memory_hit_rate ≥ 0.3`.
+- **semantic**: positive EM uplift over `baselines/longctx` on the
+  `semantic(hard)` split.
+- **spatial**: `EM ≥ 0.10` or `steps_to_goal` reduced by ≥20%.
+
+`semantic(default)` and `episodic_cross(default)` remain only as **smoke tests**
+because their baselines saturate.
 
 ### Telemetry invariants
 
