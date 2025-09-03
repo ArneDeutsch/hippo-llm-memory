@@ -1,4 +1,8 @@
-"""CLI wrapper for :mod:`hippo_mem.reporting.report` with re-exports."""
+"""CLI wrapper for :mod:`hippo_mem.reporting.report` with re-exports.
+
+Exposes reporting utilities including new KPIs like ``memory_hit_rate``
+and uplift vs the long-context baseline.
+"""
 
 import sys
 from pathlib import Path

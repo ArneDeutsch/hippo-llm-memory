@@ -73,6 +73,10 @@ DISPLAY_NAMES = {
     "delta_f1": "ΔF1",
     "overlong": "overlong",
     "format_violation": "format_violation",
+    "memory_hit_rate": "memory_hit_rate",
+    "latency_ms_delta": "latency_ms_delta",
+    "uplift_vs_longctx_em": "ΔEM vs longctx",
+    "uplift_vs_longctx_f1": "ΔF1 vs longctx",
 }
 MetricStats = Dict[str, MetricStat]
 Summary = Dict[str, Dict[str, Dict[int, MetricStats]]]
@@ -364,6 +368,31 @@ def summarise(
             agg[key] = (mval, ci)
         summary.setdefault(suite, {}).setdefault(preset, {})[size] = agg
     return summary, missing_pre
+
+
+def add_longctx_uplift(summary: Summary) -> None:
+    """Augment ``summary`` with uplift vs long-context baseline."""
+
+    for suite, presets in summary.items():
+        base = presets.get("baselines/longctx")
+        if not base:
+            continue
+        for preset, sizes in presets.items():
+            if preset == "baselines/longctx":
+                continue
+            for size, metrics in sizes.items():
+                base_metrics = base.get(size)
+                if not base_metrics:
+                    continue
+                for key in ("em", "em_norm", "f1"):
+                    if (
+                        key in metrics
+                        and key in base_metrics
+                        and metrics[key] is not None
+                        and base_metrics[key] is not None
+                    ):
+                        uplift = metrics[key][0] - base_metrics[key][0]
+                        metrics[f"uplift_vs_longctx_{key}"] = (uplift, 0.0)
 
 
 def _missing_pre_suites(
@@ -1129,6 +1158,7 @@ def main() -> None:  # pragma: no cover - thin CLI wrapper
     gate_ablation_data = collect_gate_ablation(runs_path)
     lineage_data = collect_lineage(runs_path)
     summary, missing_pre = summarise(metric_data)
+    add_longctx_uplift(summary)
     bad_pre = _missing_pre_suites(missing_pre)
     if bad_pre:
         for suite in bad_pre:

@@ -55,13 +55,15 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     assert metrics["store"]["size"] >= 1
     suite_metrics = metrics["metrics"]["episodic"]
     assert "pre_refusal_rate" in suite_metrics
-    assert metrics["gating"]["relational"]["attempts"] == 0
+    assert "memory_hit_rate" in suite_metrics
+    assert "latency_ms_delta" in suite_metrics
     assert "accepted" in metrics["gating"]["relational"]
 
     with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
     assert rows and float(rows[0]["latency_ms"]) > 0
+    assert "memory_hit" in rows[0]
 
 
 def test_eval_model_cli_flags(tmp_path: Path) -> None:
@@ -158,6 +160,8 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
     subprocess.run(cmd_test, check=True)
     metrics = json.loads((outdir_test / "metrics.json").read_text())
     assert metrics["retrieval"]["episodic"]["requests"] >= 1
+    assert metrics["gating"]["episodic"]["attempts"] > 0
+    assert metrics["metrics"]["episodic"]["memory_hit_rate"] > 0
 
     # memory explicitly off
     outdir_off = tmp_path / "test_off"
