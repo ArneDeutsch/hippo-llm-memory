@@ -1,0 +1,27 @@
+{
+  "suite": "episodic_multi",
+  "sizes": [
+    50,
+    200,
+    1000
+  ],
+  "seeds": [
+    1337,
+    2025,
+    4242
+  ],
+  "generator_version": "834b6f0b48df637ae0587d91fdbcf188cdd4eb64",
+  "files": {
+    "50_1337.jsonl": "288499912030d637d904ed4128a9e680792340e25824cdcc40dd9a1d330ba756",
+    "50_2025.jsonl": "1113cccb18e8722f4b26b5a0bfb61e6ea3e687fd49f491b21e678cff7c675a10",
+    "50_4242.jsonl": "414c889a921577a2ac31e5d6c96717966b059d2242bb6f27dcce54bae5ebf04d",
+    "200_1337.jsonl": "2c642e41c09e3ed313ab95606f26be7c841a6031004e23abac82322d2ea17a81",
+    "200_2025.jsonl": "00c8734f13cb0add123922280731597fa0d8a8668d490530d8df1594e29a7a12",
+    "200_4242.jsonl": "b8b4e87701060c4a498a57e4914cfac770d9c0e8b60f4dcbcfa9cabcb16d831a",
+    "1000_1337.jsonl": "b00755cb61b36c328dcd9abcbc720eaa0525aea1b871ab566eea8d4fb2d67f86",
+    "1000_2025.jsonl": "5d7a8f0dbb30f88c3955c420fca3688f326fe032f5ec09cfeeb355ccd46e7c00",
+    "1000_4242.jsonl": "4a90701ad47b17a5f153e0d5f31518cf178a459a01fc47317340485881068f23"
+  },
+  "created_utc": "2025-09-03T13:19:59.769779+00:00",
+  "cli_example": "python scripts/make_datasets.py suite=episodic_multi size=<size> seed=<seed> out=data/episodic_multi/<size>_<seed>.jsonl"
+}

@@ -1,0 +1,153 @@
+{
+  "episodic": [
+    {
+      "file": "episodic/1000_1337.jsonl",
+      "items": 1000,
+      "sha256": "c14e85ed499becf9baae664a03e259aa5a49df3f9fa5ff51f56c39d18215ff4d"
+    },
+    {
+      "file": "episodic/1000_2025.jsonl",
+      "items": 1000,
+      "sha256": "fb48bdb6395a0167ca97325432268679d905d9bb1b38f3dd1394c8f82234ba5d"
+    },
+    {
+      "file": "episodic/1000_4242.jsonl",
+      "items": 1000,
+      "sha256": "c37803246264f0289a54192221835402434637ce7d666eeb34495c7f33917e05"
+    },
+    {
+      "file": "episodic/200_1337.jsonl",
+      "items": 200,
+      "sha256": "f8cc52fe8a06d1077aa0e61d431066c5e886e6bee901e8621c6401b01c6ebea6"
+    },
+    {
+      "file": "episodic/200_2025.jsonl",
+      "items": 200,
+      "sha256": "23183f23d7b225d7c40e36f5802c08ad18227048fb9679d57a343ec68920c760"
+    },
+    {
+      "file": "episodic/200_4242.jsonl",
+      "items": 200,
+      "sha256": "dd496e20b36a13fd1707ed26afda472c3b90f13014f3817522654f1442564891"
+    },
+    {
+      "file": "episodic/50_1337.jsonl",
+      "items": 50,
+      "sha256": "6dccf0c7232f401c1cabb7fbfa274392bc6e25084c8dc33897bd88d75f269a06"
+    },
+    {
+      "file": "episodic/50_2025.jsonl",
+      "items": 50,
+      "sha256": "ccd14279fa763b67ed9c2b81aa40641039216d09db2cda4d151c865d7b894f62"
+    },
+    {
+      "file": "episodic/50_4242.jsonl",
+      "items": 50,
+      "sha256": "4a0756caffdc804cb719dd4d211d23c0bcc3819cfd0adab71eb978cb65a21c73"
+    }
+  ],
+  "seeds": [
+    1337,
+    2025,
+    4242
+  ],
+  "semantic": [
+    {
+      "file": "semantic/1000_1337.jsonl",
+      "items": 1000,
+      "sha256": "52c861321dd09af4fc8a67a7e6407d376e90b65b7860375ed80214101b91cbfa"
+    },
+    {
+      "file": "semantic/1000_2025.jsonl",
+      "items": 1000,
+      "sha256": "58b9078a0b2705b05ed2f5198585436fbd18e3fec58f50db0f3a27e383898178"
+    },
+    {
+      "file": "semantic/1000_4242.jsonl",
+      "items": 1000,
+      "sha256": "6bfbbcb5a57d38c4222c8e23b7e243c145cb4d253ff18ad4fdcf6135d1d006fe"
+    },
+    {
+      "file": "semantic/200_1337.jsonl",
+      "items": 200,
+      "sha256": "dd30c3bad05168ec976bcfda9cdcb8e5b46c6810a31a1bfb4fbc4d70eb2b3023"
+    },
+    {
+      "file": "semantic/200_2025.jsonl",
+      "items": 200,
+      "sha256": "45e110e30a52e994db13bd450e13280e74c5f03b5eaf17822ae067a9ca242258"
+    },
+    {
+      "file": "semantic/200_4242.jsonl",
+      "items": 200,
+      "sha256": "c31c4223b8a6e83e1f377cc441cac8509f1cf44603dd313605f32ab417129d37"
+    },
+    {
+      "file": "semantic/50_1337.jsonl",
+      "items": 50,
+      "sha256": "a76f366ade59ee0bb9832d6b9c7e869570ed78e17d1edbb40d113e71969171a7"
+    },
+    {
+      "file": "semantic/50_2025.jsonl",
+      "items": 50,
+      "sha256": "bd2b4b2feda8ce42264443600035903d9ed4565558335e0ae10d109e25601920"
+    },
+    {
+      "file": "semantic/50_4242.jsonl",
+      "items": 50,
+      "sha256": "2f09d587a59bdc5e2657892ff19e08838e9abeaa629156719045e725a77559ca"
+    }
+  ],
+  "sizes": [
+    50,
+    200,
+    1000
+  ],
+  "spatial": [
+    {
+      "file": "spatial/1000_1337.jsonl",
+      "items": 1000,
+      "sha256": "838996cfd8baa3680cba723972df8e5c37117b1ac63308fed353cad165eeeb6a"
+    },
+    {
+      "file": "spatial/1000_2025.jsonl",
+      "items": 1000,
+      "sha256": "60573e6419447a1548178cef0350597ba39dab0d812ca68097a7da8a951f17ec"
+    },
+    {
+      "file": "spatial/1000_4242.jsonl",
+      "items": 1000,
+      "sha256": "5d318d5dcabff73c30c8cf5cfefecc86fb90d85b285b3f1ef9ab8047cea36fed"
+    },
+    {
+      "file": "spatial/200_1337.jsonl",
+      "items": 200,
+      "sha256": "1519d690fea2057ca701f8788f7dd218e35d7bebc03a2647b8d463ea5fa7124b"
+    },
+    {
+      "file": "spatial/200_2025.jsonl",
+      "items": 200,
+      "sha256": "bd1d4af53149715ebcdf03d1b4de2e01f944c0e79da00bff416888f8bc0ca195"
+    },
+    {
+      "file": "spatial/200_4242.jsonl",
+      "items": 200,
+      "sha256": "3b24708720c9231e498d4fd70afd42dc60758814cda2284e3174bd7b5a991056"
+    },
+    {
+      "file": "spatial/50_1337.jsonl",
+      "items": 50,
+      "sha256": "8b89bc36d23fa2ac47435ed950f66d726222ad5431b79eaad0326bd941a3e322"
+    },
+    {
+      "file": "spatial/50_2025.jsonl",
+      "items": 50,
+      "sha256": "3db61b7196f2f5c85f985f990b309997f32be177d50a75be6fecff0cb6c6bf34"
+    },
+    {
+      "file": "spatial/50_4242.jsonl",
+      "items": 50,
+      "sha256": "84c308f9a65115954f2f1c1723dbb9574ada039615d7fea5b0514cacb0f0fb1f"
+    }
+  ]
+}
