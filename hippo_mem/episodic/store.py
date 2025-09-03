@@ -307,6 +307,9 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         # why: tags approximate initial salience when explicit score absent
         salience = float(len(value.salience_tags) if value.salience_tags else 1.0)
         idx = self.persistence.insert(key_arr[0], value, ts, salience)
+        if value.trace_id is None:
+            value.trace_id = str(idx)
+            self.persistence.update_value(idx, value)
         self.index.add(key_arr, idx)
         self.logger.increment("writes")
         return idx

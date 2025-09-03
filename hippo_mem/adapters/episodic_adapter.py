@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import torch
+import torch.nn.functional as F
 from torch import Tensor, nn
 
 from hippo_mem.common import MemoryTokens
@@ -38,6 +39,26 @@ class EpisodicMemoryAdapter(nn.Module):
         mem = MemoryTokens(tokens=tokens, mask=memory.mask, meta=memory.meta)
         fused = self.inner(hidden_states, memory=mem)
         return fused - hidden_states
+
+    @staticmethod
+    def build_key(hidden_states: Tensor, span: tuple[int, int] | None = None) -> Tensor:
+        """Return an L2-normalised key vector from ``hidden_states``.
+
+        Parameters
+        ----------
+        hidden_states:
+            Token-level representations ``[T, H]``.
+        span:
+            Optional ``(start, end)`` token indices specifying the span to pool.
+            When omitted, use the final token.
+        """
+
+        if span is not None:
+            start, end = span
+            vec = hidden_states[start:end].mean(dim=0)
+        else:
+            vec = hidden_states[-1]
+        return F.normalize(vec, p=2, dim=-1)
 
 
 __all__ = ["EpisodicMemoryAdapter", "EpisodicMemoryConfig"]

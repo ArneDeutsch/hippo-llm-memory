@@ -397,10 +397,26 @@ def test_replay_scheduler_mix_and_unique_ids() -> None:
     assert kinds.count("episodic") == 5
     assert kinds.count("semantic") == 3
     assert kinds.count("fresh") == 2
-
     epi_ids = [tid for k, tid in batch if k == "episodic"]
     assert None not in epi_ids
     assert len(epi_ids) == len(set(epi_ids))
+
+
+def test_retrieval_meta_contains_ids_and_spans() -> None:
+    """Recall returns trace ids and token spans in metadata."""
+
+    store = EpisodicStore(dim=4)
+    key = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
+    val = TraceValue(
+        tokens_span=(1, 3), trace_id="t1", sample_id="s1", suite="episodic", provenance="p"
+    )
+    store.write(key, val)
+
+    hidden = torch.from_numpy(key).view(1, 1, -1)
+    spec = TraceSpec(source="episodic", k=1)
+    mem = episodic_retrieve_and_pack(hidden, spec, store, torch.nn.Identity())
+    assert mem.meta["trace_ids"][0][0] == "t1"
+    assert mem.meta["tokens_span"][0][0] == (1, 3)
 
 
 def test_faiss_index_trains_and_queries() -> None:
