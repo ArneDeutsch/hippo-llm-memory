@@ -700,11 +700,12 @@ def main() -> None:
             **common,
         )
     elif args.suite == "episodic_multi":
+        max_corr = 2 if profile_cfg.get("corrections", True) else 0
         items = generator(
             args.size,
             args.seed,
             distractors=profile_cfg.get("distractors", args.distractors),
-            corrections=profile_cfg.get("corrections", True),
+            max_corrections=max_corr,
             **common,
         )
     elif args.suite == "episodic_cross":
