@@ -38,6 +38,23 @@ def test_generate_episodic_cross_single_token_answer() -> None:
         assert len(item["answer"].split()) == 1
 
 
+def test_generate_episodic_cross_inserts_distractors() -> None:
+    items = build_datasets.generate_episodic_cross(size=5, seed=0)
+    for item in items:
+        prompt = item["prompt"]
+        answer = item["answer"]
+        after = prompt.split("--- FLUSH ---")[1]
+        distractor = after.split("Where did")[0]
+        assert distractor.strip()
+        assert answer not in distractor
+
+
+def test_generate_episodic_cross_unique() -> None:
+    items = build_datasets.generate_episodic_cross(size=20, seed=0)
+    facts = {it["prompt"].split("--- FLUSH ---")[0].strip() for it in items}
+    assert len(facts) == len(items)
+
+
 def test_generate_episodic_capacity_longer_than_budget() -> None:
     items1 = build_datasets.generate_episodic_capacity(size=1, seed=0, context_budget=16)
     items2 = build_datasets.generate_episodic_capacity(size=1, seed=0, context_budget=16)

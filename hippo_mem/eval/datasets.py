@@ -203,6 +203,11 @@ def generate_episodic_cross(
 ) -> List[Dict[str, object]]:
     """Cross-episode recall after a flush marker.
 
+    Generates a visit event using varied verbs and temporal modifiers. The
+    correct fact is followed by a ``FLUSH`` token and unrelated distractor
+    sentences so the answer cannot be recovered from remaining context. Each
+    (person, place, verb, time) combination is unique for a given call.
+
     Parameters
     ----------
     size:
@@ -219,7 +224,7 @@ def generate_episodic_cross(
 
     rng = random.Random(seed)
     if entity_pool is None:
-        entity_pool = {"easy": 4, "default": 6, "hard": 8}[profile]
+        entity_pool = {"easy": 8, "default": 12, "hard": 16}[profile]
     base_people = [
         "Alice",
         "Bob",
@@ -229,6 +234,14 @@ def generate_episodic_cross(
         "Frank",
         "Grace",
         "Heidi",
+        "Ivan",
+        "Judy",
+        "Mallory",
+        "Niaj",
+        "Olivia",
+        "Peggy",
+        "Rupert",
+        "Sybil",
     ]
     base_places = [
         "Cafe",
@@ -239,15 +252,52 @@ def generate_episodic_cross(
         "School",
         "Cinema",
         "Museum",
+        "Beach",
+        "Zoo",
+        "Stadium",
+        "Theater",
+        "Bank",
+        "Restaurant",
+        "Hospital",
+        "Station",
+    ]
+    verbs = ["went", "traveled", "walked", "drove", "journeyed"]
+    times = [
+        "yesterday",
+        "last week",
+        "this morning",
+        "earlier today",
+        "in the evening",
     ]
     people = base_people[:entity_pool]
     places = base_places[:entity_pool]
+    combinations = len(people) * len(places) * len(verbs) * len(times)
+    if size > combinations:
+        raise ValueError("size exceeds unique episode capacity")
+    seen: set[tuple[str, str, str, str]] = set()
     tasks: List[Dict[str, object]] = []
-    for _ in range(size):
+    while len(tasks) < size:
         who = rng.choice(people)
         where = rng.choice(places)
-        fact = f"{who} went to the {where}."
-        prompt = f"{fact} --- FLUSH --- Where did {who} go? " "Answer with the location name only."
+        verb = rng.choice(verbs)
+        when = rng.choice(times)
+        key = (who, where, verb, when)
+        if key in seen:
+            continue
+        seen.add(key)
+        fact = f"{who} {verb} to the {where} {when}."
+        post_sents: List[str] = []
+        for _ in range(rng.randint(1, 2)):
+            dwho = rng.choice([p for p in people if p != who])
+            dwhere = rng.choice([pl for pl in places if pl != where])
+            dverb = rng.choice(verbs)
+            dwhen = rng.choice(times)
+            post_sents.append(f"{dwho} {dverb} to the {dwhere} {dwhen}.")
+        distractors = " ".join(post_sents)
+        prompt = (
+            f"{fact} --- FLUSH --- {distractors} Where did {who} go? "
+            "Answer with the location name only."
+        )
         tasks.append({"prompt": prompt, "answer": where})
     return tasks
 
