@@ -54,6 +54,11 @@ def spatial_retrieve_and_pack(
     nodes = nodes[:max_nodes]
     edges = edges[:max_edges]
 
+    hint = None
+    if edges:
+        _src, dst, _kind = edges[0]
+        hint = f"go to {graph._id_to_context.get(dst, '')}".strip()
+
     def iter_retrieve():
         feats = []
         for n in nodes:
@@ -62,7 +67,7 @@ def spatial_retrieve_and_pack(
             feats.append(
                 np.array([p.coord[0], p.coord[1], float(p.last_seen), 1.0], dtype=np.float32)
             )
-        for u, v in edges:
+        for u, v, _ in edges:
             e = graph.graph[u][v]
             feats.append(np.array([e.cost, e.success, float(e.last_seen), 0.0], dtype=np.float32))
         arr = np.stack(feats) if feats else np.zeros((0, 4), dtype=np.float32)
@@ -78,6 +83,7 @@ def spatial_retrieve_and_pack(
             radius=radius,
             num_nodes=len(nodes),
             num_edges=len(edges),
+            hint=hint or "",
         )
 
     return retrieve_and_pack_base(

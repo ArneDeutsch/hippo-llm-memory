@@ -23,5 +23,13 @@ class SpatialMemoryAdapter(nn.Module):
         fused = self.inner(hidden_states, memory=memory)
         return fused - hidden_states
 
+    def hint(self, memory: MemoryTokens | None = None) -> str | None:
+        """Return action hint embedded in ``memory`` if present."""
+
+        if memory is None:
+            return None
+        hint = memory.meta.get("hint")
+        return hint if hint else None
+
 
 __all__ = ["SpatialMemoryAdapter"]

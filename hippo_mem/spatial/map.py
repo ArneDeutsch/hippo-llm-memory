@@ -52,7 +52,8 @@ class Edge:
 
     Summary
     -------
-    Stores edge cost, success probability, weight and last observation step.
+    Stores edge cost, success probability, weight, last observation step and
+    adjacency type.
 
     Parameters
     ----------
@@ -64,10 +65,12 @@ class Edge:
         Step index when edge was last traversed, by default ``0``.
     weight : float, optional
         Evidence count for the edge, by default ``1.0``.
+    kind : str, optional
+        Adjacency label such as ``"room"`` or ``"door"``.
     Examples
     --------
     >>> Edge()
-    Edge(cost=1.0, success=1.0, last_seen=0, weight=1.0)
+    Edge(cost=1.0, success=1.0, last_seen=0, weight=1.0, kind='generic')
 
     See Also
     --------
@@ -78,6 +81,7 @@ class Edge:
     success: float = 1.0
     last_seen: int = 0
     weight: float = 1.0
+    kind: str = "generic"
 
 
 @dataclass
@@ -86,20 +90,22 @@ class Place:
 
     Summary
     -------
-    Holds coordinate and recency information for a context.
+    Holds coordinate, type and recency information for a context.
 
     Parameters
     ----------
     name : str
         Context string.
     coord : Tuple[float, float]
-        Pseudo coordinates ``(x, y)``.
+        Pseudo coordinates ``(x, y)`` normalised to ``[0, 1]``.
     last_seen : int, optional
         Step index of last observation, by default ``0``.
+    kind : str, optional
+        Landmark type such as ``"room"`` or ``"object"``.
     Examples
     --------
     >>> Place("a", (0.0, 0.0))
-    Place(name='a', coord=(0.0, 0.0), last_seen=0)
+    Place(name='a', coord=(0.0, 0.0), last_seen=0, kind='generic')
 
     See Also
     --------
@@ -109,6 +115,7 @@ class Place:
     name: str
     coord: Tuple[float, float]
     last_seen: int = 0
+    kind: str = "generic"
 
 
 class ContextEncoder:
@@ -155,8 +162,8 @@ class ContextEncoder:
 
         if context not in self._cache:
             h = hash(context)
-            x = (h & 0xFFFF) / 1000.0
-            y = ((h >> 16) & 0xFFFF) / 1000.0
+            x = (h & 0xFFFF) / 65535.0
+            y = ((h >> 16) & 0xFFFF) / 65535.0
             self._cache[context] = Place(context, (x, y))
         return self._cache[context]
 
@@ -209,7 +216,14 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         self._position = (0.0, 0.0)
         self._last_coord: Optional[Tuple[float, float]] = None
         self.config = config or {}
-        self._log = {"writes": 0, "recalls": 0, "hits": 0, "maintenance": 0}
+        self._log = {
+            "writes": 0,
+            "recalls": 0,
+            "hits": 0,
+            "maintenance": 0,
+            "landmarks_added": 0,
+            "edges_added": 0,
+        }
         self._maintenance_log: List[dict[str, Any]] = []
         self._log_file = self.config.get("maintenance_log")
         StoreLifecycleMixin.__init__(self)
@@ -229,6 +243,30 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
             self.graph.setdefault(node, {})
             # why: cache coordinates for deterministic heuristics
             self.encoder.encode(context)
+            self._log["landmarks_added"] += 1
+        return node
+
+    def add_landmark(self, context: str, coord: Tuple[float, float], kind: str = "generic") -> int:
+        """Insert a landmark with explicit coordinates.
+
+        Parameters
+        ----------
+        context:
+            Landmark identifier.
+        coord:
+            ``(x, y)`` pair normalised to ``[0, 1]``. Values outside this range
+            are clipped.
+        kind:
+            Landmark type such as ``"room"`` or ``"object"``.
+        """
+
+        self._step += 1
+        x = max(0.0, min(1.0, float(coord[0])))
+        y = max(0.0, min(1.0, float(coord[1])))
+        node = self._ensure_node(context)
+        place = Place(context, (x, y), self._step, kind)
+        self.encoder._cache[context] = place
+        self._last_obs = node
         return node
 
     # ------------------------------------------------------------------
@@ -332,6 +370,8 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         b_context: str,
         cost: float = 1.0,
         success: float = 1.0,
+        *,
+        kind: str = "generic",
     ) -> None:
         """Explicitly connect two contexts.
 
@@ -361,8 +401,8 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
 
         a = self._ensure_node(a_context)
         b = self._ensure_node(b_context)
-        self._add_edge(a, b, cost, success)
-        self._add_edge(b, a, cost, success)
+        self._add_edge(a, b, cost, success, kind=kind)
+        self._add_edge(b, a, cost, success, kind=kind)
         self._log["writes"] += 1
 
     def _add_edge(
@@ -373,15 +413,20 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         success: float = 1.0,
         *,
         step: Optional[int] = None,
+        kind: str = "generic",
     ) -> None:
         # why: track last_seen for TTL pruning
         edge = self.graph[a].get(b)
         if edge is None:
-            self.graph[a][b] = Edge(cost, success, last_seen=step or self._step, weight=1.0)
+            self.graph[a][b] = Edge(
+                cost, success, last_seen=step or self._step, weight=1.0, kind=kind
+            )
+            self._log["edges_added"] += 1
         else:
             edge.cost = cost
             edge.success = success
             edge.last_seen = step or self._step
+            edge.kind = kind
 
     # ------------------------------------------------------------------
     # Planning utilities
@@ -660,6 +705,7 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                                     "context": context,
                                     "coord": list(place.coord),
                                     "last_seen": place.last_seen,
+                                    "kind": place.kind,
                                 }
                             )
                             + "\n"
@@ -677,6 +723,7 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                                         "success": edge.success,
                                         "last_seen": edge.last_seen,
                                         "weight": edge.weight,
+                                        "kind": edge.kind,
                                     }
                                 )
                                 + "\n"
@@ -696,6 +743,7 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                         "context": context,
                         "coord": list(place.coord),
                         "last_seen": place.last_seen,
+                        "kind": place.kind,
                     }
                 )
             edges = []
@@ -709,6 +757,7 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                             "success": edge.success,
                             "last_seen": edge.last_seen,
                             "weight": edge.weight,
+                            "kind": edge.kind,
                         }
                     )
             io.atomic_write_file(
@@ -752,7 +801,12 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                 elif typ == "node":
                     pid = int(rec["id"])
                     context = rec["context"]
-                    place = Place(context, tuple(rec["coord"]), int(rec["last_seen"]))
+                    place = Place(
+                        context,
+                        tuple(rec["coord"]),
+                        int(rec.get("last_seen", 0)),
+                        rec.get("kind", "generic"),
+                    )
                     self.encoder._cache[context] = place
                     self._context_to_id[context] = pid
                     self._id_to_context[pid] = context
@@ -761,8 +815,9 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                     edge = Edge(
                         cost=float(rec["cost"]),
                         success=float(rec["success"]),
-                        last_seen=int(rec["last_seen"]),
-                        weight=float(rec["weight"]),
+                        last_seen=int(rec.get("last_seen", 0)),
+                        weight=float(rec.get("weight", 1.0)),
+                        kind=rec.get("kind", "generic"),
                     )
                     self.graph.setdefault(int(rec["src"]), {})[int(rec["dst"])] = edge
         elif fmt == "parquet":
@@ -772,7 +827,12 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
             for rec in nodes_df.to_dict(orient="records"):
                 pid = int(rec["id"])
                 context = rec["context"]
-                place = Place(context, tuple(rec["coord"]), int(rec["last_seen"]))
+                place = Place(
+                    context,
+                    tuple(rec["coord"]),
+                    int(rec.get("last_seen", 0)),
+                    rec.get("kind", "generic"),
+                )
                 self.encoder._cache[context] = place
                 self._context_to_id[context] = pid
                 self._id_to_context[pid] = context
@@ -781,8 +841,9 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
                 edge = Edge(
                     cost=float(rec["cost"]),
                     success=float(rec["success"]),
-                    last_seen=int(rec["last_seen"]),
-                    weight=float(rec["weight"]),
+                    last_seen=int(rec.get("last_seen", 0)),
+                    weight=float(rec.get("weight", 1.0)),
+                    kind=rec.get("kind", "generic"),
                 )
                 self.graph.setdefault(int(rec["src"]), {})[int(rec["dst"])] = edge
             self._next_id = meta.get("next_id", 0)
