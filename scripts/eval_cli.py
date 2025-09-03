@@ -11,7 +11,6 @@ def main() -> int:
         description="Legacy CLI for eval_model.py",
         epilog=(
             "Run baselines first: python scripts/run_baselines.py --run-id <RID>\n"
-            "RUN_ID may include underscores; preflight also checks the digits-only form.\n"
             "store_dir: runs/<RID>/stores (recommended) or runs/<RID>/stores/<algo>.\n"
             "Replay cycles: pass replay_cycles=N or replay.cycles=N."
         ),
@@ -21,7 +20,7 @@ def main() -> int:
     parser.add_argument("--mode", help="Phase: teach, replay, or test")
     parser.add_argument("--persist", help="Write to store_dir during teach/replay")
     parser.add_argument(
-        "--store_dir", help="Base directory for persistent stores (e.g., runs/$DATE/stores)"
+        "--store_dir", help="Base directory for persistent stores (e.g., runs/$RUN_ID/stores)"
     )
     parser.add_argument(
         "--session_id",
@@ -39,6 +38,8 @@ def main() -> int:
         action=argparse.BooleanOptionalAction,
         help="Compute per-item metrics during the pre phase",
     )
+    parser.add_argument("--run-id", help="Run identifier")
+    parser.add_argument("--verbose", action="store_true", help="Print resolved run_id")
     args, rest = parser.parse_known_args()
 
     overrides = list(args.overrides)
@@ -56,6 +57,11 @@ def main() -> int:
         overrides.append("strict_telemetry=true")
     if args.pre_metrics is not None:
         overrides.append(f"compute.pre_metrics={str(args.pre_metrics).lower()}")
+    run_id = args.run_id or os.getenv("RUN_ID")
+    if run_id is not None:
+        overrides.append(f"run_id={run_id}")
+        if args.verbose:
+            print(f"run_id={run_id}", file=sys.stderr)
 
     cmd = [sys.executable, "scripts/eval_model.py", *overrides, *rest]
     return subprocess.call(cmd)

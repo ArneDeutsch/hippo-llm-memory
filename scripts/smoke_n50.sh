@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RUN_ID=${RUN_ID:-dev}
 source "$(dirname "$0")/_env.sh"
-export RUN_ID DATE
 export MODEL=models/tiny-gpt2
 export HF_MODEL_PATH="$MODEL"
 export ALLOW_BENCH=1
 IFS=$'\n\t'
-
-RUN_ID=${RUN_ID}
-DATE="$RUN_ID"
 
 # Baseline runs for core preset on key suites
 python scripts/run_baselines_bench.py \

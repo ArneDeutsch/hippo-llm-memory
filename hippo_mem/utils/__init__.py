@@ -9,6 +9,7 @@ from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
 
+from .ids import validate_run_id
 from .stores import assert_store_exists
 
 log = logging.getLogger(__name__)
@@ -33,4 +34,4 @@ def log_memory_status(
     )
 
 
-__all__ = ["assert_store_exists", "log_memory_status"]
+__all__ = ["assert_store_exists", "log_memory_status", "validate_run_id"]

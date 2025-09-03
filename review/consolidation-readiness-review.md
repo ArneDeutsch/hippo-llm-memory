@@ -159,10 +159,10 @@
 
 - **Fix command examples (Hydra syntax)** — Update all docs and MILESTONE_9_5_PLAN H2/H3/H5 commands to use key=value overrides. Example:
 ```bash
-DATE=$(date +%Y%m%d_%H%M); SID=seed1337
+RUN_ID=my_run; SID=seed1337
 python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337 \
-  mode=teach persist=true store_dir=runs/$DATE/stores session_id=$SID \
-  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$DATE/memory/teach
+  mode=teach persist=true store_dir=runs/$RUN_ID/stores session_id=$SID \
+  model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$RUN_ID/memory/teach
 ```
 
 - **Sanity‑check the pipeline end‑to‑end (dry runs)** — With `models/tiny-gpt2` to avoid downloads:

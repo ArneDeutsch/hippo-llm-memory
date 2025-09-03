@@ -7,12 +7,11 @@ import argparse
 import csv
 import json
 import math
-import re
-import warnings
-from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, pstdev
 from typing import Dict, Iterable, List
+
+from hippo_mem.utils import validate_run_id
 
 
 def _ci95(values: List[float]) -> float:
@@ -116,37 +115,15 @@ def write_metrics(rows: List[Dict[str, float]], out_dir: Path) -> Path:
     return csv_path
 
 
-SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
-
-
-def _date_str(value: object | None) -> str:
-    """Return a normalized date string."""
-
-    if value is None:
-        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
-    date = str(value)
-    if "_" not in date and date.isdigit() and len(date) > 8:
-        return f"{date[:8]}_{date[8:]}"
-    return date
-
-
 def main(argv: Iterable[str] | None = None) -> None:
     """CLI entry point."""
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runs-dir", default="runs", help="Root runs directory")
-    parser.add_argument("--run-id", dest="run_id")
-    parser.add_argument("--date", dest="date", help="Deprecated run identifier")
+    parser.add_argument("--run-id", required=True, help="Run identifier")
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    run_id = args.run_id
-    if not run_id and args.date:
-        run_id = _date_str(args.date)
-        warnings.warn("`--date` is deprecated; use --run-id", DeprecationWarning)
-    if not run_id:
-        raise ValueError("--run-id is required")
-    if not SLUG_RE.match(run_id):
-        raise ValueError("run_id must match ^[A-Za-z0-9._-]{3,64}$")
+    run_id = validate_run_id(args.run_id)
 
     root = Path(args.runs_dir) / run_id / "baselines"
     rows = collect_baseline_metrics(root)

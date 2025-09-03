@@ -1,17 +1,11 @@
 #!/usr/bin/env bash
-# Standard environment prelude for evaluation pipeline.
-# RUN_ID is primary; DATE is kept for backward compatibility.
-
-: "${RUN_ID:=${DATE:-$(date -u +%Y%m%d_%H%M)}}"
-DATE="$RUN_ID"
+set -euo pipefail
+: "${RUN_ID:?Set RUN_ID (simple slug like 'dev' or 'exp_42')}"
 RUNS="runs/$RUN_ID"
 REPORTS="reports/$RUN_ID"
 STORES="$RUNS/stores"
 ADAPTERS="adapters/$RUN_ID"
 : "${MODEL:=Qwen/Qwen2.5-1.5B-Instruct}"
-# Expose model path for Python scripts expecting HF_MODEL_PATH.
-: "${HF_MODEL_PATH:=$MODEL}"
-export MODEL HF_MODEL_PATH
-# Deterministic session identifier for HEI-NW replay
+export MODEL HF_MODEL_PATH="$MODEL"
 HEI_SESSION_ID="hei_${RUN_ID}"
 mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"

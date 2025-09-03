@@ -5,12 +5,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 import subprocess
 import sys
-import warnings
 from pathlib import Path
 from typing import Iterable
+
+from hippo_mem.utils import validate_run_id
 
 PRESETS = ["baselines/core", "baselines/span_short", "baselines/rag", "baselines/longctx"]
 SUITES = [
@@ -57,27 +57,16 @@ def _run(cmd: Iterable[str]) -> None:
     subprocess.run(list(cmd), check=True)
 
 
-SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--run-id", dest="run_id")
-    parser.add_argument("--date", dest="date")
+    parser.add_argument("--run-id", required=True, help="Run identifier")
     parser.add_argument("--presets", nargs="*", default=PRESETS)
     parser.add_argument("--suites", nargs="*", default=SUITES)
     parser.add_argument("--sizes", nargs="*", type=int, default=SIZES)
     parser.add_argument("--seeds", nargs="*", type=int, default=SEEDS)
     args = parser.parse_args()
 
-    run_id = args.run_id
-    if not run_id and args.date:
-        run_id = args.date
-        warnings.warn("`--date` is deprecated; use --run-id", DeprecationWarning)
-    if not run_id:
-        raise ValueError("--run-id is required")
-    if not SLUG_RE.match(run_id):
-        raise ValueError("run_id must match ^[A-Za-z0-9._-]{3,64}$")
+    run_id = validate_run_id(args.run_id)
 
     for preset in args.presets:
         for suite in args.suites:
@@ -96,8 +85,6 @@ def main() -> None:
                         f"run_id={run_id}",
                         f"outdir={outdir}",
                     ]
-                    if args.date:
-                        cmd.append(f"date={args.date}")
                     _run(cmd)
 
 

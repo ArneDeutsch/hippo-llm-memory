@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RUN_ID=${RUN_ID:-dev}
 source "$(dirname "$0")/_env.sh"
-export RUN_ID DATE
 MODEL=models/tiny-gpt2
 SUITE=episodic
 printf "%-6s %-9s %-9s\n" "seed" "baseline" "hei_nw"

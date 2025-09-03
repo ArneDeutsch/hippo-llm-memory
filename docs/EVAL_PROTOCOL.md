@@ -9,12 +9,11 @@ updates from the pipeline review.
 Set a single `RUN_ID` once per experiment and source the shared prelude:
 
 ```bash
-export RUN_ID=my_run
-source scripts/env_prelude.sh
+export RUN_ID=my_experiment   # slug [A-Za-z0-9_-], 3–64 chars
+source scripts/_env.sh
 ```
 
-The prelude mirrors `RUN_ID` into `DATE` for back‑compat and defines helper
-paths such as `$RUNS`, `$REPORTS`, and `$STORES`.
+All outputs go to `runs/$RUN_ID/...`; no normalization happens.
 
 ## 1) Dataset difficulty profiles
 
@@ -28,7 +27,7 @@ suite=episodic_capacity dataset_profile=hard --strict-telemetry
 ```
 
 ```bash
-make datasets DATE="$RUN_ID"
+make datasets RUN_ID="$RUN_ID"
 ```
 
 ## 2) Teach → replay → test
