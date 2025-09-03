@@ -26,8 +26,6 @@ def _run_eval(tmp_path: Path, *overrides: str):
     for arg in overrides:
         if arg.startswith("run_id="):
             run_id = arg.split("=", 1)[1]
-        if arg.startswith("date="):
-            run_id = arg.split("=", 1)[1]
     if run_id:
         src = repo_root / "runs" / run_id
         dst = tmp_path / "runs" / run_id
@@ -44,14 +42,7 @@ def test_paths_use_run_id(tmp_path: Path) -> None:
     assert (outdir / "metrics.json").exists()
 
 
-def test_date_backcompat_warns(tmp_path: Path) -> None:
-    result = _run_eval(tmp_path, "date=20250101")
-    assert "date` is deprecated" in (result.stdout + result.stderr)
-    outdir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
-    assert (outdir / "metrics.json").exists()
-
-
 def test_invalid_run_id_rejected() -> None:
     cfg = OmegaConf.create({"run_matrix": True, "presets": ["foo"], "run_id": "bad id"})
-    with pytest.raises(ValueError, match="run_id must match"):
+    with pytest.raises(ValueError, match="Invalid RUN_ID"):
         harness.main(cfg)

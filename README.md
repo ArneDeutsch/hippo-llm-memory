@@ -153,8 +153,7 @@ Presets live under `configs/eval/baselines/`:
 - `longctx` – longest feasible context window without retrieval.
 - `span_short` – chat templates on with a short-span decoding profile for exact-match metrics.
 >
-> <span style="color:red;font-weight:bold">MUST:</span> Use a `RUN_ID` slug consistently across all commands. Valid slugs match `^[A-Za-z0-9._-]{3,64}$`.
-> Preflight also checks the digits-only form, so `20250902_50_1337_2025` and `202509025013372025` are equivalent.
+> <span style="color:red;font-weight:bold">MUST:</span> Use a `RUN_ID` slug consistently across all commands. Valid slugs match `^[A-Za-z0-9_-]{3,64}$`.
 
 Before any memory run, generate baseline metrics:
 
@@ -166,7 +165,7 @@ python scripts/run_baselines.py --run-id "$RUN_ID"
 
 ```bash
 # 1) Teach: write experiences to stores (persist across runs)
-RUN_ID=20250902_50_1337_2025; SID=seed1337
+RUN_ID=my_experiment; SID=seed1337
 python scripts/eval_model.py preset=memory/hei_nw task=episodic n=200 seed=1337 \
   mode=teach persist=true store_dir=runs/$RUN_ID/stores session_id=$SID \
   model=Qwen/Qwen2.5-1.5B-Instruct outdir=runs/$RUN_ID/memory/teach

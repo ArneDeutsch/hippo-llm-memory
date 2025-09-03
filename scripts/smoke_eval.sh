@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RUN_ID=${RUN_ID:-dev}
 export STRICT_TELEMETRY=1
 source "$(dirname "$0")/_env.sh"
-export RUN_ID DATE
 
 outdir=$(mktemp -d)
 python scripts/eval_model.py suite=episodic preset=baselines/core n=50 seed=1337 \

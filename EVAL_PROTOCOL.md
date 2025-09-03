@@ -14,21 +14,16 @@ This protocol executes a **complete, reproducible** validation run across **base
 
 ### Choosing a run identifier
 
-Set a stable session id once before running the protocol:
+Set a stable run identifier once before running the protocol:
 
 ```bash
-# Example slug
-export RUN_ID=20250902_50_1337_2025
-# or derive one dynamically
-export RUN_ID="$(date -u +%Y%m%d_%H%M)-$(git rev-parse --short HEAD 2>/dev/null || echo nogit)"
+export RUN_ID=my_experiment   # slug [A-Za-z0-9_-], 3–64 chars
+source scripts/_env.sh
 ```
 
-All outputs (runs, reports, stores, adapters) will use this `RUN_ID`.
+All outputs go to `runs/$RUN_ID/...`; no normalization happens.
 
-Preflight strips underscores when resolving baselines, so it also checks the
-digits-only form `${RUN_ID//_/}`.
-
-> <span style="color:red;font-weight:bold">MUST:</span> Use the same `run_id` for every command. Valid slugs match `^[A-Za-z0-9._-]{3,64}$`.
+> <span style="color:red;font-weight:bold">MUST:</span> Use the same `run_id` for every command. Valid slugs match `^[A-Za-z0-9_-]{3,64}$`.
 
 > **Parameter reference**
 > - `--store_dir`: base directory for persistent stores, typically `$STORES`
@@ -39,7 +34,7 @@ digits-only form `${RUN_ID//_/}`.
 #### Minimal end-to-end example
 
 ```bash
-RUN_ID=20250902_50_1337_2025
+RUN_ID=my_experiment
 source scripts/_env.sh
 python scripts/eval_model.py +run_matrix=true run_id=$RUN_ID presets=[baselines/core] tasks=[episodic] n_values=[50] seeds=[1337] model=$MODEL
 python scripts/run_baselines.py --run-id $RUN_ID

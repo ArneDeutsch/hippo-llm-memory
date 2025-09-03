@@ -25,7 +25,6 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -45,6 +44,7 @@ from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
+from hippo_mem.utils import validate_run_id
 from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
 from .bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
@@ -63,8 +63,6 @@ REFUSAL_RE = re.compile(
 
 FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
-SLUG_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
-
 
 def _ensure_list(name: str, val: object | None) -> object | None:
     """Validate that Hydra list inputs are proper sequences.
@@ -76,23 +74,6 @@ def _ensure_list(name: str, val: object | None) -> object | None:
     if isinstance(val, str):
         raise TypeError(f"{name} must be a list: use {name}=[a,b], not a quoted string")
     return val
-
-
-def _date_str(value: object | None) -> str:
-    """Return a normalized date string.
-
-    ``value`` may be ``None``, a numeric timestamp, or a string with an optional
-    ``_HHMM`` suffix. The function preserves underscores if provided and inserts
-    one for 12+ digit numeric values so ``202508290841`` becomes
-    ``20250829_0841``.
-    """
-
-    if value is None:
-        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
-    date = str(value)
-    if "_" not in date and date.isdigit() and len(date) > 8:
-        return f"{date[:8]}_{date[8:]}"
-    return date
 
 
 def get_replay_cycles(cfg: object) -> int:
@@ -910,7 +891,6 @@ def _write_outputs(
         "preset": cfg.preset,
         "n": cfg.n,
         "run_id": cfg.get("run_id"),
-        "date": cfg.get("date"),
         "git_sha": _git_sha(),
         "model": model_meta,
         "config_hash": _config_hash(cfg),
@@ -975,17 +955,12 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
     failures: list[str] = []
     if cfg.get("mode") != "teach":
         rid = str(cfg.get("run_id"))
-        digits = rid.replace("_", "")
-        candidates = [Path("runs") / rid / "baselines" / "metrics.csv"]
-        if digits != rid:
-            candidates.append(Path("runs") / digits / "baselines" / "metrics.csv")
-        if not any(p.exists() for p in candidates):
-            shown = " or ".join(str(p) for p in candidates)
-            cmds = [f"python scripts/run_baselines.py --run-id {rid}"]
-            if digits != rid:
-                cmds.append(f"python scripts/run_baselines.py --run-id {digits}")
+        baseline = Path("runs") / rid / "baselines" / "metrics.csv"
+        if not baseline.exists():
             failures.append(
-                f"missing baseline metrics: {shown} — generate via:\n  " + "\n  ".join(cmds)
+                "missing baseline metrics: "
+                f"{baseline} — generate via:\n  "
+                f"python scripts/run_baselines.py --run-id {rid}"
             )
 
     store_dir = cfg.get("store_dir")
@@ -1405,16 +1380,9 @@ def main(cfg: DictConfig) -> None:
     # Resolve run identifier and freeze it early so repeated accesses do not drift.
     with open_dict(cfg):
         run_id = cfg.get("run_id")
-        if not run_id and cfg.get("date"):
-            run_id = _date_str(cfg.get("date"))
-            log.warning("`date` is deprecated for IO; using run_id=%s", run_id)
-        if not run_id:
-            run_id = _date_str(None)
-        run_id = str(run_id)
-        if not SLUG_RE.match(run_id):
-            raise ValueError("run_id must match ^[A-Za-z0-9._-]{3,64}$")
-        cfg.run_id = run_id
-        cfg.date = cfg.get("date")
+        if run_id is None:
+            raise ValueError("run_id is required")
+        cfg.run_id = validate_run_id(str(run_id))
         cfg.strict_telemetry = _strict_flag(cfg)
         set_strict_telemetry(cfg.strict_telemetry)
 

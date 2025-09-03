@@ -20,15 +20,9 @@ else
   find "runs/$RID/stores" -maxdepth 3 -name store_meta.json -print
 fi
 
-# Check baseline metrics under underscored RUN_ID
+# Check baseline metrics
 if ! ls -l "runs/$RID/baselines/metrics.csv" 2>/dev/null; then
-  echo "Baseline CSV (underscored) missing"
-fi
-
-# Check baseline metrics under digits-only RUN_ID
-DIGITS="${RID//_/}"
-if ! ls -l "runs/$DIGITS/baselines/metrics.csv" 2>/dev/null; then
-  echo "Baseline CSV (digits) missing"
+  echo "Baseline CSV missing"
 fi
 
 # Dump any failed preflight diagnostics

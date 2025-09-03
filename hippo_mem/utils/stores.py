@@ -23,7 +23,7 @@ def derive(run_id: str | None = None, algo: str = "hei_nw") -> StoreLayout:
     ----------
     run_id:
         Identifier for the current experiment run. If ``None`` the value is
-        read from ``RUN_ID`` or ``DATE`` environment variables.
+        read from the ``RUN_ID`` environment variable.
     algo:
         Memory algorithm key, e.g. ``"hei_nw"``.
 
@@ -36,7 +36,7 @@ def derive(run_id: str | None = None, algo: str = "hei_nw") -> StoreLayout:
         shell prelude's ``HEI_SESSION_ID`` variable.
     """
 
-    rid = run_id or os.environ.get("RUN_ID") or os.environ.get("DATE")
+    rid = run_id or os.environ.get("RUN_ID")
     if not rid:
         raise ValueError("RUN_ID is required (set RUN_ID env or pass run_id argument).")
 

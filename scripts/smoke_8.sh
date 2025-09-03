@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RUN_ID=${1:-dev}
 source "$(dirname "$0")/_env.sh"
 export MODEL=models/tiny-gpt2
 export HF_MODEL_PATH="$MODEL"
 export ALLOW_BENCH=1
 IFS=$'\n\t'
 
-RUN_ID=${1:-$RUN_ID}
-DATE="$RUN_ID"
-
 for suite in episodic semantic spatial; do
   python scripts/build_datasets.py --suite "$suite" --size 50 --seed 1337 --out "data/$suite/50_1337.jsonl"
 done
 
-python scripts/run_baselines_bench.py --date "$RUN_ID" --presets baselines/core --sizes 50 --seeds 1337
-python scripts/report.py --date "$RUN_ID"
+python scripts/run_baselines_bench.py --run-id "$RUN_ID" --presets baselines/core --sizes 50 --seeds 1337
+python scripts/report.py --run-id "$RUN_ID"
 
 for suite in episodic semantic spatial; do
   run_dir="runs/$RUN_ID/baselines/core/$suite/50_1337"

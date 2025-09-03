@@ -4,10 +4,11 @@ This guide lists the shell commands to evaluate the three suites with each basel
 current `scripts/eval_bench.py` uses a **mock model** that simply returns the ground-truth
 answers, so metrics are a sanity check of the evaluation pipeline. Each run writes
 `metrics.json`, `metrics.csv` and `meta.json` to
-`runs/<date>/baselines/<preset>/<suite>/<size>_<seed>/` where `<date>` is `$(date +%Y%m%d)`.
+`runs/<RUN_ID>/baselines/<preset>/<suite>/<size>_<seed>/` where `<RUN_ID>` is a
+slug of 3–64 characters.
 
 ```bash
-DATE=$(date +%Y%m%d)
+RUN_ID=my_baselines
 for PRESET in core rag longctx; do
   for SUITE in episodic semantic spatial; do
     for SIZE in 50 200 1000; do
@@ -15,7 +16,7 @@ for PRESET in core rag longctx; do
         python scripts/eval_bench.py \
           suite=$SUITE preset=baselines/$PRESET \
           n=$SIZE seed=$SEED \
-          outdir=runs/$DATE/baselines/$PRESET/$SUITE/${SIZE}_${SEED}
+          outdir=runs/$RUN_ID/baselines/$PRESET/$SUITE/${SIZE}_${SEED}
       done
     done
   done
