@@ -1001,7 +1001,7 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
         outdir.mkdir(parents=True, exist_ok=True)
         fail_path = outdir / "failed_preflight.json"
         fail_path.write_text(json.dumps({"errors": failures}, indent=2))
-        raise RuntimeError("preflight check failed")
+        raise RuntimeError(f"preflight check failed (see {fail_path})")
 
 
 def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
