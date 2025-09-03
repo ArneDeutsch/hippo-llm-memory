@@ -121,15 +121,38 @@ def generate_episodic_multi(
     size: int,
     seed: int,
     distractors: int | None = None,
-    corrections: bool | None = None,
+    max_corrections: int | None = None,
+    omit_fraction: float = 0.0,
     profile: str = "default",
 ) -> List[Dict[str, object]]:
-    """Multi-turn episodes with distractors and optional corrections."""
+    """Multi-turn episodes with distractors and optional corrections.
+
+    Parameters
+    ----------
+    size:
+        Number of items to generate.
+    seed:
+        RNG seed.
+    distractors:
+        Number of distractor sentences to prepend. Derived from ``profile``
+        when ``None``.
+    max_corrections:
+        Maximum number of "Actually" correction statements after the initial
+        fact. Values ``<= 0`` disable corrections. ``None`` derives from
+        ``profile`` and currently defaults to ``2``.
+    omit_fraction:
+        Fraction of items that should omit corrections even when
+        ``max_corrections > 0``. ``0.0`` keeps all items eligible for
+        corrections.
+    profile:
+        Difficulty profile controlling ``distractors`` and default
+        ``max_corrections``.
+    """
 
     if distractors is None:
         distractors = {"easy": 8, "default": 10, "hard": 12}[profile]
-    if corrections is None:
-        corrections = True
+    if max_corrections is None:
+        max_corrections = 2
 
     rng = random.Random(seed)
     people = ["Alice", "Bob", "Carol", "Dave"]
@@ -143,12 +166,18 @@ def generate_episodic_multi(
             for _ in range(distractors)
         ]
         sents = distractor_sents + [f"{who} likes {first_color}."]
-        if corrections:
-            new_color = rng.choice([c for c in colors if c != first_color])
+
+        num_corrections = 0
+        if max_corrections > 0 and rng.random() >= omit_fraction:
+            num_corrections = rng.randint(0, max_corrections)
+
+        current_color = first_color
+        for _ in range(num_corrections):
+            new_color = rng.choice([c for c in colors if c != current_color])
             sents.append(f"Actually, {who} likes {new_color}.")
-            answer = new_color
-        else:
-            answer = first_color
+            current_color = new_color
+
+        answer = current_color
         question = f"What color does {who} like?"
         prompt = " ".join(sents + [question])
         tasks.append({"prompt": prompt, "answer": answer})
