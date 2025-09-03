@@ -65,19 +65,22 @@ def generate_episodic(
 
     tasks: List[Dict[str, object]] = []
     for _ in range(size):
-        pre_sents: List[str] = []
-        for _ in range(distractors):
-            dwho = rng.choice(people)
-            dwhat = rng.choice(actions)
-            dwhere = rng.choice(places)
-            dwhen = rng.choice(times)
-            pre_sents.append(f"{dwho} {dwhat} at the {dwhere} on {dwhen}.")
+        qtype = rng.choice(qtypes)
 
         who = rng.choice(people)
         what = rng.choice(actions)
         where = rng.choice(places)
         when = rng.choice(times)
         target_sent = f"{who} {what} at the {where} on {when}."
+
+        pre_sents: List[str] = []
+        for _ in range(distractors):
+            candidates = people if qtype == "who_at_where" else [p for p in people if p != who]
+            dwho = rng.choice(candidates)
+            dwhat = rng.choice(actions)
+            dwhere = rng.choice(places)
+            dwhen = rng.choice(times)
+            pre_sents.append(f"{dwho} {dwhat} at the {dwhere} on {dwhen}.")
 
         post_sents: List[str] = []
         for _ in range(post_distractors):
@@ -86,7 +89,6 @@ def generate_episodic(
             pdwhen = rng.choice(times)
             post_sents.append(f"{pdwho} {pdwhat} at the {where} on {pdwhen}.")
 
-        qtype = rng.choice(qtypes)
         if qtype == "who_at_where":
             question = f"Who was at the {where}?"
             answer = who

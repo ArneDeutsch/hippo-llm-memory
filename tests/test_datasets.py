@@ -66,6 +66,22 @@ def test_episodic_flags() -> None:
     assert "reward" in item and "pin" in item
 
 
+def test_episodic_single_protagonist_event() -> None:
+    """Prompts mention the queried protagonist exactly once before the question."""
+
+    items = build_datasets.generate_episodic(50, seed=0)
+    people = ["Alice", "Bob", "Carol", "Dave"]
+    for item in items:
+        prompt = item["prompt"]
+        for name in people:
+            if (
+                f"What did {name} do?" in prompt
+                or f"Where was {name}?" in prompt
+                or f"When was {name} at" in prompt
+            ):
+                assert prompt.count(name) == 2
+
+
 def test_semantic_fact_labels() -> None:
     """Semantic items include per-fact schema-fit metadata."""
 
