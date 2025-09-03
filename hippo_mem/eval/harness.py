@@ -1016,8 +1016,10 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
         return
 
     failures: list[str] = []
+    rid = str(cfg.get("run_id"))
+    suite = str(cfg.get("suite"))
+    teach_cmd = f"python scripts/eval_model.py --mode teach +suite={suite} --run-id {rid}"
     if cfg.get("mode") != "teach":
-        rid = str(cfg.get("run_id"))
         baseline = Path("runs") / rid / "baselines" / "metrics.csv"
         if not baseline.exists():
             failures.append(
@@ -1044,6 +1046,22 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
                 meta = json.loads(meta_path.read_text())
                 if meta.get("source") == "stub":
                     failures.append(f"store_meta.source == 'stub' in {meta_path}")
+                else:
+                    store_files = {
+                        "hei_nw": "episodic.jsonl",
+                        "sgc_rss": "kg.jsonl",
+                        "smpd": "spatial.jsonl",
+                    }
+                    store_file = meta_path.parent / store_files.get(algo, f"{algo}.jsonl")
+                    has_data = False
+                    if store_file.exists():
+                        with store_file.open("r", encoding="utf-8") as fh:
+                            for line in fh:
+                                if line.strip():
+                                    has_data = True
+                                    break
+                    if not has_data:
+                        failures.append(f"empty store: {store_file} — run:\n  {teach_cmd}")
             except Exception as exc:  # pragma: no cover - diagnostics only
                 failures.append(f"invalid store_meta.json: {meta_path}: {exc}")
 
@@ -1058,7 +1076,7 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
         gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
     )
     if attempts == 0:
-        failures.append("gate.attempts == 0 in dry-run")
+        failures.append(f"gate.attempts == 0 in dry-run — run:\n  {teach_cmd}")
 
     if failures:
         outdir.mkdir(parents=True, exist_ok=True)
