@@ -15,9 +15,17 @@ import sys
 from pathlib import Path
 
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, open_dict
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+# allow `--mode test` style flags by translating to Hydra syntax
+if "--mode" in sys.argv:
+    idx = sys.argv.index("--mode")
+    if idx + 1 < len(sys.argv):
+        val = sys.argv[idx + 1]
+        sys.argv[idx] = f"mode={val}"
+        del sys.argv[idx + 1]
 
 from hippo_mem.eval.harness import (
     AutoModelForCausalLM,
@@ -68,6 +76,12 @@ def main(cfg: DictConfig) -> None:
         return {"sgc_rss": "kg", "smpd": "spatial"}.get(a, "episodic")
 
     store_kind = _store_kind(algo)
+
+    # propagate mode to memory config for downstream components
+    with open_dict(cfg):
+        if cfg.get("memory") is None:
+            cfg.memory = {}
+        cfg.memory["mode"] = cfg.mode
 
     layout: StoreLayout | None = None
     if cfg.mode == "replay":

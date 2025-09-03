@@ -399,6 +399,13 @@ class WriteGate:
         action = "insert" if allow else "skip"
         reason = f"score={sc:.2f}"
         decision = GateDecision(action=action, reason=reason, score=sc)
+        stats = gate_registry.get("episodic")
+        stats.attempts += 1
+        if action == "insert":
+            stats.inserted += 1
+            stats.accepted += 1
+        else:
+            stats.skipped += 1
         log_gate(
             self.logger,
             "episodic",
@@ -406,6 +413,9 @@ class WriteGate:
             {"prob": prob, "provenance": provenance},
         )
         return decision
+
+    # alias to satisfy :class:`~hippo_mem.common.gates.MemoryGate`
+    decide = __call__
 
 
 def gate_batch(
@@ -475,17 +485,12 @@ def gate_batch(
         return decisions, 0.0
     accepted = 0
     for i, p in enumerate(probs):
-        stats.attempts += 1
         r = float(rewards[i]) if rewards is not None else 0.0
         pin = bool(pins[i]) if pins is not None else False
         dec = gate(p, queries[i], keys, r, pin, provenance)
         decisions.append(dec)
         if dec.action == "insert":
-            stats.inserted += 1
-            stats.accepted += 1
             accepted += 1
-        else:
-            stats.skipped += 1
     rate = accepted / len(decisions)
     logger.info("write_accept_rate=%.2f", rate)
     return decisions, rate

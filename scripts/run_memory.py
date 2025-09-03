@@ -58,7 +58,8 @@ def main() -> None:
         f"n={args.n}",
         f"seed={args.seed}",
         f"outdir={args.outdir}",
-        f"mode={args.mode}",
+        "--mode",
+        args.mode,
         f"model={args.model}",
     ]
     if args.dry_run:

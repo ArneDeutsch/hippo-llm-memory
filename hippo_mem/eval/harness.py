@@ -24,7 +24,7 @@ import re
 import sys
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -36,6 +36,7 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import gate_registry, registry, set_strict_telemetry
 from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
@@ -304,6 +305,8 @@ def _evaluate(
     suite: str | None = None,
     retrieval_enabled: bool = True,
     long_context_enabled: bool = False,
+    mode: str = "test",
+    gating: Dict[str, GateCounters] | None = None,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
@@ -390,6 +393,49 @@ def _evaluate(
             overlong_total += overlong
             fmt_total += fmt
             refusal_total += int(bool(REFUSAL_RE.search(pred)))
+        # write phase guarded by gates
+        if modules:
+            if "episodic" in modules and modules["episodic"].get("gate") is not None:
+                store = modules["episodic"]["store"]
+                gate = modules["episodic"]["gate"]
+                q = np.zeros(store.dim, dtype="float32")
+                decision = gate.decide(0.5, q, store.keys())
+                gc = gating["episodic"]
+                gc.attempts += 1
+                if decision.action == "insert":
+                    gc.accepted += 1
+                    if mode == "teach":
+                        store.write(q, item.answer)
+                else:
+                    gc.skipped += 1
+            if "relational" in modules and modules["relational"].get("gate") is not None:
+                kg = modules["relational"]["kg"]
+                gate = modules["relational"]["gate"]
+                tup = ("a", "rel", "b", "ctx", None, 1.0, 0)
+                decision = gate.decide(tup, kg)
+                gc = gating["relational"]
+                gc.attempts += 1
+                if decision.action == "insert":
+                    gc.accepted += 1
+                    if mode == "teach":
+                        # avoid double counting: ``kg.ingest`` invokes the gate again
+                        kg.schema_index.fast_track(tup, kg)
+                else:
+                    gc.skipped += 1
+            if "spatial" in modules and modules["spatial"].get("gate") is not None:
+                graph = modules["spatial"]["map"]
+                gate = modules["spatial"]["gate"]
+                decision = gate.decide(None, "ctx", graph)
+                gc = gating["spatial"]
+                gc.attempts += 1
+                if decision.action == "insert" and mode == "teach":
+                    graph.observe("ctx")
+                    gc.accepted += 1
+                elif decision.action == "insert":
+                    gc.accepted += 1
+                else:
+                    gc.skipped += 1
+
         input_tokens += inputs["input_ids"].shape[-1]
         gen_tokens += gen.shape[-1]
         item_t1 = time.perf_counter()
@@ -581,6 +627,9 @@ def run_suite(
 
     registry.reset()
     gate_registry.reset()
+    gating: Dict[str, GateCounters] = {
+        k: GateCounters() for k in ("episodic", "relational", "spatial")
+    }
 
     base_cfg = OmegaConf.create(
         {
@@ -606,6 +655,12 @@ def run_suite(
     )
     if cfg.preset and not is_memory_preset(str(cfg.preset)):
         modules = {}
+    if "episodic" in modules:
+        modules["episodic"]["gate"] = WriteGate()
+    if "relational" in modules:
+        modules["relational"]["gate"] = RelationalGate()
+    if "spatial" in modules:
+        modules["spatial"]["gate"] = SpatialGate()
 
     model_id = (str(base_cfg.model) or "").strip()
     if not model_id:
@@ -649,6 +704,8 @@ def run_suite(
         retrieval_enabled=retrieval_enabled,
         long_context_enabled=long_ctx_enabled,
         compute_metrics=cfg.pre_metrics,
+        mode="test",
+        gating=gating,
     )
     if cfg.pre_metrics:
         metrics["em"] = (
@@ -682,7 +739,7 @@ def run_suite(
             },
         },
         "retrieval": retrieval_snaps,
-        "gating": gate_registry.all_snapshots(),
+        "gating": {k: asdict(v) for k, v in gating.items()},
         "replay": {"samples": replay_samples},
         "store": {
             "size": sum(store_sizes.values()),
@@ -707,6 +764,7 @@ def _write_outputs(
     replay_samples: int = 0,
     store_sizes: Dict[str, int] | None = None,
     store_diags: Dict[str, Dict[str, int]] | None = None,
+    gating: Dict[str, GateCounters] | None = None,
 ) -> None:
     """Persist metrics and metadata."""
 
@@ -762,7 +820,7 @@ def _write_outputs(
         "metrics": {cfg.suite: suite_metrics},
         "diagnostics": {cfg.suite: diagnostics},
         "retrieval": registry.all_snapshots(),
-        "gating": gate_registry.all_snapshots(),
+        "gating": {k: asdict(v) for k, v in (gating or {}).items()},
         "replay": {"samples": replay_samples},
         "store": {
             "size": sum((store_sizes or {}).values()),
@@ -1013,6 +1071,9 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     set_strict_telemetry(_strict_flag(cfg))
     registry.reset()
     gate_registry.reset()
+    gating: Dict[str, GateCounters] = {
+        k: GateCounters() for k in ("episodic", "relational", "spatial")
+    }
 
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile)
     tasks = _load_tasks(dataset, cfg.n)
@@ -1067,6 +1128,13 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             if spat_file.exists():
                 modules["spatial"]["map"].load(str(session_dir), sid)
 
+    if "episodic" in modules:
+        modules["episodic"]["gate"] = WriteGate()
+    if "relational" in modules:
+        modules["relational"]["gate"] = RelationalGate()
+    if "spatial" in modules:
+        modules["spatial"]["gate"] = SpatialGate()
+
     retrieval_enabled = bool(cfg.get("retrieval", {}).get("enabled", False))
     long_ctx_enabled = bool(cfg.get("long_context", {}).get("enabled", False))
 
@@ -1114,6 +1182,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             suite=cfg.suite,
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
+            mode="teach",
+            gating=gating,
         )
         if compute_metrics:
             pre_metrics["em"] = (
@@ -1133,9 +1203,9 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         replay_samples = _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             session_dir = Path(to_absolute_path(str(cfg.store_dir)))
-            epi_attempts = gate_registry.get("episodic").attempts
-            rel_attempts = gate_registry.get("relational").attempts
-            spat_attempts = gate_registry.get("spatial").attempts
+            epi_attempts = gating["episodic"].attempts
+            rel_attempts = gating["relational"].attempts
+            spat_attempts = gating["spatial"].attempts
             if "episodic" in modules:
                 modules["episodic"]["store"].save(
                     str(session_dir),
@@ -1172,6 +1242,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             replay_samples=replay_samples,
             store_sizes=store_sizes,
             store_diags=store_diags,
+            gating=gating,
         )
         return
 
@@ -1249,6 +1320,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             suite=cfg.suite,
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
+            mode=cfg.mode,
+            gating=gating,
         )
         for name, snap in gate_snaps.items():
             stats = gate_registry.get(name)
@@ -1286,6 +1359,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             replay_samples=replay_samples,
             store_sizes=store_sizes,
             store_diags=store_diags,
+            gating=gating,
         )
         retrieval_snaps = registry.all_snapshots()
         _enforce_guardrails(
@@ -1306,6 +1380,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         suite=cfg.suite,
         retrieval_enabled=retrieval_enabled,
         long_context_enabled=long_ctx_enabled,
+        mode=cfg.mode,
+        gating=gating,
     )
     if pre_compute:
         pre_metrics["em"] = (
@@ -1344,6 +1420,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         replay_samples=replay_samples,
         store_sizes=store_sizes,
         store_diags=store_diags,
+        gating=gating,
     )
 
     retrieval_snaps = registry.all_snapshots()
