@@ -1,0 +1,27 @@
+{
+  "suite": "semantic",
+  "sizes": [
+    50,
+    200,
+    1000
+  ],
+  "seeds": [
+    1337,
+    2025,
+    4242
+  ],
+  "generator_version": "e9bf4efedd4becd44cc5ff2f97bcb8294a400a36",
+  "files": {
+    "50_1337.jsonl": "7f0acc1de6961fd989b40c66ca389e427549b99611e845fb32333da409fb968e",
+    "50_2025.jsonl": "568b98ef4babe95027a6b3a83b1ca7310521ad188e45c98cfc09d6313d9fb77d",
+    "50_4242.jsonl": "f0f15777c39495fd961aa16317273ae6e7fca262706234e09978b279961742b4",
+    "200_1337.jsonl": "935e8822e80811694dbb2dc3b6c2da812f3d9f3545749917e9d4680ac5e80cd6",
+    "200_2025.jsonl": "b2613b824709139bbcede76acf5029cdbb29a36e18cf25b48ff5b7b52ecad5b8",
+    "200_4242.jsonl": "de6001e269406500afe75d416e529efb3c1916dfaa6ce0bdc4fda4b5346c9aaa",
+    "1000_1337.jsonl": "13abfeaffb9ef73fd45cd32d7baf22cedc68faddde4f10988a944053a477ee35",
+    "1000_2025.jsonl": "1f407bd8ac7a6e7e383a938f2ad11ada93c7b0e960f3ea490d979cb3d588e31d",
+    "1000_4242.jsonl": "5b8fcd3999487fbc3d764169b18622c682d5d0c521473b9dfd58479b62ab6cd8"
+  },
+  "created_utc": "2025-09-03T06:41:29.896769+00:00",
+  "cli_example": "python scripts/make_datasets.py suite=semantic size=<size> seed=<seed> out=data/semantic/<size>_<seed>.jsonl"
+}
