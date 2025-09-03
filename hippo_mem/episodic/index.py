@@ -47,6 +47,7 @@ class FaissIndex(IndexStrategy):
         self._pending_ids: List[int] = []
 
     def add(self, key: np.ndarray, idx: int) -> None:
+        faiss.normalize_L2(key)
         if self.index.is_trained:
             ids = np.array([idx], dtype="int64")
             self.index.add_with_ids(key, ids)
@@ -63,6 +64,7 @@ class FaissIndex(IndexStrategy):
                 self._pending_ids.clear()
 
     def search(self, query: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
+        faiss.normalize_L2(query)
         return self.index.search(query, k)
 
     def remove(self, idx: int) -> None:
@@ -100,16 +102,21 @@ class NumpyIndex(IndexStrategy):
         self._vecs: Dict[int, np.ndarray] = {}
 
     def add(self, key: np.ndarray, idx: int) -> None:
-        self._vecs[idx] = key[0]
+        norm = np.linalg.norm(key, axis=1, keepdims=True)
+        norm[norm == 0] = 1.0
+        self._vecs[idx] = (key / norm)[0]
 
     def search(self, query: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
         if not self._vecs:
             scores = np.zeros((1, k), dtype="float32")
             ids = np.full((1, k), -1, dtype="int64")
             return scores, ids
+        norm = np.linalg.norm(query, axis=1, keepdims=True)
+        norm[norm == 0] = 1.0
+        q = query / norm
         keys = np.stack(list(self._vecs.values()))
         ids = np.array(list(self._vecs.keys()), dtype="int64")
-        sims = keys @ query.T
+        sims = keys @ q.T
         sims = sims.reshape(-1)
         topk = sims.argsort()[::-1][:k]
         top_scores = sims[topk]

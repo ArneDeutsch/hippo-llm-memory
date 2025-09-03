@@ -17,6 +17,9 @@ class TraceValue:
     state_sketch: Optional[list] = None
     salience_tags: Optional[List[str]] = None
     provenance: Optional[str] = None
+    trace_id: Optional[str] = None
+    sample_id: Optional[str] = None
+    suite: Optional[str] = None
 
 
 @dataclass

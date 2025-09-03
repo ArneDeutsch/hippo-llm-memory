@@ -17,6 +17,7 @@ from hippo_mem.common.retrieval import build_meta, retrieve_and_pack_base
 from hippo_mem.common.telemetry import registry
 
 from .store import EpisodicStore
+from .types import TraceValue
 
 logger = logging.getLogger(__name__)
 
@@ -44,13 +45,14 @@ def _extract_vectors(store: EpisodicStore, traces: List, dim: int) -> np.ndarray
 
 def _recall_traces(
     store: EpisodicStore, cue: np.ndarray, k: int
-) -> tuple[np.ndarray, np.ndarray, int]:
+) -> tuple[np.ndarray, np.ndarray, int, List[TraceValue]]:
     """Recall ``k`` traces from ``store`` and return their vectors.
 
     Returns
     -------
     tuple
-        Updated cue, dense vectors for recalled traces, and number of hits.
+        Updated cue, dense vectors for recalled traces, number of hits, and
+        their :class:`TraceValue` metadata.
     """
 
     k_wta = getattr(store, "k_wta", 0)
@@ -60,7 +62,8 @@ def _recall_traces(
     traces = store.recall(cue, k) if k > 0 else []
     hits = len(traces)
     vecs = _extract_vectors(store, traces, store.dim)
-    return cue, vecs, hits
+    values = [getattr(t, "value", TraceValue()) for t in traces]
+    return cue, vecs, hits, values
 
 
 def _apply_hopfield(
@@ -111,15 +114,19 @@ def episodic_retrieve_and_pack(
 
     placeholder_total = 0
     actual_hits = 0
+    span_meta: list[list[tuple[int, int]]] = []
+    id_meta: list[list[str | None]] = []
 
     def iter_retrieve():
         nonlocal placeholder_total, actual_hits
         for i in range(bsz):
             cue = batch_hidden[i, -1].detach().cpu().numpy()
-            cue, vecs, hits = _recall_traces(store, cue, k)
+            cue, vecs, hits, values = _recall_traces(store, cue, k)
             vecs, mask_hits, placeholder = _apply_hopfield(store, vecs, cue, hits, k, spec)
             placeholder_total += placeholder
             actual_hits += hits
+            span_meta.append([tuple(v.tokens_span) if v.tokens_span else (0, 0) for v in values])
+            id_meta.append([v.trace_id for v in values])
             yield vecs, mask_hits
 
     def meta_fn(start: float, hits: int, k: int, bsz: int) -> dict[str, float]:
@@ -134,6 +141,9 @@ def episodic_retrieve_and_pack(
         build_meta_fn=meta_fn,
         telemetry_key="episodic",
     )
+
+    mem.meta["tokens_span"] = span_meta
+    mem.meta["trace_ids"] = id_meta
 
     if placeholder_total:
         stats = registry.get("episodic")
