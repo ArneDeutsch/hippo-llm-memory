@@ -24,8 +24,21 @@ fix = true
 exclude = ["tests/data", "runs"]
 
 [tool.ruff.lint]
-# Enable import sorting and common lint rules
-extend-select = ["I"]
+# Enable import sorting, tidy imports, and common lint rules
+extend-select = ["I", "TID"]
+
+# Forbid hippo_mem from depending on hippo_eval
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"hippo_eval" = {msg = "hippo_mem must not import hippo_eval"}
+
+[tool.ruff.lint.per-file-ignores]
+"hippo_eval/**" = ["TID251"]
+"tests/**" = ["TID251"]
+"scripts/**" = ["TID251"]
+"hippo_mem/eval/__init__.py" = ["TID251"]
+"hippo_mem/metrics/__init__.py" = ["TID251"]
+"hippo_mem/reporting/__init__.py" = ["TID251"]
+"hippo_mem/tasks/__init__.py" = ["TID251"]
 
 [tool.pytest.ini_options]
 addopts = "-q -ra --color=yes"
