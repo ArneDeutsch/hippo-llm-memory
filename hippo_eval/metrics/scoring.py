@@ -6,7 +6,7 @@ import heapq
 import re
 import string
 from collections import Counter
-from typing import List
+from typing import List, Protocol
 
 _ARTICLES = {"a", "an", "the"}
 _PUNCT_RE = re.compile(f"[{re.escape(string.punctuation)}]")
@@ -129,101 +129,182 @@ _FROM_TO_RE = re.compile(r"from (\(\d+,\s*\d+\)) to (\(\d+,\s*\d+\))")
 _MOVES_RE = re.compile(r"After moves ([LRUD]+)", re.IGNORECASE)
 
 
-def spatial_kpis(tasks, rows):
-    """Update ``rows`` with spatial metrics and return aggregates.
+class SpatialTaskStrategy(Protocol):
+    """Strategy interface for spatial task scoring."""
 
-    Paths are marked successful when they reach the goal without
-    hitting obstacles and require no more than ``1.2`` times the
-    optimal number of steps.
-    """
-    total = len(rows)
-    success = 0
-    subopt_sum = 0.0
-    steps_sum = 0
-    counted = 0
+    def evaluate(
+        self,
+        pred: str,
+        start: tuple[int, int],
+        goal: tuple[int, int] | None,
+        size: int,
+        obstacles: set[tuple[int, int]],
+        row: dict,
+    ) -> None:
+        """Populate ``row`` with metrics for a prediction."""
+
+
+class _MetricAccumulator:
+    """Aggregate success, step, and suboptimality metrics."""
+
+    def __init__(self, total: int) -> None:
+        self.total = total
+        self.success = 0
+        self.subopt_sum = 0.0
+        self.steps_sum = 0
+        self.counted = 0
+
+    def add(self, row: dict) -> None:
+        self.success += int(row["success"])
+        self.subopt_sum += row["suboptimality"]
+        self.steps_sum += row["steps_pred"]
+        self.counted += 1
+
+    def metrics(self) -> dict[str, float]:
+        return {
+            "success_rate": self.success / self.total if self.total else 0.0,
+            "suboptimality_ratio": (self.subopt_sum / self.counted if self.counted else 0.0),
+            "steps_to_goal": self.steps_sum / self.counted if self.counted else 0.0,
+        }
+
+
+def _extract_metadata(
+    prompt: str,
+) -> tuple[
+    int, set[tuple[int, int]], tuple[int, int] | None, tuple[int, int] | None, List[str] | None
+]:
+    """Return grid size, obstacles, start, goal, and move trace."""
+
+    gmatch = _GRID_RE.search(prompt)
+    size = int(gmatch.group(1)) if gmatch else 5
+    obstacles: set[tuple[int, int]] = set()
+    if gmatch:
+        try:
+            import ast
+
+            obs_list = ast.literal_eval(gmatch.group(2))
+            obstacles = {tuple(map(int, o)) for o in obs_list}
+        except Exception:
+            obstacles = set()
+    start, goal = None, None
+    ft = _FROM_TO_RE.search(prompt)
+    if ft:
+        start = _parse_coord(ft.group(1))
+        goal = _parse_coord(ft.group(2))
+    else:
+        sm = _START_RE.search(prompt)
+        gm = _GOAL_RE.search(prompt)
+        if sm:
+            start = _parse_coord(sm.group(1))
+        if gm:
+            goal = _parse_coord(gm.group(1))
+    moves_prompt = _MOVES_RE.search(prompt)
+    path_moves = list(moves_prompt.group(1)) if moves_prompt else None
+    return size, obstacles, start, goal, path_moves
+
+
+def _default_row(row: dict) -> None:
+    row["success"] = False
+    row["steps_pred"] = 0
+    row["steps_opt"] = 0
+    row["suboptimality"] = 0.0
+
+
+class _MoveTraceStrategy:
+    """Evaluate final coordinate after following a move trace."""
+
+    def __init__(self, path_moves: List[str]) -> None:
+        self.path_moves = path_moves
+
+    def evaluate(
+        self,
+        pred: str,
+        start: tuple[int, int],
+        goal: tuple[int, int] | None,
+        size: int,
+        obstacles: set[tuple[int, int]],
+        row: dict,
+    ) -> None:
+        final = start
+        for step in self.path_moves:
+            dx, dy = _MOVE_DIRS[step]
+            final = (final[0] + dx, final[1] + dy)
+        pred_coord = _parse_coord(pred)
+        row["steps_pred"] = len(self.path_moves)
+        row["steps_opt"] = len(self.path_moves)
+        row["suboptimality"] = 1.0
+        row["success"] = pred_coord == final
+
+
+class _PathLengthStrategy:
+    """Evaluate predicted length of optimal path."""
+
+    def evaluate(
+        self,
+        pred: str,
+        start: tuple[int, int],
+        goal: tuple[int, int],
+        size: int,
+        obstacles: set[tuple[int, int]],
+        row: dict,
+    ) -> None:
+        opt_len = len(_astar(start, goal, size, obstacles) or [])
+        try:
+            pred_len = int(re.findall(r"-?\d+", pred)[0])
+        except Exception:
+            pred_len = 0
+        row["steps_pred"] = pred_len
+        row["steps_opt"] = opt_len
+        row["suboptimality"] = (pred_len / opt_len) if opt_len else 0.0
+        row["success"] = pred_len == opt_len
+
+
+class _PathSequenceStrategy:
+    """Evaluate a predicted move sequence."""
+
+    def evaluate(
+        self,
+        pred: str,
+        start: tuple[int, int],
+        goal: tuple[int, int],
+        size: int,
+        obstacles: set[tuple[int, int]],
+        row: dict,
+    ) -> None:
+        opt_len = len(_astar(start, goal, size, obstacles) or [])
+        pred_moves = _parse_moves(pred)
+        row["steps_pred"] = len(pred_moves)
+        row["steps_opt"] = opt_len
+        row["suboptimality"] = (len(pred_moves) / opt_len) if opt_len else 0.0
+        pos = start
+        valid = True
+        for step in pred_moves:
+            dx, dy = _MOVE_DIRS[step]
+            nx, ny = pos[0] + dx, pos[1] + dy
+            if not (0 <= nx < size and 0 <= ny < size) or (nx, ny) in obstacles:
+                valid = False
+                break
+            pos = (nx, ny)
+        row["success"] = valid and pos == goal and row["suboptimality"] <= 1.2
+
+
+def spatial_kpis(tasks, rows):
+    """Update ``rows`` with spatial metrics and return aggregates."""
+
+    acc = _MetricAccumulator(len(rows))
     for task, row in zip(tasks, rows):
         prompt = task.prompt
         pred = row.get("pred", "")
-        gmatch = _GRID_RE.search(prompt)
-        size = int(gmatch.group(1)) if gmatch else 5
-        obstacles: set[tuple[int, int]] = set()
-        if gmatch:
-            try:
-                import ast
-
-                obs_list = ast.literal_eval(gmatch.group(2))
-                obstacles = {tuple(map(int, o)) for o in obs_list}
-            except Exception:
-                obstacles = set()
-        start, goal = None, None
-        ft = _FROM_TO_RE.search(prompt)
-        if ft:
-            start = _parse_coord(ft.group(1))
-            goal = _parse_coord(ft.group(2))
+        size, obstacles, start, goal, path_moves = _extract_metadata(prompt)
+        if path_moves and start is not None:
+            strategy: SpatialTaskStrategy = _MoveTraceStrategy(path_moves)
+        elif start is None or goal is None:
+            _default_row(row)
+            continue
+        elif "shortest path length" in prompt.lower():
+            strategy = _PathLengthStrategy()
         else:
-            sm = _START_RE.search(prompt)
-            gm = _GOAL_RE.search(prompt)
-            if sm:
-                start = _parse_coord(sm.group(1))
-            if gm:
-                goal = _parse_coord(gm.group(1))
-        moves_prompt = _MOVES_RE.search(prompt)
-        if moves_prompt and start is not None:
-            path_moves = list(moves_prompt.group(1))
-            final = start
-            for step in path_moves:
-                dx, dy = _MOVE_DIRS[step]
-                final = (final[0] + dx, final[1] + dy)
-            pred_coord = _parse_coord(pred)
-            row["steps_pred"] = len(path_moves)
-            row["steps_opt"] = len(path_moves)
-            row["suboptimality"] = 1.0
-            row["success"] = pred_coord == final
-            success += int(row["success"])
-            subopt_sum += row["suboptimality"]
-            steps_sum += len(path_moves)
-            counted += 1
-            continue
-        if start is not None and goal is not None:
-            opt_path = _astar(start, goal, size, obstacles) or []
-            opt_len = len(opt_path)
-            pred_moves: List[str] = []
-            if "shortest path length" in prompt.lower():
-                try:
-                    pred_len = int(re.findall(r"-?\d+", pred)[0])
-                except Exception:
-                    pred_len = 0
-                row["steps_pred"] = pred_len
-                row["steps_opt"] = opt_len
-                row["suboptimality"] = (pred_len / opt_len) if opt_len else 0.0
-                row["success"] = pred_len == opt_len
-            else:
-                pred_moves = _parse_moves(pred)
-                row["steps_pred"] = len(pred_moves)
-                row["steps_opt"] = opt_len
-                row["suboptimality"] = (len(pred_moves) / opt_len) if opt_len else 0.0
-                pos = start
-                valid = True
-                for step in pred_moves:
-                    dx, dy = _MOVE_DIRS[step]
-                    nx, ny = pos[0] + dx, pos[1] + dy
-                    if not (0 <= nx < size and 0 <= ny < size) or (nx, ny) in obstacles:
-                        valid = False
-                        break
-                    pos = (nx, ny)
-                row["success"] = valid and pos == goal and row["suboptimality"] <= 1.2
-            success += int(row["success"])
-            subopt_sum += row["suboptimality"]
-            steps_sum += row["steps_pred"]
-            counted += 1
-            continue
-        row["success"] = False
-        row["steps_pred"] = 0
-        row["steps_opt"] = 0
-        row["suboptimality"] = 0.0
-    metrics = {
-        "success_rate": success / total if total else 0.0,
-        "suboptimality_ratio": subopt_sum / counted if counted else 0.0,
-        "steps_to_goal": steps_sum / counted if counted else 0.0,
-    }
-    return metrics
+            strategy = _PathSequenceStrategy()
+        strategy.evaluate(pred, start, goal, size, obstacles, row)
+        acc.add(row)
+    return acc.metrics()
