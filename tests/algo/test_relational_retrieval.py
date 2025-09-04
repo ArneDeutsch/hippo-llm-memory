@@ -121,3 +121,14 @@ def test_relational_hops_two_edges():
     mem2 = relational_retrieve_and_pack(batch_hidden, spec2, kg, proj)
     assert mem2.mask.tolist() == [[True, True, True]]
     assert any(torch.allclose(tok, c_vec) for tok in mem2.tokens[0][mem2.mask[0]])
+
+
+def test_relational_fallback_on_missing_edges() -> None:
+    kg = KnowledgeGraph()
+    batch_hidden = torch.zeros(1, 1, 3)
+    spec = TraceSpec(source="relational", k=1, params={"hops": 1})
+    proj = nn.Identity()
+    mem = relational_retrieve_and_pack(batch_hidden, spec, kg, proj)
+    assert mem.tokens.shape == (1, 1, 3)
+    assert mem.mask.tolist() == [[False]]
+    assert mem.meta["hit_rate"] == 0.0
