@@ -1,4 +1,4 @@
-"""Algorithmic overview for spatial/procedural memory (SMPD).
+r"""Algorithmic overview for spatial/procedural memory (SMPD).
 
 Summary
 -------
