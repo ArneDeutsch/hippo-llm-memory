@@ -5,7 +5,7 @@
 * **Templates:** `reports/templates/` (Jinja2), but **reporting code** lives in `hippo_mem/reporting`.
 * **Generated outputs:** `data/`, `runs/` (empty in the ZIP), `reports/` (currently also contains code templates).
 * **Hydra configs:** `configs/` (widely referenced).
-* **Small “edge” dirs:** `datasets/` (1 file), `experiments/` (3 subdirs with `RUN.md` + `run.yaml` each).
+* **Small “edge” dirs:** `tests/fixtures/datasets/` (1 file), `docs/experiments/` (3 subdirs with `RUN.md` + `run.yaml` each).
 * **Tests:** `tests/` — large, and they mix algorithm, evaluation, reporting, and scripts concerns.
 
 Notable hotspots:
@@ -38,8 +38,8 @@ Notable hotspots:
   ⚠️ Mixed.
 
   * `configs/` is widely referenced by docs and eval code (Hydra). Keep it.
-  * `datasets/semantic/mini.jsonl` is a **fixture**; it belongs under `tests/fixtures/datasets/`.
-  * `experiments/*` (each with `RUN.md` + `run.yaml`) look like **examples/docs**; moving them under `docs/experiments/` (or `examples/`) will declutter the root.
+  * `tests/fixtures/datasets/semantic/mini.jsonl` is a **fixture**; keep it under `tests/fixtures/datasets/`.
+  * `docs/experiments/*` (each with `RUN.md` + `run.yaml`) host examples/docs and keep the root decluttered.
 
 * **“Tests for algorithms and pipelines are mixed.”**
   ✅ Agree. We can split into `tests/algo/`, `tests/eval/`, `tests/reporting/`, `tests/cli/` with a small compatibility layer for shared fixtures.
