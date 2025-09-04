@@ -58,7 +58,7 @@ def test_eval_model_run_matrix_episodic_multi(tmp_path: Path) -> None:
 def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
     """Matrix run handles numeric date without explicit outdir."""
 
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     (tmp_path / "data").symlink_to(repo_root / "data", target_is_directory=True)
     (tmp_path / "models").symlink_to(repo_root / "models", target_is_directory=True)
     env = {**os.environ, "PYTHONPATH": str(repo_root)}
@@ -83,7 +83,7 @@ def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
 def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
     """Baseline matrix run uses local tiny model."""
 
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     (tmp_path / "data").symlink_to(repo_root / "data", target_is_directory=True)
     (tmp_path / "models").symlink_to(repo_root / "models", target_is_directory=True)
     env = {**os.environ, "PYTHONPATH": str(repo_root)}
@@ -110,7 +110,7 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
 def test_eval_model_run_matrix_date_time(tmp_path: Path) -> None:
     """Matrix run handles timestamped date without explicit outdir."""
 
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     (tmp_path / "data").symlink_to(repo_root / "data", target_is_directory=True)
     (tmp_path / "models").symlink_to(repo_root / "models", target_is_directory=True)
     env = {**os.environ, "PYTHONPATH": str(repo_root)}

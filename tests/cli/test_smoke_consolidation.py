@@ -8,7 +8,7 @@ import pytest
 
 @pytest.mark.slow
 def test_smoke_consolidation_tiny(tmp_path: Path) -> None:
-    repo = Path(__file__).resolve().parents[1]
+    repo = Path(__file__).resolve().parents[2]
     env = os.environ.copy()
     env.update(
         {

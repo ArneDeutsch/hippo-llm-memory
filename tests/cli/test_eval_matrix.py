@@ -19,7 +19,7 @@ def test_run_matrix_generates_outputs(
 ) -> None:
     """Matrix run writes metrics for each combination."""
 
-    script = Path(__file__).resolve().parents[1] / "scripts" / "eval_bench.py"
+    script = Path(__file__).resolve().parents[2] / "scripts" / "eval_bench.py"
     outdir = tmp_path / "matrix_runs"
     cmd = [
         sys.executable,

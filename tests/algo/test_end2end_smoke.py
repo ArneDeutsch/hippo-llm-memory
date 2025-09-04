@@ -13,7 +13,7 @@ def _run(cmd: list[str], cwd: Path) -> None:
 def test_end_to_end_smoke(tmp_path: Path) -> None:
     """Run baseline and memory presets and validate metrics, stores and gating."""
 
-    repo = Path(__file__).resolve().parent.parent
+    repo = Path(__file__).resolve().parents[2]
 
     baseline_out = tmp_path / "baseline"
     _run(
