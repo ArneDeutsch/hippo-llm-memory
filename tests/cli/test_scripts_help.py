@@ -1,22 +1,17 @@
-import os
 import subprocess
 import sys
-from pathlib import Path
-
-import pytest
-
-ROOT = Path(__file__).resolve().parents[2]
 
 SCRIPTS = [
-    "eval_model.py",
-    "datasets_cli.py",
+    ["-m", "hippo_eval.bench", "--help"],
+    ["-m", "hippo_eval.datasets.cli", "--help"],
 ]
 
 
-@pytest.mark.parametrize("script", SCRIPTS)
-def test_cli_help(script: str) -> None:
-    cmd = [sys.executable, f"scripts/{script}", "--help"]
-    env = {**os.environ, "PYTHONPATH": str(ROOT)}
-    subprocess.run(
-        cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=ROOT, env=env
-    )
+def test_cli_help() -> None:
+    for args in SCRIPTS:
+        subprocess.run(
+            [sys.executable, *args],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
