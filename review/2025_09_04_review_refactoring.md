@@ -77,4 +77,38 @@ runs/                       # generated only
 reports/                    # generated only
 ```
 
-And move `reports/templates/` → `hippo_mem/reporting/templates/` (code and templates colocated). `hippo_mem/reporting/report.py` updated to load from its own package.
+# What should move (and what should stay)
+
+Here’s a concrete decision table over the top-level packages under `hippo_mem/`:
+
+| Path                                                                                                | Keep in `hippo_mem` (algos/core) | Move to `hippo_eval` (eval/pipeline) | Notes                                                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `adapters/`                                                                                         | ✅                                |                                      | Algorithm integration code.                                                                                                                                                                          |
+| `common/`                                                                                           | ✅                                |                                      | Telemetry, I/O, utilities used across both.                                                                                                                                                          |
+| `consolidation/`                                                                                    | ✅                                | ➖ (partial)                          | Keep `trainer.py`, `worker.py`, `replay_dataset.py` in core. **Move** `consolidation/test_eval.py` to `hippo_eval/consolidation/eval.py` and add a thin CLI wrapper `scripts/test_consolidation.py`. |
+| `episodic/`, `spatial/`, `relational/`, `memory/`, `planning/`, `training/`, `retrieval/`, `utils/` | ✅                                |                                      | Core algorithmic functionality.                                                                                                                                                                      |
+| `eval/`                                                                                             |                                  | ✅                                    | Entire package moves (your T1).                                                                                                                                                                      |
+| `metrics/`                                                                                          |                                  | ✅                                    | These are evaluation metrics (EM/F1/spatial path, etc.). Move to `hippo_eval/metrics/`. Keep a shim at `hippo_mem/metrics` for compatibility.                                                        |
+| `reporting/`                                                                                        |                                  | ✅                                    | Reporting consumes eval outputs; move whole package to `hippo_eval/reporting/`. Keep a shim at `hippo_mem/reporting`.                                                                                |
+| `tasks/`                                                                                            |                                  | ✅                                    | Synthetic task/data generation used by the harness; move to `hippo_eval/tasks/`. Update imports in `datasets.py`.                                                                                    |
+
+Non-package folders:
+
+* Root `reports/` currently contains **code** (`health.py`, `render_baselines.py`, `plots/`) and **templates** — these should move under `hippo_eval/reporting/…`; keep root `reports/` strictly **outputs**. (This supersedes your existing T2, which only moved templates.)&#x20;
+* Root `tasks/` (Markdown Codex instructions) should **stay** as docs; it’s distinct from `hippo_eval/tasks/` (code).
+* `datasets/semantic/mini.jsonl` is a **fixture** → move to `tests/fixtures/datasets/semantic/mini.jsonl`.
+* `experiments/*` are examples/docs → move to `docs/experiments/*`.
+
+# Why these moves
+
+* Keeps a one-way boundary: **`hippo_eval → hippo_mem`** (never the other way).
+* De-couples pipelines, metrics, reporting, and synthetic data from core memory algorithms.
+* Reduces accidental import cycles and clarifies ownership for tests and CI.
+
+This directly addresses the gaps in your current T1/T2 and expands T4 beyond `harness.py` to additional oversized modules you flagged implicitly (bench/datasets/report).&#x20;
+
+---
+
+# Updated Codex tasks (revised & expanded)
+
+You can paste these as separate Codex tasks. They’re self-contained, safe-order, and include acceptance criteria.
