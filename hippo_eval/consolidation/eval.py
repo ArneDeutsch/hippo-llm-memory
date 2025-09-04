@@ -144,7 +144,8 @@ def _build_cfg(model_path: str, args: Args) -> Any:
         subprocess.run(
             [
                 sys.executable,
-                str(SCRIPTS_DIR / "build_datasets.py"),
+                "-m",
+                "hippo_eval.datasets.cli",
                 "--suite",
                 cfg.suite,
                 "--size",

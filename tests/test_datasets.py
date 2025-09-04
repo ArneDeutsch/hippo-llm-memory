@@ -5,7 +5,7 @@ import pytest
 import torch
 from torch.utils.data import DataLoader
 
-from hippo_eval.eval import datasets as build_datasets
+from hippo_eval import datasets as build_datasets
 from hippo_mem.training import jsonl_dataset
 
 SUITES = ["episodic", "semantic", "spatial"]

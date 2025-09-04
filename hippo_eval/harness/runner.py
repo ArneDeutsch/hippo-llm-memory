@@ -9,6 +9,7 @@ from typing import Dict, List
 import torch
 from omegaconf import DictConfig, OmegaConf
 
+from hippo_eval.datasets.loaders import load_dataset
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.gating import WriteGate
@@ -73,9 +74,9 @@ def run_suite(runner: Runner, suite: str | None = None) -> RunResult:
         preset_cfg = OmegaConf.load(cfg.preset)
         base_cfg = OmegaConf.merge(base_cfg, preset_cfg)
 
-    tasks = _h._load_tasks(
-        _h._dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.get("dataset_profile")), cfg.n
-    )
+    dataset = _h._dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.get("dataset_profile"))
+    raw_tasks = load_dataset(dataset, {"n": cfg.n})
+    tasks = [_h.Task(prompt=str(obj["prompt"]), answer=str(obj["answer"])) for obj in raw_tasks]
     flat_ablate = _h._flatten_ablate(base_cfg.get("ablate"))
     modules = _h._init_modules(
         base_cfg.get("memory"),

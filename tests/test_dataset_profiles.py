@@ -1,7 +1,7 @@
 import re
 from statistics import mean
 
-from hippo_eval.eval.datasets import generate_episodic, generate_semantic
+from hippo_eval.datasets import generate_episodic, generate_semantic
 
 
 def _naive_episodic_baseline(prompt: str) -> str:

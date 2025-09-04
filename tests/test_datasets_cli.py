@@ -13,7 +13,8 @@ def test_cli_generates_episodic_multi(tmp_path: Path) -> None:
     out = tmp_path / "epi_multi.jsonl"
     cmd = [
         sys.executable,
-        "scripts/make_datasets.py",
+        "-m",
+        "hippo_eval.datasets.cli",
         "--suite",
         "episodic_multi",
         "--size",
@@ -33,7 +34,8 @@ def test_cli_episodic_cross_capacity(tmp_path: Path) -> None:
     out = tmp_path / "epi_cross.jsonl"
     cmd = [
         sys.executable,
-        "scripts/make_datasets.py",
+        "-m",
+        "hippo_eval.datasets.cli",
         "--suite",
         "episodic_cross",
         "--size",

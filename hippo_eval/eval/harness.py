@@ -35,6 +35,7 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
+from hippo_eval.datasets.loaders import load_dataset
 from hippo_eval.harness.io import write_csv, write_meta, write_metrics
 from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis
@@ -239,21 +240,8 @@ def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> 
         if matches:
             return matches[0]
     raise FileNotFoundError(
-        "Dataset not found; run scripts/make_datasets.py or check suite name",
+        "Dataset not found; run scripts/datasets_cli.py or check suite name",
     )
-
-
-def _load_tasks(path: Path, n: int) -> List[Task]:
-    """Load the first ``n`` tasks from ``path``."""
-
-    tasks: List[Task] = []
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            if len(tasks) >= n:
-                break
-            obj = json.loads(line)
-            tasks.append(Task(prompt=str(obj["prompt"]), answer=str(obj["answer"])))
-    return tasks
 
 
 def _rss_mb() -> float:
@@ -930,7 +918,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     }
 
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile)
-    tasks = _load_tasks(dataset, cfg.n)
+    raw_tasks = load_dataset(dataset, {"n": cfg.n})
+    tasks = [Task(prompt=str(obj["prompt"]), answer=str(obj["answer"])) for obj in raw_tasks]
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     mem_cfg = cfg.get("memory")
     if isinstance(mem_cfg, DictConfig):

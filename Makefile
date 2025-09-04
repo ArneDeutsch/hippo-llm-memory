@@ -34,10 +34,10 @@ datasets:
 	  for size in 50 200 1000; do \
 	    for seed in 1337 2025 4242; do \
 	      printf '[%d/%d] suite=%s size=%s seed=%s profile=base\n' $$count $$total $$suite $$size $$seed; \
-	      python scripts/make_datasets.py --profile base --suite $$suite --size $$size --seed $$seed --out data/$$suite/$$size\_$$seed.jsonl; \
+              python scripts/datasets_cli.py --profile base --suite $$suite --size $$size --seed $$seed --out data/$$suite/$$size\_$$seed.jsonl; \
 	      count=$$((count + 1)); \
 	      printf '[%d/%d] suite=%s size=%s seed=%s profile=hard\n' $$count $$total $$suite $$size $$seed; \
-	      python scripts/make_datasets.py --profile hard --suite $$suite --size $$size --seed $$seed --out data/$$suite\_hard/$$size\_$$seed.jsonl; \
+              python scripts/datasets_cli.py --profile hard --suite $$suite --size $$size --seed $$seed --out data/$$suite\_hard/$$size\_$$seed.jsonl; \
 	      count=$$((count + 1)); \
 	    done; \
 	  done; \
