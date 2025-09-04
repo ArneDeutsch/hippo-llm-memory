@@ -19,7 +19,8 @@ def test_mark_run_invalid_skips_report(tmp_path: Path) -> None:
     subprocess.run(
         [
             sys.executable,
-            "scripts/report.py",
+            "-m",
+            "hippo_eval.reporting.report",
             "--runs-dir",
             str(tmp_path / "runs"),
             "--out-dir",

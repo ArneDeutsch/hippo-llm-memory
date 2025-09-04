@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.run_baselines import collect_baseline_metrics, write_metrics
+from hippo_eval.baselines import aggregate_metrics
+from hippo_eval.harness.io import write_metrics
 
 
 def _write_metrics(
@@ -19,7 +20,7 @@ def test_collect_and_write(tmp_path: Path) -> None:
     _write_metrics(tmp_path, "core", "episodic", 0, 0.1, 0.2, 0.3)
     _write_metrics(tmp_path, "core", "episodic", 1, 0.2, 0.3, 0.4)
     root = tmp_path / "runs" / "20250101" / "baselines"
-    rows = collect_baseline_metrics(root)
+    rows = aggregate_metrics(root)
     assert rows == [
         {
             "suite": "episodic",

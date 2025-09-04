@@ -1,48 +1,28 @@
-#!/usr/bin/env python3
-"""Aggregate baseline metrics and persist summary with confidence intervals."""
+"""Baseline utilities for metrics aggregation."""
 
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import math
-import sys
 from pathlib import Path
 from statistics import mean, pstdev
 from typing import Dict, Iterable, List
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:  # pragma: no branch - idempotent
-    sys.path.insert(0, str(ROOT))
-
-from hippo_mem.utils import validate_run_id  # noqa: E402
+from hippo_eval.harness.io import write_metrics
+from hippo_mem.utils import validate_run_id
 
 
 def _ci95(values: List[float]) -> float:
-    """Return 95% confidence interval for ``values``.
-
-    Parameters
-    ----------
-    values:
-        Sample of metric values.
-    """
-
-    if len(values) < 2:  # pre: CI undefined for single sample
+    """Return 95% confidence interval for ``values``."""
+    if len(values) < 2:
         return 0.0
     std = pstdev(values)
     return 1.96 * std / math.sqrt(len(values))
 
 
-def collect_baseline_metrics(root: Path) -> List[Dict[str, float]]:
-    """Collect per-suite baseline metrics under ``root``.
-
-    Parameters
-    ----------
-    root:
-        Directory ``runs/<run_id>/baselines`` containing per-seed outputs.
-    """
-
+def aggregate_metrics(root: Path) -> List[Dict[str, float]]:
+    """Collect per-suite baseline metrics under ``root``."""
     rows: List[Dict[str, float]] = []
     try:
         for preset_dir in root.iterdir():
@@ -97,41 +77,16 @@ def collect_baseline_metrics(root: Path) -> List[Dict[str, float]]:
     return rows
 
 
-def write_metrics(rows: List[Dict[str, float]], out_dir: Path) -> Path:
-    """Write ``rows`` to ``out_dir/metrics.csv`` and a success flag."""
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = out_dir / "metrics.csv"
-    fieldnames = [
-        "suite",
-        "preset",
-        "em_raw_mean",
-        "em_raw_ci",
-        "em_norm_mean",
-        "em_norm_ci",
-        "f1_mean",
-        "f1_ci",
-    ]
-    with csv_path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-    (out_dir / "baselines_ok.flag").write_text("ok\n", encoding="utf-8")
-    return csv_path
-
-
 def main(argv: Iterable[str] | None = None) -> None:
-    """CLI entry point."""
-
+    """CLI entry point for aggregating baseline metrics."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runs-dir", default="runs", help="Root runs directory")
     parser.add_argument("--run-id", required=True, help="Run identifier")
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     run_id = validate_run_id(args.run_id)
-
     root = Path(args.runs_dir) / run_id / "baselines"
-    rows = collect_baseline_metrics(root)
+    rows = aggregate_metrics(root)
     write_metrics(rows, root)
     print(f"aggregated {len(rows)} baseline rows under {root}")
 

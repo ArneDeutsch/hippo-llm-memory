@@ -19,7 +19,8 @@ def test_smoke_consolidation_tiny(tmp_path: Path) -> None:
     outdir = tmp_path / "out"
     cmd = [
         sys.executable,
-        str(repo / "scripts" / "test_consolidation.py"),
+        "-m",
+        "hippo_eval.consolidation.eval",
         "--phase",
         "pre",
         "--suite",

@@ -35,11 +35,11 @@ def test_run_baselines_accepts_run_id(presets: list[str], seeds: list[int]) -> N
     """``run_baselines_bench.py`` emits metrics/meta for all combinations."""
 
     repo_root = Path(__file__).resolve().parents[1]
-    script = repo_root / "scripts" / "run_baselines_bench.py"
     run_id = "20250101"
     cmd = [
         sys.executable,
-        str(script),
+        "-m",
+        "hippo_eval.eval.baselines",
         "--run-id",
         run_id,
         "--presets",

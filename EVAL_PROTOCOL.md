@@ -37,7 +37,7 @@ All outputs go to `runs/$RUN_ID/...`; no normalization happens.
 RUN_ID=my_experiment
 source scripts/_env.sh
 python scripts/eval_model.py +run_matrix=true run_id=$RUN_ID presets=[baselines/core] tasks=[episodic] n_values=[50] seeds=[1337] model=$MODEL
-python scripts/run_baselines.py --run-id $RUN_ID
+python -m hippo_eval.baselines --run-id $RUN_ID
 python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID n=50 seed=1337 mode=teach persist=true store_dir=$STORES session_id=$HEI_SESSION_ID model=$MODEL
 python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID n=50 seed=1337 mode=test store_dir=$STORES session_id=$HEI_SESSION_ID model=$MODEL
 python scripts/report.py --run-id $RUN_ID
@@ -245,7 +245,7 @@ python scripts/eval_model.py +run_matrix=true run_id="$RUN_ID" \
   n_values=[$NV] seeds=[$SD] \
   mode=teach model="$MODEL" outdir="$RUNS"
 
-python scripts/run_baselines.py --run-id "${RUN_ID}"
+python -m hippo_eval.baselines --run-id "${RUN_ID}"
 ```
 
 Notes:

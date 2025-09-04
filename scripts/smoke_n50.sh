@@ -8,7 +8,7 @@ export ALLOW_BENCH=1
 IFS=$'\n\t'
 
 # Baseline runs for core preset on key suites
-python scripts/run_baselines_bench.py \
+python -m hippo_eval.eval.baselines \
   --run-id "$RUN_ID" \
   --presets baselines/core \
   --suites episodic semantic spatial \
@@ -48,6 +48,6 @@ python scripts/eval_cli.py \
 # Verify post_* and delta_* metrics
 jq -e ".metrics[\"$SUITE\"] | has(\"post_em\") and has(\"delta_em\")" "$outdir/metrics.json" >/dev/null
 
-python scripts/report.py --run-id "$RUN_ID"
+python -m hippo_eval.reporting.report --run-id "$RUN_ID"
 
 echo "Smoke n50 pipeline finished for RUN_ID=$RUN_ID"

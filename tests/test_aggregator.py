@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.run_baselines import main as run_main
+from hippo_eval.baselines import main as run_main
 
 
 def _write_metrics(base: Path, run_id: str) -> None:

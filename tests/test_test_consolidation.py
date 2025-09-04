@@ -41,7 +41,8 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
     )
     cmd = [
         sys.executable,
-        str(repo / "scripts" / "replay_consolidate.py"),
+        "-m",
+        "hippo_mem.consolidation.trainer",
         "--store_dir",
         str(store_dir),
         "--session_id",
@@ -58,7 +59,8 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
     pre_dir = tmp_path / "pre"
     cmd_pre = [
         sys.executable,
-        str(repo / "scripts" / "test_consolidation.py"),
+        "-m",
+        "hippo_eval.consolidation.eval",
         "--phase",
         "pre",
         "--suite",
@@ -78,7 +80,8 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
     post_dir = tmp_path / "post"
     cmd_post = [
         sys.executable,
-        str(repo / "scripts" / "test_consolidation.py"),
+        "-m",
+        "hippo_eval.consolidation.eval",
         "--phase",
         "post",
         "--suite",

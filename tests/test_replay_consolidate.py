@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.replay_consolidate import parse_args
+from hippo_mem.consolidation.trainer import parse_args
 
 
 def _write_store(base: Path) -> Path:
@@ -17,7 +17,7 @@ def _write_store(base: Path) -> Path:
     epi.write_text(json.dumps(rec) + "\n")
     (session / "relational.jsonl").write_text("")
     (session / "spatial.jsonl").write_text("")
-    return base
+    return base / "hei_nw"
 
 
 def test_parse_args(tmp_path: Path) -> None:
@@ -60,7 +60,8 @@ def test_replay_consolidate_auto_targets(tmp_path: Path) -> None:
     )
     cmd = [
         sys.executable,
-        "scripts/replay_consolidate.py",
+        "-m",
+        "hippo_mem.consolidation.trainer",
         "--store_dir",
         str(store_dir),
         "--session_id",
@@ -98,7 +99,8 @@ def test_replay_consolidate_runs(tmp_path: Path) -> None:
     )
     cmd = [
         sys.executable,
-        "scripts/replay_consolidate.py",
+        "-m",
+        "hippo_mem.consolidation.trainer",
         "--store_dir",
         str(store_dir),
         "--session_id",
@@ -135,7 +137,8 @@ def test_replay_consolidate_merge(tmp_path: Path) -> None:
     )
     cmd = [
         sys.executable,
-        "scripts/replay_consolidate.py",
+        "-m",
+        "hippo_mem.consolidation.trainer",
         "--store_dir",
         str(store_dir),
         "--session_id",

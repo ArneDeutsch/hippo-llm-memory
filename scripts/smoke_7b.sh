@@ -8,7 +8,7 @@ IFS=$'\n\t'
 
 LOG=$(mktemp)
 
-python scripts/train_lora.py \
+python -m hippo_mem.training.lora \
   dry_run=true \
   data_format=jsonl \
   train_files='["data/episodic/50_2025.jsonl"]' \

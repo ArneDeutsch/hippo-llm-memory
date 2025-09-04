@@ -54,7 +54,7 @@ def test_preflight_missing_baselines_lists_both_paths(
         fail_msg = json.loads((outdir / "failed_preflight.json").read_text())["errors"][0]
         expect = f"runs/{rid}/baselines/metrics.csv"
         assert expect in fail_msg
-        assert f"python scripts/run_baselines.py --run-id {rid}" in fail_msg
+        assert f"python -m hippo_eval.baselines --run-id {rid}" in fail_msg
         attempts = sum(
             gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
         )

@@ -22,7 +22,7 @@ python scripts/eval_model.py +run_matrix=true \
   > /dev/null
 
 # 2. Aggregation
-python scripts/run_baselines.py --run-id "$RUN_ID"
+python -m hippo_eval.baselines --run-id "$RUN_ID"
 
 # 3. Teach and test with strict telemetry
 python scripts/eval_model.py suite=$SUITE preset=$PRESET \
@@ -38,7 +38,7 @@ python scripts/eval_model.py suite=$SUITE preset=$PRESET \
   model="$MODEL" > /dev/null
 
 # 4. Report generation
-python scripts/report.py --run-id "$RUN_ID"
+python -m hippo_eval.reporting.report --run-id "$RUN_ID"
 
 # Fail if baseline metrics missing
 if [ ! -f "runs/$RUN_ID/baselines/metrics.csv" ]; then

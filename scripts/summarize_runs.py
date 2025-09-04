@@ -1,15 +1,8 @@
-"""Aggregate run metrics or sweep a run for sanity checks."""
-
 import argparse
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:  # pragma: no branch - idempotent
-    sys.path.insert(0, str(ROOT))
-
-from hippo_eval.reporting.report import sanity_sweep  # noqa: E402
-from hippo_eval.reporting.summarize import summarize_runs  # noqa: E402
+from hippo_eval.reporting.report import sanity_sweep
+from hippo_eval.reporting.summarize import summarize_runs
 
 
 def main(argv: list[str] | None = None) -> int:
