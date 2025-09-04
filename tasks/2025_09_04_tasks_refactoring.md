@@ -1,225 +1,204 @@
-## T1 — Create `hippo_eval` package and migrate evaluation code
+## T1 — Create `hippo_eval` and migrate **eval, metrics, reporting, tasks, and consolidation eval**
 
 **Why**
-Separate concerns so algorithms never depend on pipeline/eval. Reduce cognitive load and simplify testing.
+Make `hippo_eval` the single home for pipelines, metrics, reporting, synthetic tasks, and consolidation evaluation orchestration.
 
 **What to change**
 
-1. Create `hippo_eval/` and **move** all Python modules from `hippo_mem/eval/` into it. Preserve module names (`datasets.py`, `harness.py`, `baselines.py`, etc.).
-2. Fix imports inside moved modules: replace `from hippo_mem.eval.X import ...` with intra-package imports or with `from hippo_eval.X import ...`.
-3. Add **shim** module at `hippo_mem/eval/__init__.py` that re-exports public API from `hippo_eval` and raises a deprecation warning on import. This prevents breaking existing tests/scripts.
-4. Update `scripts/*.py` to import from `hippo_eval` directly (no `sys.path` hacks).
+1. **Move packages:**
 
-**Touch these files**
+   * `hippo_mem/eval/**` → `hippo_eval/**`
+   * `hippo_mem/metrics/**` → `hippo_eval/metrics/**`
+   * `hippo_mem/reporting/**` → `hippo_eval/reporting/**`
+   * `hippo_mem/tasks/**` → `hippo_eval/tasks/**`
+2. **Move root reporting code & templates:**
 
-* Move: `hippo_mem/eval/*` → `hippo_eval/*`
-* New: `hippo_mem/eval/__init__.py` (shim)
-* Edit: `scripts/eval_model.py`, `scripts/eval_cli.py`, `scripts/run_baselines.py`, `scripts/eval_bench.py`, any script importing `hippo_mem.eval`
+   * `reports/health.py`, `reports/render_baselines.py`, `reports/plots/**`, `reports/templates/**`
+     → `hippo_eval/reporting/health.py`, `hippo_eval/reporting/render_baselines.py`, `hippo_eval/reporting/plots/**`, `hippo_eval/reporting/templates/**`
+3. **Relocate consolidation eval runner:**
+
+   * `hippo_mem/consolidation/test_eval.py` → `hippo_eval/consolidation/eval.py`
+     (rename module to `eval.py` or `consolidation_eval.py`).
+   * Add `scripts/test_consolidation.py` as a thin CLI calling `hippo_eval.consolidation.eval:main`.
+4. **Add shims with deprecation warnings:**
+
+   * `hippo_mem/eval/__init__.py` re-exports from `hippo_eval` (warns).
+   * `hippo_mem/metrics/__init__.py` re-exports from `hippo_eval.metrics` (warns).
+   * `hippo_mem/reporting/__init__.py` re-exports from `hippo_eval.reporting` (warns).
+   * `hippo_mem/tasks/__init__.py` re-exports from `hippo_eval.tasks` (warns).
+5. **Fix imports across the repo** to `hippo_eval.*` for callers (scripts/tests).
+   Example: `from hippo_mem.metrics.scoring import ...` → `from hippo_eval.metrics.scoring import ...`.
 
 **Acceptance**
 
-* `pytest -q` passes.
-* Running `python scripts/eval_model.py --help` still works.
-* Importing `hippo_mem.eval` prints a deprecation warning but still works.
+* `pytest -q` fully green.
+* All CLIs still work: `python scripts/eval_model.py --help`, `python scripts/test_consolidation.py --help`, etc.
+* Importing old paths (`hippo_mem.eval`, `hippo_mem.metrics`, `hippo_mem.reporting`, `hippo_mem.tasks`) works but emits deprecation warnings.
+
+> This expands your previous T1 to include `metrics`, `reporting`, `tasks`, and consolidation eval as discussed.&#x20;
 
 ---
 
-## T2 — Colocate report templates with reporting code and lock down `reports/` as output only
+## T2 — Lock root `reports/` to **outputs only** and update loaders
 
 **Why**
-Avoid mixing source and generated assets. Make template discovery robust.
+Stop mixing source with generated artifacts; make template discovery robust.
 
 **What to change**
 
-1. Move `reports/templates/` → `hippo_mem/reporting/templates/`.
-2. In `hippo_mem/reporting/report.py`, set `_TEMPLATE_DIR = Path(__file__).parent / "templates"`.
-3. Remove any remaining code in root `reports/` (keep the **directory** for generated outputs; add `.gitkeep` if necessary).
-4. Update any references in docs/tasks mentioning `reports/templates/`.
+1. Ensure **all** reporting code + templates now live under `hippo_eval/reporting/**`.
+2. In `hippo_eval/reporting/report.py` and `hippo_eval/reporting/render_baselines.py`, set the template loader to:
 
-**Touch these files**
-
-* Move: `reports/templates/**` → `hippo_mem/reporting/templates/**`
-* Edit: `hippo_mem/reporting/report.py`
-* Edit docs: `EVAL_PLAN.md`, `EVAL_PROTOCOL.md`, `README.md` (search & replace the old template path)
+   ```python
+   _TEMPLATE_DIR = Path(__file__).parent / "templates"
+   ```
+3. Clean root `reports/` (leave `.gitkeep` and add `.gitignore` as needed).
+4. Replace any imports of `reports.health` with `hippo_eval.reporting.health`.
 
 **Acceptance**
 
-* `python -m hippo_mem.reporting.summarize --dry-run` (or your existing report entry) renders without path errors.
-* `reports/<run_id>/` is only generated content.
+* Report generation works on a sample run; paths resolve without errors.
+* `grep -R "^from reports\."` returns nothing outside tests.
+
+> This supersedes the narrower template-only move in your current T2.&#x20;
 
 ---
 
-## T3 — Slim all `scripts/` to true CLIs (no business logic, no path hacks)
+## T3 — Slim **all** scripts to true CLIs (and add a new consolidation CLI)
 
 **Why**
-Ensure reuse from library, better testability, and no environment surprises.
+Keep business logic in libraries; prevent path hacks.
 
 **What to change**
 
-1. Remove `sys.path.insert(...)` from `scripts/run_baselines.py` and others.
-2. Hoist any non-trivial logic into library modules:
+1. Remove `sys.path.insert(...)` in `scripts/*.py`.
+2. Hoist aggregation/IO logic into:
 
-   * Add `hippo_eval/baselines.aggregate(metrics_root: Path) -> Dict` and use it from the script.
-   * If scripts contain argument validation/IO logic, move to `hippo_eval/bench.py` or `hippo_eval/harness/io.py`.
-3. Keep scripts to argument parsing + calling a library function + exit code handling.
-4. Optionally add `console_scripts` in `pyproject.toml` (e.g., `hippo-eval = scripts.eval_cli:main`).
-
-**Touch these files**
-
-* Edit: All `scripts/*.py` that currently import from project internals via `sys.path` hacks.
-* New/Expand: `hippo_eval/baselines.py`, `hippo_eval/harness/io.py`
+   * `hippo_eval/baselines.py` (e.g., `aggregate_metrics(root: Path) -> dict`)
+   * `hippo_eval/harness/io.py`
+3. Ensure the new `scripts/test_consolidation.py` only parses args and calls library code.
 
 **Acceptance**
 
-* `grep -R "sys.path.insert" scripts` returns nothing.
-* Running `python scripts/run_baselines.py --help` works and calls library code (verify via small dry run).
+* `grep -R "sys.path.insert" scripts` → no results.
+* `python scripts/run_baselines.py --help` and a tiny dry run still work.
 
 ---
 
-## T4 — Break up oversized functions in `hippo_eval/harness.py`
+## T4 — Decompose **oversized modules**: harness, bench, datasets, report
 
 **Why**
-Improve readability/coverage and enforce single responsibility.
+Improve readability/coverage and reduce risk.
 
 **What to change**
 
-1. Extract helpers so no function exceeds \~80 LOC:
+Break these files into small, single-purpose modules:
 
-   * `evaluate()` → delegates to `build_runner()`, `load_suite()`, `run_suite()`, `collect_metrics()`.
-   * `_write_outputs()` → split into `write_metrics()`, `write_meta()`, `write_csv()`, `write_artifacts()`.
-2. Pure logic gets pure functions (no file IO); IO goes through `harness/io.py`.
+* `hippo_eval/harness.py` (was \~1500 LOC) → extract:
 
-**Touch these files**
+  * `harness/runner.py` (`build_runner`, `run_suite`)
+  * `harness/metrics.py` (`collect_metrics`, schema helpers)
+  * `harness/io.py` (FS interactions)
+* `hippo_eval/bench.py` (was \~700 LOC) → extract orchestration vs. summarization vs. FS layout.
+* `hippo_eval/datasets.py` (was \~700 LOC) → split generators vs. CLI wrappers; move synthetic generators next to `hippo_eval/tasks/` where appropriate.
+* `hippo_eval/reporting/report.py` (was \~1200 LOC) → extract:
 
-* Edit: `hippo_eval/harness.py` (now smaller, imports helpers)
-* New: `hippo_eval/harness/runner.py`, `hippo_eval/harness/io.py`, `hippo_eval/harness/metrics.py`
+  * `reporting/tables.py` (Markdown table assembly)
+  * `reporting/plots.py` (matplotlib helpers)
+  * `reporting/rollup.py` (index generation)
+  * keep `report.py` as a thin coordinator.
 
 **Acceptance**
 
-* Unit tests for harness still pass; no diffs in produced `metrics.json/csv` for a known run (use a golden file in `tests/fixtures/expected/`).
+* Byte-identical outputs for a known mini run (`metrics.json`/`metrics.csv`) pre vs. post (add a golden fixture).
+* Unit tests cover the new helpers; CLI behavior unchanged.
+
+> This extends your original T4 beyond `harness.py`, as you suspected.&#x20;
 
 ---
 
-## T5 — Unify adapter wrappers and reduce structural duplication
-
-**Why**
-Episodic and spatial memory adapters share the “fusion” protocol; unify the wrapper logic and keep algorithm-specific parts minimal.
+## T5 — Unify memory adapter wrappers (reduce structural duplication)
 
 **What to change**
 
-1. Create `hippo_mem/adapters/memory_base.py` with a small abstract base: pooling, normalization, and `forward(hidden_states, memory_tokens, span=None)`.
-2. Refactor `EpisodicMemoryAdapter` and `SpatialMemoryAdapter` to inherit the base and keep only algorithm-specific config/touchpoints.
-3. Remove/inline thin duplicates if they only forward to the same base.
-4. Keep the existing public names/import paths.
-
-**Touch these files**
-
-* New: `hippo_mem/adapters/memory_base.py`
-* Edit: `hippo_mem/adapters/episodic_adapter.py`, `hippo_mem/adapters/spatial_adapter.py`
-* (Optional) Add deprecation note in `hippo_mem/episodic/adapter.py` and `hippo_mem/spatial/adapter.py` if any API is duplicated there.
+* Create `hippo_mem/adapters/memory_base.py` with pooling/norm and a stable `forward(...)` surface.
+* Make episodic/spatial adapters inherit from it; keep public names/imports stable.
 
 **Acceptance**
 
-* Adapter unit tests still pass; parameter counts and shapes unchanged.
-* A quick smoke run shows identical retrieval/fusion telemetry.
+* Shapes/params unchanged; telemetry unchanged in a smoke run.
 
 ---
 
-## T6 — Clean folder responsibilities (“generated only” rule)
-
-**Why**
-Make outputs predictable; avoid checked-in code under output dirs.
+## T6 — Enforce folder responsibilities
 
 **What to change**
 
-1. Ensure `reports/` and `runs/` are empty (except `.gitkeep`) in the repo and ignored in `.gitignore`.
-2. Move `datasets/semantic/mini.jsonl` → `tests/fixtures/datasets/semantic/mini.jsonl`; update references.
-3. Move `experiments/*` → `docs/experiments/*` and update docs to point there.
-
-**Touch these files**
-
-* Moves: `datasets/**`, `experiments/**`
-* Edits: any code/docs referencing old paths (`EVAL_PLAN.md`, `README.md`, tests)
+* Root `reports/` and `runs/` are outputs only; ensure ignored in VCS (except `.gitkeep`).
+* Move `datasets/semantic/mini.jsonl` → `tests/fixtures/datasets/...` and update references.
+* Move `experiments/*` → `docs/experiments/*` and update links.
 
 **Acceptance**
 
-* `pytest -q` passes.
-* `grep -R "datasets/"` in non-test code returns **no** matches (except under `tests/fixtures`).
-* Example commands in `docs/experiments/*/RUN.md` still work.
+* `pytest -q` green; example `docs/experiments/*/RUN.md` commands still work.
 
 ---
 
-## T7 — Split tests by concern and add fast smoke tests for the CLI
-
-**Why**
-Faster feedback loops and clearer ownership.
+## T7 — Split tests by concern (and fix the misplaced “test\_eval”)
 
 **What to change**
 
-1. Create subdirs under `tests/`: `algo/`, `eval/`, `reporting/`, `cli/`, `fixtures/`.
-2. Move existing tests accordingly (heuristic: module import path inside the test).
-3. Add a couple of CLI smoke tests that execute scripts with `--help` and a tiny dry-run using the mini dataset fixture.
+1. Create `tests/{algo,eval,reporting,cli,fixtures}`.
+2. Move tests accordingly; keep shared fixtures in `tests/fixtures`.
+3. Add CLI smoke tests for `scripts/*` (help + tiny dry run).
+4. Replace the previous in-package script `hippo_mem/consolidation/test_eval.py` with:
 
-**Touch these files**
-
-* Moves: many under `tests/`
-* New: `tests/cli/test_eval_cli.py`, `tests/fixtures/datasets/...`
+   * `hippo_eval/consolidation/eval.py` (library)
+   * `scripts/test_consolidation.py` (CLI)
+   * `tests/eval/test_consolidation_eval.py` (unit tests)
 
 **Acceptance**
 
-* `pytest -q -k cli` runs only CLI smoke tests and passes in <10s.
-* `pytest -q` total runtime similar or improved.
+* `pytest -q -k cli` < 10s; full suite green.
 
 ---
 
-## T8 — Document the new architecture and update references
-
-**Why**
-Prevent regressions and confusion after the move.
+## T8 — Documentation updates
 
 **What to change**
 
-1. Update `README.md`, `DESIGN.md`, `EVAL_PLAN.md`, `EVAL_PROTOCOL.md`, `PROJECT_PLAN.md` to reference `hippo_eval` and the new template location.
-2. Add a short “Migration notes” section explaining the `hippo_mem.eval` shim and deprecation.
+* Update `README.md`, `DESIGN.md`, `EVAL_PLAN.md`, `EVAL_PROTOCOL.md`, `PROJECT_PLAN.md` to reflect:
 
-**Touch these files**
-
-* Edits: the above docs.
+  * New package: `hippo_eval`
+  * Reporting and templates now under `hippo_eval/reporting`
+  * Shims and deprecation notes
+* Add a short “Migration notes” section.
 
 **Acceptance**
 
-* A new contributor can run:
-  `python scripts/eval_model.py +suite=episodic sizes=[50] seeds=[1337]`
-  and get outputs under `runs/<id>/…` and `reports/<id>/…` using the new layout.
+* A new contributor can follow docs to run an eval and produce reports successfully.
 
 ---
 
-## T9 — (Optional but recommended) Add style/lint gates for the new boundaries
-
-**Why**
-Keep the codebase healthy post-refactor.
+## T9 — Import-boundary guardrails
 
 **What to change**
 
-1. Add `ruff` and `black` configs in `pyproject.toml`.
-2. Add a tiny `pre-commit` config to enforce import boundaries (e.g., forbid `hippo_mem` importing `hippo_eval`).
-3. Add a unit test that asserts `from hippo_mem import eval` is only available via the shim and warns.
+* Add `ruff` and `black` config.
+* Add a simple import-cycle test: **forbid `hippo_mem` importing `hippo_eval`**.
+* Add a test asserting `import hippo_mem.eval` emits a `DeprecationWarning`.
 
 **Acceptance**
 
-* `make lint` passes locally and in CI.
-* Import boundary test fails if someone reintroduces `hippo_eval` → `hippo_mem` cycle.
+* `make lint` green; boundary test fails if a cycle is introduced.
 
 ---
 
-# Notes to Codex (global guardrails during refactor)
+# Quick answers to your specific questions
 
-* **No behavior changes.** If you’re unsure, keep the old code path and add a shim that calls the new one.
-* **Absolute imports.** Prefer `from hippo_eval...` over relative spaghetti.
-* **Fail loud on path changes.** Add deprecation warnings instead of silent breaks.
-* **Keep outputs identical.** For a known run in `data/…`, assert that `metrics.json/csv` before vs. after refactor are byte-identical.
-* **CI first.** Commit in small steps; run `pytest -q` and the minimal CLI smoke after each step.
-
----
-
-If you want, I can also spit this into two Markdown files (review + Codex task list) you can drop straight into your `review/` and `tasks/` folders.
+* **“metrics” — move?** Yes. All of `hippo_mem/metrics/**` is evaluation-only → **move to `hippo_eval/metrics/**`** with a deprecation shim in `hippo_mem.metrics`.
+* **“reporting” — move?** Yes. Entire reporting package and all root `reports/*` code/templates → **`hippo_eval/reporting/**`**. Root `reports/` becomes outputs-only.
+* **“tasks” — move?** Yes. Code under `hippo_mem/tasks/**` is synthetic data generation for eval → **`hippo_eval/tasks/**`**. Root `tasks/` (Markdown) stays as docs.
+* **`consolidation/test_eval.py` — where?** It’s an **evaluation runner**, not a unit test. Move to **`hippo_eval/consolidation/eval.py`** and expose a thin CLI `scripts/test_consolidation.py`.
+* **T2 needs update?** Yes — it must cover **moving all reporting code and templates** (not templates only) and locking down root `reports/` to outputs-only.&#x20;
+* **T4 only for `harness.py`?** No — it should also decompose `bench.py`, `datasets.py`, and `report.py` (very large) as outlined above.&#x20;
