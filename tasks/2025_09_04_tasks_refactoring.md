@@ -85,35 +85,280 @@ Keep business logic in libraries; prevent path hacks.
 
 ---
 
-## T4 — Decompose **oversized modules**: harness, bench, datasets, report
+Perfect—let’s slice T4 into bite-size Codex tasks. Each task is scoped to a single change set you can run independently and commit before moving to the next. I’ve grouped them by file, but each file has multiple tiny steps so Codex won’t balk.
 
-**Why**
-Improve readability/coverage and reduce risk.
+---
 
-**What to change**
+# T4.harness — break up `hippo_eval/harness.py`
 
-Break these files into small, single-purpose modules:
+## T4.harness.1 — Extract runner (build + execute)
 
-* `hippo_eval/harness.py` (was \~1500 LOC) → extract:
+**Why** Keep orchestration separate from IO/metrics.
+**What**
 
-  * `harness/runner.py` (`build_runner`, `run_suite`)
-  * `harness/metrics.py` (`collect_metrics`, schema helpers)
-  * `harness/io.py` (FS interactions)
-* `hippo_eval/bench.py` (was \~700 LOC) → extract orchestration vs. summarization vs. FS layout.
-* `hippo_eval/datasets.py` (was \~700 LOC) → split generators vs. CLI wrappers; move synthetic generators next to `hippo_eval/tasks/` where appropriate.
-* `hippo_eval/reporting/report.py` (was \~1200 LOC) → extract:
+* Create `hippo_eval/harness/runner.py` with:
 
-  * `reporting/tables.py` (Markdown table assembly)
-  * `reporting/plots.py` (matplotlib helpers)
-  * `reporting/rollup.py` (index generation)
-  * keep `report.py` as a thin coordinator.
+  * `build_runner(cfg) -> Runner`
+  * `run_suite(runner, suite) -> RunResult`
+* Move only code strictly needed for building/executing runs.
+* In `hippo_eval/harness.py`, import and delegate to these.
+  **Touch**
+* New: `hippo_eval/harness/runner.py`
+* Edit: `hippo_eval/harness.py`, imports in callers if any.
+  **Acceptance**
+* `pytest -q` passes.
+* A mini dry-run produces identical `metrics.json/csv` (use your golden fixture).
 
-**Acceptance**
+## T4.harness.2 — Extract filesystem IO helpers
 
-* Byte-identical outputs for a known mini run (`metrics.json`/`metrics.csv`) pre vs. post (add a golden fixture).
-* Unit tests cover the new helpers; CLI behavior unchanged.
+**Why** Centralize reads/writes and paths.
+**What**
 
-> This extends your original T4 beyond `harness.py`, as you suspected.&#x20;
+* Create `hippo_eval/harness/io.py` with:
+
+  * `write_metrics(path, metrics)`, `write_meta(path, meta)`, `write_csv(path, rows)`
+  * `ensure_run_dirs(root) -> Paths`
+* Move FS/path code from `harness.py` into these functions.
+* Replace direct FS calls in `harness.py` with calls to `io.py`.
+  **Touch**
+* New: `hippo_eval/harness/io.py`
+* Edit: `hippo_eval/harness.py`
+  **Acceptance**
+* Golden mini run unchanged; unit tests green.
+
+## T4.harness.3 — Extract metrics aggregation/schema
+
+**Why** Separate metric math from orchestration.
+**What**
+
+* Create `hippo_eval/harness/metrics.py` with:
+
+  * `collect_metrics(results) -> Dict`
+  * `MetricSchema` (any dataclasses/validators you use)
+* Move pure metric code from `harness.py` here.
+* Update `harness.py` to import from this module.
+  **Touch**
+* New: `hippo_eval/harness/metrics.py`
+* Edit: `hippo_eval/harness.py`
+  **Acceptance**
+* Golden outputs identical; tests green.
+
+## T4.harness.4 — Thin the public API & remove dead code
+
+**Why** Make `harness.py` a coordinator only.
+**What**
+
+* Keep only small public functions (e.g., `evaluate(cfg)`).
+* Inline trivial pass-throughs into imports; delete dead/private helpers now in submodules.
+* Add `__all__` exports in `harness/__init__.py` re-exporting `runner`, `io`, `metrics` surfaces.
+  **Touch**
+* New/Edit: `hippo_eval/harness/__init__.py`
+* Edit: `hippo_eval/harness.py`
+  **Acceptance**
+* `from hippo_eval.harness import evaluate` still works.
+* No output diffs on the golden mini run.
+
+---
+
+# T4.bench — break up `hippo_eval/bench.py`
+
+## T4.bench.1 — Extract orchestration
+
+**Why** Keep run loops separate from summarization/FS.
+**What**
+
+* Create `hippo_eval/bench/orchestrator.py` with:
+
+  * `run_bench(cfg) -> BenchResult`
+  * `run_matrix(matrix_cfg) -> List[BenchResult]`
+* Move only control-flow logic.
+  **Touch**
+* New: `hippo_eval/bench/orchestrator.py`
+* Edit: `hippo_eval/bench.py` (delegate)
+  **Acceptance**
+* CLI bench still works; tests pass.
+
+## T4.bench.2 — Extract summarization
+
+**Why** Isolate rollups independent of IO.
+**What**
+
+* Create `hippo_eval/bench/summarize.py` with:
+
+  * `summarize(results) -> Summary`
+  * `aggregate_across_runs(results) -> Dict`
+* Move pure summarization logic here.
+  **Touch**
+* New: `hippo_eval/bench/summarize.py`
+* Edit: `hippo_eval/bench.py`
+  **Acceptance**
+* Summaries identical for golden mini run.
+
+## T4.bench.3 — Extract layout & paths
+
+**Why** One place defines where artifacts live.
+**What**
+
+* Create `hippo_eval/bench/layout.py` with:
+
+  * `bench_paths(root, run_id) -> Paths`
+  * Any constants for folder/file names.
+* Replace path building in `bench.py` with these helpers.
+  **Touch**
+* New: `hippo_eval/bench/layout.py`
+* Edit: `hippo_eval/bench.py`
+  **Acceptance**
+* Files created in same locations as before (compare directory trees).
+
+## T4.bench.4 — Final cleanup
+
+**Why** Make `bench.py` thin.
+**What**
+
+* Keep only public entry points re-exporting the three submodules.
+* Add `hippo_eval/bench/__init__.py` with `__all__` for `orchestrator`, `summarize`, `layout`.
+  **Touch**
+* New/Edit: `hippo_eval/bench/__init__.py`
+* Edit: `hippo_eval/bench.py`
+  **Acceptance**
+* `from hippo_eval.bench import run_bench` works; no output diffs.
+
+---
+
+# T4.datasets — break up `hippo_eval/datasets.py`
+
+## T4.datasets.1 — Extract dataset loaders
+
+**Why** Separate IO from CLI and generation.
+**What**
+
+* Create `hippo_eval/datasets/loaders.py` with:
+
+  * `load_dataset(name, cfg) -> Iterable[Example]`
+  * `iter_split(ds, split) -> Iterator[Example]`
+* Move pure loader/adaptor code here.
+  **Touch**
+* New: `hippo_eval/datasets/loaders.py`
+* Edit: `hippo_eval/datasets.py`
+  **Acceptance**
+* All dataset consumers still load identical counts/samples.
+
+## T4.datasets.2 — Move synthetic generators next to tasks
+
+**Why** Make generation live with task definitions.
+**What**
+
+* Create/extend `hippo_eval/tasks/generators.py` with existing synthetic generators from `datasets.py`.
+* Replace imports in `datasets.py` to call these generators.
+  **Touch**
+* New/Edit: `hippo_eval/tasks/generators.py`
+* Edit: `hippo_eval/datasets.py`
+  **Acceptance**
+* Generated examples are byte-identical for a fixed seed.
+
+## T4.datasets.3 — Extract CLI wrappers
+
+**Why** Keep CLI thin.
+**What**
+
+* Create `hippo_eval/datasets/cli.py` with argparse-based entry points that call `loaders`/`tasks`.
+* Make any script (`scripts/datasets_cli.py`) delegate to this module.
+  **Touch**
+* New: `hippo_eval/datasets/cli.py`
+* Edit: `scripts/*` that expose dataset commands
+  **Acceptance**
+* `python scripts/datasets_cli.py --help` works; behavior unchanged.
+
+## T4.datasets.4 — Final tidy & fixtures
+
+**Why** Lock the surface and test it.
+**What**
+
+* Remove now-unused helpers from `datasets.py`; keep it as a thin coordinator.
+* Ensure `tests/fixtures/datasets/semantic/mini.jsonl` path is used where relevant.
+  **Touch**
+* Edit: `hippo_eval/datasets.py`
+* Edit: tests referencing datasets
+  **Acceptance**
+* Tests green; same dataset stats/hashes for golden samples.
+
+---
+
+# T4.report — break up `hippo_eval/reporting/report.py`
+
+## T4.report.1 — Extract table assembly
+
+**Why** Make Markdown/HTML table logic reusable and testable.
+**What**
+
+* Create `hippo_eval/reporting/tables.py` with:
+
+  * `make_metrics_table(df) -> str`
+  * `make_summary_table(df) -> str`
+* Move pure formatting functions here.
+  **Touch**
+* New: `hippo_eval/reporting/tables.py`
+* Edit: `hippo_eval/reporting/report.py`
+  **Acceptance**
+* Rendered tables (saved strings) match before/after exactly.
+
+## T4.report.2 — Extract plotting helpers
+
+**Why** Isolate matplotlib code.
+**What**
+
+* Create `hippo_eval/reporting/plots.py` with:
+
+  * `plot_accuracy_over_k(df, out_path)`
+  * `plot_confusion_matrix(cm, out_path)`
+* Move plotting code; no style changes.
+  **Touch**
+* New: `hippo_eval/reporting/plots.py`
+* Edit: `hippo_eval/reporting/report.py`
+  **Acceptance**
+* Produced images identical (checksum) or pixel-close for deterministic plots.
+
+## T4.report.3 — Extract rollup/index generation
+
+**Why** Separate multi-run aggregation from rendering.
+**What**
+
+* Create `hippo_eval/reporting/rollup.py` with:
+
+  * `collect_runs(reports_root) -> DataFrame`
+  * `write_index(df, out_dir)`
+* Move rollup logic here.
+  **Touch**
+* New: `hippo_eval/reporting/rollup.py`
+* Edit: `hippo_eval/reporting/report.py`
+  **Acceptance**
+* `reports/<run_id>/index.html` unchanged for the golden run set.
+
+## T4.report.4 — Thin coordinator
+
+**Why** Keep `report.py` small.
+**What**
+
+* Leave `render_run_report(run_dir)` and high-level glue only.
+* Add `hippo_eval/reporting/__init__.py` re-exporting `report`, `tables`, `plots`, `rollup`.
+  **Touch**
+* Edit: `hippo_eval/reporting/report.py`
+* New/Edit: `hippo_eval/reporting/__init__.py`
+  **Acceptance**
+* Report CLI works; all artifacts identical.
+
+---
+
+## Notes (apply to every micro-task)
+
+* **No behavior changes.** Only move code and re-wire imports.
+* Keep imports absolute (`from hippo_eval.reporting.plots import …`).
+* Run your **golden mini run** before starting; after each task, re-run and compare key artifacts:
+
+  * `metrics.json`, `metrics.csv`, selected plots, `index.html`.
+* If a step touches many imports, commit after creating the new module with stubs, then migrate functions in small chunks.
+
+If you want, I can also emit these as separate Markdown “Codex task” blocks you can paste one by one.
 
 ---
 
@@ -202,3 +447,4 @@ Break these files into small, single-purpose modules:
 * **`consolidation/test_eval.py` — where?** It’s an **evaluation runner**, not a unit test. Move to **`hippo_eval/consolidation/eval.py`** and expose a thin CLI `scripts/test_consolidation.py`.
 * **T2 needs update?** Yes — it must cover **moving all reporting code and templates** (not templates only) and locking down root `reports/` to outputs-only.&#x20;
 * **T4 only for `harness.py`?** No — it should also decompose `bench.py`, `datasets.py`, and `report.py` (very large) as outlined above.&#x20;
+
