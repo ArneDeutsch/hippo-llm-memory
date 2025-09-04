@@ -45,8 +45,7 @@ hippo-llm-memory/
 ├─ codex-env/             # environment setup and dependencies
 ├─ configs/               # Hydra configs for models, training, eval, memory
 ├─ data/                  # synthetic benchmark datasets
-├─ docs/                  # API surfaces, trace specs, inventories
-├─ experiments/           # run configs and task lists for each module
+├─ docs/                  # API surfaces, trace specs, inventories, experiments
 ├─ hippo_mem/             # core Python package with memory adapters and stores
 ├─ models/                # tiny model fixtures for tests
 ├─ research/              # literature reviews and experiment synthesis

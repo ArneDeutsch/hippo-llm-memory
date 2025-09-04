@@ -148,9 +148,9 @@
 
 - **Impact:** None (docs quality)
 
-- **Why:** `experiments/*/tasks.md` still say TODO.
+- **Why:** `docs/experiments/*/tasks.md` still say TODO.
 
-- **Where:** experiments/hei_nw/tasks.md, experiments/sgc_rss/tasks.md, experiments/smpd/tasks.md
+- **Where:** docs/experiments/hei_nw/tasks.md, docs/experiments/sgc_rss/tasks.md, docs/experiments/smpd/tasks.md
 
 - **Fix:** Populate with concrete steps or delete to avoid confusion.
 
@@ -181,7 +181,7 @@ python scripts/test_consolidation.py --phase post --suite episodic --n 5 --seed 
 
 - **Optional: accept both syntaxes** — If you want to keep `--mode` style, add a tiny wrapper (e.g., `scripts/teach.py`) translating `--flags` to Hydra overrides and then calling the harness.
 
-- **Housekeeping** — Either remove or finish `configs/model/qwen2-1_5b.yaml` and fill `experiments/*/tasks.md` to avoid confusion.
+- **Housekeeping** — Either remove or finish `configs/model/qwen2-1_5b.yaml` and fill `docs/experiments/*/tasks.md` to avoid confusion.
 
 
 ## Go/No‑Go
