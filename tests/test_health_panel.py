@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from hippo_mem.reporting.report import (
+from hippo_eval.reporting.health import Badge, render_panel
+from hippo_eval.reporting.report import (
     collect_gate_ablation,
     collect_gates,
     collect_lineage,
@@ -13,7 +14,6 @@ from hippo_mem.reporting.report import (
     summarise_retrieval,
     write_reports,
 )
-from reports.health import Badge, render_panel
 from tests.test_report import _make_metrics
 
 

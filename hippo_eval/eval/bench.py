@@ -46,6 +46,7 @@ import yaml
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf, open_dict
 
+from hippo_eval.eval.score import em_norm, em_raw, f1
 from hippo_mem.adapters import (
     EpisodicMemoryAdapter,
     RelationalMemoryAdapter,
@@ -56,7 +57,6 @@ from hippo_mem.consolidation.worker import ConsolidationWorker
 from hippo_mem.episodic.adapter import AdapterConfig
 from hippo_mem.episodic.replay import ReplayScheduler
 from hippo_mem.episodic.store import EpisodicStore
-from hippo_mem.eval.score import em_norm, em_raw, f1
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.place_graph import PlaceGraph

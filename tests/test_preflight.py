@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 from omegaconf import DictConfig, OmegaConf
 
+from hippo_eval.eval import harness
 from hippo_mem.common.telemetry import gate_registry
-from hippo_mem.eval import harness
 
 
 def _setup_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, run_id: str) -> DictConfig:

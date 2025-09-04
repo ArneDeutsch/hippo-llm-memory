@@ -17,7 +17,7 @@ CASES = [
 def test_baselines_matrix_includes_new_suites() -> None:
     """SUITES constant lists all episodic variants."""
 
-    from hippo_mem.eval import baselines
+    from hippo_eval.eval import baselines
 
     assert baselines.SUITES == [
         "episodic",

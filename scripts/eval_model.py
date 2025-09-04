@@ -1,8 +1,8 @@
-"""Thin wrapper around :mod:`hippo_mem.eval.harness` for CLI use.
+"""Thin wrapper around :mod:`hippo_eval.eval.harness` for CLI use.
 
-The full evaluation harness lives in :mod:`hippo_mem.eval.harness`.  This
+The full evaluation harness lives in :mod:`hippo_eval.eval.harness`.  This
 module re-exports the public API for backward compatibility and forwards
-to :func:`hippo_mem.eval.harness.main` when executed as a script.
+to :func:`hippo_eval.eval.harness.main` when executed as a script.
 
 It exposes the ``teach``, ``replay`` and ``test`` modes as well as
 ``store_dir``/``session_id`` persistence flags used by the evaluation
@@ -27,7 +27,7 @@ if "--mode" in sys.argv:
         sys.argv[idx] = f"mode={val}"
         del sys.argv[idx + 1]
 
-from hippo_mem.eval.harness import (
+from hippo_eval.eval.harness import (
     AutoModelForCausalLM,
     AutoTokenizer,
     EvalConfig,
@@ -40,7 +40,7 @@ from hippo_mem.eval.harness import (
     evaluate_matrix,
     run_suite,
 )
-from hippo_mem.eval.harness import main as harness_main
+from hippo_eval.eval.harness import main as harness_main
 from hippo_mem.utils.stores import StoreLayout, assert_store_exists
 from hippo_mem.utils.stores import derive as derive_store_layout
 
@@ -62,7 +62,7 @@ __all__ = [
 
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
 def main(cfg: DictConfig) -> None:
-    """Hydra entry point forwarding to :mod:`hippo_mem.eval.harness`."""
+    """Hydra entry point forwarding to :mod:`hippo_eval.eval.harness`."""
 
     def _infer_algo(preset: str | None) -> str:
         p = Path(str(preset)) if preset else None

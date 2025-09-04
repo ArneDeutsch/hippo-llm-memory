@@ -1,7 +1,7 @@
 import pytest
 from omegaconf import OmegaConf
 
-from hippo_mem.eval import harness
+from hippo_eval.eval import harness
 
 
 def test_reject_quoted_presets():

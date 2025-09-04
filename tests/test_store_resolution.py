@@ -1,4 +1,4 @@
-from hippo_mem.eval.store_utils import resolve_store_meta_path
+from hippo_eval.eval.store_utils import resolve_store_meta_path
 
 
 def test_store_meta_path_resolution_base_and_algo_dir(tmp_path):

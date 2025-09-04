@@ -1,7 +1,7 @@
 """Telemetry integration test for spatial gating."""
 
+from hippo_eval.eval.harness import EvalConfig, run_suite
 from hippo_mem.common.telemetry import gate_registry
-from hippo_mem.eval.harness import EvalConfig, run_suite
 
 
 def test_spatial_gate_telemetry() -> None:

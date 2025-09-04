@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import torch
 
-from hippo_mem.eval import encode_prompt
-from hippo_mem.eval.harness import Task, _evaluate
+from hippo_eval.eval import encode_prompt
+from hippo_eval.eval.harness import Task, _evaluate
 
 
 class DummyChatTokenizer:

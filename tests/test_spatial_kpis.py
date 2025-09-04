@@ -1,5 +1,5 @@
-from hippo_mem.eval.harness import Task
-from hippo_mem.eval.score import spatial_kpis
+from hippo_eval.eval.harness import Task
+from hippo_eval.eval.score import spatial_kpis
 
 
 def test_spatial_kpis_basic() -> None:

@@ -35,7 +35,7 @@ from typing import Any, Dict, List, Optional
 from omegaconf import OmegaConf
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-import hippo_mem.eval.harness as eval_model
+import hippo_eval.eval.harness as eval_model
 from hippo_mem.adapters.lora import load_adapter, merge_adapter
 from hippo_mem.common import io
 

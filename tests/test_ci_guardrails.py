@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from hippo_mem.eval import harness as eval_model
-from scripts import test_consolidation
+from hippo_eval.consolidation import eval as test_consolidation
+from hippo_eval.eval import harness as eval_model
 
 
 @pytest.mark.parametrize(

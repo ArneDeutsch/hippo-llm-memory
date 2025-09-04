@@ -22,7 +22,7 @@ from typing import Any, Dict, Iterable, List
 
 from omegaconf import OmegaConf
 
-from hippo_mem.tasks.spatial.generator import generate_spatial
+from hippo_eval.tasks.spatial.generator import generate_spatial
 
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]

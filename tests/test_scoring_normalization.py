@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from hippo_mem.eval.score import em_norm, normalize
+from hippo_eval.eval.score import em_norm, normalize
 
 
 def test_normalize_and_em() -> None:

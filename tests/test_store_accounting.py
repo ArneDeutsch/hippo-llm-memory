@@ -4,9 +4,9 @@ import sys
 import numpy as np
 
 import scripts.validate_store as vs
+from hippo_eval.eval.harness import _store_sizes
 from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.episodic.types import TraceValue
-from hippo_mem.eval.harness import _store_sizes
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
 

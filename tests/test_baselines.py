@@ -7,7 +7,7 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
-from hippo_mem.eval.harness import _apply_model_defaults, evaluate
+from hippo_eval.eval.harness import _apply_model_defaults, evaluate
 
 
 def test_baseline_metrics_in_teach(tmp_path: Path) -> None:

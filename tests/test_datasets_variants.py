@@ -1,4 +1,4 @@
-from hippo_mem.eval import datasets as build_datasets
+from hippo_eval.eval import datasets as build_datasets
 
 
 def test_generate_episodic_multi_deterministic() -> None:

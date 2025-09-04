@@ -8,8 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:  # pragma: no branch - idempotent
     sys.path.insert(0, str(ROOT))
 
-from hippo_mem.reporting.report import sanity_sweep  # noqa: E402
-from hippo_mem.reporting.summarize import summarize_runs  # noqa: E402
+from hippo_eval.reporting.report import sanity_sweep  # noqa: E402
+from hippo_eval.reporting.summarize import summarize_runs  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
