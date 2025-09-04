@@ -133,115 +133,146 @@ def _compute_kl(student: torch.Tensor, teacher: torch.Tensor) -> torch.Tensor:
     return torch.nn.functional.kl_div(s_log, t_log, log_target=True, reduction="batchmean")
 
 
+class ConsolidationTrainer:
+    """Encapsulates model and tokenizer for consolidation training."""
+
+    def __init__(self, model_name: str, seed: int) -> None:
+        logging.info("loading model %s", model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
+        torch.manual_seed(seed)
+        self.model.train()
+        self.lora_hash = ""
+
+    def configure_lora(self, cfg: Dict[str, Any]) -> bool:
+        modules = cfg.get("targets")
+        if not modules or modules == "auto":
+            modules = default_target_modules(self.model)
+        else:
+            available = {name.split(".")[-1] for name, _ in self.model.named_modules()}
+            missing = [m for m in modules if m not in available]
+            if missing:
+                logging.warning("target modules %s not found; using defaults", missing)
+                modules = default_target_modules(self.model)
+        if not modules:
+            logging.warning("no target modules for model")
+            return False
+        cfg["targets"] = modules
+        fan_in_fan_out = any(
+            isinstance(mod, Conv1D) and any(name.endswith(m) for m in modules)
+            for name, mod in self.model.named_modules()
+        )
+        lora_cfg = LoraConfig(
+            r=cfg["rank"],
+            lora_alpha=cfg["alpha"],
+            lora_dropout=cfg["dropout"],
+            target_modules=modules,
+            bias="none",
+            task_type="CAUSAL_LM",
+            fan_in_fan_out=fan_in_fan_out,
+        )
+        self.model = get_peft_model(self.model, lora_cfg)
+        self.lora_hash = hashlib.sha256(
+            json.dumps(
+                {
+                    "rank": lora_cfg.r,
+                    "alpha": lora_cfg.lora_alpha,
+                    "dropout": lora_cfg.lora_dropout,
+                    "targets": cfg["targets"],
+                },
+                sort_keys=True,
+            ).encode()
+        ).hexdigest()
+        logging.info("lora_config_hash=%s", self.lora_hash)
+        return True
+
+    def build_dataset(self, store_dir: str, session_id: str, cfg: Dict[str, Any]) -> ReplayDataset:
+        return ReplayDataset(
+            store_dir,
+            session_id,
+            policy=cfg.get("policy", "priority"),
+            cycles=cfg.get("cycles"),
+        )
+
+    def _finalize(
+        self, outdir: str, steps: int, lr: float, replay_samples: int, merge: bool
+    ) -> Dict[str, Any]:
+        Path(outdir).mkdir(parents=True, exist_ok=True)
+        if merge:
+            merged = merge_adapter(self.model)
+            merged.save_pretrained(outdir)
+        else:
+            export_adapter(self.model, outdir)
+        self.tokenizer.save_pretrained(outdir)
+        meta = {
+            "steps": steps,
+            "lr": lr,
+            "replay_samples": replay_samples,
+            "lora_config_hash": self.lora_hash,
+            "merged": merge,
+        }
+        io.atomic_write_json(Path(outdir) / "meta.json", meta)
+        return meta
+
+    def training_loop(
+        self,
+        dataset: ReplayDataset,
+        train_cfg: Dict[str, Any],
+        kl_weight: float,
+        outdir: str,
+        merge: bool,
+    ) -> Dict[str, Any]:
+        iterator = iter(dataset)
+        opt = torch.optim.AdamW(self.model.parameters(), lr=train_cfg["lr"])
+        replay_count = 0
+        for step in range(1, train_cfg["steps"] + 1):
+            batch = [next(iterator, None) for _ in range(train_cfg["batch_size"])]
+            batch = [b for b in batch if b is not None]
+            if not batch:
+                logging.info("empty batch; stopping")
+                return self._finalize(outdir, step - 1, train_cfg["lr"], replay_count, merge)
+            texts, batch = _format_records(batch)
+            if not texts:
+                continue
+            toks = self.tokenizer(texts, return_tensors="pt", padding=True)
+            # Some tokenizers may yield floating tensors; embeddings expect integer indices.
+            toks = {k: v.long() for k, v in toks.items()}
+            labels = toks["input_ids"].clone()
+            out = self.model(**toks, labels=labels)
+            loss = out.loss
+            if kl_weight > 0.0:
+                kls: List[torch.Tensor] = []
+                for i, rec in enumerate(batch):
+                    teacher = rec.get("teacher")
+                    if teacher and "logits" in teacher:
+                        t_logits = torch.tensor(teacher["logits"], dtype=out.logits.dtype)
+                        s_logits = out.logits[i, -t_logits.size(0) :]
+                        kls.append(_compute_kl(s_logits, t_logits))
+                if kls:
+                    loss = loss + kl_weight * torch.stack(kls).mean()
+            loss.backward()
+            opt.step()
+            opt.zero_grad()
+            replay_count += len(batch)
+            logging.info(
+                "step=%d lr=%.2e loss=%.4f",
+                step,
+                train_cfg["lr"],
+                loss.detach().item(),
+            )
+        return self._finalize(outdir, step, train_cfg["lr"], replay_count, merge)
+
+
 def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
     """Execute consolidation training and return metadata."""
 
-    logging.info("loading model %s", args.model)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(args.model)
-
-    modules = cfg["peft"].get("targets")
-    if not modules or modules == "auto":
-        modules = default_target_modules(model)
-    else:
-        available = {name.split(".")[-1] for name, _ in model.named_modules()}
-        missing = [m for m in modules if m not in available]
-        if missing:
-            logging.warning("target modules %s not found; using defaults", missing)
-            modules = default_target_modules(model)
-    if not modules:
-        raise ValueError("Could not determine target modules for model")
-    cfg["peft"]["targets"] = modules
-
-    fan_in_fan_out = any(
-        isinstance(mod, Conv1D) and any(name.endswith(m) for m in modules)
-        for name, mod in model.named_modules()
-    )
-
-    lora_cfg = LoraConfig(
-        r=cfg["peft"]["rank"],
-        lora_alpha=cfg["peft"]["alpha"],
-        lora_dropout=cfg["peft"]["dropout"],
-        target_modules=modules,
-        bias="none",
-        task_type="CAUSAL_LM",
-        fan_in_fan_out=fan_in_fan_out,
-    )
-    model = get_peft_model(model, lora_cfg)
-    lora_hash = hashlib.sha256(
-        json.dumps(
-            {
-                "rank": lora_cfg.r,
-                "alpha": lora_cfg.lora_alpha,
-                "dropout": lora_cfg.lora_dropout,
-                "targets": cfg["peft"]["targets"],
-            },
-            sort_keys=True,
-        ).encode()
-    ).hexdigest()
-    logging.info("lora_config_hash=%s", lora_hash)
-
-    torch.manual_seed(args.seed)
-    model.train()
-    ds = ReplayDataset(
-        args.store_dir,
-        args.session_id,
-        policy=cfg["replay"].get("policy", "priority"),
-        cycles=cfg["replay"].get("cycles"),
-    )
-    iterator = iter(ds)
-    opt = torch.optim.AdamW(model.parameters(), lr=cfg["train"]["lr"])
-    replay_count = 0
-    for step in range(1, cfg["train"]["steps"] + 1):
-        batch = list(next(iterator, None) for _ in range(cfg["train"]["batch_size"]))
-        batch = [b for b in batch if b is not None]
-        if not batch:
-            break
-        texts, batch = _format_records(batch)
-        if not texts:
-            continue
-        toks = tokenizer(texts, return_tensors="pt", padding=True)
-        # Some tokenizer implementations may return floating point tensors
-        # (e.g. when defaults change upstream).  Embedding layers expect
-        # integer index types, so we explicitly cast to ``long`` to avoid
-        # runtime errors like ``Expected tensor for argument #1 'indices'``.
-        toks = {k: v.long() for k, v in toks.items()}
-        labels = toks["input_ids"].clone()
-        out = model(**toks, labels=labels)
-        loss = out.loss
-        if args.kl_weight > 0.0:
-            kls: List[torch.Tensor] = []
-            for i, rec in enumerate(batch):
-                teacher = rec.get("teacher")
-                if teacher and "logits" in teacher:
-                    t_logits = torch.tensor(teacher["logits"], dtype=out.logits.dtype)
-                    s_logits = out.logits[i, -t_logits.size(0) :]
-                    kls.append(_compute_kl(s_logits, t_logits))
-            if kls:
-                loss = loss + args.kl_weight * torch.stack(kls).mean()
-        loss.backward()
-        opt.step()
-        opt.zero_grad()
-        replay_count += len(batch)
-        logging.info("step=%d lr=%.2e loss=%.4f", step, cfg["train"]["lr"], loss.detach().item())
-    Path(args.outdir).mkdir(parents=True, exist_ok=True)
-    if args.merge:
-        merged = merge_adapter(model)
-        merged.save_pretrained(args.outdir)
-    else:
-        export_adapter(model, args.outdir)
-    tokenizer.save_pretrained(args.outdir)
-    meta = {
-        "steps": step,
-        "lr": cfg["train"]["lr"],
-        "replay_samples": replay_count,
-        "lora_config_hash": lora_hash,
-        "merged": args.merge,
-    }
-    io.atomic_write_json(Path(args.outdir) / "meta.json", meta)
-    return meta
+    trainer = ConsolidationTrainer(args.model, args.seed)
+    if not trainer.configure_lora(cfg["peft"]):
+        return {}
+    ds = trainer.build_dataset(args.store_dir, args.session_id, cfg["replay"])
+    return trainer.training_loop(ds, cfg["train"], args.kl_weight, args.outdir, args.merge)
 
 
 def main(argv: Optional[List[str]] = None) -> Dict[str, Any]:  # pragma: no cover - CLI
@@ -254,6 +285,7 @@ __all__ = [
     "Args",
     "load_config",
     "main",
+    "ConsolidationTrainer",
     "parse_args",
     "train",
 ]
