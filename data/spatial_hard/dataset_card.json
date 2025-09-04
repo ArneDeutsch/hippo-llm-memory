@@ -10,7 +10,7 @@
     2025,
     4242
   ],
-  "generator_version": "ad2ab93b9ec9f2a875b55ad5379bdf72fd694bcf",
+  "generator_version": "6e7f1a48f7844e348181e3c9c0a2d95d7aefa61b",
   "files": {
     "50_1337.jsonl": "ab1af1f3e88594e7ba5d12feef90b51631189223f52eee50c23b08140c8a7f79",
     "50_2025.jsonl": "ef517992f36d64604764046df4741f075bc15816374646711c3bbb160480c1f0",
@@ -22,6 +22,6 @@
     "1000_2025.jsonl": "714d67cfb56db14f534390f23493e010ac9e35889b611841dfadc4e04590868f",
     "1000_4242.jsonl": "1f5a41f6e164c26ccee4ebea16939860d0c29441da5d7bd71181a0f8d4bcf86d"
   },
-  "created_utc": "2025-09-03T09:20:00.836859+00:00",
+  "created_utc": "2025-09-04T13:25:29.866165+00:00",
   "cli_example": "python scripts/make_datasets.py suite=spatial size=<size> seed=<seed> out=data/spatial/<size>_<seed>.jsonl"
 }

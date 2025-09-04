@@ -10,7 +10,7 @@
     2025,
     4242
   ],
-  "generator_version": "ad2ab93b9ec9f2a875b55ad5379bdf72fd694bcf",
+  "generator_version": "6e7f1a48f7844e348181e3c9c0a2d95d7aefa61b",
   "files": {
     "50_1337.jsonl": "a76f366ade59ee0bb9832d6b9c7e869570ed78e17d1edbb40d113e71969171a7",
     "50_2025.jsonl": "bd2b4b2feda8ce42264443600035903d9ed4565558335e0ae10d109e25601920",
@@ -22,6 +22,6 @@
     "1000_2025.jsonl": "58b9078a0b2705b05ed2f5198585436fbd18e3fec58f50db0f3a27e383898178",
     "1000_4242.jsonl": "6bfbbcb5a57d38c4222c8e23b7e243c145cb4d253ff18ad4fdcf6135d1d006fe"
   },
-  "created_utc": "2025-09-03T09:18:45.788164+00:00",
+  "created_utc": "2025-09-04T13:24:17.645990+00:00",
   "cli_example": "python scripts/make_datasets.py suite=semantic size=<size> seed=<seed> out=data/semantic/<size>_<seed>.jsonl"
 }
