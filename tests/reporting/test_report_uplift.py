@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from hippo_eval.reporting.plots import render_suite_plots
+from hippo_eval.reporting.plots import AggBackend, render_suite_plots
 from hippo_eval.reporting.tables import render_markdown_suite
 
 
@@ -52,5 +52,5 @@ def test_uplift_plot_written(tmp_path: Path) -> None:
     """Uplift plot is generated when pre/post metrics are present."""
 
     presets = _make_presets(0.02)
-    render_suite_plots("episodic", presets, tmp_path)
+    render_suite_plots("episodic", presets, tmp_path, backend=AggBackend())
     assert (tmp_path / "uplift.png").exists()
