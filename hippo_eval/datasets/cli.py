@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 from omegaconf import OmegaConf
 
@@ -19,6 +19,42 @@ def _load_profile(name: str) -> Dict[str, Any]:
     if not path.exists():  # pragma: no cover - defensive
         return {}
     return OmegaConf.to_container(OmegaConf.load(path), resolve=True)  # type: ignore[return-value]
+
+
+# Maps suite names to callables that build generator kwargs from CLI args and
+# difficulty profiles. Extend this to support new suites.
+SUITE_STRATEGIES: Dict[str, Callable[[argparse.Namespace, Dict[str, Any]], Dict[str, Any]]] = {
+    "spatial": lambda a, c: {
+        "grid_size": c.get("grid_size", a.grid_size),
+        "obstacle_density": c.get("obstacle_density", a.obstacle_density),
+    },
+    "episodic": lambda a, c: {"distractors": c.get("distractors", a.distractors)},
+    "episodic_multi": lambda a, c: {
+        "distractors": c.get("distractors", a.distractors),
+        "max_corrections": 2 if c.get("corrections", True) else 0,
+    },
+    "episodic_cross": lambda a, c: {
+        "entity_pool": c.get("entity_pool", a.entity_pool),
+        "distractors": c.get("distractors", a.distractors or None),
+    },
+    "episodic_capacity": lambda a, c: {"context_budget": c.get("context_budget", a.context_budget)},
+    "semantic": lambda a, c: {
+        "hop_depth": c.get("hop_depth", a.hop_depth),
+        "inject_contradictions": c.get("inject_contradictions", a.contradict),
+        "distractors": c.get("distractors", a.distractors),
+        "entity_pool": c.get("entity_pool", a.entity_pool),
+        "paraphrase_prob": c.get("paraphrase_prob", a.paraphrase_prob),
+        "ambiguity_prob": c.get("ambiguity_prob", a.ambiguity_prob),
+    },
+}
+
+
+def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Exit early if ``size`` or ``seed`` are invalid."""
+    if args.size <= 0:
+        parser.error("--size must be positive")
+    if args.seed < 0:
+        parser.error("--seed must be non-negative")
 
 
 def main() -> None:
@@ -89,63 +125,13 @@ def main() -> None:
         help="Pronoun ambiguity probability for semantic suite",
     )
     args = parser.parse_args()
-    profile_cfg = _load_profile(args.profile).get(args.suite, {})
+    _validate_args(parser, args)
 
+    profile_cfg = _load_profile(args.profile).get(args.suite, {})
+    build = SUITE_STRATEGIES.get(args.suite, lambda *_: {})
+    kwargs = build(args, profile_cfg)
     generator = SUITE_TO_GENERATOR[args.suite]
-    common = {"profile": args.profile}
-    if args.suite == "spatial":
-        items = generator(
-            args.size,
-            args.seed,
-            grid_size=profile_cfg.get("grid_size", args.grid_size),
-            obstacle_density=profile_cfg.get("obstacle_density", args.obstacle_density),
-            **common,
-        )
-    elif args.suite == "episodic":
-        items = generator(
-            args.size,
-            args.seed,
-            distractors=profile_cfg.get("distractors", args.distractors),
-            **common,
-        )
-    elif args.suite == "episodic_multi":
-        max_corr = 2 if profile_cfg.get("corrections", True) else 0
-        items = generator(
-            args.size,
-            args.seed,
-            distractors=profile_cfg.get("distractors", args.distractors),
-            max_corrections=max_corr,
-            **common,
-        )
-    elif args.suite == "episodic_cross":
-        items = generator(
-            args.size,
-            args.seed,
-            entity_pool=profile_cfg.get("entity_pool", args.entity_pool),
-            distractors=profile_cfg.get("distractors", args.distractors or None),
-            **common,
-        )
-    elif args.suite == "episodic_capacity":
-        items = generator(
-            args.size,
-            args.seed,
-            context_budget=profile_cfg.get("context_budget", args.context_budget),
-            **common,
-        )
-    elif args.suite == "semantic":
-        items = generator(
-            args.size,
-            args.seed,
-            hop_depth=profile_cfg.get("hop_depth", args.hop_depth),
-            inject_contradictions=profile_cfg.get("inject_contradictions", args.contradict),
-            distractors=profile_cfg.get("distractors", args.distractors),
-            entity_pool=profile_cfg.get("entity_pool", args.entity_pool),
-            paraphrase_prob=profile_cfg.get("paraphrase_prob", args.paraphrase_prob),
-            ambiguity_prob=profile_cfg.get("ambiguity_prob", args.ambiguity_prob),
-            **common,
-        )
-    else:
-        items = generator(args.size, args.seed, **common)
+    items = generator(args.size, args.seed, profile=args.profile, **kwargs)
     write_jsonl(args.out, items)
     checksum_path = args.out.parent / "checksums.json"
     digest = record_checksum(args.out, checksum_path)
