@@ -2,26 +2,18 @@
 
 from __future__ import annotations
 
-import torch
-from torch import Tensor, nn
-
 from hippo_mem.common import MemoryTokens
 from hippo_mem.spatial.adapter import AdapterConfig, SpatialAdapter
 
+from .memory_base import MemoryAdapterBase
 
-class SpatialMemoryAdapter(nn.Module):
+
+class SpatialMemoryAdapter(MemoryAdapterBase):
     """Expose :class:`SpatialAdapter` under the fusion protocol."""
 
     def __init__(self, cfg: AdapterConfig) -> None:
-        super().__init__()
-        self.inner = SpatialAdapter(cfg)
-
-    def forward(self, hidden_states: Tensor, *, memory: MemoryTokens | None = None) -> Tensor:
-        if memory is None or not torch.any(memory.mask):
-            return torch.zeros_like(hidden_states)
-
-        fused = self.inner(hidden_states, memory=memory)
-        return fused - hidden_states
+        inner = SpatialAdapter(cfg)
+        super().__init__(inner)
 
     def hint(self, memory: MemoryTokens | None = None) -> str | None:
         """Return action hint embedded in ``memory`` if present."""
