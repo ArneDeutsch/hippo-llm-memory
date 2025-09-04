@@ -654,18 +654,8 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
 
     # ------------------------------------------------------------------
     # Persistence
-    def save(
-        self,
-        directory: str,
-        session_id: str,
-        fmt: str = "jsonl",
-        replay_samples: int = 0,
-        gate_attempts: int = 0,
-    ) -> None:
-        """Save map under ``directory/session_id``."""
-
-        path = Path(directory) / session_id
-        path.mkdir(parents=True, exist_ok=True)
+    def _write_meta(self, path: Path, replay_samples: int, gate_attempts: int) -> None:
+        """Write store metadata to ``path``."""
 
         meta = {
             "schema": "spatial.store_meta.v1",
@@ -676,108 +666,137 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         io.atomic_write_json(path / "store_meta.json", meta)
+
+    def _save_jsonl(self, path: Path) -> None:
+        """Write nodes and edges to ``spatial.jsonl``."""
+
+        file = path / "spatial.jsonl"
+
+        def _write(tmp_path: Path) -> None:
+            with open(tmp_path, "w", encoding="utf-8") as fh:
+                meta_rec = {
+                    "schema": "spatial.v1",
+                    "type": "meta",
+                    "next_id": self._next_id,
+                    "last_obs": self._last_obs,
+                    "step": self._step,
+                    "position": self._position,
+                    "last_coord": self._last_coord,
+                }
+                fh.write(json.dumps(meta_rec) + "\n")
+                for context, place in self.encoder._cache.items():
+                    fh.write(
+                        json.dumps(
+                            {
+                                "schema": "spatial.v1",
+                                "type": "node",
+                                "id": self._context_to_id[context],
+                                "context": context,
+                                "coord": list(place.coord),
+                                "last_seen": place.last_seen,
+                                "kind": place.kind,
+                            }
+                        )
+                        + "\n"
+                    )
+                for src, nbrs in self.graph.items():
+                    for dst, edge in nbrs.items():
+                        fh.write(
+                            json.dumps(
+                                {
+                                    "schema": "spatial.v1",
+                                    "type": "edge",
+                                    "src": src,
+                                    "dst": dst,
+                                    "cost": edge.cost,
+                                    "success": edge.success,
+                                    "last_seen": edge.last_seen,
+                                    "weight": edge.weight,
+                                    "kind": edge.kind,
+                                }
+                            )
+                            + "\n"
+                        )
+
+        io.atomic_write_file(file, _write)
+
+    def _save_parquet(self, path: Path) -> None:
+        """Write nodes and edges in Parquet format."""
+
+        try:
+            import pandas as pd
+        except Exception as exc:  # pragma: no cover - optional
+            raise RuntimeError("Parquet support requires pandas") from exc
+
+        nodes = []
+        for context, place in self.encoder._cache.items():
+            nodes.append(
+                {
+                    "id": self._context_to_id[context],
+                    "context": context,
+                    "coord": list(place.coord),
+                    "last_seen": place.last_seen,
+                    "kind": place.kind,
+                }
+            )
+
+        edges = []
+        for src, nbrs in self.graph.items():
+            for dst, edge in nbrs.items():
+                edges.append(
+                    {
+                        "src": src,
+                        "dst": dst,
+                        "cost": edge.cost,
+                        "success": edge.success,
+                        "last_seen": edge.last_seen,
+                        "weight": edge.weight,
+                        "kind": edge.kind,
+                    }
+                )
+
+        io.atomic_write_file(
+            path / "spatial_nodes.parquet",
+            lambda tmp: pd.DataFrame(nodes).to_parquet(tmp, index=False),
+        )
+        io.atomic_write_file(
+            path / "spatial_edges.parquet",
+            lambda tmp: pd.DataFrame(edges).to_parquet(tmp, index=False),
+        )
+        meta = {
+            "next_id": self._next_id,
+            "last_obs": self._last_obs,
+            "step": self._step,
+            "position": self._position,
+            "last_coord": self._last_coord,
+        }
+        io.atomic_write_json(path / "spatial_meta.json", meta)
+
+    def save(
+        self,
+        directory: str,
+        session_id: str,
+        fmt: str = "jsonl",
+        replay_samples: int = 0,
+        gate_attempts: int = 0,
+    ) -> None:
+        """Save map under ``directory/session_id``."""
+        if fmt not in {"jsonl", "parquet"}:  # pragma: no cover - defensive
+            raise ValueError(f"Unsupported format: {fmt}")
+
+        path = Path(directory) / session_id
+        path.mkdir(parents=True, exist_ok=True)
+        self._write_meta(path, replay_samples, gate_attempts)
+
         file = path / "spatial.jsonl"
         if replay_samples <= 0:
             io.atomic_write_file(file, lambda tmp: open(tmp, "w", encoding="utf-8").write(""))
             return
 
         if fmt == "jsonl":
-
-            def _write(tmp_path: Path) -> None:
-                with open(tmp_path, "w", encoding="utf-8") as fh:
-                    meta_rec = {
-                        "schema": "spatial.v1",
-                        "type": "meta",
-                        "next_id": self._next_id,
-                        "last_obs": self._last_obs,
-                        "step": self._step,
-                        "position": self._position,
-                        "last_coord": self._last_coord,
-                    }
-                    fh.write(json.dumps(meta_rec) + "\n")
-                    for context, place in self.encoder._cache.items():
-                        fh.write(
-                            json.dumps(
-                                {
-                                    "schema": "spatial.v1",
-                                    "type": "node",
-                                    "id": self._context_to_id[context],
-                                    "context": context,
-                                    "coord": list(place.coord),
-                                    "last_seen": place.last_seen,
-                                    "kind": place.kind,
-                                }
-                            )
-                            + "\n"
-                        )
-                    for src, nbrs in self.graph.items():
-                        for dst, edge in nbrs.items():
-                            fh.write(
-                                json.dumps(
-                                    {
-                                        "schema": "spatial.v1",
-                                        "type": "edge",
-                                        "src": src,
-                                        "dst": dst,
-                                        "cost": edge.cost,
-                                        "success": edge.success,
-                                        "last_seen": edge.last_seen,
-                                        "weight": edge.weight,
-                                        "kind": edge.kind,
-                                    }
-                                )
-                                + "\n"
-                            )
-
-            io.atomic_write_file(file, _write)
-        elif fmt == "parquet":
-            try:
-                import pandas as pd
-            except Exception as exc:  # pragma: no cover - optional
-                raise RuntimeError("Parquet support requires pandas") from exc
-            nodes = []
-            for context, place in self.encoder._cache.items():
-                nodes.append(
-                    {
-                        "id": self._context_to_id[context],
-                        "context": context,
-                        "coord": list(place.coord),
-                        "last_seen": place.last_seen,
-                        "kind": place.kind,
-                    }
-                )
-            edges = []
-            for src, nbrs in self.graph.items():
-                for dst, edge in nbrs.items():
-                    edges.append(
-                        {
-                            "src": src,
-                            "dst": dst,
-                            "cost": edge.cost,
-                            "success": edge.success,
-                            "last_seen": edge.last_seen,
-                            "weight": edge.weight,
-                            "kind": edge.kind,
-                        }
-                    )
-            io.atomic_write_file(
-                path / "spatial_nodes.parquet",
-                lambda tmp: pd.DataFrame(nodes).to_parquet(tmp, index=False),
-            )
-            io.atomic_write_file(
-                path / "spatial_edges.parquet",
-                lambda tmp: pd.DataFrame(edges).to_parquet(tmp, index=False),
-            )
-            meta = {
-                "next_id": self._next_id,
-                "last_obs": self._last_obs,
-                "step": self._step,
-                "position": self._position,
-                "last_coord": self._last_coord,
-            }
-            io.atomic_write_json(path / "spatial_meta.json", meta)
-        else:  # pragma: no cover - defensive
-            raise ValueError(f"Unsupported format: {fmt}")
+            self._save_jsonl(path)
+        else:  # fmt == "parquet"
+            self._save_parquet(path)
 
     def load(self, directory: str, session_id: str, fmt: str = "jsonl") -> None:
         """Load map from ``directory/session_id``."""
