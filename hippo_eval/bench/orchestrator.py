@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 from omegaconf import DictConfig, OmegaConf
 
 from .layout import bench_paths
+
+if TYPE_CHECKING:
+    from . import BenchRun
 
 
 @dataclass
@@ -14,8 +17,7 @@ class BenchResult:
     """Container for a single bench run."""
 
     outdir: Path
-    rows: List[Dict[str, object]]
-    metrics: Dict[str, object]
+    run: BenchRun
     flat_ablate: Dict[str, object]
 
 
@@ -24,9 +26,9 @@ def run_bench(cfg: DictConfig) -> BenchResult:
     from . import run_suite, write_outputs
 
     paths = bench_paths(cfg)
-    rows, metrics, flat_ablate = run_suite(cfg)
-    write_outputs(paths.outdir, rows, metrics, flat_ablate, cfg)
-    return BenchResult(paths.outdir, rows, metrics, flat_ablate)
+    run, flat_ablate = run_suite(cfg)
+    write_outputs(paths.outdir, run, flat_ablate, cfg)
+    return BenchResult(paths.outdir, run, flat_ablate)
 
 
 def run_matrix(matrix_cfg: DictConfig) -> List[BenchResult]:

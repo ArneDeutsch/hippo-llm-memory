@@ -9,6 +9,8 @@ from omegaconf import OmegaConf
 sys.path.append(str(Path(__file__).resolve().parents[2] / "scripts"))
 import eval_bench
 
+from hippo_eval.bench import BenchRun
+
 
 @pytest.mark.parametrize("driver", [None, 123])
 def test_meta_records_cuda_and_env(tmp_path, monkeypatch, driver):
@@ -23,7 +25,7 @@ def test_meta_records_cuda_and_env(tmp_path, monkeypatch, driver):
         monkeypatch.setattr(torch._C, "_cuda_getDriverVersion", lambda: driver, raising=False)
 
     cfg = OmegaConf.create({"seed": 0, "suite": "episodic", "preset": "baselines/core", "n": 0})
-    eval_bench.write_outputs(tmp_path, [], {"acc": 1.0}, {}, cfg)
+    eval_bench.write_outputs(tmp_path, BenchRun([], {"acc": 1.0}), {}, cfg)
 
     meta = json.loads((tmp_path / "meta.json").read_text())
     assert meta["cuda"]["version"] == "testcuda"
