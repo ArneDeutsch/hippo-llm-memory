@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts import report
+from hippo_eval.reporting.plots import render_suite_plots
+from hippo_eval.reporting.tables import render_markdown_suite
 
 
 def _make_presets(ci: float, pre_norm: float = 0.99) -> dict:
@@ -22,7 +23,7 @@ def _make_presets(ci: float, pre_norm: float = 0.99) -> dict:
 def test_markdown_includes_ci_and_saturation(tmp_path: Path) -> None:
     """Metrics table shows CI and flags saturation when pre_em_norm high."""
 
-    text = report._render_markdown_suite(
+    text = render_markdown_suite(
         "episodic",
         _make_presets(0.02),
         retrieval=None,
@@ -36,7 +37,7 @@ def test_markdown_includes_ci_and_saturation(tmp_path: Path) -> None:
 def test_markdown_includes_zero_ci_and_note_single_seed() -> None:
     """Single-seed stats show ± 0.000 and explanatory note."""
 
-    text = report._render_markdown_suite(
+    text = render_markdown_suite(
         "episodic",
         _make_presets(0.0),
         retrieval=None,
@@ -51,5 +52,5 @@ def test_uplift_plot_written(tmp_path: Path) -> None:
     """Uplift plot is generated when pre/post metrics are present."""
 
     presets = _make_presets(0.02)
-    report._render_plots_suite("episodic", presets, tmp_path)
+    render_suite_plots("episodic", presets, tmp_path)
     assert (tmp_path / "uplift.png").exists()

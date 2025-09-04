@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from hippo_eval.reporting.report import collect_metrics, summarise, write_reports
+from hippo_eval.reporting.report import write_reports
+from hippo_eval.reporting.rollup import collect_metrics, summarise
 
 
 def _make_metrics(path: Path, suite: str, metrics: dict) -> None:

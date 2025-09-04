@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
 
-from scripts.report import (
+from hippo_eval.reporting.report import write_reports
+from hippo_eval.reporting.rollup import (
     collect_gate_ablation,
     collect_gates,
     collect_metrics,
@@ -9,7 +10,6 @@ from scripts.report import (
     summarise,
     summarise_gates,
     summarise_retrieval,
-    write_reports,
 )
 
 
