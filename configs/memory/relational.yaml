@@ -1,4 +1,7 @@
 # Relational memory configuration.
+# Optional: seed schemas for fast-track routing (use with simple fixtures)
+# schemas:
+#   - { name: "rel", relation: "rel" }
 
 # Summary: settings for SGC-RSS knowledge graph. Defaults mirror EVAL_PLAN §3.2.
 
