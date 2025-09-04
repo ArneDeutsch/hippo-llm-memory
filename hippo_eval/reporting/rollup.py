@@ -12,7 +12,7 @@ from typing import Dict, Iterable, Tuple
 from jinja2 import Environment, FileSystemLoader
 
 from hippo_eval.reporting.health import Badge, render_panel
-from hippo_eval.reporting.tables import display_name, make_summary_table
+from hippo_eval.reporting.table_utils import display_name, make_summary_table
 from hippo_mem.common.telemetry import validate_retrieval_snapshot
 
 log = logging.getLogger(__name__)
