@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from hippo_eval.eval.harness import EvalConfig, run_suite
+from omegaconf import OmegaConf
+
+from hippo_eval.harness import build_runner, run_suite
 from hippo_mem.common import ProvenanceLogger
 from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.relational.gating import RelationalGate
@@ -41,16 +43,18 @@ def test_provenance_logger_writes(tmp_path: Path) -> None:
 
 def test_gate_metrics_propagate(tmp_path: Path) -> None:
     gate_registry.reset()
-    cfg = EvalConfig(
-        suite="episodic",
-        n=5,
-        seed=1337,
-        preset="configs/eval/memory/hei_nw.yaml",
-        model="models/tiny-gpt2",
+    cfg = OmegaConf.create(
+        {
+            "suite": "episodic",
+            "n": 5,
+            "seed": 1337,
+            "preset": "configs/eval/memory/hei_nw.yaml",
+            "model": "models/tiny-gpt2",
+        }
     )
-    rows, metrics, _ = run_suite(cfg)
-    assert rows
-    gating = metrics.get("gating")
+    result = run_suite(build_runner(cfg))
+    assert result.rows
+    gating = result.metrics.get("gating")
     assert gating is not None
     assert "relational" in gating and "spatial" in gating
     assert "accepted" in gating["relational"]

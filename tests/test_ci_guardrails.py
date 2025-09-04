@@ -4,9 +4,11 @@ import json
 from pathlib import Path
 
 import pytest
+from omegaconf import OmegaConf
 
 from hippo_eval.consolidation import eval as test_consolidation
-from hippo_eval.eval import harness as eval_model
+from hippo_eval.eval import harness as eval_helpers
+from hippo_eval.harness import build_runner, run_suite
 
 
 @pytest.mark.parametrize(
@@ -25,17 +27,19 @@ def test_retrieval_requests_guard(
     data_file = tmp_path / "data.jsonl"
     data_file.write_text("")
 
-    cfg = eval_model.EvalConfig(
-        suite="episodic",
-        n=0,
-        seed=0,
-        preset=preset,
-        model="models/tiny-gpt2",
+    cfg = OmegaConf.create(
+        {
+            "suite": "episodic",
+            "n": 0,
+            "seed": 0,
+            "preset": preset,
+            "model": "models/tiny-gpt2",
+        }
     )
 
-    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(eval_helpers, "_dataset_path", lambda s, n, seed, profile=None: data_file)
     with pytest.raises(RuntimeError) as exc:
-        eval_model.run_suite(cfg)
+        run_suite(build_runner(cfg))
     assert "retrieval.requests == 0" in str(exc.value)
 
 
@@ -45,22 +49,24 @@ def test_retrieval_tokens_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     data_file = tmp_path / "data.jsonl"
     data_file.write_text("")
 
-    cfg = eval_model.EvalConfig(
-        suite="episodic",
-        n=0,
-        seed=0,
-        preset="configs/eval/memory/hei_nw.yaml",
-        model="models/tiny-gpt2",
+    cfg = OmegaConf.create(
+        {
+            "suite": "episodic",
+            "n": 0,
+            "seed": 0,
+            "preset": "configs/eval/memory/hei_nw.yaml",
+            "model": "models/tiny-gpt2",
+        }
     )
 
-    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(eval_helpers, "_dataset_path", lambda s, n, seed, profile=None: data_file)
     monkeypatch.setattr(
-        eval_model.registry,
+        eval_helpers.registry,
         "all_snapshots",
         lambda: {"episodic": {"requests": 1, "tokens_returned": 0}},
     )
     with pytest.raises(RuntimeError) as exc:
-        eval_model.run_suite(cfg)
+        run_suite(build_runner(cfg))
     assert "retrieval.tokens_returned == 0" in str(exc.value)
 
 
@@ -70,7 +76,7 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     # dataset
     data_file = tmp_path / "d.jsonl"
     data_file.write_text(json.dumps({"prompt": "p", "answer": "a"}) + "\n")
-    monkeypatch.setattr(eval_model, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(eval_helpers, "_dataset_path", lambda s, n, seed, profile=None: data_file)
 
     class DummyTokenizer:
         pad_token_id = 0
@@ -100,27 +106,29 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
             return self
 
     monkeypatch.setattr(
-        eval_model,
+        eval_helpers,
         "AutoTokenizer",
         type("T", (), {"from_pretrained": lambda *a, **k: DummyTokenizer()}),
     )
     monkeypatch.setattr(
-        eval_model,
+        eval_helpers,
         "AutoModelForCausalLM",
         type("M", (), {"from_pretrained": lambda *a, **k: DummyModel()}),
     )
 
-    cfg = eval_model.EvalConfig(
-        suite="episodic",
-        n=1,
-        seed=0,
-        preset="configs/eval/baselines/core.yaml",
-        use_chat_template=True,
-        max_new_tokens=8,
-        model="models/tiny-gpt2",
+    cfg = OmegaConf.create(
+        {
+            "suite": "episodic",
+            "n": 1,
+            "seed": 0,
+            "preset": "configs/eval/baselines/core.yaml",
+            "use_chat_template": True,
+            "max_new_tokens": 8,
+            "model": "models/tiny-gpt2",
+        }
     )
     with pytest.raises(RuntimeError) as exc:
-        eval_model.run_suite(cfg)
+        run_suite(build_runner(cfg))
     assert "refusal rate > 0.5" in str(exc.value)
 
 

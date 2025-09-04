@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from hippo_eval.baselines import aggregate_metrics
-from hippo_eval.harness.io import write_metrics
+from hippo_eval.harness.io import write_baseline_metrics
 
 
 def _write_metrics(
@@ -34,6 +34,6 @@ def test_collect_and_write(tmp_path: Path) -> None:
         }
     ]
     out_dir = root
-    csv_path = write_metrics(rows, out_dir)
+    csv_path = write_baseline_metrics(rows, out_dir)
     assert csv_path.exists()
     assert (out_dir / "baselines_ok.flag").exists()
