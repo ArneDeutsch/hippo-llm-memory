@@ -14,12 +14,26 @@ def pytest_addoption(parser):
     parser.addoption(
         "--runslow", action="store_true", default=False, help="run tests marked as slow"
     )
+    parser.addoption(
+        "--runintegration",
+        action="store_true",
+        default=False,
+        help="run integration tests",
+    )
 
 
 def pytest_collection_modifyitems(config, items):
-    if config.getoption("--runslow"):
-        return
-    skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+    skip_slow = not config.getoption("--runslow")
+    skip_integration = not config.getoption("--runintegration")
+
     for item in items:
-        if "slow" in item.keywords:
-            item.add_marker(skip_slow)
+        fspath = str(getattr(item, "fspath", ""))
+        if "tests/cli/" in fspath.replace("\\", "/"):
+            item.add_marker(pytest.mark.integration)
+
+        if skip_slow and "slow" in item.keywords:
+            item.add_marker(pytest.mark.skip(reason="need --runslow to run slow tests"))
+        if skip_integration and "integration" in item.keywords:
+            item.add_marker(
+                pytest.mark.skip(reason="need --runintegration to run integration tests")
+            )

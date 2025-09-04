@@ -42,7 +42,11 @@ testpaths = [
   "tests"
 ]
 python_files = ["test_*.py"]
-markers = ["slow: mark tests as slow and excluded from default runs"]
+markers = [
+  "slow: mark tests as slow and excluded from default runs",
+  "integration: mark CLI/Hydra/real harness tests",
+  "smoke: mark minimal e2e smoke checks",
+]
 
 [tool.setuptools]
 package-dir = {"" = "."}
