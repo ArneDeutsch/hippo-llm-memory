@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -17,7 +18,7 @@ def main() -> None:
     """CLI entry point."""
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run_id", help="Run identifier; defaults to $RUN_ID or $DATE env vars")
+    parser.add_argument("--run_id", help="Run identifier; defaults to $RUN_ID env var")
     parser.add_argument("--algo", default="hei_nw", help="Memory algorithm identifier")
     parser.add_argument("--kind", default="episodic", help="Store kind to validate")
     parser.add_argument(
@@ -26,11 +27,18 @@ def main() -> None:
     parser.add_argument("--metrics", help="Path to metrics.json for count validation", default=None)
     args = parser.parse_args()
 
+    run_id = args.run_id or os.environ.get("RUN_ID")
+    if not run_id:
+        print("RUN_ID is required; set RUN_ID env or pass --run_id", file=sys.stderr)
+        raise SystemExit(1)
+
     try:
-        path = validate_store(
-            run_id=args.run_id, algo=args.algo, kind=args.kind, preset=args.preset
-        )
-    except (FileExistsError, FileNotFoundError) as err:  # pragma: no cover - tested via CLI
+        path = validate_store(run_id=run_id, algo=args.algo, kind=args.kind, preset=args.preset)
+    except (
+        FileExistsError,
+        FileNotFoundError,
+        ValueError,
+    ) as err:  # pragma: no cover - tested via CLI
         print(err, file=sys.stderr)
         raise SystemExit(1) from err
     if path is not None:
@@ -49,7 +57,7 @@ def main() -> None:
         if not has_data:
             raise ValueError(
                 "empty store: "
-                f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {args.run_id}"
+                f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {run_id}"
             )
 
     if args.metrics:
