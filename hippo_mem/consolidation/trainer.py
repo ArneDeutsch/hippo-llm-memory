@@ -21,6 +21,7 @@ import torch
 import yaml
 from peft import LoraConfig, get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers.pytorch_utils import Conv1D
 
 from hippo_mem.adapters.lora import default_target_modules, export_adapter, merge_adapter
 from hippo_mem.common import io
@@ -153,6 +154,12 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
     if not modules:
         raise ValueError("Could not determine target modules for model")
     cfg["peft"]["targets"] = modules
+
+    fan_in_fan_out = any(
+        isinstance(mod, Conv1D) and any(name.endswith(m) for m in modules)
+        for name, mod in model.named_modules()
+    )
+
     lora_cfg = LoraConfig(
         r=cfg["peft"]["rank"],
         lora_alpha=cfg["peft"]["alpha"],
@@ -160,6 +167,7 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
         target_modules=modules,
         bias="none",
         task_type="CAUSAL_LM",
+        fan_in_fan_out=fan_in_fan_out,
     )
     model = get_peft_model(model, lora_cfg)
     lora_hash = hashlib.sha256(
@@ -217,7 +225,7 @@ def train(args: Args, cfg: Dict[str, Any]) -> Dict[str, Any]:
         opt.step()
         opt.zero_grad()
         replay_count += len(batch)
-        logging.info("step=%d lr=%.2e loss=%.4f", step, cfg["train"]["lr"], float(loss))
+        logging.info("step=%d lr=%.2e loss=%.4f", step, cfg["train"]["lr"], loss.detach().item())
     Path(args.outdir).mkdir(parents=True, exist_ok=True)
     if args.merge:
         merged = merge_adapter(model)
