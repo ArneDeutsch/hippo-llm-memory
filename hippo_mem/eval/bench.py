@@ -340,6 +340,8 @@ def _eval_tasks(
                 "overlong": overlong,
                 "format_violation": fmt,
                 "latency_ms": latency_ms,
+                "memory_hit": 0,
+                "retrieval_latency_ms": 0.0,
                 "flags": flag,
             }
         )
@@ -430,6 +432,10 @@ def run_suite(
         retrieval_enabled=retrieval_enabled,
         long_context_enabled=long_ctx_enabled,
     )
+    hits = sum(int(r.get("memory_hit", 0)) for r in rows)
+    lat_delta = sum(float(r.get("retrieval_latency_ms", 0.0)) for r in rows)
+    metrics_pre.setdefault("memory_hit_rate", hits / max(1, len(rows)))
+    metrics_pre.setdefault("latency_ms_delta", lat_delta / max(1, len(rows)))
     total_time = elapsed
     lat_sum = lat_mean * len(tasks)
     total_in_tokens = in_tokens
@@ -547,6 +553,8 @@ def write_outputs(
             "overlong",
             "format_violation",
             "latency_ms",
+            "memory_hit",
+            "retrieval_latency_ms",
             *compute_cols,
             "flags",
             "gating_enabled",

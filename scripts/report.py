@@ -1,7 +1,8 @@
 """CLI wrapper for :mod:`hippo_mem.reporting.report` with re-exports.
 
-Exposes reporting utilities including new KPIs like ``memory_hit_rate``
-and uplift vs the long-context baseline.
+Exposes reporting utilities including new KPIs like ``memory_hit_rate``,
+uplift vs the long-context baseline, and the ``sanity_sweep`` helper for
+quick run checks.
 """
 
 import sys
