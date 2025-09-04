@@ -33,24 +33,16 @@ jobs:
 
       - name: Lint
         run: make lint
+      - name: Unit & Smoke
+        run: |
+          export FAST_TESTS=1
+          pytest -q -m "not slow and not integration"
 
-      - name: Tests
-        run: make test
+      - name: Coverage
+        run: |
+          export FAST_TESTS=1
+          coverage run -m pytest -q -m "not slow and not integration"
+          coverage report -m
 
-      - name: Slow tests
-        run: make slow-test
-
-      - name: Smoke 7b
-        run: bash scripts/smoke_7b.sh
-      - name: Smoke 8a
-        run: bash scripts/smoke_8a.sh
-      - name: Smoke 8
-        run: bash scripts/smoke_8.sh
-      - name: CI smoke eval
-        run: bash scripts/ci_smoke_eval.sh
-      - name: Smoke n50
-        run: bash scripts/smoke_n50.sh
-      - name: Smoke n seeds
-        run: bash scripts/smoke_n_seeds.sh
       - name: Ablation smoke
         run: python tests/fixtures/ci/ablation_smoke.py

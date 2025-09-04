@@ -54,3 +54,12 @@ packages = ["hippo_mem", "hippo_eval"]
 
 [tool.mutmut]
 paths_to_mutate = ["hippo_mem/episodic", "hippo_mem/relational"]
+
+[tool.coverage.run]
+source = ["hippo_eval", "hippo_mem"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 70
+skip_empty = true
+show_missing = true
