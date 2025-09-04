@@ -8,7 +8,7 @@ IFS=$'\n\t'
 
 LOG=$(mktemp)
 
-python scripts/train_lora.py \
+python -m hippo_mem.training.lora \
   dry_run=true \
   episodic.enabled=true \
   episodic.hidden_size=2 \

@@ -135,7 +135,7 @@ Verify the harness and scoring on a tiny slice before full runs:
 RUN_ID=test_$(date +%s); SID=test
 # Baseline with pre metrics
 python scripts/eval_model.py suite=semantic preset=baselines/core run_id=$RUN_ID n=5 seed=1337 compute.pre_metrics=true
-python scripts/run_baselines.py --run-id $RUN_ID
+python -m hippo_eval.baselines --run-id $RUN_ID
 
 # Memory variant with replay and persistence
 python scripts/eval_model.py suite=semantic preset=memory/sgc_rss run_id=$RUN_ID n=5 seed=1337 \
@@ -158,7 +158,7 @@ Presets live under `configs/eval/baselines/`:
 Before any memory run, generate baseline metrics:
 
 ```bash
-python scripts/run_baselines.py --run-id "$RUN_ID"
+python -m hippo_eval.baselines --run-id "$RUN_ID"
 ```
 
 **Quickstart**

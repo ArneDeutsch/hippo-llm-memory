@@ -1067,7 +1067,7 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
             failures.append(
                 "missing baseline metrics: "
                 f"{baseline} — generate via:\n  "
-                f"python scripts/run_baselines.py --run-id {rid}"
+                f"python -m hippo_eval.baselines --run-id {rid}"
             )
 
     store_dir = cfg.get("store_dir")

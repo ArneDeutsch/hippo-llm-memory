@@ -10,7 +10,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Legacy CLI for eval_model.py",
         epilog=(
-            "Run baselines first: python scripts/run_baselines.py --run-id <RID>\n"
+            "Run baselines first: python -m hippo_eval.baselines --run-id <RID>\n"
             "store_dir: runs/<RID>/stores (recommended) or runs/<RID>/stores/<algo>.\n"
             "Replay cycles: pass replay_cycles=N or replay.cycles=N."
         ),

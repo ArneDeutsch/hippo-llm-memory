@@ -8,11 +8,11 @@ export ALLOW_BENCH=1
 IFS=$'\n\t'
 
 for suite in episodic semantic spatial; do
-  python scripts/build_datasets.py --suite "$suite" --size 50 --seed 1337 --out "data/$suite/50_1337.jsonl"
+  python -m hippo_eval.eval.datasets --suite "$suite" --size 50 --seed 1337 --out "data/$suite/50_1337.jsonl"
 done
 
-python scripts/run_baselines_bench.py --run-id "$RUN_ID" --presets baselines/core --sizes 50 --seeds 1337
-python scripts/report.py --run-id "$RUN_ID"
+python -m hippo_eval.eval.baselines --run-id "$RUN_ID" --presets baselines/core --sizes 50 --seeds 1337
+python -m hippo_eval.reporting.report --run-id "$RUN_ID"
 
 for suite in episodic semantic spatial; do
   run_dir="runs/$RUN_ID/baselines/core/$suite/50_1337"

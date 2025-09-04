@@ -96,7 +96,7 @@ def test_preflight_missing_baseline_hints_command(
             harness.evaluate(cfg, outdir, preflight=True)
         fail_msg = json.loads((outdir / "failed_preflight.json").read_text())["errors"][0]
         assert f"runs/{cfg.run_id}/baselines/metrics.csv" in fail_msg
-        assert f"python scripts/run_baselines.py --run-id {cfg.run_id}" in fail_msg
+        assert f"python -m hippo_eval.baselines --run-id {cfg.run_id}" in fail_msg
         attempts = sum(
             gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
         )

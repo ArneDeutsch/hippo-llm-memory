@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 from pathlib import Path
 from statistics import mean, pstdev
-from typing import Dict, List
+from typing import Dict, Iterable, List
+
+from hippo_eval.harness.io import write_metrics
+from hippo_mem.utils import validate_run_id
 
 
 def _ci95(values: List[float]) -> float:
@@ -71,3 +75,21 @@ def aggregate_metrics(root: Path) -> List[Dict[str, float]]:
         msg = f"no baseline metrics under {root}; found: {candidates}"
         raise FileNotFoundError(msg)
     return rows
+
+
+def main(argv: Iterable[str] | None = None) -> None:
+    """CLI entry point for aggregating baseline metrics."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--runs-dir", default="runs", help="Root runs directory")
+    parser.add_argument("--run-id", required=True, help="Run identifier")
+    args = parser.parse_args(list(argv) if argv is not None else None)
+
+    run_id = validate_run_id(args.run_id)
+    root = Path(args.runs_dir) / run_id / "baselines"
+    rows = aggregate_metrics(root)
+    write_metrics(rows, root)
+    print(f"aggregated {len(rows)} baseline rows under {root}")
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    main()
