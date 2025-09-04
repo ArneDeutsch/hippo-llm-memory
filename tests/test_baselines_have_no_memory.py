@@ -7,7 +7,7 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
-from hippo_eval.eval.bench import _init_modules
+from hippo_eval.bench import _init_modules
 from hippo_eval.eval.harness import _apply_model_defaults, evaluate
 
 

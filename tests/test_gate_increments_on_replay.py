@@ -1,6 +1,6 @@
 from omegaconf import OmegaConf
 
-from hippo_eval.eval.bench import _init_modules
+from hippo_eval.bench import _init_modules
 from hippo_eval.eval.harness import Task, _run_replay
 from hippo_mem.common.telemetry import gate_registry
 
