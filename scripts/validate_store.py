@@ -14,8 +14,8 @@ from hippo_eval.eval.store_utils import resolve_store_meta_path
 from hippo_mem.utils.stores import validate_store
 
 
-def main() -> None:
-    """CLI entry point."""
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run_id", help="Run identifier; defaults to $RUN_ID env var")
@@ -25,7 +25,11 @@ def main() -> None:
         "--preset", help="Preset identifier; baselines must not produce stores", default=None
     )
     parser.add_argument("--metrics", help="Path to metrics.json for count validation", default=None)
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def validate_cli_store(args: argparse.Namespace) -> Path | None:
+    """Validate store layout and content for a run."""
 
     run_id = args.run_id or os.environ.get("RUN_ID")
     if not run_id:
@@ -34,75 +38,93 @@ def main() -> None:
 
     try:
         path = validate_store(run_id=run_id, algo=args.algo, kind=args.kind, preset=args.preset)
-    except (
-        FileExistsError,
-        FileNotFoundError,
-        ValueError,
-    ) as err:  # pragma: no cover - tested via CLI
+    except (FileExistsError, FileNotFoundError, ValueError) as err:  # pragma: no cover - CLI
         print(err, file=sys.stderr)
         raise SystemExit(1) from err
-    if path is not None:
-        session_id = path.parent.name
-        store_dir = path.parents[2]
-        preset = args.preset or f"memory/{args.algo}"
-        meta = resolve_store_meta_path(preset, store_dir, session_id)
-        if not meta.exists():
-            raise FileNotFoundError(f"missing store_meta.json: {meta}")
-        has_data = False
-        with path.open("r", encoding="utf-8") as fh:
-            for line in fh:
-                if line.strip():
-                    has_data = True
-                    break
-        if not has_data:
-            raise ValueError(
-                "empty store: "
-                f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {run_id}\n"
-                "hint: for SGC-RSS ensure the teach path actually writes tuples "
-                "(gate accepts *and* either schemas are seeded or direct upsert is used)."
-            )
 
-    if args.metrics:
-        with Path(args.metrics).open("r", encoding="utf-8") as fh:
-            metrics = json.load(fh)
-        store = metrics.get("store", {})
-        per_mem = store.get("per_memory", {})
-        diag = store.get("diagnostics", {})
-        key_map = {
-            "episodic": "episodic",
-            "kg": "relational",
-            "map": "spatial",
-            "spatial": "spatial",
-        }
-        key = key_map.get(args.kind, args.kind)
-        expected = int(per_mem.get(key, 0))
-        if args.kind == "kg":
-            expected += int(diag.get("relational", {}).get("nodes_added", 0))
-        elif args.kind in ("map", "spatial"):
-            expected += 1  # meta line
-        if path is None:
-            if expected != 0:
-                raise ValueError("metrics report store entries but no file found")
-        else:
-            actual = 0
-            with path.open("r", encoding="utf-8") as fh:
-                for line in fh:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        rec = json.loads(line)
-                    except json.JSONDecodeError:
-                        actual += 1
-                        continue
-                    val = rec.get("value")
-                    if isinstance(val, dict) and val.get("provenance") == "dummy":
-                        continue
-                    actual += 1
-            if actual != expected:
-                raise ValueError(
-                    f"{args.kind} store line count {actual} != metrics expectation {expected}"
-                )
+    if path is None:
+        return None
+
+    session_id = path.parent.name
+    store_dir = path.parents[2]
+    preset = args.preset or f"memory/{args.algo}"
+    meta = resolve_store_meta_path(preset, store_dir, session_id)
+    if not meta.exists():
+        raise FileNotFoundError(f"missing store_meta.json: {meta}")
+    has_data = False
+    with path.open("r", encoding="utf-8") as fh:
+        for line in fh:
+            if line.strip():
+                has_data = True
+                break
+    if not has_data:
+        raise ValueError(
+            "empty store: "
+            f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {run_id}\n"
+            "hint: for SGC-RSS ensure the teach path actually writes tuples "
+            "(gate accepts *and* either schemas are seeded or direct upsert is used)."
+        )
+    return path
+
+
+def _expected_lines(kind: str, per_mem: dict, diag: dict) -> int:
+    """Return expected line count based on metrics and store kind."""
+
+    key_map = {"episodic": "episodic", "kg": "relational", "map": "spatial", "spatial": "spatial"}
+    strategies = {
+        "kg": lambda key, pm, dg: int(pm.get(key, 0))
+        + int(dg.get("relational", {}).get("nodes_added", 0)),
+        "map": lambda key, pm, dg: int(pm.get(key, 0)) + 1,
+        "spatial": lambda key, pm, dg: int(pm.get(key, 0)) + 1,
+    }
+    key = key_map.get(kind, kind)
+    strategy = strategies.get(kind, lambda k, pm, dg: int(pm.get(k, 0)))
+    return strategy(key, per_mem, diag)
+
+
+def verify_metrics(path: Path | None, kind: str, metrics_path: str | None) -> None:
+    """Verify metrics line counts against store contents."""
+
+    if not metrics_path:
+        return
+
+    with Path(metrics_path).open("r", encoding="utf-8") as fh:
+        metrics = json.load(fh)
+    store = metrics.get("store", {})
+    per_mem = store.get("per_memory", {})
+    diag = store.get("diagnostics", {})
+    expected = _expected_lines(kind, per_mem, diag)
+
+    if path is None:
+        if expected != 0:
+            raise ValueError("metrics report store entries but no file found")
+        return
+
+    actual = 0
+    with path.open("r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                actual += 1
+                continue
+            val = rec.get("value")
+            if isinstance(val, dict) and val.get("provenance") == "dummy":
+                continue
+            actual += 1
+    if actual != expected:
+        raise ValueError(f"{kind} store line count {actual} != metrics expectation {expected}")
+
+
+def main() -> None:
+    """CLI entry point."""
+
+    args = parse_args()
+    path = validate_cli_store(args)
+    verify_metrics(path, args.kind, args.metrics)
     if path is None:
         print(f"OK: no store for baseline {args.preset}")
     else:
