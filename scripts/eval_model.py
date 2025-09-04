@@ -56,21 +56,64 @@ __all__ = [
 ]
 
 
+def _infer_algo(preset: str | None) -> str:
+    """Derive algorithm key from memory preset."""
+
+    p = Path(str(preset)) if preset else None
+    if p and len(p.parts) >= 2 and p.parts[0] == "memory":
+        return p.parts[1]
+    return "hei_nw"
+
+
+def _store_kind(algo: str) -> str:
+    """Return store kind for a given algorithm."""
+
+    return {"sgc_rss": "kg", "smpd": "spatial"}.get(algo, "episodic")
+
+
+def _normalize_store_dir(store_dir: str, algo: str) -> str:
+    """Append algorithm subfolder to ``store_dir`` if missing."""
+
+    root = Path(store_dir)
+    return str(root if root.name == algo else root / algo)
+
+
+def _resolve_layout(cfg: DictConfig, algo: str) -> StoreLayout:
+    """Resolve persisted store layout and update ``cfg`` in-place."""
+
+    if cfg.get("store_dir") and cfg.get("session_id"):
+        root = Path(str(cfg.store_dir))
+        base_dir = root.parent if root.name == algo else root
+        cfg.store_dir = _normalize_store_dir(str(cfg.store_dir), algo)
+        return StoreLayout(base_dir, Path(cfg.store_dir), str(cfg.session_id))
+    layout = derive_store_layout(algo=algo)
+    cfg.store_dir = cfg.get("store_dir") or str(layout.algo_dir)
+    cfg.session_id = cfg.get("session_id") or layout.session_id
+    return layout
+
+
+def _ensure_populated(store_path: Path | None, cfg: DictConfig) -> None:
+    """Raise ``FileNotFoundError`` if ``store_path`` has no data."""
+
+    if store_path is None:
+        return
+    if store_path.exists():
+        with store_path.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                if line.strip():
+                    return
+    raise FileNotFoundError(
+        "empty store: "
+        f"{store_path} — populate via:\n  "
+        f"python scripts/eval_model.py --mode teach +suite={cfg.suite} --run-id {cfg.run_id}"
+    )
+
+
 @hydra.main(version_base=None, config_path="../configs/eval", config_name="default")
 def main(cfg: DictConfig) -> None:
     """Hydra entry point forwarding to :mod:`hippo_eval.eval.harness`."""
 
-    def _infer_algo(preset: str | None) -> str:
-        p = Path(str(preset)) if preset else None
-        if p and len(p.parts) >= 2 and p.parts[0] == "memory":
-            return p.parts[1]
-        return "hei_nw"
-
     algo = _infer_algo(cfg.get("preset"))
-
-    def _store_kind(a: str) -> str:
-        return {"sgc_rss": "kg", "smpd": "spatial"}.get(a, "episodic")
-
     store_kind = _store_kind(algo)
 
     # propagate mode to memory config for downstream components
@@ -79,72 +122,28 @@ def main(cfg: DictConfig) -> None:
             cfg.memory = {}
         cfg.memory["mode"] = cfg.mode
 
+    if cfg.mode not in {"teach", "replay", "test"}:
+        harness_main(cfg)
+        return
+
     layout: StoreLayout | None = None
     if cfg.mode == "replay":
-        if not getattr(cfg, "store_dir", None) or not getattr(cfg, "session_id", None):
-            layout = derive_store_layout(algo=algo)
-            cfg.store_dir = cfg.store_dir or str(layout.algo_dir)
-            cfg.session_id = cfg.session_id or layout.session_id
-        else:
-            root = Path(str(cfg.store_dir))
-            base_dir = root.parent if root.name == algo else root
-            cfg.store_dir = str(root if root.name == algo else root / algo)
-            layout = StoreLayout(
-                base_dir=base_dir, algo_dir=Path(cfg.store_dir), session_id=str(cfg.session_id)
-            )
+        layout = _resolve_layout(cfg, algo)
         store_path = assert_store_exists(
             str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind
         )
-        if store_path is not None:
-            has_data = False
-            if store_path.exists():
-                with store_path.open("r", encoding="utf-8") as fh:
-                    for line in fh:
-                        if line.strip():
-                            has_data = True
-                            break
-            if not has_data:
-                raise FileNotFoundError(
-                    "empty store: "
-                    f"{store_path} — populate via:\n  "
-                    f"python scripts/eval_model.py --mode teach +suite={cfg.suite} --run-id {cfg.run_id}"
-                )
-    elif cfg.mode == "test" and (
-        getattr(cfg, "store_dir", None) or getattr(cfg, "session_id", None)
-    ):
-        if getattr(cfg, "store_dir", None) and getattr(cfg, "session_id", None):
-            root = Path(str(cfg.store_dir))
-            base_dir = root.parent if root.name == algo else root
-            cfg.store_dir = str(root if root.name == algo else root / algo)
-            layout = StoreLayout(
-                base_dir=base_dir, algo_dir=Path(cfg.store_dir), session_id=str(cfg.session_id)
+        _ensure_populated(store_path, cfg)
+    elif cfg.mode == "test":
+        if cfg.get("store_dir") or cfg.get("session_id"):
+            layout = _resolve_layout(cfg, algo)
+            store_path = assert_store_exists(
+                str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind
             )
-        else:
-            layout = derive_store_layout(algo=algo)
-            if getattr(cfg, "store_dir", None) is None:
-                cfg.store_dir = str(layout.algo_dir)
-            if getattr(cfg, "session_id", None) is None:
-                cfg.session_id = layout.session_id
-        store_path = assert_store_exists(
-            str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind
-        )
-        if store_path is not None:
-            has_data = False
-            if store_path.exists():
-                with store_path.open("r", encoding="utf-8") as fh:
-                    for line in fh:
-                        if line.strip():
-                            has_data = True
-                            break
-            if not has_data:
-                raise FileNotFoundError(
-                    "empty store: "
-                    f"{store_path} — populate via:\n  "
-                    f"python scripts/eval_model.py --mode teach +suite={cfg.suite} --run-id {cfg.run_id}"
-                )
-    elif getattr(cfg, "store_dir", None):
-        root = Path(str(cfg.store_dir))
-        cfg.store_dir = str(root if root.name == algo else root / algo)
+            _ensure_populated(store_path, cfg)
+        elif cfg.get("store_dir"):
+            cfg.store_dir = _normalize_store_dir(str(cfg.store_dir), algo)
+    elif cfg.get("store_dir"):
+        cfg.store_dir = _normalize_store_dir(str(cfg.store_dir), algo)
 
     harness_main(cfg)
 
