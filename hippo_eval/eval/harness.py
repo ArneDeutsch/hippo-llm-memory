@@ -15,7 +15,6 @@ episodic store to mimic consolidation.
 
 from __future__ import annotations
 
-import csv
 import itertools
 import json
 import logging
@@ -24,7 +23,7 @@ import re
 import sys
 import tempfile
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -36,6 +35,8 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_eval.datasets.loaders import load_dataset
+from hippo_eval.harness.io import write_csv, write_meta, write_metrics
+from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.gates import GateCounters
@@ -187,27 +188,6 @@ class Task:
 
     prompt: str
     answer: str
-
-
-@dataclass
-class EvalConfig:
-    """Lightweight configuration for :func:`run_suite`."""
-
-    suite: str
-    n: int = 5
-    seed: int = 0
-    preset: str = "configs/eval/memory/hei_nw.yaml"
-    model: str = ""
-    max_new_tokens: int = 32
-    replay_cycles: int = 0
-    use_chat_template: bool = False
-    system_prompt: str | None = None
-    pad_token_id: int | None = None
-    eos_token_id: int | None = None
-    primary_em: str = "norm"
-    dataset_profile: str | None = None
-    pre_metrics: bool = True
-    allow_dummy_stores: bool = False
 
 
 def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> Path:
@@ -645,137 +625,6 @@ def _enforce_guardrails(
             raise RuntimeError("refusal rate > 0.5 on span suite")
 
 
-def run_suite(
-    cfg: EvalConfig,
-) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
-    """Execute a suite according to ``cfg`` and return rows and metrics."""
-
-    registry.reset()
-    gate_registry.reset()
-    gating: Dict[str, GateCounters] = {
-        k: GateCounters() for k in ("episodic", "relational", "spatial")
-    }
-
-    base_cfg = OmegaConf.create(
-        {
-            "suite": cfg.suite,
-            "n": cfg.n,
-            "seed": cfg.seed,
-            "model": cfg.model,
-            "max_new_tokens": cfg.max_new_tokens,
-            "use_chat_template": cfg.use_chat_template,
-            "system_prompt": cfg.system_prompt,
-        }
-    )
-    if cfg.preset:
-        preset_cfg = OmegaConf.load(cfg.preset)
-        base_cfg = OmegaConf.merge(base_cfg, preset_cfg)
-
-    tasks = _load_tasks(_dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile), cfg.n)
-    flat_ablate = _flatten_ablate(base_cfg.get("ablate"))
-    modules = _init_modules(
-        base_cfg.get("memory"),
-        flat_ablate,
-        allow_dummy_stores=cfg.allow_dummy_stores,
-    )
-    if cfg.preset and not is_memory_preset(str(cfg.preset)):
-        modules = {}
-    if "episodic" in modules:
-        modules["episodic"]["gate"] = WriteGate()
-    if "relational" in modules:
-        modules["relational"]["gate"] = RelationalGate()
-    if "spatial" in modules:
-        modules["spatial"]["gate"] = SpatialGate()
-
-    model_id = (str(base_cfg.model) or "").strip()
-    if not model_id:
-        raise ValueError("cfg.model is empty. Pass --model or set $MODEL.")
-    p = Path(model_id)
-    if p.exists() and p.is_dir():
-        if not (p / "config.json").exists():
-            raise ValueError(
-                f"Model path '{p}' exists but is not a Hugging Face model dir (missing config.json). "
-                "Did you accidentally pass the repository root? Set --model correctly."
-            )
-
-    model_path = to_absolute_path(model_id)
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    if cfg.pad_token_id is not None:
-        tokenizer.pad_token_id = cfg.pad_token_id
-    elif tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    if cfg.eos_token_id is not None:
-        tokenizer.eos_token_id = cfg.eos_token_id
-    model = AutoModelForCausalLM.from_pretrained(model_path)
-    model.config.pad_token_id = tokenizer.pad_token_id
-    model.generation_config.pad_token_id = tokenizer.pad_token_id
-    if cfg.eos_token_id is not None:
-        model.generation_config.eos_token_id = cfg.eos_token_id
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
-    retrieval_enabled = bool(base_cfg.get("retrieval", {}).get("enabled", False))
-    long_ctx_enabled = bool(base_cfg.get("long_context", {}).get("enabled", False))
-
-    rows, metrics, in_tokens, gen_tokens, elapsed = _evaluate(
-        tasks,
-        modules,
-        tokenizer,
-        model,
-        int(base_cfg.max_new_tokens),
-        use_chat_template=cfg.use_chat_template,
-        system_prompt=cfg.system_prompt,
-        suite=cfg.suite,
-        retrieval_enabled=retrieval_enabled,
-        long_context_enabled=long_ctx_enabled,
-        compute_metrics=cfg.pre_metrics,
-        mode="test",
-        gating=gating,
-    )
-    if cfg.pre_metrics:
-        metrics["em"] = (
-            metrics.get("em_norm", 0.0) if cfg.primary_em == "norm" else metrics.get("em_raw", 0.0)
-        )
-    lat_mean = sum(r["latency_ms"] for r in rows) / max(1, len(rows))
-
-    replay_samples = 0
-    for _ in range(get_replay_cycles(cfg)):
-        replay_samples += _run_replay(base_cfg, modules, tasks)
-
-    total_tokens = in_tokens + gen_tokens
-    store_sizes, store_diags = _store_sizes(modules)
-    retrieval_snaps = registry.all_snapshots()
-    metrics_dict = {
-        "version": 2,
-        "phase": str(getattr(cfg, "mode", "test")),
-        "suite": cfg.suite,
-        "n": cfg.n,
-        "seed": cfg.seed,
-        "preset": cfg.preset,
-        "metrics": {
-            cfg.suite: metrics,
-            "compute": {
-                "input_tokens": in_tokens,
-                "generated_tokens": gen_tokens,
-                "total_tokens": total_tokens,
-                "time_ms_per_100": 100 * elapsed * 1000 / max(1, total_tokens),
-                "rss_mb": _rss_mb(),
-                "latency_ms_mean": lat_mean,
-            },
-        },
-        "retrieval": retrieval_snaps,
-        "gating": {k: asdict(v) for k, v in gating.items()},
-        "replay": {"samples": replay_samples},
-        "store": {
-            "size": sum(store_sizes.values()),
-            "per_memory": store_sizes,
-            "diagnostics": store_diags,
-        },
-    }
-    _enforce_guardrails(base_cfg, metrics, None, retrieval_snaps, has_memory=bool(modules))
-    return rows, metrics_dict, flat_ablate
-
-
 def _write_outputs(
     outdir: Path,
     pre_rows: List[Dict[str, object]],
@@ -796,72 +645,18 @@ def _write_outputs(
     outdir.mkdir(parents=True, exist_ok=True)
     is_test = str(getattr(cfg, "mode", "")) in ("test", "teach")
 
-    # Metrics JSON - follow schema used by report.py
-    suite_metrics: Dict[str, float | None] = {
-        "pre_em": pre_metrics.get("em"),
-        "pre_em_raw": pre_metrics.get("em_raw"),
-        "pre_em_norm": pre_metrics.get("em_norm"),
-        "pre_f1": pre_metrics.get("f1"),
-        "pre_refusal_rate": pre_metrics.get("refusal_rate"),
-        "memory_hit_rate": 0.0,
-        "latency_ms_delta": 0.0,
-    }
-    for k in ("success_rate", "suboptimality_ratio", "steps_to_goal"):
-        if k in pre_metrics:
-            suite_metrics[f"pre_{k}"] = pre_metrics[k]
-    diagnostics: Dict[str, int | None] = {
-        "pre_overlong": pre_metrics.get("overlong"),
-        "pre_format_violation": pre_metrics.get("format_violation"),
-    }
-    if pre_rows:
-        hits = sum(int(r.get("memory_hit", 0)) for r in pre_rows)
-        lat_delta = sum(float(r.get("retrieval_latency_ms", 0.0)) for r in pre_rows)
-        suite_metrics["memory_hit_rate"] = hits / max(1, len(pre_rows))
-        suite_metrics["latency_ms_delta"] = lat_delta / max(1, len(pre_rows))
-    if post_metrics is not None:
-        suite_metrics.update(
-            {
-                "post_em": post_metrics.get("em", 0.0),
-                "post_em_raw": post_metrics.get("em_raw", 0.0),
-                "post_em_norm": post_metrics.get("em_norm", 0.0),
-                "post_f1": post_metrics.get("f1", 0.0),
-                "post_refusal_rate": post_metrics.get("refusal_rate", 0.0),
-            }
-        )
-        for k in ("success_rate", "suboptimality_ratio", "steps_to_goal"):
-            if k in post_metrics:
-                suite_metrics[f"post_{k}"] = post_metrics[k]
-        diagnostics.update(
-            {
-                "post_overlong": post_metrics.get("overlong", 0),
-                "post_format_violation": post_metrics.get("format_violation", 0),
-            }
-        )
-        for key, pre_val in pre_metrics.items():
-            post_val = post_metrics.get(key)
-            if isinstance(pre_val, (int, float)) and isinstance(post_val, (int, float)):
-                suite_metrics[f"delta_{key}"] = post_val - pre_val
-    metrics: Dict[str, object] = {
-        "version": 2,
-        "phase": str(getattr(cfg, "mode", "test")),
-        "suite": cfg.suite,
-        "n": cfg.n,
-        "seed": cfg.seed,
-        "preset": cfg.preset,
-        "dataset_profile": cfg.get("dataset_profile") or "default",
-        "metrics": {cfg.suite: suite_metrics},
-        "diagnostics": {cfg.suite: diagnostics},
-        "retrieval": registry.all_snapshots(),
-        "gating": {k: asdict(v) for k, v in (gating or {}).items()},
-        "replay": {"samples": replay_samples},
-        "store": {
-            "size": sum((store_sizes or {}).values()),
-            "per_memory": store_sizes or {},
-            "diagnostics": store_diags or {},
-        },
-    }
-    if compute:
-        metrics["metrics"]["compute"] = compute
+    metrics = collect_metrics(
+        pre_rows,
+        pre_metrics,
+        post_rows,
+        post_metrics,
+        cfg,
+        compute=compute,
+        replay_samples=replay_samples,
+        store_sizes=store_sizes,
+        store_diags=store_diags,
+        gating=gating,
+    )
     store_dir = cfg.get("store_dir")
     session_id = cfg.get("session_id")
     if store_dir and session_id:
@@ -878,8 +673,7 @@ def _write_outputs(
                 metrics.setdefault("store", {})["source"] = source
         except Exception:  # pragma: no cover - diagnostic only
             pass
-    with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
-        json.dump(metrics, f)
+    write_metrics(outdir / "metrics.json", metrics)
     mem_obj = cfg.get("memory")
     mem_dict = (
         OmegaConf.to_container(mem_obj, resolve=True) if isinstance(mem_obj, DictConfig) else {}
@@ -951,11 +745,7 @@ def _write_outputs(
             *sorted(retrieval_fields),
             *sorted(gate_fields),
         ]
-        with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in csv_rows:
-                writer.writerow(row)
+        write_csv(outdir / "metrics.csv", csv_rows, fieldnames)
 
         # Small audit sample
         sample = []
@@ -1015,8 +805,7 @@ def _write_outputs(
     if config_meta:
         meta["config"] = config_meta
 
-    with (outdir / "meta.json").open("w", encoding="utf-8") as f:
-        json.dump(meta, f)
+    write_meta(outdir / "meta.json", meta)
 
 
 def _load_preset(cfg: DictConfig) -> DictConfig:
