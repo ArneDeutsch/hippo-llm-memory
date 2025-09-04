@@ -195,7 +195,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
 def test_run_id_parameter_controls_outdir(tmp_path: Path, preset: str, expected: list[str]) -> None:
     """CLI ``run_id`` parameter selects the run subdirectory."""
 
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = Path(__file__).resolve().parents[2]
     # provide data and model via symlinks so harness can resolve them
     (tmp_path / "data").symlink_to(repo_root / "data", target_is_directory=True)
     (tmp_path / "models").symlink_to(repo_root / "models", target_is_directory=True)
