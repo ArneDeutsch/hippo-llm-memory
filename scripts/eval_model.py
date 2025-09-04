@@ -30,7 +30,6 @@ if "--mode" in sys.argv:
 from hippo_eval.eval.harness import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    EvalConfig,
     Task,
     _apply_model_defaults,
     _dataset_path,
@@ -38,7 +37,6 @@ from hippo_eval.eval.harness import (
     _load_preset,
     evaluate,
     evaluate_matrix,
-    run_suite,
 )
 from hippo_eval.eval.harness import main as harness_main
 from hippo_mem.utils.stores import StoreLayout, assert_store_exists
@@ -47,7 +45,6 @@ from hippo_mem.utils.stores import derive as derive_store_layout
 __all__ = [
     "AutoModelForCausalLM",
     "AutoTokenizer",
-    "EvalConfig",
     "Task",
     "_apply_model_defaults",
     "_dataset_path",
@@ -55,7 +52,6 @@ __all__ = [
     "_load_preset",
     "evaluate",
     "evaluate_matrix",
-    "run_suite",
     "main",
 ]
 

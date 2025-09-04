@@ -9,7 +9,7 @@ from pathlib import Path
 from statistics import mean, pstdev
 from typing import Dict, Iterable, List
 
-from hippo_eval.harness.io import write_metrics
+from hippo_eval.harness.io import write_baseline_metrics
 from hippo_mem.utils import validate_run_id
 
 
@@ -87,7 +87,7 @@ def main(argv: Iterable[str] | None = None) -> None:
     run_id = validate_run_id(args.run_id)
     root = Path(args.runs_dir) / run_id / "baselines"
     rows = aggregate_metrics(root)
-    write_metrics(rows, root)
+    write_baseline_metrics(rows, root)
     print(f"aggregated {len(rows)} baseline rows under {root}")
 
 
