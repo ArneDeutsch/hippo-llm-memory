@@ -8,8 +8,7 @@ This document specifies a production-ready design for hippocampus-inspired memor
 
 All evaluation pipelines, metrics, reporting utilities, and synthetic tasks now
 live in a separate top-level package, `hippo_eval`. The `hippo_mem` package is
-limited to core memory algorithms; legacy imports (e.g., `hippo_mem.eval`) exist
-only as deprecating shims.
+limited to core memory algorithms; legacy import paths have been removed.
 
 # 2) Assumptions & constraints
 
@@ -382,7 +381,6 @@ Spatial ingest:
 - Evaluation, metrics, reporting, and synthetic tasks were extracted to the
   `hippo_eval` package. `hippo_mem` now contains only core memory algorithms.
 - Reporting templates moved under `hippo_eval/reporting/templates`; the root
-  `reports/` directory stores generated artifacts only.
-- Importing via `hippo_mem.eval`, `hippo_mem.metrics`, or similar modules is
-  still supported but emits `DeprecationWarning`.
+  `reports/` directory stores generated artifacts only. Legacy import paths like
+  `hippo_mem.eval` have been removed.
 

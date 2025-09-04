@@ -243,7 +243,6 @@ Use them like: `model=$M_QWEN25S`.
   `hippo_eval` package.
 - Reporting templates reside under `hippo_eval/reporting/templates`; the root
   `reports/` directory holds generated outputs only.
-- Legacy imports such as `hippo_mem.eval` or `hippo_mem.reporting` remain
-  available but emit `DeprecationWarning` and will be removed in a later
-  release.
+- Legacy import paths like `hippo_mem.eval` have been removed; import directly
+  from `hippo_eval`.
 
