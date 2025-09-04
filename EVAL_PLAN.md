@@ -1,7 +1,13 @@
 # 0) Purpose
 
-A concrete, repeatable plan to **validate** HEI‑NW, SGC‑RSS, and SMPD on a single 12 GB GPU setup. It defines datasets, baselines, run matrix, metrics, ablations, file formats, and commands so Codex/CI and local runs yield comparable, auditable results.
+A concrete, repeatable plan to **validate** HEI‑NW, SGC‑RSS, and SMPD on a
+single 12 GB GPU setup. It defines datasets, baselines, run matrix, metrics,
+ablations, file formats, and commands so Codex/CI and local runs yield
+comparable, auditable results.
 
+Evaluation code, metrics, reporting, and synthetic tasks reside in the
+`hippo_eval` package. The former `hippo_mem.*` modules are maintained as shims
+that issue `DeprecationWarning`.
 # 0.1) Quick smoke test
 
 For a fast end‑to‑end check at `n=50`, `seed=1337`, run:
@@ -158,7 +164,8 @@ We add three episodic variants to force memory usage beyond trivial one-shot ext
 - **`episodic_multi`** — multi-turn episodes with distractors and last-mention-wins corrections.
 - **`episodic_cross`** — cross-episode recall after session flush; facts only available via store replay.
 - **`episodic_capacity`** — episodes longer than the decoding context budget; retrieval required.
-Generators live in `hippo_mem/eval/datasets.py` and are addressable via the CLI (`scripts/build_datasets.py`).
+Generators live in `hippo_eval/datasets.py` and are addressable via the CLI
+(`scripts/build_datasets.py`).
 
 # 4) Run matrix
 
@@ -222,7 +229,9 @@ All suites using span extraction MUST follow a short‑answer policy.
 **Model instruction:** “Answer with the exact shortest span; no punctuation; no extra words.”
 **Metrics:** We report three scores side‑by‑side:
 - **EM (raw):** `pred.strip() == gold` (exact string match).
-- **EM (normalized):** lower‑case, strip punctuation and articles (`a|an|the`) from both sides before comparison. Normalizer defined in `hippo_mem/eval/score.py`.
+- **EM (normalized):** lower‑case, strip punctuation and articles (`a|an|the`)
+  from both sides before comparison. Normalizer defined in
+  `hippo_eval/metrics/scoring.py`.
 - **Token‑F1:** whitespace token F1.
 Diagnostics we also log: `pred_len`, `gold_len`, `overlong` (pred_len > gold_len), and `format_violation` (any terminal punctuation or contains a period).
 
@@ -369,6 +378,8 @@ python scripts/eval_model.py suite=episodic preset=memory/hei_nw   n=50 seed=133
 - Aggregates all `metrics.json`/`metrics.csv` under `runs/**`.
 - Produces a markdown table and simple charts (optional) comparing presets.
 - Outputs to `reports/<date>/<suite>/summary.md`.
+- Templates are loaded from `hippo_eval/reporting/templates`; the root
+  `reports/` directory contains generated artifacts only.
 * **Gate Telemetry table** (per suite): columns `mem, attempts, inserted, aggregated, routed_to_episodic/blocked_new_edges`.
 * **ON/OFF delta table** when both present for a date: `duplicate_rateΔ`, `nodesΔ/1k`, `edgesΔ/1k`, and `runtimeΔ/100q` with 95% CIs if multiple seeds.
 
@@ -527,3 +538,12 @@ python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=200 seed=1337
 - Chat template: **ON**.
 - System prompt: “Answer with the **exact shortest span** from the prompt. No explanations.”
 - `max_new_tokens`: 8–16.
+
+## Migration notes
+
+- Evaluation, metrics, reporting, and synthetic task code now live in
+  `hippo_eval/*`.
+- Reporting templates moved to `hippo_eval/reporting/templates`, leaving the
+  root `reports/` directory for generated outputs only.
+- Importing modules through former `hippo_mem.*` paths triggers a
+  `DeprecationWarning` but remains temporarily supported.

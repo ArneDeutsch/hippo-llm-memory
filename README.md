@@ -47,10 +47,11 @@ hippo-llm-memory/
 ├─ data/                  # synthetic benchmark datasets
 ├─ docs/                  # API surfaces, trace specs, inventories, experiments
 ├─ hippo_mem/             # core Python package with memory adapters and stores
+├─ hippo_eval/            # evaluation pipelines, metrics, reporting, synthetic tasks
 ├─ models/                # tiny model fixtures for tests
 ├─ research/              # literature reviews and experiment synthesis
 ├─ review/                # progress reviews and planning notes
-├─ reports/               # aggregated evaluation outputs
+├─ reports/               # generated evaluation outputs (no source code)
 ├─ runs/                  # run artifacts and metrics
 ├─ scripts/               # dataset generation, training, evaluation utilities
 ├─ tests/                 # unit tests
@@ -235,4 +236,14 @@ alias M_PHI35S="microsoft/Phi-3.5-mini-instruct"
 alias M_GEMMA3S="google/gemma-3-1b-it"
 ```
 Use them like: `model=$M_QWEN25S`.
+
+## Migration notes
+
+- Evaluation, metrics, reporting, and synthetic tasks now live in the new
+  `hippo_eval` package.
+- Reporting templates reside under `hippo_eval/reporting/templates`; the root
+  `reports/` directory holds generated outputs only.
+- Legacy imports such as `hippo_mem.eval` or `hippo_mem.reporting` remain
+  available but emit `DeprecationWarning` and will be removed in a later
+  release.
 

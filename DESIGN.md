@@ -6,6 +6,11 @@ This document specifies a production-ready design for hippocampus-inspired memor
 * **SGC-RSS** — Schema-guided consolidation with a **relational semantic store** and **schema fast-track** routing.
 * **SMPD** — Spatial map with **place-like codes**, optional **path-integration**, and **replay-to-policy** macro distillation.
 
+All evaluation pipelines, metrics, reporting utilities, and synthetic tasks now
+live in a separate top-level package, `hippo_eval`. The `hippo_mem` package is
+limited to core memory algorithms; legacy imports (e.g., `hippo_mem.eval`) exist
+only as deprecating shims.
+
 # 2) Assumptions & constraints
 
 * **Hardware:** 1× NVIDIA GPU (12 GB), Ubuntu Linux.
@@ -371,4 +376,13 @@ Spatial ingest:
   (prev_ctx, ctx) → gate.decide() → {add_edge | aggregate_duplicate | block_new_edge}
   counters++ ; provenance.log(...)
 ```
+
+## Migration notes
+
+- Evaluation, metrics, reporting, and synthetic tasks were extracted to the
+  `hippo_eval` package. `hippo_mem` now contains only core memory algorithms.
+- Reporting templates moved under `hippo_eval/reporting/templates`; the root
+  `reports/` directory stores generated artifacts only.
+- Importing via `hippo_mem.eval`, `hippo_mem.metrics`, or similar modules is
+  still supported but emits `DeprecationWarning`.
 

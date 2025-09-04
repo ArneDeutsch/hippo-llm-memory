@@ -12,6 +12,13 @@
 [3]: https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
 [4]: https://huggingface.co/google/gemma-3-1b-it
 
+# Evaluation tooling
+
+All evaluation pipelines, metrics, reporting helpers, and synthetic task
+generators now live in the separate `hippo_eval` package. `hippo_mem` contains
+only core memory algorithms; legacy imports such as `hippo_mem.eval` are thin
+shims that emit `DeprecationWarning`.
+
 # Milestone 1 – Research consolidation & design blueprint
 
 **Objective**: establish a shared theoretical foundation, map hippocampal mechanisms to LLM gaps, and produce design and evaluation documents.
@@ -167,9 +174,13 @@
 
 4. [ ] **Aggregation & reports**
    - Extend `scripts/report.py` to:
-     - Aggregate metrics per suite across presets, sizes, and seeds (mean ± std) and write Markdown to `reports/YYYYMMDD/<suite>/summary.md`.
+     - Aggregate metrics per suite across presets, sizes, and seeds (mean ± std)
+       and write Markdown to `reports/YYYYMMDD/<suite>/summary.md`.
      - Include optional plots when matplotlib is present (saved as PNG).
-     - Tolerate missing retrieval/gate fields for baselines while still producing tables.
+     - Tolerate missing retrieval/gate fields for baselines while still producing
+       tables.
+   - Reporting templates reside in `hippo_eval/reporting/templates`; the root
+     `reports/` directory stores generated artifacts only.
 
 5. [ ] **CI & smoke wiring**
    - Add `smoke_8.sh` that generates size=50 datasets for all suites, runs the `baselines/core` preset for seed=1337, and runs `scripts/report.py --date YYYYMMDD`.
@@ -251,3 +262,12 @@
 4. [ ] **Submit preprint**: publish the paper on a preprint server (e.g., arXiv) and share with the community.
 
 - [ ] **Gate**: final manuscript ready for submission; repository tagged and includes release notes; reproduction guide verified; datasets and reports publicly accessible.
+
+## Migration notes
+
+- Evaluation, metrics, reporting, and synthetic task generators now live in
+  `hippo_eval/*`.
+- Reporting templates were moved to `hippo_eval/reporting/templates`; the root
+  `reports/` folder contains generated outputs only.
+- Legacy `hippo_mem.eval`, `hippo_mem.metrics`, and `hippo_mem.reporting` paths
+  are shims that emit `DeprecationWarning`.
