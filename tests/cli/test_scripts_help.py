@@ -9,9 +9,12 @@ SCRIPTS = [
 
 def test_cli_help() -> None:
     for args in SCRIPTS:
-        subprocess.run(
+        proc = subprocess.run(
             [sys.executable, *args],
             check=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
         )
+        assert "usage" in proc.stdout.lower()
+        assert proc.returncode == 0
