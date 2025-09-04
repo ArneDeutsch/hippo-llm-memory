@@ -35,6 +35,7 @@ from omegaconf import DictConfig, OmegaConf, open_dict
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.gates import GateCounters
@@ -48,7 +49,6 @@ from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from hippo_mem.utils import validate_run_id
 from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
-from .bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 from .encode import encode_prompt
 from .models import load_model_config
 from .store_utils import resolve_store_meta_path

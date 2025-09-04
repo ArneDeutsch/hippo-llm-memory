@@ -28,7 +28,6 @@ import csv
 import hashlib
 import json
 import logging
-import os
 import platform
 import re
 import subprocess
@@ -43,10 +42,9 @@ import hydra
 import numpy as np
 import torch
 import yaml
-from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf, open_dict
 
-from hippo_eval.eval.score import em_norm, em_raw, f1
+from hippo_eval.metrics.scoring import em_norm, em_raw, f1
 from hippo_mem.adapters import (
     EpisodicMemoryAdapter,
     RelationalMemoryAdapter,
@@ -61,7 +59,8 @@ from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.place_graph import PlaceGraph
 
-from .datasets import SUITE_TO_GENERATOR
+from .orchestrator import BenchResult, run_bench, run_matrix
+from .summarize import _rss_mb, summarize
 
 
 def _date_str(value: object | None) -> str:
@@ -117,22 +116,6 @@ def _cpu_info() -> str:
     if not info:
         info = platform.machine()
     return info or "unknown"
-
-
-def _rss_mb() -> float:
-    """Return resident set size of current process in megabytes."""
-
-    try:
-        import psutil
-
-        return psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
-    except Exception:  # pragma: no cover - psutil may be missing
-        import resource
-
-        rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        if sys.platform == "darwin":
-            rss /= 1024
-        return rss / 1024
 
 
 def _sha256_file(path: Path) -> str:
@@ -257,6 +240,7 @@ def _flatten_ablate(ablate: Optional[DictConfig | str]) -> Dict[str, object]:
 
 def generate_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
     """Return ``n`` tasks for ``suite`` using ``seed``."""
+    from hippo_eval.eval.datasets import SUITE_TO_GENERATOR
 
     generator = SUITE_TO_GENERATOR[suite]
     return generator(n, seed)
@@ -393,19 +377,6 @@ def _run_replay_once(modules: Dict[str, Dict[str, object]]) -> None:
     worker.join(timeout=1)
 
 
-def _memory_usage(modules: Dict[str, Dict[str, object]]) -> Dict[str, object]:
-    """Return memory usage logs from modules."""
-
-    mem: Dict[str, object] = {}
-    if "episodic" in modules:
-        mem["episodic"] = modules["episodic"]["store"]._log
-    if "relational" in modules:
-        mem["relational"] = modules["relational"]["kg"]._log
-    if "spatial" in modules:
-        mem["spatial"] = modules["spatial"]["map"]._log
-    return mem
-
-
 def run_suite(
     cfg: DictConfig,
 ) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
@@ -483,34 +454,18 @@ def run_suite(
             lat_sum += cycle_lat * len(tasks)
             start += len(tasks)
 
-    mem_usage = _memory_usage(modules)
     total_items = len(rows)
-    avg_latency = lat_sum / max(1, total_items)
-    total_tokens = total_in_tokens + total_gen_tokens
-    metrics = {
-        "version": 2,
-        "phase": str(getattr(cfg, "mode", "test")),
-        "suite": cfg.suite,
-        "n": cfg.n,
-        "seed": cfg.seed,
-        "preset": cfg.preset,
-        "metrics": {
-            cfg.suite: metrics_pre,
-            "compute": {
-                "input_tokens": total_in_tokens,
-                "generated_tokens": total_gen_tokens,
-                "total_tokens": total_tokens,
-                "time_ms_per_100": 100 * total_time * 1000 / max(1, total_tokens),
-                "rss_mb": _rss_mb(),
-                "latency_ms_mean": avg_latency,
-            },
-        },
-        "memory": mem_usage,
-        "retrieval": {},
-        "gating": {},
-    }
-    if post_metrics:
-        metrics["post_replay"] = post_metrics
+    metrics = summarize(
+        cfg,
+        metrics_pre,
+        modules,
+        total_in_tokens,
+        total_gen_tokens,
+        total_time,
+        lat_sum,
+        total_items,
+        post_metrics or None,
+    )
     return rows, metrics, flat_ablate
 
 
@@ -601,69 +556,6 @@ def write_outputs(
         json.dump(meta, f)
 
 
-def evaluate(cfg: DictConfig, outdir: Path) -> None:
-    """Run evaluation for ``cfg.suite`` and write metrics to ``outdir``."""
-    registry.reset()
-    gate_registry.reset()
-    rows, metrics, flat_ablate = run_suite(cfg)
-    write_outputs(outdir, rows, metrics, flat_ablate, cfg)
-
-
-def evaluate_matrix(cfg: DictConfig, root_outdir: Path) -> None:
-    """Run evaluation over a grid of suites, dataset sizes and seeds.
-
-    Parameters
-    ----------
-    cfg:
-        Hydra configuration containing ``suites``, ``n_values`` and ``seeds``
-        lists in addition to the usual evaluation options.
-    root_outdir:
-        Directory under which per-run results will be written.  Subdirectories
-        of the form ``<suite>/n<samples>_seed<seed>`` are created for each
-        combination.
-    """
-
-    suites = cfg.get("suites", ["episodic", "semantic", "spatial"])
-    n_values = cfg.get("n_values", [50, 200, 1000])
-    seeds = cfg.get("seeds", [1337, 2025, 4242])
-    base_cfg = OmegaConf.to_container(cfg, resolve=True)
-    for suite in suites:
-        for n in n_values:
-            for seed in seeds:
-                run_cfg = OmegaConf.create(base_cfg)
-                run_cfg.suite = suite
-                run_cfg.n = int(n)
-                run_cfg.seed = int(seed)
-                outdir = root_outdir / suite / f"n{n}_seed{seed}"
-                mem = run_cfg.get("memory")
-                if isinstance(mem, DictConfig):
-                    rel_gate = (
-                        mem.relational.gate
-                        if mem.get("relational") and mem.relational.get("gate")
-                        else None
-                    )
-                    spat_gate = (
-                        mem.spatial.gate if mem.get("spatial") and mem.spatial.get("gate") else None
-                    )
-                else:
-                    rel_gate = spat_gate = None
-                if rel_gate or spat_gate:
-                    for enabled in [True, False]:
-                        gate_cfg = OmegaConf.create(OmegaConf.to_container(run_cfg, resolve=True))
-                        if rel_gate:
-                            OmegaConf.update(
-                                gate_cfg, "memory.relational.gate.enabled", enabled, merge=True
-                            )
-                        if spat_gate:
-                            OmegaConf.update(
-                                gate_cfg, "memory.spatial.gate.enabled", enabled, merge=True
-                            )
-                        gate_dir = outdir / ("gate_on" if enabled else "gate_off")
-                        evaluate(gate_cfg, gate_dir)
-                else:
-                    evaluate(run_cfg, outdir)
-
-
 def main(cfg: DictConfig) -> None:
     """Run the evaluation bench with ``cfg``."""
 
@@ -684,28 +576,10 @@ def main(cfg: DictConfig) -> None:
     with open_dict(cfg):
         cfg.run_id = run_id
         cfg.date = cfg.get("date")
-    outdir: Optional[str] = cfg.get("outdir")
-    preset_path = Path(str(cfg.preset))
     if cfg.get("run_matrix"):
-        if outdir is not None:
-            root_outdir = Path(to_absolute_path(outdir))
-        else:
-            if preset_path.parts and preset_path.parts[0] == "baselines":
-                root_outdir = Path("runs") / run_id / preset_path.parts[0] / preset_path.name
-            else:
-                root_outdir = Path("runs") / run_id / preset_path.name
-        evaluate_matrix(cfg, root_outdir)
+        run_matrix(cfg)
     else:
-        if outdir is not None:
-            outdir_path = Path(to_absolute_path(outdir))
-        else:
-            if preset_path.parts and preset_path.parts[0] == "baselines":
-                outdir_path = (
-                    Path("runs") / run_id / preset_path.parts[0] / preset_path.name / cfg.suite
-                )
-            else:
-                outdir_path = Path("runs") / run_id / preset_path.name / cfg.suite
-        evaluate(cfg, outdir_path)
+        run_bench(cfg)
 
 
 @hydra.main(version_base=None, config_path="../../configs/eval", config_name="default")
@@ -717,3 +591,15 @@ def cli(cfg: DictConfig) -> None:  # pragma: no cover - CLI entry point
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
     cli()
+
+
+__all__ = [
+    "BenchResult",
+    "run_bench",
+    "run_matrix",
+    "run_suite",
+    "write_outputs",
+    "_init_modules",
+    "_config_hash",
+    "_git_sha",
+]

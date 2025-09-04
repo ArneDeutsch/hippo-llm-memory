@@ -77,7 +77,7 @@ def main() -> None:
                     cmd = [
                         sys.executable,
                         "-m",
-                        "hippo_eval.eval.bench",
+                        "hippo_eval.bench",
                         f"suite={suite}",
                         f"preset={preset}",
                         f"n={size}",
