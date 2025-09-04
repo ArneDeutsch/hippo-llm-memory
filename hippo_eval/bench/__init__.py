@@ -240,7 +240,7 @@ def _flatten_ablate(ablate: Optional[DictConfig | str]) -> Dict[str, object]:
 
 def generate_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
     """Return ``n`` tasks for ``suite`` using ``seed``."""
-    from hippo_eval.eval.datasets import SUITE_TO_GENERATOR
+    from hippo_eval.datasets import SUITE_TO_GENERATOR
 
     generator = SUITE_TO_GENERATOR[suite]
     return generator(n, seed)
