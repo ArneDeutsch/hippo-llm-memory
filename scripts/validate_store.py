@@ -57,7 +57,9 @@ def main() -> None:
         if not has_data:
             raise ValueError(
                 "empty store: "
-                f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {run_id}"
+                f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {run_id}\n"
+                "hint: for SGC-RSS ensure the teach path actually writes tuples "
+                "(gate accepts *and* either schemas are seeded or direct upsert is used)."
             )
 
     if args.metrics:

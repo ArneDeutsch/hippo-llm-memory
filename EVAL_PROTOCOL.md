@@ -314,6 +314,8 @@ ls -l "runs/$RUN_ID/stores/hei_nw/hei_${RUN_ID}/episodic.jsonl"
 
 ### 4.2) SGC‑RSS (semantic)
 
+The teach step seeds the relational store with a minimal placeholder tuple, so this section runs even before tuple extraction is fully integrated.
+
 ```bash
 SID="sgc_${RUN_ID}"
 suite=semantic

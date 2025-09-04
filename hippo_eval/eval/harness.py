@@ -405,8 +405,10 @@ def _evaluate(
                 if decision.action == "insert":
                     gc.accepted += 1
                     if mode == "teach":
-                        # avoid double counting: ``kg.ingest`` invokes the gate again
-                        kg.schema_index.fast_track(tup, kg)
+                        # Bypass schema dependency for the placeholder tuple;
+                        # avoid double-gating by writing directly.
+                        head, rel, tail, ctx, time_str, conf, prov = tup
+                        kg.upsert(head, rel, tail, ctx, "entity", "entity", time_str, conf, prov)
                 else:
                     gc.skipped += 1
             if "spatial" in modules and modules["spatial"].get("gate") is not None:

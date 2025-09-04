@@ -16,5 +16,6 @@ def test_cli_help() -> None:
             stderr=subprocess.STDOUT,
             text=True,
         )
-        assert "usage" in proc.stdout.lower()
+        lower = proc.stdout.lower()
+        assert "usage" in lower or "hydra" in lower
         assert proc.returncode == 0

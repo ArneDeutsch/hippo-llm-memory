@@ -175,7 +175,25 @@ def _init_modules(
         modules["episodic"] = {"store": store, "adapter": EpisodicMemoryAdapter(adapter_cfg)}
 
     def _add_relational() -> None:
-        kg = KnowledgeGraph()
+        cfg = {}
+        try:
+            # `memory` may be OmegaConf; resolve and pull `relational` subtree
+            mem_dict = OmegaConf.to_container(memory, resolve=True) if memory is not None else {}
+            cfg = dict(mem_dict.get("relational") or {})
+            # gate is applied separately; do not pass through in `config`
+            cfg.pop("gate", None)
+        except Exception:
+            cfg = {}
+        kg = KnowledgeGraph(config=cfg or None)
+        # Optional: seed schemas from config: memory.relational.schemas: [{name, relation}|str]
+        schemas = (cfg.get("schemas") if isinstance(cfg, dict) else None) or []
+        for s in schemas:
+            if isinstance(s, str):
+                kg.schema_index.add_schema(s, s)
+            elif isinstance(s, dict):
+                kg.schema_index.add_schema(
+                    s.get("name", s.get("relation", "rel")), s.get("relation", "rel")
+                )
         if allow_dummy_stores:
             kg.upsert("a", "rel", "b", "a rel b")
         modules["relational"] = {"kg": kg, "adapter": RelationalMemoryAdapter()}

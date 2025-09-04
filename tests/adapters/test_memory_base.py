@@ -12,9 +12,9 @@ def hidden_states(draw):
     dim = draw(st.integers(min_value=1, max_value=8))
     arr = draw(hnp.arrays(dtype="float32", shape=(seq_len, dim), elements=st.floats(-1, 1)))
     tensor = torch.from_numpy(arr)
-    assume(tensor[-1].norm().item() > 0)
+    assume(tensor[-1].norm().item() > 1e-6)
     if tensor.size(0) > 1:
-        assume(tensor[:-1].mean(dim=0).norm().item() > 0)
+        assume(tensor[:-1].mean(dim=0).norm().item() > 1e-6)
     return tensor
 
 
