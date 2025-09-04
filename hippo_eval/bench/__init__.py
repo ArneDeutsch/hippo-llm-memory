@@ -33,6 +33,7 @@ import re
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -264,6 +265,42 @@ def generate_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
     return generator(n, seed)
 
 
+@dataclass
+class BenchRun:
+    """Rows and metrics returned from :func:`run_suite`."""
+
+    rows: List[Dict[str, object]]
+    metrics: Dict[str, object]
+
+
+def _mock_retrieval(modules: Dict[str, Dict[str, object]], enabled: bool) -> None:
+    """Execute mock retrieval for all configured modules."""
+
+    if not enabled:
+        return
+    epi_feats = None
+    if "episodic" in modules:
+        store = modules["episodic"]["store"]
+        traces = store.recall(np.zeros(8, dtype="float32"), 1)
+        if traces:
+            mem = torch.tensor([t.key for t in traces], dtype=torch.float32).unsqueeze(0)
+        else:
+            mem = torch.zeros(1, 1, 8)
+        hidden_t = torch.zeros(1, 1, 8)
+        epi_feats = modules["episodic"]["adapter"](hidden_t, mem).detach().numpy()[0]
+    if "relational" in modules:
+        modules["relational"]["kg"].retrieve(np.zeros(8, dtype="float32"))
+        modules["relational"]["adapter"](
+            np.zeros(8, dtype="float32"),
+            np.zeros((1, 8), dtype="float32"),
+            epi_feats,
+        )
+    if "spatial" in modules:
+        modules["spatial"]["map"].plan("a", "b")
+        plans = torch.zeros(1, 1, 8)
+        modules["spatial"]["adapter"](torch.zeros(1, 1, 8), plans)
+
+
 def _eval_tasks(
     tasks: List[Dict[str, object]],
     modules: Dict[str, Dict[str, object]],
@@ -283,27 +320,7 @@ def _eval_tasks(
     latencies: List[float] = []
     for off, item in enumerate(tasks):
         item_t0 = time.perf_counter()
-        epi_feats = None
-        if retrieval_enabled and "episodic" in modules:
-            store = modules["episodic"]["store"]
-            traces = store.recall(np.zeros(8, dtype="float32"), 1)
-            if traces:
-                mem = torch.tensor([t.key for t in traces], dtype=torch.float32).unsqueeze(0)
-            else:
-                mem = torch.zeros(1, 1, 8)
-            hidden_t = torch.zeros(1, 1, 8)
-            epi_feats = modules["episodic"]["adapter"](hidden_t, mem).detach().numpy()[0]
-        if retrieval_enabled and "relational" in modules:
-            modules["relational"]["kg"].retrieve(np.zeros(8, dtype="float32"))
-            modules["relational"]["adapter"](
-                np.zeros(8, dtype="float32"),
-                np.zeros((1, 8), dtype="float32"),
-                epi_feats,
-            )
-        if retrieval_enabled and "spatial" in modules:
-            modules["spatial"]["map"].plan("a", "b")
-            plans = torch.zeros(1, 1, 8)
-            modules["spatial"]["adapter"](torch.zeros(1, 1, 8), plans)
+        _mock_retrieval(modules, retrieval_enabled)
 
         prompt = str(item["prompt"])
         if long_context_enabled and not retrieval_enabled:
@@ -395,9 +412,7 @@ def _run_replay_once(modules: Dict[str, Dict[str, object]]) -> None:
     worker.join(timeout=1)
 
 
-def run_suite(
-    cfg: DictConfig,
-) -> tuple[List[Dict[str, object]], Dict[str, object], Dict[str, object]]:
+def run_suite(cfg: DictConfig) -> tuple[BenchRun, Dict[str, object]]:
     """Execute the evaluation logic and return rows and metrics."""
 
     tasks = _load_tasks(cfg.suite, cfg.n, cfg.seed)
@@ -484,21 +499,11 @@ def run_suite(
         total_items,
         post_metrics or None,
     )
-    return rows, metrics, flat_ablate
+    return BenchRun(rows, metrics), flat_ablate
 
 
-def write_outputs(
-    outdir: Path,
-    rows: List[Dict[str, object]],
-    metrics: Dict[str, object],
-    flat_ablate: Dict[str, object],
-    cfg: DictConfig,
-) -> None:
-    """Write metrics and metadata to ``outdir``."""
-
-    outdir.mkdir(parents=True, exist_ok=True)
-    with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
-        json.dump(metrics, f)
+def _extract_gating(cfg: DictConfig) -> tuple[bool, object | None, object | None]:
+    """Return ``(enabled, rel_gate, spat_gate)`` from ``cfg``."""
 
     mem_obj = cfg.get("memory")
     mem_dict = (
@@ -509,29 +514,39 @@ def write_outputs(
     gating_enabled = bool(
         (rel_gate or {}).get("enabled", False) or (spat_gate or {}).get("enabled", False)
     )
+    return gating_enabled, rel_gate, spat_gate
 
-    with (outdir / "metrics.csv").open("w", newline="", encoding="utf-8") as f:
-        compute = metrics.get("metrics", {}).get("compute", {})
-        compute_cols = [k for k in ("time_ms_per_100", "rss_mb") if k in compute]
-        fieldnames = [
-            "idx",
-            "prompt",
-            "answer",
-            "pred",
-            "em_raw",
-            "em_norm",
-            "f1",
-            "pred_len",
-            "gold_len",
-            "overlong",
-            "format_violation",
-            "latency_ms",
-            "memory_hit",
-            "retrieval_latency_ms",
-            *compute_cols,
-            "flags",
-            "gating_enabled",
-        ]
+
+def write_metrics_csv(
+    path: Path,
+    rows: List[Dict[str, object]],
+    metrics: Dict[str, object],
+    gating_enabled: bool,
+) -> None:
+    """Write ``rows`` enriched with compute metrics to ``path``."""
+
+    compute = metrics.get("metrics", {}).get("compute", {})
+    compute_cols = [k for k in ("time_ms_per_100", "rss_mb") if k in compute]
+    fieldnames = [
+        "idx",
+        "prompt",
+        "answer",
+        "pred",
+        "em_raw",
+        "em_norm",
+        "f1",
+        "pred_len",
+        "gold_len",
+        "overlong",
+        "format_violation",
+        "latency_ms",
+        "memory_hit",
+        "retrieval_latency_ms",
+        *compute_cols,
+        "flags",
+        "gating_enabled",
+    ]
+    with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
@@ -540,6 +555,17 @@ def write_outputs(
                 row[col] = compute.get(col)
             row["gating_enabled"] = gating_enabled
             writer.writerow(row)
+
+
+def write_metadata(
+    path: Path,
+    cfg: DictConfig,
+    flat_ablate: Dict[str, object],
+    gating_enabled: bool,
+    rel_gate: object | None,
+    spat_gate: object | None,
+) -> None:
+    """Write run metadata derived from ``cfg`` to ``path``."""
 
     cfg_hash = _config_hash(cfg)
     meta = {
@@ -569,9 +595,25 @@ def write_outputs(
         config_meta.setdefault("spatial", {})["gate"] = spat_gate
     if config_meta:
         meta["config"] = config_meta
-
-    with (outdir / "meta.json").open("w", encoding="utf-8") as f:
+    with path.open("w", encoding="utf-8") as f:
         json.dump(meta, f)
+
+
+def write_outputs(
+    outdir: Path,
+    run: BenchRun,
+    flat_ablate: Dict[str, object],
+    cfg: DictConfig,
+) -> None:
+    """Write metrics and metadata to ``outdir``."""
+
+    outdir.mkdir(parents=True, exist_ok=True)
+    with (outdir / "metrics.json").open("w", encoding="utf-8") as f:
+        json.dump(run.metrics, f)
+
+    gating_enabled, rel_gate, spat_gate = _extract_gating(cfg)
+    write_metrics_csv(outdir / "metrics.csv", run.rows, run.metrics, gating_enabled)
+    write_metadata(outdir / "meta.json", cfg, flat_ablate, gating_enabled, rel_gate, spat_gate)
 
 
 def main(cfg: DictConfig) -> None:
@@ -612,11 +654,14 @@ if __name__ == "__main__":  # pragma: no cover - CLI entry point
 
 
 __all__ = [
+    "BenchRun",
     "BenchResult",
     "run_bench",
     "run_matrix",
     "run_suite",
     "write_outputs",
+    "write_metrics_csv",
+    "write_metadata",
     "_init_modules",
     "_config_hash",
     "_git_sha",

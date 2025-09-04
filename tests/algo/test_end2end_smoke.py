@@ -14,9 +14,9 @@ def test_end_to_end_smoke(tmp_path: Path) -> None:
     base_cfg = OmegaConf.create(
         {"preset": "baselines/core", "suite": "episodic", "n": 2, "seed": 1337}
     )
-    rows, metrics, ablate = run_suite(base_cfg)
+    res_base, ablate = run_suite(base_cfg)
     baseline_out = tmp_path / "baseline"
-    write_outputs(baseline_out, rows, metrics, ablate, base_cfg)
+    write_outputs(baseline_out, res_base, ablate, base_cfg)
     assert (baseline_out / "metrics.json").exists()
 
     # Memory preset
@@ -29,11 +29,11 @@ def test_end_to_end_smoke(tmp_path: Path) -> None:
             "memory": "hei_nw",
         }
     )
-    rows_mem, metrics_mem, ablate_mem = run_suite(mem_cfg)
+    res_mem, ablate_mem = run_suite(mem_cfg)
     mem_out = tmp_path / "memory"
-    write_outputs(mem_out, rows_mem, metrics_mem, ablate_mem, mem_cfg)
+    write_outputs(mem_out, res_mem, ablate_mem, mem_cfg)
     assert (mem_out / "metrics.json").exists()
 
     # Basic sanity: EM metrics present
-    assert "episodic" in metrics["metrics"]
-    assert "episodic" in metrics_mem["metrics"]
+    assert "episodic" in res_base.metrics["metrics"]
+    assert "episodic" in res_mem.metrics["metrics"]
