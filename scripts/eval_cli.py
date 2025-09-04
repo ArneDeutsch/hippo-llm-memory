@@ -43,21 +43,41 @@ def main() -> int:
     args, rest = parser.parse_known_args()
 
     overrides = list(args.overrides)
+
+    def _has(key: str) -> bool:
+        prefix = f"{key}="
+        return any(o.startswith(prefix) for o in overrides)
+
     if args.mode is not None:
         overrides.append(f"mode={args.mode}")
     if args.persist is not None:
         overrides.append(f"persist={args.persist}")
-    store_dir = args.store_dir or os.getenv("STORES")
-    if store_dir is not None:
-        overrides.append(f"store_dir={store_dir}")
-    session_id = args.session_id or os.getenv("HEI_SESSION_ID")
-    if session_id is not None:
-        overrides.append(f"session_id={session_id}")
+
+    if args.store_dir is not None:
+        overrides.append(f"store_dir={args.store_dir}")
+    elif not _has("store_dir"):
+        store_dir = os.getenv("STORES")
+        if store_dir is not None:
+            overrides.append(f"store_dir={store_dir}")
+
+    if args.session_id is not None:
+        overrides.append(f"session_id={args.session_id}")
+    elif not _has("session_id"):
+        session_id = os.getenv("HEI_SESSION_ID")
+        if session_id is not None:
+            overrides.append(f"session_id={session_id}")
+
     if args.strict_telemetry:
         overrides.append("strict_telemetry=true")
     if args.pre_metrics is not None:
         overrides.append(f"compute.pre_metrics={str(args.pre_metrics).lower()}")
-    run_id = args.run_id or os.getenv("RUN_ID")
+
+    if args.run_id is not None:
+        run_id = args.run_id
+    elif not _has("run_id"):
+        run_id = os.getenv("RUN_ID")
+    else:
+        run_id = None
     if run_id is not None:
         overrides.append(f"run_id={run_id}")
         if args.verbose:
