@@ -30,6 +30,11 @@ suite=episodic_capacity dataset_profile=hard --strict-telemetry
 make datasets RUN_ID="$RUN_ID"
 ```
 
+The dataset CLI dispatches suites through a registry that maps suite names to
+generator callables and argument strategies. Extending evaluation to a new
+suite requires adding entries to both `hippo_eval.datasets.SUITE_TO_GENERATOR`
+and `hippo_eval.datasets.cli.SUITE_STRATEGIES`.
+
 ## 2) Teach → replay → test
 
 Memory evaluations run in three phases, all under the same `RUN_ID` and a
