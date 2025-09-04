@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 : "${RUN_ID:?Set RUN_ID (simple slug like 'dev' or 'exp_42')}"
+export RUN_ID
 RUNS="runs/$RUN_ID"
 REPORTS="reports/$RUN_ID"
 STORES="$RUNS/stores"
@@ -7,4 +8,5 @@ ADAPTERS="adapters/$RUN_ID"
 : "${MODEL:=Qwen/Qwen2.5-1.5B-Instruct}"
 export MODEL HF_MODEL_PATH="$MODEL"
 HEI_SESSION_ID="hei_${RUN_ID}"
+export RUNS REPORTS STORES ADAPTERS HEI_SESSION_ID
 mkdir -p "$RUNS" "$REPORTS" "$STORES" "$ADAPTERS"
