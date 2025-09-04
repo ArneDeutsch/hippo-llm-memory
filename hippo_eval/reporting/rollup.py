@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean, stdev
 from typing import Dict, Iterable, Tuple
@@ -373,22 +374,13 @@ def collect_runs(reports_root: Path):  # pragma: no cover - convenience
     return pd.DataFrame(records)
 
 
-def write_index(
+def aggregate_rollup(
     summary: Summary,
-    suite_paths: Dict[str, Path],
-    gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
-    gate_ablation: Dict[str, Dict[str, Dict[str, float]]],
-    retrieval: Dict[str, Dict[str, MetricDict]],
-    out_dir: Path,
-    seed_count: int,
-    lineage: Dict[str, Dict[str, set]] | None = None,
-    missing_pre: Dict[str, tuple[int, int]] | None = None,
-) -> Path:
-    """Write a top-level roll-up report and return its path."""
+) -> tuple[list[tuple[str, str, Dict[str, float | None]]], list[str], list[str]]:
+    """Return aggregated metrics, ordered keys and display names."""
 
     rollup: list[tuple[str, str, Dict[str, float | None]]] = []
     metric_keys: set[str] = set()
-    em_by_preset: Dict[str, list[float]] = defaultdict(list)
     for suite, presets in summary.items():
         for preset, sizes in presets.items():
             agg: Dict[str, float | None] = {}
@@ -398,22 +390,9 @@ def write_index(
                     for stats in sizes.values()
                     if key in stats and stats[key] is not None
                 ]
-                if vals:
-                    agg[key] = sum(vals) / len(vals)
-                else:
-                    agg[key] = None
+                agg[key] = sum(vals) / len(vals) if vals else None
             rollup.append((suite, preset, agg))
             metric_keys.update(agg.keys())
-            if suite == "semantic" and "em_raw" in agg:
-                em_key = "em_raw"
-            else:
-                em_key = (
-                    "em_norm"
-                    if "em_norm" in agg
-                    else ("em" if "em" in agg else ("em_raw" if "em_raw" in agg else None))
-                )
-            if em_key:
-                em_by_preset[preset].append(agg[em_key] or 0.0)
 
     metric_keys = sorted(metric_keys)
     preferred = [
@@ -434,12 +413,15 @@ def write_index(
         k for k in metric_keys if k not in preferred
     ]
     display = [display_name(k) for k in ordered]
-    body: list[str] = []
-    run_dir = Path("runs") / out_dir.name
-    failed = list(run_dir.rglob("failed_preflight.json"))
-    if failed:
-        body.append("> ⚠️ preflight failures detected; see logs")
-        body.append("")
+    return rollup, ordered, display
+
+
+def render_summary_table(
+    rollup: list[tuple[str, str, Dict[str, float | None]]],
+    ordered: list[str],
+    display: list[str],
+) -> str:
+    """Render the roll-up table in Markdown."""
 
     rows: list[dict[str, object]] = []
     for suite, preset, stats in rollup:
@@ -453,123 +435,150 @@ def write_index(
             else:
                 row[disp] = "–"
         rows.append(row)
-    table_md = make_summary_table(rows)
-    body.append(table_md)
-    body.append("")
+    return make_summary_table(rows)
 
-    if missing_pre:
-        bad = missing_pre_suites(missing_pre)
-        if bad:
-            body.append("### Warnings")
-            for suite in bad:
-                body.append(f"- {suite}: MissingPre")
-            body.append("")
 
-    if retrieval:
+@dataclass
+class RetrievalSummary:
+    """Helper for rendering retrieval stats and activity checks."""
+
+    data: Dict[str, Dict[str, MetricDict]]
+
+    def render(self) -> str | None:
+        if not self.data:
+            return None
         agg_ret: Dict[str, Dict[str, float]] = {}
-        for suite_stats in retrieval.values():
+        for suite_stats in self.data.values():
             for mem, stats in suite_stats.items():
                 dest = agg_ret.setdefault(mem, {k: 0.0 for k in stats})
                 for k, v in stats.items():
                     dest[k] += float(v)
         tmpl = _ENV.get_template("partials/retrieval.md.j2")
-        body.append(tmpl.render(retrieval=agg_ret).strip())
-        body.append("")
-    if gates:
-        body.append("## Gate Telemetry")
-        int_keys = {
-            "attempts",
-            "accepted",
-            "blocked",
-            "skipped",
-            "inserted",
-            "aggregated",
-            "routed_to_episodic",
-            "blocked_new_edges",
-            "nodes_added",
-            "edges_added",
-        }
-        order = [
-            "attempts",
-            "accepted",
-            "blocked",
-            "skipped",
-            "inserted",
-            "aggregated",
-            "duplicate_rate",
-            "nodes_added",
-            "edges_added",
-            "nodes_per_1k",
-            "edges_per_1k",
-            "routed_to_episodic",
-            "blocked_new_edges",
-        ]
-        for status, mems in gates.items():
-            body.append(f"### Gate {status.upper()}")
-            metric_keys = [k for k in order if any(k in s for s in mems.values())]
-            header = "| mem | " + " | ".join(metric_keys) + " |"
-            sep = "|---" * (len(metric_keys) + 1) + "|"
-            body.extend([header, sep])
-            for mem in sorted(mems):
-                stats = mems[mem]
-                vals: list[str] = []
-                for key in metric_keys:
-                    val = stats.get(key, 0)
-                    if key in int_keys:
-                        vals.append(str(int(val)))
-                    else:
-                        vals.append(f"{val:.3f}")
-                body.append("| " + mem + " | " + " | ".join(vals) + " |")
-            body.append("")
-        if "on" in gates and "off" in gates:
-            body.append("### Gate ON vs OFF")
+        return tmpl.render(retrieval=agg_ret).strip()
+
+    def is_active(self) -> bool:
+        return any(
+            stats.get("requests", 0) > 0
+            for suite_stats in self.data.values()
+            for stats in suite_stats.values()
+        )
+
+
+@dataclass
+class GateSummary:
+    """Render gate telemetry and derived comparisons."""
+
+    data: Dict[str, Dict[str, Dict[str, MetricDict]]]
+    summary: Summary
+    ablation: Dict[str, Dict[str, Dict[str, float]]] | None = None
+
+    def render(self) -> str | None:
+        if not self.data and not self.ablation:
+            return None
+        body: list[str] = []
+        if self.data:
+            body.append("## Gate Telemetry")
+            int_keys = {
+                "attempts",
+                "accepted",
+                "blocked",
+                "skipped",
+                "inserted",
+                "aggregated",
+                "routed_to_episodic",
+                "blocked_new_edges",
+                "nodes_added",
+                "edges_added",
+            }
+            order = [
+                "attempts",
+                "accepted",
+                "blocked",
+                "skipped",
+                "inserted",
+                "aggregated",
+                "duplicate_rate",
+                "nodes_added",
+                "edges_added",
+                "nodes_per_1k",
+                "edges_per_1k",
+                "routed_to_episodic",
+                "blocked_new_edges",
+            ]
+            for status, mems in self.data.items():
+                body.append(f"### Gate {status.upper()}")
+                metric_keys = [k for k in order if any(k in s for s in mems.values())]
+                header = "| mem | " + " | ".join(metric_keys) + " |"
+                sep = "|---" * (len(metric_keys) + 1) + "|"
+                body.extend([header, sep])
+                for mem in sorted(mems):
+                    stats = mems[mem]
+                    vals: list[str] = []
+                    for key in metric_keys:
+                        val = stats.get(key, 0)
+                        if key in int_keys:
+                            vals.append(str(int(val)))
+                        else:
+                            vals.append(f"{val:.3f}")
+                    body.append("| " + mem + " | " + " | ".join(vals) + " |")
+                body.append("")
+            if "on" in self.data and "off" in self.data:
+                body.append("### Gate ON vs OFF")
+                body.append("| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |")
+                body.append("|---|---|---|---|---|---|")
+                on = self.data["on"]
+                off = self.data["off"]
+
+                def _metric(status: str, metric: str) -> float:
+                    for preset_name, size_stats in self.summary.get("episodic", {}).items():
+                        if preset_name.endswith(f"gate_{status}"):
+                            stats = next(iter(size_stats.values()))
+                            return stats.get(metric, (0.0, 0.0))[0]
+                    return 0.0
+
+                store_on = _metric("on", "store_size")
+                store_off = _metric("off", "store_size")
+                em_on = _metric("on", "pre_em") or _metric("on", "em")
+                em_off = _metric("off", "pre_em") or _metric("off", "em")
+                delta_em = em_on - em_off
+
+                mems = sorted(set(on) | set(off))
+                for mem in mems:
+                    accepted_on = on.get(mem, {}).get("accepted", 0)
+                    accepted_off = off.get(mem, {}).get("accepted", 0)
+                    body.append(
+                        f"| {mem} | {store_on:.0f} | {store_off:.0f} | {accepted_on:.0f} | {accepted_off:.0f} | {delta_em:+.3f} |"
+                    )
+                body.append("")
+        if self.ablation:
+            body.append("## Gate ON vs OFF")
             body.append("| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |")
             body.append("|---|---|---|---|---|---|")
-            on = gates["on"]
-            off = gates["off"]
-
-            def _metric(status: str, metric: str) -> float:
-                for preset_name, size_stats in summary.get("episodic", {}).items():
-                    if preset_name.endswith(f"gate_{status}"):
-                        stats = next(iter(size_stats.values()))
-                        return stats.get(metric, (0.0, 0.0))[0]
-                return 0.0
-
-            store_on = _metric("on", "store_size")
-            store_off = _metric("off", "store_size")
-            em_on = _metric("on", "pre_em") or _metric("on", "em")
-            em_off = _metric("off", "pre_em") or _metric("off", "em")
-            delta_em = em_on - em_off
-
-            mems = sorted(set(on) | set(off))
-            for mem in mems:
-                accepted_on = on.get(mem, {}).get("accepted", 0)
-                accepted_off = off.get(mem, {}).get("accepted", 0)
+            for mem in sorted(self.ablation):
+                on = self.ablation[mem].get("on", {})
+                off = self.ablation[mem].get("off", {})
+                delta = on.get("em", 0.0) - off.get("em", 0.0)
                 body.append(
-                    f"| {mem} | {store_on:.0f} | {store_off:.0f} | {accepted_on:.0f} | {accepted_off:.0f} | {delta_em:+.3f} |"
+                    f"| {mem} | {on.get('store_size', 0):.0f} | {off.get('store_size', 0):.0f} | "
+                    f"{on.get('accepted', 0):.0f} | {off.get('accepted', 0):.0f} | {delta:+.3f} |"
                 )
             body.append("")
-    if gate_ablation:
-        body.append("## Gate ON vs OFF")
-        body.append("| mem | store_on | store_off | accepted_on | accepted_off | ΔEM |")
-        body.append("|---|---|---|---|---|---|")
-        for mem in sorted(gate_ablation):
-            on = gate_ablation[mem].get("on", {})
-            off = gate_ablation[mem].get("off", {})
-            delta = on.get("em", 0.0) - off.get("em", 0.0)
-            body.append(
-                f"| {mem} | {on.get('store_size', 0):.0f} | {off.get('store_size', 0):.0f} | "
-                f"{on.get('accepted', 0):.0f} | {off.get('accepted', 0):.0f} | {delta:+.3f} |"
-            )
-        body.append("")
+        return "\n".join(body).strip()
 
-    body.append("## Per-suite summaries")
-    for suite in sorted(suite_paths):
-        body.append(f"- [{suite}]({suite}/summary.md)")
-    smoke = out_dir / "smoke.md"
-    if smoke.exists():
-        body.append("")
-        body.append("See also: [smoke.md](smoke.md)")
+    def is_active(self) -> bool:
+        return any(
+            stats.get("attempts", 0) > 0 for mems in self.data.values() for stats in mems.values()
+        )
+
+
+def compute_badges(
+    out_dir: Path,
+    missing_pre: Dict[str, tuple[int, int]] | None,
+    lineage: Dict[str, Dict[str, set]] | None,
+    gate_summary: GateSummary,
+    retrieval_summary: RetrievalSummary,
+) -> list[Badge]:
+    """Compute health badges for the roll-up report."""
 
     baseline_ok = True
     if missing_pre:
@@ -581,23 +590,70 @@ def write_index(
             if srcs and "stub" in srcs:
                 non_stub = False
                 break
-    gating_active = any(
-        stats.get("attempts", 0) > 0
-        for variants in gates.values()
-        for mems in variants.values()
-        for stats in mems.values()
-    )
-    retrieval_active = any(
-        stats.get("requests", 0) > 0
-        for suite_stats in retrieval.values()
-        for stats in suite_stats.values()
-    )
     badges = [
         Badge("BaselinesOK", baseline_ok, str(out_dir / "baselines")),
         Badge("NonStubStores", non_stub, str(out_dir / "stores")),
-        Badge("GatingActive", gating_active, str(out_dir / "gates")),
-        Badge("RetrievalActive", retrieval_active, str(out_dir / "retrieval")),
+        Badge("GatingActive", gate_summary.is_active(), str(out_dir / "gates")),
+        Badge(
+            "RetrievalActive",
+            retrieval_summary.is_active(),
+            str(out_dir / "retrieval"),
+        ),
     ]
+    return badges
+
+
+def write_index(
+    summary: Summary,
+    suite_paths: Dict[str, Path],
+    gates: Dict[str, Dict[str, Dict[str, MetricDict]]],
+    gate_ablation: Dict[str, Dict[str, Dict[str, float]]],
+    retrieval: Dict[str, Dict[str, MetricDict]],
+    out_dir: Path,
+    seed_count: int,
+    lineage: Dict[str, Dict[str, set]] | None = None,
+    missing_pre: Dict[str, tuple[int, int]] | None = None,
+) -> Path:
+    """Write a top-level roll-up report and return its path."""
+
+    rollup, ordered, display = aggregate_rollup(summary)
+    body: list[str] = []
+    run_dir = Path("runs") / out_dir.name
+    if list(run_dir.rglob("failed_preflight.json")):
+        body.append("> ⚠️ preflight failures detected; see logs")
+        body.append("")
+
+    body.append(render_summary_table(rollup, ordered, display))
+    body.append("")
+
+    if missing_pre:
+        bad = missing_pre_suites(missing_pre)
+        if bad:
+            body.append("### Warnings")
+            for suite in bad:
+                body.append(f"- {suite}: MissingPre")
+            body.append("")
+
+    retrieval_summary = RetrievalSummary(retrieval)
+    ret_section = retrieval_summary.render()
+    if ret_section:
+        body.append(ret_section)
+        body.append("")
+
+    gate_summary = GateSummary(gates, summary, gate_ablation)
+    gate_section = gate_summary.render()
+    if gate_section:
+        body.append(gate_section)
+
+    body.append("## Per-suite summaries")
+    for suite in sorted(suite_paths):
+        body.append(f"- [{suite}]({suite}/summary.md)")
+    smoke = out_dir / "smoke.md"
+    if smoke.exists():
+        body.append("")
+        body.append("See also: [smoke.md](smoke.md)")
+
+    badges = compute_badges(out_dir, missing_pre, lineage, gate_summary, retrieval_summary)
     tmpl = _ENV.get_template("index.md.j2")
     content = tmpl.render(health_panel=render_panel(badges), body="\n".join(body))
     index_path = out_dir / "index.md"
@@ -623,5 +679,10 @@ __all__ = [
     "summarise_retrieval",
     "summarise_gates",
     "collect_runs",
+    "aggregate_rollup",
+    "render_summary_table",
+    "RetrievalSummary",
+    "GateSummary",
+    "compute_badges",
     "write_index",
 ]
