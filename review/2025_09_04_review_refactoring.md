@@ -106,9 +106,3 @@ Non-package folders:
 * Reduces accidental import cycles and clarifies ownership for tests and CI.
 
 This directly addresses the gaps in your current T1/T2 and expands T4 beyond `harness.py` to additional oversized modules you flagged implicitly (bench/datasets/report).&#x20;
-
----
-
-# Updated Codex tasks (revised & expanded)
-
-You can paste these as separate Codex tasks. They’re self-contained, safe-order, and include acceptance criteria.
