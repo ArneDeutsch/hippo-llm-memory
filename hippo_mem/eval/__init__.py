@@ -1,25 +1,14 @@
-"""Evaluation utilities for hippo_mem.
+"""Deprecated shim for :mod:`hippo_mem.eval`.
 
-Expose helper functions for prompt encoding, model configuration, and
-evaluation harness utilities used by scripts.
+Use :mod:`hippo_eval` instead.
 """
 
-from .encode import encode_prompt
-from .harness import (
-    EvalConfig,
-    Task,
-    evaluate,
-    evaluate_matrix,
-    run_suite,
-)
-from .models import load_model_config
+import warnings
 
-__all__ = [
-    "encode_prompt",
-    "load_model_config",
-    "EvalConfig",
-    "Task",
-    "evaluate",
-    "evaluate_matrix",
-    "run_suite",
-]
+from hippo_eval import eval as _eval
+from hippo_eval.eval import *  # noqa: F401,F403
+
+warnings.warn("hippo_mem.eval is deprecated; use hippo_eval", DeprecationWarning, stacklevel=2)
+
+__all__ = getattr(_eval, "__all__", [])
+__path__ = _eval.__path__

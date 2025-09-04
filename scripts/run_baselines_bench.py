@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI wrapper for :mod:`hippo_mem.eval.baselines` (bench harness).
+"""CLI wrapper for :mod:`hippo_eval.eval.baselines` (bench harness).
 
 Allows running the module without installing the package by adding the
 repository root to ``sys.path`` before importing ``hippo_mem``.
@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:  # pragma: no branch - idempotent
     sys.path.insert(0, str(ROOT))
 
 # noqa needed since we modify sys.path before import
-from hippo_mem.eval.baselines import main  # noqa: E402
+from hippo_eval.eval.baselines import main  # noqa: E402
 
 
 def _guard() -> None:

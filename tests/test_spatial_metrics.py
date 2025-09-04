@@ -2,7 +2,7 @@
 
 import pytest
 
-from hippo_mem.metrics.spatial import em, ensure_prediction_format, f1
+from hippo_eval.metrics.spatial import em, ensure_prediction_format, f1
 
 CASES = [
     ("(0,0) -> (0,1) -> (0,2)", "DD"),

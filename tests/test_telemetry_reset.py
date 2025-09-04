@@ -1,5 +1,5 @@
+from hippo_eval.eval.harness import EvalConfig, run_suite
 from hippo_mem.common.telemetry import registry
-from hippo_mem.eval.harness import EvalConfig, run_suite
 
 
 def test_telemetry_resets_between_runs() -> None:

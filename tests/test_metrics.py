@@ -6,7 +6,7 @@ import time
 
 import torch
 
-from hippo_mem.eval.harness import Task, _evaluate
+from hippo_eval.eval.harness import Task, _evaluate
 
 
 class DummyTokenizer:

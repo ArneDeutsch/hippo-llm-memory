@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from hippo_eval.metrics.scoring import spatial_kpis
 from hippo_mem.memory.spatial_store import SpatialStore, Transition
-from hippo_mem.metrics.scoring import spatial_kpis
 from hippo_mem.planning.path_planner import PathPlanner
 
 

@@ -31,8 +31,8 @@ from typing import Dict, Iterable, Tuple
 
 from jinja2 import Environment, FileSystemLoader
 
+from hippo_eval.reporting.health import Badge, render_panel
 from hippo_mem.common.telemetry import validate_retrieval_snapshot
-from reports.health import Badge, render_panel
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _date_str(value: object | None) -> str:
     return date
 
 
-_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "reports" / "templates"
+_TEMPLATE_DIR = Path(__file__).parent / "templates"
 _ENV = Environment(loader=FileSystemLoader(_TEMPLATE_DIR))
 
 MetricDict = Dict[str, float]
@@ -927,7 +927,7 @@ def _render_plots_suite(
 
     if retrieval:
         try:  # pragma: no cover - optional plotting
-            from reports.plots.retrieval import plot_retrieval
+            from hippo_eval.reporting.plots.retrieval import plot_retrieval
 
             plot_retrieval(retrieval, out_dir)
         except Exception as exc:  # pragma: no cover - matplotlib missing

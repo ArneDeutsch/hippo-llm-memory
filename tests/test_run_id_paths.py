@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from omegaconf import OmegaConf
 
-from hippo_mem.eval import harness
+from hippo_eval.eval import harness
 
 
 def _run_eval(tmp_path: Path, *overrides: str):

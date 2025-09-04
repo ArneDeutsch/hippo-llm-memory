@@ -7,8 +7,8 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
-from hippo_mem.eval.bench import _init_modules
-from hippo_mem.eval.harness import _apply_model_defaults, evaluate
+from hippo_eval.eval.bench import _init_modules
+from hippo_eval.eval.harness import _apply_model_defaults, evaluate
 
 
 def test_baseline_has_no_memory(tmp_path: Path) -> None:

@@ -1,8 +1,8 @@
 import pytest
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from hippo_eval.eval.harness import Task, _evaluate, _init_modules
 from hippo_mem.common.telemetry import registry
-from hippo_mem.eval.harness import Task, _evaluate, _init_modules
 
 
 def test_retrieval_flag_disables_memory(monkeypatch: pytest.MonkeyPatch) -> None:

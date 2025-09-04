@@ -37,7 +37,7 @@ markers = ["slow: mark tests as slow and excluded from default runs"]
 
 [tool.setuptools]
 package-dir = {"" = "."}
-packages = ["hippo_mem"]
+packages = ["hippo_mem", "hippo_eval"]
 
 [tool.mutmut]
 paths_to_mutate = ["hippo_mem/episodic", "hippo_mem/relational"]

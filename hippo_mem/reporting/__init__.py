@@ -1,7 +1,18 @@
-"""Reporting utilities for summarizing evaluation metrics."""
+"""Deprecated shim for :mod:`hippo_mem.reporting`.
 
-from .report import main as report_main
-from .summarize import main as summarize_main
-from .summarize import summarize_runs
+Use :mod:`hippo_eval.reporting` instead.
+"""
 
-__all__ = ["report_main", "summarize_runs", "summarize_main"]
+import warnings
+
+from hippo_eval import reporting as _reporting
+from hippo_eval.reporting import *  # noqa: F401,F403
+
+warnings.warn(
+    "hippo_mem.reporting is deprecated; use hippo_eval.reporting",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+__all__ = getattr(_reporting, "__all__", [])
+__path__ = _reporting.__path__

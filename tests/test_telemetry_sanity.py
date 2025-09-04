@@ -1,13 +1,13 @@
 import pytest
 from omegaconf import OmegaConf
 
+from hippo_eval.eval import harness
 from hippo_mem.common.telemetry import (
     record_stats,
     registry,
     set_strict_telemetry,
     validate_retrieval_snapshot,
 )
-from hippo_mem.eval import harness
 
 
 @pytest.fixture(autouse=True)

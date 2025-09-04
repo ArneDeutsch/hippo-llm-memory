@@ -1,7 +1,7 @@
 from omegaconf import OmegaConf
 
+from hippo_eval.eval.harness import Task, _run_replay
 from hippo_mem.episodic.store import EpisodicStore
-from hippo_mem.eval.harness import Task, _run_replay
 
 
 def test_run_replay_uses_write_gate() -> None:

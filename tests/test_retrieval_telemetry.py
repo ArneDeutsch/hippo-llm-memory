@@ -1,7 +1,7 @@
 from pathlib import Path
 
+from hippo_eval.eval.harness import EvalConfig, run_suite
 from hippo_mem.common.telemetry import registry
-from hippo_mem.eval.harness import EvalConfig, run_suite
 
 
 def test_retrieval_counters_propagate(tmp_path: Path) -> None:

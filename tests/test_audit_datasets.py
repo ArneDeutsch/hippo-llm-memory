@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from hippo_mem.eval import audit as audit_datasets
+from hippo_eval.eval import audit as audit_datasets
 
 
 def test_audit_datasets_passes() -> None:

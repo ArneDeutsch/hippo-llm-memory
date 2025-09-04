@@ -1,4 +1,4 @@
-from hippo_mem.metrics.scoring import em_norm, em_raw
+from hippo_eval.metrics.scoring import em_norm, em_raw
 
 
 def test_em_norm_zero_when_raw_zero() -> None:

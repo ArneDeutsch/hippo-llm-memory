@@ -1,8 +1,8 @@
 from omegaconf import OmegaConf
 
+from hippo_eval.eval.bench import _init_modules
+from hippo_eval.eval.harness import Task, _run_replay
 from hippo_mem.common.telemetry import gate_registry
-from hippo_mem.eval.bench import _init_modules
-from hippo_mem.eval.harness import Task, _run_replay
 
 
 def test_gate_counters_increment_on_replay() -> None:

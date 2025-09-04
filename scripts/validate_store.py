@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from hippo_mem.eval.store_utils import resolve_store_meta_path
+from hippo_eval.eval.store_utils import resolve_store_meta_path
 from hippo_mem.utils.stores import validate_store
 
 
