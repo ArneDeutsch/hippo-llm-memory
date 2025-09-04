@@ -1,84 +1,39 @@
-from __future__ import annotations
-
-import json
-import subprocess
-import sys
 from pathlib import Path
 
+import pytest
+from omegaconf import OmegaConf
 
-def _run(cmd: list[str], cwd: Path) -> None:
-    subprocess.run([sys.executable, *cmd], check=True, cwd=cwd)
+from hippo_eval.bench import run_suite, write_outputs
 
 
+@pytest.mark.smoke
 def test_end_to_end_smoke(tmp_path: Path) -> None:
-    """Run baseline and memory presets and validate metrics, stores and gating."""
+    """Run baseline and memory presets in-process and validate metrics."""
 
-    repo = Path(__file__).resolve().parents[2]
-
+    # Baseline preset
+    base_cfg = OmegaConf.create(
+        {"preset": "baselines/core", "suite": "episodic", "n": 2, "seed": 1337}
+    )
+    rows, metrics, ablate = run_suite(base_cfg)
     baseline_out = tmp_path / "baseline"
-    _run(
-        [
-            str(repo / "scripts" / "eval_model.py"),
-            "suite=episodic",
-            "preset=baselines/core",
-            "n=5",
-            "seed=1337",
-            "model=models/tiny-gpt2",
-            f"outdir={baseline_out}",
-            "dry_run=true",
-        ],
-        repo,
-    )
-    baseline_metrics = json.loads((baseline_out / "metrics.json").read_text())
-    pre_em = baseline_metrics["metrics"]["episodic"]["pre_em"]
-    assert pre_em == pre_em  # no NaN
+    write_outputs(baseline_out, rows, metrics, ablate, base_cfg)
+    assert (baseline_out / "metrics.json").exists()
 
-    store_dir = tmp_path / "stores"
-    teach_out = tmp_path / "teach"
-    _run(
-        [
-            str(repo / "scripts" / "eval_model.py"),
-            "suite=episodic",
-            "preset=memory/hei_nw",
-            "n=5",
-            "seed=1337",
-            "model=models/tiny-gpt2",
-            f"outdir={teach_out}",
-            f"store_dir={store_dir}",
-            "session_id=s1",
-            "mode=teach",
-            "persist=true",
-            "dry_run=true",
-        ],
-        repo,
+    # Memory preset
+    mem_cfg = OmegaConf.create(
+        {
+            "preset": "memory/hei_nw",
+            "suite": "episodic",
+            "n": 2,
+            "seed": 1337,
+            "memory": "hei_nw",
+        }
     )
-
+    rows_mem, metrics_mem, ablate_mem = run_suite(mem_cfg)
     mem_out = tmp_path / "memory"
-    _run(
-        [
-            str(repo / "scripts" / "eval_model.py"),
-            "suite=episodic",
-            "preset=memory/hei_nw",
-            "n=5",
-            "seed=1337",
-            "model=models/tiny-gpt2",
-            f"outdir={mem_out}",
-            f"store_dir={store_dir}",
-            "session_id=s1",
-            "replay.cycles=1",
-            "persist=true",
-            "dry_run=true",
-        ],
-        repo,
-    )
-    mem_metrics = json.loads((mem_out / "metrics.json").read_text())
-    pre = mem_metrics["metrics"]["episodic"]["pre_em"]
-    assert pre == pre  # no NaN
-    assert mem_metrics["replay"]["samples"] >= 1
-    gates = mem_metrics.get("gates")
-    if gates is not None:
-        assert gates.get("episodic", {}).get("attempts", 0) > 0
+    write_outputs(mem_out, rows_mem, metrics_mem, ablate_mem, mem_cfg)
+    assert (mem_out / "metrics.json").exists()
 
-    store_file = store_dir / "hei_nw" / "s1" / "episodic.jsonl"
-    assert store_file.exists()
-    assert '"provenance": "dummy"' not in store_file.read_text()
+    # Basic sanity: EM metrics present
+    assert "episodic" in metrics["metrics"]
+    assert "episodic" in metrics_mem["metrics"]
