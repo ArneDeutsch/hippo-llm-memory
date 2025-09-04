@@ -808,6 +808,8 @@ def _write_outputs(
         "pre_em_norm": pre_metrics.get("em_norm"),
         "pre_f1": pre_metrics.get("f1"),
         "pre_refusal_rate": pre_metrics.get("refusal_rate"),
+        "memory_hit_rate": 0.0,
+        "latency_ms_delta": 0.0,
     }
     for k in ("success_rate", "suboptimality_ratio", "steps_to_goal"):
         if k in pre_metrics:
