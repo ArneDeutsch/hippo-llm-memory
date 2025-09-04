@@ -21,7 +21,7 @@ def _write_store(base: Path) -> Path:
 
 @pytest.mark.slow
 def test_test_consolidation_pre_post(tmp_path: Path) -> None:
-    repo = Path(__file__).resolve().parents[1]
+    repo = Path(__file__).resolve().parents[2]
     env = os.environ.copy()
     env.update(
         {

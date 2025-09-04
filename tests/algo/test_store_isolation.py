@@ -15,7 +15,7 @@ def test_baseline_store_absent(tmp_path: Path, monkeypatch) -> None:
     """Running a baseline preset must not write any store files."""
 
     monkeypatch.setenv("RUN_ID", "foo")
-    cfg_path = Path(__file__).resolve().parent.parent / "configs" / "eval" / "default.yaml"
+    cfg_path = Path(__file__).resolve().parents[2] / "configs" / "eval" / "default.yaml"
     cfg = OmegaConf.load(cfg_path)
     monkeypatch.chdir(tmp_path)
     data_file = Path("data/episodic/50_1337.jsonl")
@@ -23,7 +23,7 @@ def test_baseline_store_absent(tmp_path: Path, monkeypatch) -> None:
     data_file.write_text('{"prompt": "q", "answer": "a"}\n')
     cfg.suite = "episodic"
     cfg.preset = "baselines/core"
-    cfg.model = str(Path(__file__).resolve().parent.parent / "models" / "tiny-gpt2")
+    cfg.model = str(Path(__file__).resolve().parents[2] / "models" / "tiny-gpt2")
     cfg.n = 1
     cfg.seed = 1337
     cfg.dry_run = True

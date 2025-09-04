@@ -25,7 +25,7 @@ PRESETS = [
 def test_baseline_presets_create_metrics(tmp_path: Path, preset: str) -> None:
     """Each baseline preset writes well-formed metrics and metadata files."""
 
-    script = Path(__file__).resolve().parents[1] / "scripts" / "eval_bench.py"
+    script = Path(__file__).resolve().parents[2] / "scripts" / "eval_bench.py"
     cmd = [
         sys.executable,
         str(script),

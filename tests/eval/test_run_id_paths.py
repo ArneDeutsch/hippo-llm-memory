@@ -10,7 +10,7 @@ from hippo_eval.eval import harness
 
 
 def _run_eval(tmp_path: Path, *overrides: str):
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     script = repo_root / "scripts" / "eval_bench.py"
     cmd = [
         sys.executable,

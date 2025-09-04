@@ -14,7 +14,7 @@ from hippo_eval.reporting.rollup import (
     summarise_gates,
     summarise_retrieval,
 )
-from tests.test_report import _make_metrics
+from tests.reporting.test_report import _make_metrics
 
 
 def test_panel_ordering() -> None:

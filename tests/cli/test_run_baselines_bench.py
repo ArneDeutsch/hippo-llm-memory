@@ -34,7 +34,7 @@ def test_baselines_matrix_includes_new_suites() -> None:
 def test_run_baselines_accepts_run_id(presets: list[str], seeds: list[int]) -> None:
     """``run_baselines_bench.py`` emits metrics/meta for all combinations."""
 
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     run_id = "20250101"
     cmd = [
         sys.executable,
