@@ -132,6 +132,76 @@ class ReplayDataset(torch.utils.data.IterableDataset):
         return _StoreData(records, arr)
 
     # ------------------------------------------------------------------
+    def _maybe_add_teacher(self, rec: Dict[str, Any]) -> None:
+        """Attach teacher outputs if a teacher is provided and missing."""
+        if self.teacher is not None and "teacher" not in rec:
+            teacher_out = self.teacher(rec)
+            if teacher_out is not None:
+                rec["teacher"] = teacher_out
+
+    def _iter_weighted(
+        self,
+        rng: np.random.Generator,
+        stores: Dict[str, _StoreData],
+        kinds: List[str],
+        probs: np.ndarray,
+        max_items: Optional[int],
+    ) -> Iterator[Dict[str, Any]]:
+        """Yield items using priority or uniform sampling."""
+        count = 0
+        while max_items is None or count < max_items:
+            kind = rng.choice(kinds, p=probs)
+            data = stores[kind]
+            if self.policy == "priority" and len(data.records) > 0:
+                weights = data.weights
+                if self.noise_level > 0.0 and len(weights) > 0:
+                    noise = rng.normal(0.0, self.noise_level, size=len(weights))
+                    weights = np.clip(weights + noise, 0.0, None)
+                    if weights.sum() == 0:
+                        weights = np.ones_like(weights) / len(weights)
+                    else:
+                        weights = weights / weights.sum()
+                idx = int(rng.choice(len(data.records), p=weights))
+            else:
+                idx = int(rng.integers(len(data.records)))
+            base_rec = data.records[idx]
+            self._maybe_add_teacher(base_rec)
+            rec = dict(base_rec)
+            rec["kind"] = kind
+            yield rec
+            count += 1
+
+    def _iter_spaced(
+        self,
+        rng: np.random.Generator,
+        stores: Dict[str, _StoreData],
+        kinds: List[str],
+        _probs: np.ndarray,
+        max_items: Optional[int],
+    ) -> Iterator[Dict[str, Any]]:
+        """Yield items without replacement per cycle."""
+        orders = {k: rng.permutation(len(data.records)).tolist() for k, data in stores.items()}
+        pos = {k: 0 for k in kinds}
+        count = 0
+        while max_items is None or count < max_items:
+            available = [k for k in kinds if pos[k] < len(orders[k])]
+            if not available:
+                for k in kinds:
+                    orders[k] = rng.permutation(len(stores[k].records)).tolist()
+                    pos[k] = 0
+                available = kinds
+            p = np.array([self.ratios.get(k, 0.0) for k in available], dtype="float64")
+            p = p / p.sum()
+            kind = rng.choice(available, p=p)
+            idx = orders[kind][pos[kind]]
+            pos[kind] += 1
+            base_rec = stores[kind].records[idx]
+            self._maybe_add_teacher(base_rec)
+            rec = dict(base_rec)
+            rec["kind"] = kind
+            yield rec
+            count += 1
+
     def __iter__(self) -> Iterator[Dict[str, Any]]:
         rng = np.random.default_rng(self.seed)
         kinds = [k for k, data in self._stores.items() if data.records]
@@ -147,69 +217,24 @@ class ReplayDataset(torch.utils.data.IterableDataset):
         if self.cycles is not None:
             cyc_total = self.cycles * total_per_cycle
             max_items = min(cyc_total, max_items) if max_items is not None else cyc_total
+        if max_items == 0:
+            return iter(())  # type: ignore[return-value]
 
-        count = 0
-
-        if self.policy == "spaced":
-            # prepare shuffled indices per store
-            orders = {k: rng.permutation(len(data.records)).tolist() for k, data in stores.items()}
-            pos = {k: 0 for k in kinds}
-            cycle = 0
-            while max_items is None or count < max_items:
-                available = [k for k in kinds if pos[k] < len(orders[k])]
-                if not available:
-                    cycle += 1
-                    if self.cycles is not None and cycle >= self.cycles:
-                        break
-                    for k in kinds:
-                        orders[k] = rng.permutation(len(stores[k].records)).tolist()
-                        pos[k] = 0
-                    available = kinds
-                p = np.array([self.ratios.get(k, 0.0) for k in available], dtype="float64")
-                p = p / p.sum()
-                kind = rng.choice(available, p=p)
-                idx = orders[kind][pos[kind]]
-                pos[kind] += 1
-
-                data = stores[kind]
-                base_rec = data.records[idx]
-
-                if self.teacher is not None and "teacher" not in base_rec:
-                    teacher_out = self.teacher(base_rec)
-                    if teacher_out is not None:
-                        base_rec["teacher"] = teacher_out
-
-                rec = dict(base_rec)
-                rec["kind"] = kind
-                yield rec
-                count += 1
-        else:
-            while max_items is None or count < max_items:
-                kind = rng.choice(kinds, p=probs)
-                data = stores[kind]
-                if self.policy == "priority" and len(data.records) > 0:
-                    weights = data.weights
-                    if self.noise_level > 0.0 and len(weights) > 0:
-                        noise = rng.normal(0.0, self.noise_level, size=len(weights))
-                        weights = np.clip(weights + noise, 0.0, None)
-                        if weights.sum() == 0:
-                            weights = np.ones_like(weights) / len(weights)
-                        else:
-                            weights = weights / weights.sum()
-                    idx = int(rng.choice(len(data.records), p=weights))
-                else:  # uniform
-                    idx = int(rng.integers(len(data.records)))
-
-                base_rec = data.records[idx]
-                if self.teacher is not None and "teacher" not in base_rec:
-                    teacher_out = self.teacher(base_rec)
-                    if teacher_out is not None:
-                        base_rec["teacher"] = teacher_out
-
-                rec = dict(base_rec)
-                rec["kind"] = kind
-                yield rec
-                count += 1
+        strategies: Dict[
+            str,
+            Callable[
+                [np.random.Generator, Dict[str, _StoreData], List[str], np.ndarray, Optional[int]],
+                Iterator[Dict[str, Any]],
+            ],
+        ] = {
+            "spaced": self._iter_spaced,
+            "priority": self._iter_weighted,
+            "uniform": self._iter_weighted,
+        }
+        strategy = strategies.get(self.policy)
+        if strategy is None:
+            raise ValueError(f"Unknown policy: {self.policy}")
+        return strategy(rng, stores, kinds, probs, max_items)
 
 
 __all__ = ["ReplayDataset"]
