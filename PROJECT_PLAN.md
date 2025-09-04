@@ -16,8 +16,8 @@
 
 All evaluation pipelines, metrics, reporting helpers, and synthetic task
 generators now live in the separate `hippo_eval` package. `hippo_mem` contains
-only core memory algorithms; legacy imports such as `hippo_mem.eval` are thin
-shims that emit `DeprecationWarning`.
+only core memory algorithms; legacy import paths like `hippo_mem.eval` have
+been removed.
 
 # Milestone 1 – Research consolidation & design blueprint
 
@@ -270,4 +270,4 @@ shims that emit `DeprecationWarning`.
 - Reporting templates were moved to `hippo_eval/reporting/templates`; the root
   `reports/` folder contains generated outputs only.
 - Legacy `hippo_mem.eval`, `hippo_mem.metrics`, and `hippo_mem.reporting` paths
-  are shims that emit `DeprecationWarning`.
+  have been removed.

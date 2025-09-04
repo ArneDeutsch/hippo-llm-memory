@@ -4,22 +4,16 @@ from __future__ import annotations
 
 import ast
 import importlib
-import sys
-import warnings
 from pathlib import Path
+
+import pytest
 
 
 def test_no_hippo_eval_imports_in_hippo_mem() -> None:
     """Ensure core package does not depend on hippo_eval."""
 
     base = Path(__file__).resolve().parents[1] / "hippo_mem"
-    skip = {"eval", "metrics", "reporting", "tasks"}
     for path in base.rglob("*.py"):
-        if path.name == "__init__.py" and path.parent.name in skip:
-            continue
-        rel = path.relative_to(base)
-        if rel.parts and rel.parts[0] in skip:
-            continue
         tree = ast.parse(path.read_text(), filename=str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -31,11 +25,14 @@ def test_no_hippo_eval_imports_in_hippo_mem() -> None:
                     raise AssertionError(f"{path} imports {node.module}")
 
 
-def test_import_shim_emits_warning() -> None:
-    """Importing hippo_mem.eval emits a deprecation warning."""
+def test_legacy_paths_removed() -> None:
+    """Old hippo_mem evaluation aliases have been dropped."""
 
-    sys.modules.pop("hippo_mem.eval", None)
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always", DeprecationWarning)
-        importlib.import_module("hippo_mem.eval")
-    assert any(issubclass(w.category, DeprecationWarning) for w in caught)
+    for mod in (
+        "hippo_mem.eval",
+        "hippo_mem.metrics",
+        "hippo_mem.reporting",
+        "hippo_mem.tasks",
+    ):
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module(mod)

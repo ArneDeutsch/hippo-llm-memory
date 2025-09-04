@@ -35,10 +35,6 @@ extend-select = ["I", "TID"]
 "hippo_eval/**" = ["TID251"]
 "tests/**" = ["TID251"]
 "scripts/**" = ["TID251"]
-"hippo_mem/eval/__init__.py" = ["TID251"]
-"hippo_mem/metrics/__init__.py" = ["TID251"]
-"hippo_mem/reporting/__init__.py" = ["TID251"]
-"hippo_mem/tasks/__init__.py" = ["TID251"]
 
 [tool.pytest.ini_options]
 addopts = "-q -ra --color=yes"
