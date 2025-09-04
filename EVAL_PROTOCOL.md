@@ -4,6 +4,10 @@ _Updated: 2025-08-28 (by ChatGPT)_
 
 This protocol executes a **complete, reproducible** validation run across **baselines** and **memory-enabled** algorithms (HEI‑NW, SGC‑RSS, SMPD), plus **ablations** and **consolidation** checks (Milestone 9.5).
 
+Evaluation pipelines, metrics, reporting code, and synthetic tasks reside in the
+`hippo_eval` package. Legacy `hippo_mem.*` paths remain as shims emitting
+`DeprecationWarning`.
+
 > All commands are copy‑pasteable in **bash**. Lines with `#` are comments.
 
 > **Canonical entry point:** Use `scripts/eval_model.py` for all evaluations, including
@@ -223,7 +227,7 @@ to avoid saturation.
 
 ## 3) **Baseline grid (fix)**
 
-**Why this matters:** The previous step used `python scripts/run_baselines_bench.py`, which forwards to the **light-weight bench harness** (`hippo_mem.eval.bench`). That harness returns **ground‑truth as predictions** by design (for CI plumbing), so runs are **extremely fast but not meaningful** for baseline quality. For a *real* baseline you must invoke the **model harness**.
+**Why this matters:** The previous step used `python scripts/run_baselines_bench.py`, which forwards to the **light-weight bench harness** (`hippo_eval.bench`). That harness returns **ground‑truth as predictions** by design (for CI plumbing), so runs are **extremely fast but not meaningful** for baseline quality. For a *real* baseline you must invoke the **model harness**.
 
 **Do this instead** — run the matrix with a **real model** and the baseline presets:
 
@@ -433,6 +437,9 @@ python scripts/summarize_runs.py "$RUNS" --out "$RUNS/summaries"
 python scripts/report.py --run-id "$RUN_ID" --runs-dir runs --out-dir reports --data-dir data --plots
 ```
 
+Templates are resolved from `hippo_eval/reporting/templates`; `reports/` is an
+outputs-only directory.
+
 ---
 
 ## 8) Consolidation checks (Milestone 9.5)
@@ -494,3 +501,11 @@ echo "  - $ADAPTERS    (trained adapters, if any)"
 ### Appendix — Deprecated commands
 
 - `python scripts/run_baselines_bench.py`: **CI/plumbing‑only**. It calls the light‑weight bench that returns ground truth as predictions; **do not use** for real baselines.
+
+## Migration notes
+
+- Evaluation pipelines, metrics, reporting, and synthetic tasks moved to the
+  `hippo_eval` package. The `hippo_mem.*` entry points remain as shims and emit
+  `DeprecationWarning`.
+- Reporting templates now live under `hippo_eval/reporting/templates`; the root
+  `reports/` directory stores generated artifacts only.
