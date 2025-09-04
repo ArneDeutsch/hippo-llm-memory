@@ -46,6 +46,8 @@ import yaml
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf, open_dict
 
+from hippo_eval.datasets import SUITE_TO_GENERATOR
+from hippo_eval.datasets.loaders import load_dataset
 from hippo_eval.eval.score import em_norm, em_raw, f1
 from hippo_mem.adapters import (
     EpisodicMemoryAdapter,
@@ -60,8 +62,6 @@ from hippo_mem.episodic.store import EpisodicStore
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.adapter import AdapterConfig as SpatialAdapterConfig
 from hippo_mem.spatial.place_graph import PlaceGraph
-
-from .datasets import SUITE_TO_GENERATOR
 
 
 def _date_str(value: object | None) -> str:
@@ -158,8 +158,7 @@ def _load_tasks(suite: str, n: int, seed: int) -> List[Dict[str, object]]:
         digest = _sha256_file(data_path)
         if checksums.get(data_path.name) != digest:
             raise RuntimeError(f"Checksum mismatch for {data_path}")
-        with data_path.open("r", encoding="utf-8") as f:
-            return [json.loads(line) for line in f]
+        return load_dataset(data_path)
     return generate_tasks(suite, n, seed)
 
 

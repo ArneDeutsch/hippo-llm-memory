@@ -1,4 +1,4 @@
-"""Compatibility wrapper for :mod:`hippo_eval.datasets.cli`."""
+"""Thin wrapper around :mod:`hippo_eval.datasets.cli`."""
 
 from hippo_eval.datasets.cli import main
 

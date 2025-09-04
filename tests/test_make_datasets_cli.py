@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -13,7 +14,7 @@ def test_cli_generates_episodic_multi(tmp_path: Path) -> None:
     out = tmp_path / "epi_multi.jsonl"
     cmd = [
         sys.executable,
-        "scripts/make_datasets.py",
+        "scripts/datasets_cli.py",
         "--suite",
         "episodic_multi",
         "--size",
@@ -23,7 +24,9 @@ def test_cli_generates_episodic_multi(tmp_path: Path) -> None:
         "--out",
         str(out),
     ]
-    subprocess.run(cmd, check=True)
+    repo_root = Path(__file__).resolve().parents[1]
+    env = {**os.environ, "PYTHONPATH": str(repo_root)}
+    subprocess.run(cmd, check=True, env=env)
     data = _read_jsonl(out)
     assert len(data) == 10
     assert any("Actually" in item["prompt"] for item in data)
@@ -33,7 +36,7 @@ def test_cli_episodic_cross_capacity(tmp_path: Path) -> None:
     out = tmp_path / "epi_cross.jsonl"
     cmd = [
         sys.executable,
-        "scripts/make_datasets.py",
+        "scripts/datasets_cli.py",
         "--suite",
         "episodic_cross",
         "--size",
@@ -43,6 +46,8 @@ def test_cli_episodic_cross_capacity(tmp_path: Path) -> None:
         "--out",
         str(out),
     ]
-    subprocess.run(cmd, check=True)
+    repo_root = Path(__file__).resolve().parents[1]
+    env = {**os.environ, "PYTHONPATH": str(repo_root)}
+    subprocess.run(cmd, check=True, env=env)
     data = _read_jsonl(out)
     assert len(data) == 1000

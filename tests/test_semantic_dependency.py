@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from hippo_eval.eval.datasets import generate_semantic
+from hippo_eval.tasks.generators import generate_semantic
 from hippo_mem.memory import evaluate_semantic
 
 

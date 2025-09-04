@@ -35,6 +35,7 @@ from omegaconf import DictConfig, OmegaConf, open_dict
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from hippo_eval.datasets.loaders import load_dataset
 from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.gates import GateCounters
@@ -259,21 +260,15 @@ def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> 
         if matches:
             return matches[0]
     raise FileNotFoundError(
-        "Dataset not found; run scripts/make_datasets.py or check suite name",
+        "Dataset not found; run scripts/datasets_cli.py or check suite name",
     )
 
 
 def _load_tasks(path: Path, n: int) -> List[Task]:
     """Load the first ``n`` tasks from ``path``."""
 
-    tasks: List[Task] = []
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            if len(tasks) >= n:
-                break
-            obj = json.loads(line)
-            tasks.append(Task(prompt=str(obj["prompt"]), answer=str(obj["answer"])))
-    return tasks
+    items = load_dataset(path, n)
+    return [Task(prompt=str(o["prompt"]), answer=str(o["answer"])) for o in items]
 
 
 def _rss_mb() -> float:

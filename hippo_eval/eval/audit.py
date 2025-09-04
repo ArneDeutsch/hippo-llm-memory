@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from hippo_eval.eval.datasets import sha256_file
+from hippo_eval.datasets import sha256_file
 
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]

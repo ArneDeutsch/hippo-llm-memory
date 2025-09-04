@@ -5,7 +5,8 @@ import pytest
 import torch
 from torch.utils.data import DataLoader
 
-from hippo_eval.eval import datasets as build_datasets
+from hippo_eval import datasets as build_datasets
+from hippo_eval.datasets.loaders import load_dataset
 from hippo_mem.training import jsonl_dataset
 
 SUITES = ["episodic", "semantic", "spatial"]
@@ -130,6 +131,14 @@ def test_loader_rejects_corrupted_json(tmp_path: Path) -> None:
     with pytest.raises(json.JSONDecodeError) as exc:
         jsonl_dataset.load_jsonl_files([str(file)])
     assert "Expecting" in str(exc.value)
+
+
+def test_load_dataset_fixture() -> None:
+    """`load_dataset` reads the bundled semantic fixture."""
+
+    path = Path("tests/fixtures/datasets/semantic/mini.jsonl")
+    items = load_dataset(path)
+    assert len(items) > 0
 
 
 def _collect_batches(ds, seed: int) -> list[list[str]]:
