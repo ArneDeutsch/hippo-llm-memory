@@ -1,0 +1,4 @@
+# Ignore all generated report artifacts
+*
+!.gitkeep
+!.gitignore
