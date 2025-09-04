@@ -1,6 +1,6 @@
 from omegaconf import OmegaConf
 
-from hippo_eval.harness import build_runner, run_suite
+from hippo_eval.harness import build_runner
 from hippo_mem.common.telemetry import registry
 
 
@@ -15,7 +15,7 @@ def test_telemetry_resets_between_runs() -> None:
             "model": "models/tiny-gpt2",
         }
     )
-    run_suite(build_runner(cfg_mem))
+    build_runner(cfg_mem).run()
     first = registry.get("episodic").snapshot()["requests"]
     assert first > 0
 
@@ -28,6 +28,6 @@ def test_telemetry_resets_between_runs() -> None:
             "model": "models/tiny-gpt2",
         }
     )
-    run_suite(build_runner(cfg_base))
+    build_runner(cfg_base).run()
     second = registry.get("episodic").snapshot()["requests"]
     assert second == 0

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
-from hippo_eval.harness import build_runner, run_suite
+from hippo_eval.harness import build_runner
 from hippo_mem.common.telemetry import registry
 
 
@@ -18,7 +18,7 @@ def test_retrieval_counters_propagate(tmp_path: Path) -> None:
         }
     )
     runner = build_runner(cfg)
-    result = run_suite(runner)
+    result = runner.run()
     assert result.rows  # retrieval executed
     assert "retrieval" in result.metrics
     epi = result.metrics["retrieval"]["episodic"]

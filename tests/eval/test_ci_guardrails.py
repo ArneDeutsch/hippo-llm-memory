@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 
 from hippo_eval.consolidation import eval as test_consolidation
 from hippo_eval.eval import harness as eval_helpers
-from hippo_eval.harness import build_runner, run_suite
+from hippo_eval.harness import build_runner
 
 
 @pytest.mark.parametrize(
@@ -39,7 +39,7 @@ def test_retrieval_requests_guard(
 
     monkeypatch.setattr(eval_helpers, "_dataset_path", lambda s, n, seed, profile=None: data_file)
     with pytest.raises(RuntimeError) as exc:
-        run_suite(build_runner(cfg))
+        build_runner(cfg).run()
     assert "retrieval.requests == 0" in str(exc.value)
 
 
@@ -66,7 +66,7 @@ def test_retrieval_tokens_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
         lambda: {"episodic": {"requests": 1, "tokens_returned": 0}},
     )
     with pytest.raises(RuntimeError) as exc:
-        run_suite(build_runner(cfg))
+        build_runner(cfg).run()
     assert "retrieval.tokens_returned == 0" in str(exc.value)
 
 
@@ -128,7 +128,7 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         }
     )
     with pytest.raises(RuntimeError) as exc:
-        run_suite(build_runner(cfg))
+        build_runner(cfg).run()
     assert "refusal rate > 0.5" in str(exc.value)
 
 
