@@ -9,7 +9,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Iterable
 
 from hippo_eval.reporting import rollup, tables
 
@@ -50,6 +50,14 @@ def _suite_metric(records: Dict[str, dict], suite: str, key: str) -> float:
     """Extract a metric value for ``suite`` from loaded ``records``."""
 
     return float(records.get(suite, {}).get("metrics", {}).get(suite, {}).get(key, 0.0))
+
+
+def _missing_post_metrics(
+    metric_data: Dict[tuple[str, str, int], Iterable[rollup.MetricDict]],
+) -> list[tuple[str, str, int]]:
+    """Return groups lacking any ``post_*`` metrics (compat shim)."""
+
+    return rollup.missing_post_metrics(metric_data)
 
 
 def sanity_sweep(runs_dir: Path, run_id: str) -> None:
@@ -159,6 +167,21 @@ def write_reports(
     missing_pre: Dict[str, tuple[int, int]] | None = None,
 ) -> Dict[str, Path]:
     """Write per-suite reports and optional plots to ``out_dir``."""
+
+    if missing_pre is None:
+        counts: Dict[str, tuple[int, int]] = {}
+        for suite, presets in summary.items():
+            miss = 0
+            total = 0
+            for preset_stats in presets.values():
+                for metrics in preset_stats.values():
+                    for key, stat in metrics.items():
+                        if key.startswith("pre_"):
+                            total += 1
+                            if stat is None:
+                                miss += 1
+            counts[suite] = (miss, total)
+        missing_pre = counts
 
     paths: Dict[str, Path] = {}
     for suite, presets in summary.items():

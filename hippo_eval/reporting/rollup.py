@@ -443,14 +443,27 @@ def write_index(
 
     rows: list[dict[str, object]] = []
     for suite, preset, stats in rollup:
-        row = {"suite": suite, "preset": preset}
+        row = {"Suite": suite, "Preset": preset}
         for key, disp in zip(ordered, display):
             val = stats.get(key)
-            row[disp] = f"{val:.3f}" if isinstance(val, float) else "–"
+            if isinstance(val, float):
+                row[disp] = f"{val:.3f}"
+            elif key.startswith("pre_"):
+                row[disp] = "_missing_"
+            else:
+                row[disp] = "–"
         rows.append(row)
     table_md = make_summary_table(rows)
     body.append(table_md)
     body.append("")
+
+    if missing_pre:
+        bad = missing_pre_suites(missing_pre)
+        if bad:
+            body.append("### Warnings")
+            for suite in bad:
+                body.append(f"- {suite}: MissingPre")
+            body.append("")
 
     if retrieval:
         agg_ret: Dict[str, Dict[str, float]] = {}
