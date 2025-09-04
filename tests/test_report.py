@@ -6,20 +6,22 @@ from pathlib import Path
 
 import pytest
 
-from scripts.report import (
+from hippo_eval.reporting.report import (
     _find_latest_run_id,
-    _missing_pre_suites,
+    main,
+    write_reports,
+    write_smoke,
+)
+from hippo_eval.reporting.rollup import (
     collect_gate_ablation,
     collect_gates,
     collect_lineage,
     collect_metrics,
     collect_retrieval,
-    main,
+    missing_pre_suites,
     summarise,
     summarise_gates,
     summarise_retrieval,
-    write_reports,
-    write_smoke,
 )
 
 
@@ -446,4 +448,4 @@ def test_missing_post_metrics_detector() -> None:
 def test_missing_pre_suites_detector() -> None:
     data = {("episodic", "preset", 50): [{"post_em": 0.8}, {"post_em": 0.7, "pre_em": 0.6}]}
     _, missing_pre = summarise(data)
-    assert _missing_pre_suites(missing_pre) == ["episodic"]
+    assert missing_pre_suites(missing_pre) == ["episodic"]
