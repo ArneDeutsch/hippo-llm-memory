@@ -168,6 +168,36 @@ class _MetricAccumulator:
         }
 
 
+class _MultiMetricAccumulator:
+    """Aggregate spatial metrics with optimality gap and plan length."""
+
+    def __init__(self, total: int) -> None:
+        self.total = total
+        self.success = 0
+        self.subopt_sum = 0.0
+        self.steps_pred = 0
+        self.steps_opt = 0
+        self.counted = 0
+
+    def add(self, row: dict) -> None:
+        self.success += int(row["success"])
+        self.subopt_sum += row["suboptimality"]
+        self.steps_pred += row["steps_pred"]
+        self.steps_opt += row["steps_opt"]
+        self.counted += 1
+
+    def metrics(self) -> dict[str, float]:
+        return {
+            "success_rate": self.success / self.total if self.total else 0.0,
+            "suboptimality_ratio": (self.subopt_sum / self.counted if self.counted else 0.0),
+            "mean_plan_length": (self.steps_pred / self.counted if self.counted else 0.0),
+            "steps_to_goal": (self.steps_opt / self.counted if self.counted else 0.0),
+            "optimality_gap": (
+                (self.steps_pred - self.steps_opt) / self.counted if self.counted else 0.0
+            ),
+        }
+
+
 def _extract_metadata(
     prompt: str,
 ) -> tuple[
@@ -308,3 +338,33 @@ def spatial_kpis(tasks, rows):
         strategy.evaluate(pred, start, goal, size, obstacles, row)
         acc.add(row)
     return acc.metrics()
+
+
+def spatial_multi_kpis(tasks, rows):
+    """Update ``rows`` with metrics and per-episode curves for spatial_multi."""
+
+    acc = _MultiMetricAccumulator(len(rows))
+    per_ep: dict[str, tuple[int, int]] = {}
+    for task, row in zip(tasks, rows):
+        prompt = task.prompt
+        pred = row.get("pred", "")
+        size, obstacles, start, goal, path_moves = _extract_metadata(prompt)
+        if path_moves and start is not None:
+            strategy: SpatialTaskStrategy = _MoveTraceStrategy(path_moves)
+        elif start is None or goal is None:
+            _default_row(row)
+            continue
+        elif "shortest path length" in prompt.lower():
+            strategy = _PathLengthStrategy()
+        else:
+            strategy = _PathSequenceStrategy()
+        strategy.evaluate(pred, start, goal, size, obstacles, row)
+        acc.add(row)
+        ep = getattr(task, "episode_id", None) or "0"
+        succ, tot = per_ep.get(ep, (0, 0))
+        per_ep[ep] = (succ + int(row["success"]), tot + 1)
+    metrics = acc.metrics()
+    for idx, ep in enumerate(sorted(per_ep), start=1):
+        succ, tot = per_ep[ep]
+        metrics[f"success_ep{idx}"] = succ / tot if tot else 0.0
+    return metrics

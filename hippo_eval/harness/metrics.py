@@ -106,6 +106,14 @@ def collect_metrics(
         acc.update_post(post_metrics)
         compute_deltas(acc, pre_metrics, post_metrics)
 
+    if pre_rows and post_rows:
+        pre_len = sum(float(r.get("steps_pred", 0.0)) for r in pre_rows) / max(1, len(pre_rows))
+        post_len = sum(float(r.get("steps_pred", 0.0)) for r in post_rows) / max(1, len(post_rows))
+        acc.metrics["macro_reuse_plen_delta"] = pre_len - post_len
+        pre_lat = sum(float(r.get("latency_ms", 0.0)) for r in pre_rows) / max(1, len(pre_rows))
+        post_lat = sum(float(r.get("latency_ms", 0.0)) for r in post_rows) / max(1, len(post_rows))
+        acc.metrics["macro_reuse_latency_delta_ms"] = pre_lat - post_lat
+
     metrics: Dict[str, object] = {
         "version": 2,
         "phase": str(getattr(cfg, "mode", "test")),
