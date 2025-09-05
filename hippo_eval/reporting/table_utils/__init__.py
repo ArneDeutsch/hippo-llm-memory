@@ -27,6 +27,9 @@ _DISPLAY_NAMES = {
     "format_violation": "format_violation",
     "memory_hit_rate": "memory_hit_rate",
     "latency_ms_delta": "latency_ms_delta",
+    "context_match_rate": "context_match_rate",
+    "justification_coverage": "justification_coverage",
+    "gate_accept_rate": "gate_accept_rate",
     "uplift_vs_longctx_em": "ΔEM vs longctx",
     "uplift_vs_longctx_f1": "ΔF1 vs longctx",
 }

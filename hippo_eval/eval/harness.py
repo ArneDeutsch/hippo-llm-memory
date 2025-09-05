@@ -678,6 +678,14 @@ def _enforce_guardrails(
         if any(rate > 0.5 for rate in rates):
             raise RuntimeError("refusal rate > 0.5 on span suite")
 
+    ceiling = cfg.get("baseline_ceiling")
+    allow_high = bool(cfg.get("allow_baseline_high"))
+    if ceiling is not None and not allow_high:
+        em_key = "em_norm" if cfg.get("primary_em") == "norm" else "em_raw"
+        em_val = pre_metrics.get(em_key, pre_metrics.get("em", 0.0))
+        if em_val > float(ceiling):
+            raise RuntimeError(f"baseline EM {em_val:.2f} exceeds ceiling {float(ceiling):.2f}")
+
 
 def _write_outputs(
     outdir: Path,
