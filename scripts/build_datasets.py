@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parent
 
 
 def _run_cli(args: list[str]) -> None:
-    """Invoke ``datasets_cli.py`` with ``args``."""
-    cmd = [sys.executable, str(ROOT / "datasets_cli.py"), *args]
+    """Invoke the datasets CLI module with ``args``."""
+    cmd = [sys.executable, "-m", "hippo_eval.datasets.cli", *args]
     subprocess.run(cmd, check=True)
 
 
