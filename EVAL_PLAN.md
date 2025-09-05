@@ -74,13 +74,13 @@ BASE="n=50 seed=1337"
 # semantic_mem
 python scripts/eval_cli.py suite=semantic_mem preset=baseline $BASE \
   outdir=runs/$RUN_ID/semantic_mem_baseline
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
   mode=teach --no-retrieval-during-teach=true $BASE \
   outdir=runs/$RUN_ID/semantic_mem_teach \
-  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
   mode=test $BASE outdir=runs/$RUN_ID/semantic_mem_test \
-  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
+  store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 
 # episodic_cross_mem
 python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline $BASE \
@@ -88,10 +88,10 @@ python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline $BASE \
 python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
   mode=teach --no-retrieval-during-teach=true $BASE \
   outdir=runs/$RUN_ID/episodic_cross_mem_teach \
-  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
+  store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
   mode=test $BASE outdir=runs/$RUN_ID/episodic_cross_mem_test \
-  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
+  store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 
 # spatial_multi (includes replay)
 python scripts/eval_cli.py suite=spatial_multi preset=baseline $BASE \
@@ -99,13 +99,13 @@ python scripts/eval_cli.py suite=spatial_multi preset=baseline $BASE \
 python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
   mode=teach --no-retrieval-during-teach=true $BASE \
   outdir=runs/$RUN_ID/spatial_multi_teach \
-  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+  store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
   mode=replay $BASE outdir=runs/$RUN_ID/spatial_multi_replay \
-  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+  store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
   mode=test $BASE outdir=runs/$RUN_ID/spatial_multi_test \
-  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+  store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 ```
 
 Smoke tests pass when baseline EM ≤ 0.2 for memory-required suites and

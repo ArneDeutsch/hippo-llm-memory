@@ -27,7 +27,6 @@ import hydra
 import numpy as np
 import torch
 import torch.nn.functional as F
-from datasets import load_dataset
 from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 from peft import LoraConfig, get_peft_model
@@ -35,6 +34,7 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainerCallback
 from trl import SFTConfig, SFTTrainer
 
+from datasets import load_dataset
 from hippo_mem.adapters.episodic_adapter import EpisodicMemoryAdapter
 from hippo_mem.adapters.lora import count_trainable_parameters, default_target_modules
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
