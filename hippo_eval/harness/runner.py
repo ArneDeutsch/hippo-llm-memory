@@ -60,7 +60,17 @@ class Runner:
             self.cfg.suite, self.cfg.n, self.cfg.seed, self.cfg.get("dataset_profile")
         )
         raw_tasks = load_dataset(dataset, {"n": self.cfg.n})
-        tasks = [_h.Task(prompt=str(obj["prompt"]), answer=str(obj["answer"])) for obj in raw_tasks]
+        tasks = [
+            _h.Task(
+                prompt=str(obj["prompt"]),
+                answer=str(obj["answer"]),
+                qid=str(obj.get("qid")) if obj.get("qid") is not None else None,
+                episode_id=(
+                    str(obj.get("episode_id")) if obj.get("episode_id") is not None else None
+                ),
+            )
+            for obj in raw_tasks
+        ]
 
         flat_ablate = _h._flatten_ablate(base_cfg.get("ablate"))
         modules = _h._init_modules(
@@ -147,6 +157,8 @@ class Runner:
             compute_metrics=True,
             mode="test",
             gating=gating,
+            no_retrieval_during_teach=self.cfg.no_retrieval_during_teach,
+            isolate=self.cfg.isolate,
         )
         metrics["em"] = (
             metrics.get("em_norm", 0.0)

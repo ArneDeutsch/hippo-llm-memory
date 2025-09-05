@@ -65,6 +65,7 @@ def relational_retrieve_and_pack(
     kg: KnowledgeGraph,
     proj: nn.Module,
     pooler: NodePooler | None = None,
+    context_keys: list[str | None] | None = None,
 ) -> MemoryTokens:
     """Retrieve KG neighborhoods and package as ``MemoryTokens``.
 
@@ -121,6 +122,7 @@ def relational_retrieve_and_pack(
         telemetry_key="relational",
     )
     mem.meta["nodes"] = names
+    mem.meta["trace_context_keys"] = [[None] * len(n) for n in names]
     return mem
 
 

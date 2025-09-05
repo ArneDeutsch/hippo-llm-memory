@@ -53,7 +53,7 @@ from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
 from .encode import encode_prompt
 from .models import load_model_config
-from .store_utils import resolve_store_meta_path
+from .store_utils import clear_store, resolve_store_meta_path
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -123,6 +123,8 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
         cfg.session_id = cfg.get("session_id")
         cfg.persist = cfg.get("persist", False)
         cfg.memory_off = cfg.get("memory_off", False)
+        cfg.no_retrieval_during_teach = cfg.get("no_retrieval_during_teach", True)
+        cfg.isolate = cfg.get("isolate", "none")
         model_cfg = load_model_config(str(cfg.model))
         if cfg.get("use_chat_template") is None:
             cfg.use_chat_template = model_cfg.get("use_chat_template", False)
@@ -188,6 +190,8 @@ class Task:
 
     prompt: str
     answer: str
+    qid: str | None = None
+    episode_id: str | None = None
 
 
 def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> Path:
@@ -275,6 +279,8 @@ def _evaluate(
     long_context_enabled: bool = False,
     mode: str = "test",
     gating: Dict[str, GateCounters] | None = None,
+    no_retrieval_during_teach: bool = False,
+    isolate: str = "none",
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
@@ -289,22 +295,34 @@ def _evaluate(
     total = len(task_list)
     progress_interval = max(1, total // 10) if total else 1
     t0 = time.perf_counter()
+    if mode == "teach" and no_retrieval_during_teach:
+        retrieval_enabled = False
     for idx, item in enumerate(task_list, 1):
         item_t0 = time.perf_counter()
         mem_hit = False
         mem_latency = 0.0
         router_path: List[str] = []
         topk_keys: List[str] = []
+        mems: List[MemoryTokens] = []
+        context_key = (
+            getattr(item, "episode_id", None)
+            or getattr(item, "qid", None)
+            or (f"{suite}/{idx:05d}" if suite else str(idx))
+        )
+        req_before = {k: registry.get(k).requests for k in ("episodic", "relational", "spatial")}
+        size_before_map, _ = _store_sizes(modules)
+        size_before = sum(size_before_map.values())
         if retrieval_enabled and modules:
             hidden = torch.zeros(1, 1, 8)
-            mems: List[MemoryTokens] = []
             if "episodic" in modules:
                 store = modules["episodic"]["store"]
                 adapter = modules["episodic"]["adapter"]
                 proj = getattr(adapter, "proj", nn.Linear(store.dim, 8))
                 adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="episodic", k=1)
-                mem = episodic_retrieve_and_pack(hidden, spec, store, proj)
+                mem = episodic_retrieve_and_pack(
+                    hidden, spec, store, proj, context_keys=[context_key]
+                )
                 mems.append(mem)
                 mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
                 mem_latency += float(mem.meta.get("latency_ms", 0.0))
@@ -318,7 +336,9 @@ def _evaluate(
                 proj = getattr(adapter, "proj", nn.Linear(in_dim, hidden_dim))
                 adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="relational", k=1)
-                mem = relational_retrieve_and_pack(hidden, spec, kg, proj)
+                mem = relational_retrieve_and_pack(
+                    hidden, spec, kg, proj, context_keys=[context_key]
+                )
                 mems.append(mem)
                 mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
                 mem_latency += float(mem.meta.get("latency_ms", 0.0))
@@ -330,7 +350,9 @@ def _evaluate(
                 proj = getattr(adapter, "proj", nn.Linear(4, 8))
                 adapter.proj = proj  # type: ignore[attr-defined]
                 spec = TraceSpec(source="spatial")
-                mem = spatial_retrieve_and_pack("origin", spec, graph, proj)
+                mem = spatial_retrieve_and_pack(
+                    "origin", spec, graph, proj, context_keys=[context_key]
+                )
                 mems.append(mem)
                 mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
                 mem_latency += float(mem.meta.get("latency_ms", 0.0))
@@ -392,7 +414,7 @@ def _evaluate(
                 if decision.action == "insert":
                     gc.accepted += 1
                     if mode == "teach":
-                        store.write(q, item.answer)
+                        store.write(q, item.answer, context_key=context_key)
                 else:
                     gc.skipped += 1
             if "relational" in modules and modules["relational"].get("gate") is not None:
@@ -425,6 +447,18 @@ def _evaluate(
                     gc.accepted += 1
                 else:
                     gc.skipped += 1
+        req_after = {k: registry.get(k).requests for k in ("episodic", "relational", "spatial")}
+        retrieval_requests = sum(req_after.values()) - sum(req_before.values())
+        size_after_map, _ = _store_sizes(modules)
+        size_after = sum(size_after_map.values())
+        writes_count = size_after - size_before
+        context_hits = total_tr = 0
+        for mem in mems:
+            for ck in mem.meta.get("trace_context_keys", []):
+                total_tr += 1
+                if ck == context_key:
+                    context_hits += 1
+        context_match_rate = (context_hits / total_tr) if total_tr else 0.0
 
         input_tokens += inputs["input_ids"].shape[-1]
         gen_tokens += gen.shape[-1]
@@ -451,8 +485,29 @@ def _evaluate(
                 "topk_keys": topk_keys or None,
                 "distance": None,
                 "justification": None,
+                "context_key": context_key,
+                "retrieval_requests": retrieval_requests,
+                "writes_count": writes_count,
+                "store_size_before": size_before,
+                "store_size_after": size_after,
+                "context_match_rate": context_match_rate,
             }
         )
+
+        if isolate == "per_item":
+            for mod in modules.values():
+                if "store" in mod:
+                    clear_store(mod["store"])
+        elif isolate == "per_episode":
+            next_episode = (
+                getattr(task_list[idx] if idx < total else None, "episode_id", None)
+                if idx < total
+                else None
+            )
+            if next_episode != getattr(item, "episode_id", None):
+                for mod in modules.values():
+                    if "store" in mod:
+                        clear_store(mod["store"])
         if idx % progress_interval == 0 or idx == total:
             log.info("    processed %d/%d tasks", idx, total)
     n = len(rows)
@@ -731,6 +786,12 @@ def _write_outputs(
             "topk_keys",
             "distance",
             "justification",
+            "context_key",
+            "retrieval_requests",
+            "writes_count",
+            "store_size_before",
+            "store_size_after",
+            "context_match_rate",
             "success",
             "steps_pred",
             "steps_opt",
@@ -919,6 +980,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     gating: Dict[str, GateCounters] = {
         k: GateCounters() for k in ("episodic", "relational", "spatial")
     }
+    cfg.no_retrieval_during_teach = cfg.get("no_retrieval_during_teach", True)
+    cfg.isolate = cfg.get("isolate", "none")
 
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile)
     raw_tasks = load_dataset(dataset, {"n": cfg.n})
@@ -1030,6 +1093,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             long_context_enabled=long_ctx_enabled,
             mode="teach",
             gating=gating,
+            no_retrieval_during_teach=cfg.no_retrieval_during_teach,
+            isolate=cfg.isolate,
         )
         if compute_metrics:
             pre_metrics["em"] = (
@@ -1168,6 +1233,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             long_context_enabled=long_ctx_enabled,
             mode=cfg.mode,
             gating=gating,
+            no_retrieval_during_teach=cfg.no_retrieval_during_teach,
+            isolate=cfg.isolate,
         )
         for name, snap in gate_snaps.items():
             stats = gate_registry.get(name)
@@ -1228,6 +1295,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         long_context_enabled=long_ctx_enabled,
         mode=cfg.mode,
         gating=gating,
+        no_retrieval_during_teach=cfg.no_retrieval_during_teach,
+        isolate=cfg.isolate,
     )
     if pre_compute:
         pre_metrics["em"] = (

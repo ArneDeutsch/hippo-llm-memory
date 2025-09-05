@@ -16,6 +16,7 @@ def spatial_retrieve_and_pack(
     spec: TraceSpec,
     graph: PlaceGraph,
     proj: nn.Linear,
+    context_keys: list[str | None] | None = None,
 ) -> MemoryTokens:
     """Gather a local subgraph and project to ``d_model`` memory tokens.
 
@@ -86,7 +87,7 @@ def spatial_retrieve_and_pack(
             hint=hint or "",
         )
 
-    return retrieve_and_pack_base(
+    mem = retrieve_and_pack_base(
         iter_retrieve,
         k=total,
         device=device,
@@ -95,6 +96,8 @@ def spatial_retrieve_and_pack(
         build_meta_fn=meta_fn,
         telemetry_key="spatial",
     )
+    mem.meta["trace_context_keys"] = [[None] * total]
+    return mem
 
 
 __all__ = ["spatial_retrieve_and_pack"]
