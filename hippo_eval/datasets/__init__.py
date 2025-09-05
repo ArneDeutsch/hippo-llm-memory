@@ -1,41 +1,27 @@
-"""Dataset utilities and generator dispatch."""
-
-from __future__ import annotations
-
 import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
-from hippo_eval.tasks.generators import (
-    generate_episodic,
-    generate_episodic_capacity,
-    generate_episodic_cross,
-    generate_episodic_cross_mem,
-    generate_episodic_multi,
-    generate_semantic,
-    generate_spatial,
-)
+from hippo_eval.tasks.generators import generate_episodic_cross_mem, generate_semantic
+from hippo_eval.tasks.spatial.generator_multi import generate_spatial_multi
 
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
 
 SUITE_TO_GENERATOR = {
-    "episodic": generate_episodic,
-    "semantic": generate_semantic,
-    "spatial": generate_spatial,
-    "episodic_multi": generate_episodic_multi,
-    "episodic_cross": generate_episodic_cross,
-    "episodic_cross_mem": generate_episodic_cross_mem,
     "semantic_mem": lambda *a, **k: generate_semantic(*a, require_memory=True, **k),
-    "episodic_capacity": generate_episodic_capacity,
+    "episodic_cross_mem": generate_episodic_cross_mem,
+    "spatial_multi": lambda size, seed, profile="default", **kwargs: generate_spatial_multi(
+        num_teach=size, num_test=size, seed=seed, profile=profile, **kwargs
+    ),
 }
 
 
 def generate_dataset(
     suite: str, size: int, seed: int, profile: str = "default", **kwargs: Any
-) -> List[Dict[str, object]]:
+) -> Dict[str, List[Dict[str, object]]]:
     """Dispatch to the generator for ``suite`` with a difficulty profile."""
     try:
         generator = SUITE_TO_GENERATOR[suite]
@@ -94,7 +80,7 @@ def update_dataset_card(
             "created_utc": datetime.now(timezone.utc).isoformat(),
             "cli_example": (
                 f"python scripts/datasets_cli.py --suite {suite} --size <size> "
-                f"--seed <seed> --out data/{suite}/<size>_<seed>.jsonl"
+                f"--seed <seed> --out datasets/{suite}"
             ),
         }
     card["files"][filename] = digest
@@ -110,11 +96,7 @@ __all__ = [
     "sha256_file",
     "record_checksum",
     "update_dataset_card",
-    "generate_episodic",
-    "generate_semantic",
-    "generate_spatial",
-    "generate_episodic_multi",
-    "generate_episodic_cross",
     "generate_episodic_cross_mem",
-    "generate_episodic_capacity",
+    "generate_semantic",
+    "generate_spatial_multi",
 ]

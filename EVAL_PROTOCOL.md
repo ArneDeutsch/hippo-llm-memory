@@ -5,8 +5,7 @@ _Updated: 2025-08-28 (by ChatGPT)_
 This protocol executes a **complete, reproducible** validation run across **baselines** and **memory-enabled** algorithms (HEI‑NW, SGC‑RSS, SMPD), plus **ablations** and **consolidation** checks (Milestone 9.5).
 
 The default path uses the memory‑first suites `semantic_mem`, `episodic_cross_mem`,
-and `spatial_multi`. Legacy in‑prompt suites remain available only for temporary
-comparison.
+and `spatial_multi`.
 
 Evaluation pipelines, metrics, reporting code, and synthetic tasks reside in the
 `hippo_eval` package. Legacy `hippo_mem.*` paths remain as shims emitting
@@ -582,29 +581,6 @@ echo "  - $ADAPTERS    (trained adapters, if any)"
 ### Appendix — Deprecated commands
 
 - `python scripts/run_baselines_bench.py`: **CI/plumbing‑only**. It calls the light‑weight bench that returns ground truth as predictions; **do not use** for real baselines.
-
-### Appendix — Legacy Path (Deprecated)
-
-> **Legacy Path (Deprecated)**
-> The in‑prompt suites remain runnable for side‑by‑side checks but are slated
-> for removal.
-
-```bash
-# semantic
-python scripts/eval_cli.py suite=semantic preset=baseline n=50 seed=1337 \
-  outdir=runs/$RUN_ID/legacy_semantic_baseline
-
-# episodic_cross
-python scripts/eval_cli.py suite=episodic_cross preset=baseline n=50 seed=1337 \
-  outdir=runs/$RUN_ID/legacy_episodic_cross_baseline
-
-# spatial
-python scripts/eval_cli.py suite=spatial preset=baseline n=50 seed=1337 \
-  outdir=runs/$RUN_ID/legacy_spatial_baseline
-```
-
-They retain facts inside prompts and will be removed after two consecutive
-green runs of the memory-first pipeline.
 
 ## Migration notes
 
