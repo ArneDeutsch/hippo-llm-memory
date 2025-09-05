@@ -100,7 +100,7 @@ To control replay loops, pass `replay_cycles=<n>` or `replay.cycles=<n>`.
 ### semantic_mem
 
 ```bash
-python scripts/build_datasets.py --suite semantic --size 50 --seed 1337
+python scripts/build_datasets.py --suite semantic_mem --size 50 --seed 1337
 python scripts/eval_cli.py suite=semantic_mem preset=baseline n=50 seed=1337 \
   outdir=runs/$RUN_ID/semantic_mem_baseline
 python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
