@@ -116,7 +116,7 @@ python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
 ### episodic_cross_mem
 
 ```bash
-python scripts/build_datasets.py --suite episodic_cross --size 50 --seed 1337
+python scripts/build_datasets.py --suite episodic_cross_mem --size 50 --seed 1337
 python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline n=50 seed=1337 \
   outdir=runs/$RUN_ID/episodic_cross_mem_baseline
 python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
