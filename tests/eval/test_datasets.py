@@ -54,9 +54,11 @@ def test_semantic_options() -> None:
 def test_semantic_require_memory_omits_facts() -> None:
     """When ``require_memory`` is set, prompts exclude fact sentences."""
 
-    item = build_datasets.generate_semantic(1, seed=0, require_memory=True, profile="hard")[0]
-    for fact in item["facts"]:
-        assert fact["text"] not in item["prompt"]
+    data = build_datasets.generate_semantic(1, seed=0, require_memory=True, profile="hard")
+    test_item = data["test"][0]
+    facts = [t["fact"] for t in data["teach"] if t["context_key"] == test_item["context_key"]]
+    for fact in facts:
+        assert fact not in test_item["prompt"]
 
 
 def test_semantic_paraphrasing_and_pronouns() -> None:
@@ -77,11 +79,28 @@ def test_semantic_paraphrasing_and_pronouns() -> None:
 def test_semantic_three_hop_facts() -> None:
     """3-hop chains emit three schema-fit facts in order."""
 
-    item = build_datasets.generate_semantic(1, seed=0, hop_depth=3, require_memory=True)[0]
-    facts = [f["text"] for f in item["facts"] if f["schema_fit"]]
+    data = build_datasets.generate_semantic(1, seed=0, hop_depth=3, require_memory=True)
+    test_item = data["test"][0]
+    facts = [
+        f["fact"]
+        for f in data["teach"]
+        if f["context_key"] == test_item["context_key"] and f["schema_fit"]
+    ]
     assert any("bought" in f or "purchased" in f for f in facts)
     assert any("sold" in f or "found" in f for f in facts)
     assert any("is in" in f or "is located" in f for f in facts)
+
+
+def test_episodic_cross_mem_split() -> None:
+    """Cross-session episodic generator emits teach/test pairs."""
+
+    data = build_datasets.generate_episodic_cross_mem(1, seed=0)
+    assert len(data["teach"]) == 1
+    assert len(data["test"]) == 1
+    teach_item = data["teach"][0]
+    test_item = data["test"][0]
+    assert teach_item["context_key"] == test_item["context_key"]
+    assert teach_item["fact"] not in test_item["prompt"]
 
 
 def test_episodic_flags() -> None:

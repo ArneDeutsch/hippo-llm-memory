@@ -30,21 +30,25 @@ def test_cli_generates_episodic_multi(tmp_path: Path) -> None:
     assert any("Actually" in item["prompt"] for item in data)
 
 
-def test_cli_episodic_cross_capacity(tmp_path: Path) -> None:
-    out = tmp_path / "epi_cross.jsonl"
+def test_cli_require_memory_semantic(tmp_path: Path) -> None:
+    out_dir = tmp_path / "semantic"
     cmd = [
         sys.executable,
         "-m",
         "hippo_eval.datasets.cli",
         "--suite",
-        "episodic_cross",
+        "semantic",
         "--size",
-        "1000",
+        "5",
         "--seed",
         "0",
         "--out",
-        str(out),
+        str(out_dir),
+        "--require-memory",
     ]
     subprocess.run(cmd, check=True)
-    data = _read_jsonl(out)
-    assert len(data) == 1000
+    teach = _read_jsonl(out_dir / "semantic_teach.jsonl")
+    test = _read_jsonl(out_dir / "semantic_test.jsonl")
+    assert teach and test
+    keys = {t["context_key"] for t in teach}
+    assert keys == {t["context_key"] for t in test}

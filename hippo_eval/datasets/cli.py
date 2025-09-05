@@ -64,7 +64,7 @@ def main() -> None:
     parser.add_argument("--size", type=int, default=100, help="Number of items")
     parser.add_argument("--n", dest="size", type=int, help=argparse.SUPPRESS)
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
-    parser.add_argument("--out", type=Path, required=True, help="Output JSONL path")
+    parser.add_argument("--out", type=Path, required=True, help="Output path (file or directory)")
     parser.add_argument(
         "--profile",
         choices=["easy", "default", "hard"],
@@ -124,19 +124,51 @@ def main() -> None:
         default=0.0,
         help="Pronoun ambiguity probability for semantic suite",
     )
+    parser.add_argument(
+        "--require-memory",
+        action="store_true",
+        help="Emit paired teach/test files that require memory",
+    )
     args = parser.parse_args()
     _validate_args(parser, args)
 
     profile_cfg = _load_profile(args.profile).get(args.suite, {})
     build = SUITE_STRATEGIES.get(args.suite, lambda *_: {})
     kwargs = build(args, profile_cfg)
-    generator = SUITE_TO_GENERATOR[args.suite]
-    items = generator(args.size, args.seed, profile=args.profile, **kwargs)
-    write_jsonl(args.out, items)
-    checksum_path = args.out.parent / "checksums.json"
-    digest = record_checksum(args.out, checksum_path)
-    version = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
-    update_dataset_card(args.suite, args.out.parent, args.out.name, digest, version)
+    if args.require_memory and args.suite == "episodic_cross":
+        generator = SUITE_TO_GENERATOR["episodic_cross_mem"]
+        items = generator(args.size, args.seed, profile=args.profile, **kwargs)
+    elif args.require_memory and args.suite == "semantic":
+        generator = SUITE_TO_GENERATOR["semantic_mem"]
+        items = generator(args.size, args.seed, profile=args.profile, **kwargs)
+    else:
+        generator = SUITE_TO_GENERATOR[args.suite]
+        items = generator(args.size, args.seed, profile=args.profile, **kwargs)
+
+    if args.require_memory:
+        out_dir = args.out
+        out_dir.mkdir(parents=True, exist_ok=True)
+        teach_path = out_dir / f"{args.suite}_teach.jsonl"
+        test_path = out_dir / f"{args.suite}_test.jsonl"
+        write_jsonl(teach_path, items["teach"])
+        write_jsonl(test_path, items["test"])
+        checksum_path = out_dir / "checksums.json"
+        version = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+        d_teach = record_checksum(teach_path, checksum_path)
+        update_dataset_card(f"{args.suite}_mem", out_dir, teach_path.name, d_teach, version)
+        d_test = record_checksum(test_path, checksum_path)
+        update_dataset_card(f"{args.suite}_mem", out_dir, test_path.name, d_test, version)
+        keywords = {t["fact"] for t in items["teach"]}
+        for entry in items["test"]:
+            text = entry.get("prompt", "")
+            if any(k in text for k in keywords):
+                raise SystemExit(f"Leak detected in test prompt: {text}")
+    else:
+        write_jsonl(args.out, items)
+        checksum_path = args.out.parent / "checksums.json"
+        digest = record_checksum(args.out, checksum_path)
+        version = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+        update_dataset_card(args.suite, args.out.parent, args.out.name, digest, version)
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry point
