@@ -12,6 +12,7 @@ from hippo_eval.tasks.generators import (
     generate_episodic,
     generate_episodic_capacity,
     generate_episodic_cross,
+    generate_episodic_cross_mem,
     generate_episodic_multi,
     generate_semantic,
     generate_spatial,
@@ -26,6 +27,8 @@ SUITE_TO_GENERATOR = {
     "spatial": generate_spatial,
     "episodic_multi": generate_episodic_multi,
     "episodic_cross": generate_episodic_cross,
+    "episodic_cross_mem": generate_episodic_cross_mem,
+    "semantic_mem": lambda *a, **k: generate_semantic(*a, require_memory=True, **k),
     "episodic_capacity": generate_episodic_capacity,
 }
 
@@ -112,5 +115,6 @@ __all__ = [
     "generate_spatial",
     "generate_episodic_multi",
     "generate_episodic_cross",
+    "generate_episodic_cross_mem",
     "generate_episodic_capacity",
 ]
