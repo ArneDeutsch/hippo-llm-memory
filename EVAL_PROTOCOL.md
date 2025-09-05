@@ -1,591 +1,62 @@
-# EVAL_PROTOCOL.md — Full Validation Run (Milestones 9 & 9.5)
+# EVAL_PROTOCOL — Minimal, Parameterized (GPU)
+**Purpose:** Run the evaluation pipeline with minimal, consistent commands.
 
-_Updated: 2025-08-28 (by ChatGPT)_
-
-This protocol executes a **complete, reproducible** validation run across **baselines** and **memory-enabled** algorithms (HEI‑NW, SGC‑RSS, SMPD), plus **ablations** and **consolidation** checks (Milestone 9.5).
-
-The default path uses the memory‑first suites `semantic_mem`, `episodic_cross_mem`,
-and `spatial_multi`.
-
-Evaluation pipelines, metrics, reporting code, and synthetic tasks reside in the
-`hippo_eval` package. Legacy `hippo_mem.*` paths remain as shims emitting
-`DeprecationWarning`.
-
-> All commands are copy‑pasteable in **bash**. Lines with `#` are comments.
-
-> **Canonical entry point:** Use `scripts/eval_model.py` for all evaluations, including
-> baselines. The lightweight bench wrapper `scripts/run_baselines_bench.py` is
-> reserved for CI smoke tests and requires `ALLOW_BENCH=1` to run.
-
----
-
-### Choosing a run identifier
-
-Set a stable run identifier once before running the protocol:
-
+## Variables
+Set once per run:
 ```bash
-export RUN_ID=my_experiment   # slug [A-Za-z0-9_-], 3–64 chars
-source scripts/_env.sh
+export RUN_ID=run_YYYYMMDD
+export SIZES=(50)      # e.g., 50 100 200
+export SEEDS=(1337)    # e.g., 1337 2025
+source scripts/_env.sh   # exports RUNS, STORES=runs/$RUN_ID/stores
 ```
 
-All outputs go to `runs/$RUN_ID/...`; no normalization happens.
-
-> <span style="color:red;font-weight:bold">MUST:</span> Use the same `run_id` for every command. Valid slugs match `^[A-Za-z0-9_-]{3,64}$`.
-
-> **Parameter reference**
-> - `--store_dir`: base directory for persistent stores, typically `$STORES`
-> - `--session_id`: logical key nested under each algorithm's subfolder
-> - `--persist`: write to `store_dir` during `mode=teach` or `mode=replay`
-> - `--mode`: `{teach,replay,test}` phase selector
-
-#### Minimal end-to-end example
-
+## Build Datasets
+Run per suite (adjust size/seed loops as needed):
 ```bash
-RUN_ID=my_experiment
-source scripts/_env.sh
-export SGC_SESSION=sgc_$RUN_ID
-python scripts/build_datasets.py --suite semantic --size 50 --seed 1337
-python scripts/eval_cli.py suite=semantic_mem preset=baseline n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_baseline
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
-  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_teach \
-  store_dir=$STORES session_id=$SGC_SESSION
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
-  mode=test n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_test \
-  store_dir=$STORES session_id=$SGC_SESSION
-python scripts/report.py --run-id $RUN_ID
+python -m hippo_eval.datasets.cli --suite semantic_mem --size ${SIZES[0]} --seed ${SEEDS[0]}
+python -m hippo_eval.datasets.cli --suite episodic_cross_mem --size ${SIZES[0]} --seed ${SEEDS[0]}
+python -m hippo_eval.datasets.cli --suite spatial_multi --size ${SIZES[0]} --seed ${SEEDS[0]}
 ```
 
-### Teach→test recipe
-
+## Semantic Memory (sgc_rss)
 ```bash
-# Shared environment
-export RUN_ID=my_experiment
-export STORES=runs/$RUN_ID/stores
-export SGC_SESSION=sgc_$RUN_ID      # per-algorithm session ids
-
-# 1) Teach – write experiences
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
-  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_teach \
-  store_dir=$STORES session_id=$SGC_SESSION
-
-# 2) Test – read from the same store
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
-  mode=test n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_test \
-  store_dir=$STORES session_id=$SGC_SESSION
-```
-
-Store layout:
-
-```
-runs/$RUN_ID/stores/
-  sgc_rss/$SGC_SESSION/kg.jsonl
-  hei_nw/$HEI_SESSION/episodic.jsonl
-  smpd/$SMPD_SESSION/spatial.jsonl
-```
-
-> **Store directory patterns**\
-> Recommended: `store_dir=runs/$RUN_ID/stores` (algo inferred).\
-> Explicit: `store_dir=runs/$RUN_ID/stores/hei_nw` (manual algo subdir).\
-> Both resolve in preflight.
-
-To control replay loops, pass `replay_cycles=<n>` or `replay.cycles=<n>`.
-
-## Memory-First Suite Recipes
-
-### semantic_mem
-
-```bash
-python scripts/build_datasets.py --suite semantic_mem --size 50 --seed 1337
-python scripts/eval_cli.py suite=semantic_mem preset=baseline n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_baseline
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
-  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_teach \
-  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
-  mode=test n=50 seed=1337 \
-  outdir=runs/$RUN_ID/semantic_mem_test \
-  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
-```
-
-### episodic_cross_mem
-
-```bash
-python scripts/build_datasets.py --suite episodic_cross_mem --size 50 --seed 1337
-python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline n=50 seed=1337 \
-  outdir=runs/$RUN_ID/episodic_cross_mem_baseline
-python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
-  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
-  outdir=runs/$RUN_ID/episodic_cross_mem_teach \
-  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
-python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
-  mode=test n=50 seed=1337 \
-  outdir=runs/$RUN_ID/episodic_cross_mem_test \
-  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
-```
-
-### spatial_multi
-
-```bash
-python scripts/build_datasets.py --suite spatial_multi --size 50 --seed 1337
-python scripts/eval_cli.py suite=spatial_multi preset=baseline n=50 seed=1337 \
-  outdir=runs/$RUN_ID/spatial_multi_baseline
-python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
-  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
-  outdir=runs/$RUN_ID/spatial_multi_teach \
-  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
-python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
-  mode=replay n=50 seed=1337 \
-  outdir=runs/$RUN_ID/spatial_multi_replay \
-  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
-python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
-  mode=test n=50 seed=1337 \
-  outdir=runs/$RUN_ID/spatial_multi_test \
-  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
-```
-
-### Smoke block (`n=50`, `seed=1337`)
-
-Run the above recipes with the given `RUN_ID`. Baseline EM must stay ≤0.2 on
-`semantic_mem` and `episodic_cross_mem`; memory variants should show clear
-uplift and non-zero retrieval requests.
-
-### Dataset profiles
-
-Two difficulty profiles control task hardness and expected memory gains:
-
-- **default** – moderate difficulty; baseline EM should land within the ranges in [EVAL_PLAN.md §1.2](EVAL_PLAN.md#12-expected-baseline-em-ranges) and memory-enabled runs should improve EM by ≥ 0.2.
-- **hard** – adds distractors or contradictions so baseline EM drops well below 1.0; memory is expected to lift EM by ≥ 0.2. Use when baselines saturate. The easy `semantic` and `episodic_cross` splits saturate and are retained only as smoke tests.
-
-| Suite              | Recommended profile |
-| ------------------ | ------------------ |
-| episodic           | default            |
-| episodic_multi     | default            |
-| episodic_cross     | hard               |
-| episodic_capacity  | hard               |
-| semantic           | hard               |
-| spatial            | default            |
-
-```bash
-# Recommended flags for sensitive suites
-suite=episodic_cross dataset_profile=hard --strict-telemetry
-suite=episodic_capacity dataset_profile=hard --strict-telemetry
-suite=semantic       dataset_profile=hard --strict-telemetry
-```
-
-### Success bars
-
-- **episodic**: `ΔEM(core→memory) ≥ 0.10` and `EM(memory) ≥ EM(longctx)` with
-  `memory_hit_rate ≥ 0.3`.
-- **semantic**: positive EM uplift over `baselines/longctx` on the
-  `semantic(hard)` split.
-- **spatial**: `EM ≥ 0.10` or `steps_to_goal` reduced by ≥20%.
-
-`semantic(default)` and `episodic_cross(default)` remain only as **smoke tests**
-because their baselines saturate.
-
-### Telemetry invariants
-
-Runs must satisfy these checks; reports flag violations with ⚠️:
-
-- Baselines: `retrieval.*.requests == 0` and `store.size == 0`.
-- Ablations with retrieval disabled (e.g., `longctx_no_retrieval`):
-  `retrieval.*.requests == 0`.
-- Memory presets with gates enabled: `gate.*.attempts > 0`.
-- Spatial gate attempts must be > 0 on memory presets.
-- If `pre_em_norm ≥ 0.98` while the matching baseline `< 0.20`, the suite is
-  flagged as saturation-suspect.
-
-Use `--strict-telemetry` to turn warnings into errors.
-
-### Teach vs test
-
-- `mode=teach` writes to stores (respect gates when enabled) and **should not**
-  grade EM.
-- `mode=test` reads from stores without writing.
-- Baselines run in `mode=teach` for parity but must keep retrieval counters at
-  zero.
-- Baselines MUST NOT be run with `persist=true`.
-
-### Pre-flight checklist
-
-Confirm before launching full runs:
-
-- `compute.pre_metrics=true` so baselines record `pre_*` metrics.
-- For memory presets, `replay.samples>=1` when `persist=true`.
-- Selected `dataset_profile` (`default` or `hard`) is explicit.
-- Baseline EM falls within expected ranges (see `EVAL_PLAN.md` §1.2).
-
-### Meaningful Run Contract
-
-A run counts as **meaningful** only if these conditions hold:
-
-- Baselines record non-NaN `pre_*` metrics and land within the expected ranges in `EVAL_PLAN.md` §1.2.
-- Each memory algorithm writes a non-stub store with `replay.samples ≥ 1`.
-- `gate.attempts > 0` and at least one write occurs during `mode=teach`.
-- Memory presets log `retrieval.requests > 0`.
-- Semantic and spatial suites show a ≥0.2 EM drop when their stores are ablated.
-- Metrics obey invariants (e.g., `em_norm == 0` when `em_raw == 0`).
-
-> **Troubleshooting (baseline retrieval > 0):**
-> - Ensure the preset starts with `baselines/`.
-> - Remove leftover store directories under `runs/$RUN_ID/stores`.
-> - Check `configs/eval/default.yaml` has no `memory:` root key.
-> - Re-run `pytest tests/test_baselines_have_no_memory.py`.
->
-> **Troubleshooting (gating counters = 0):**
-> - Verify memory modules and gates are enabled.
-> - Check `metrics.json.gating.attempts` increments when memory is on.
->
-> **Troubleshooting (spatial format mismatch):**
-> - Predictions must use the canonical move string format (`U/D/L/R`).
-> - If full paths appear, adjust prompts or normalize with helper scripts.
-
-## 0) Shell prelude — environment & variables
-
-```bash
-source scripts/_env.sh
-if [[ -z ${SIZES+x} ]]; then SIZES=(50 200 1000); fi
-if [[ -z ${SEEDS+x} ]]; then SEEDS=(1337 2025 4242); fi
-
-echo "RUN_ID=$RUN_ID"
-echo "MODEL=$MODEL"
-```
-
----
-
-## 1) Environment & sanity checks
-
-```bash
-# Install dev deps (if not already)
-make install-dev
-
-# Basic quality gates (optional but recommended)
-make lint
-make test
-
-# Quick smoke (tiny sizes, tiny model) — does not validate quality
-bash scripts/smoke_eval.sh
-
-# Gate overhead micro-benchmark (target ≤10% overhead)
-python scripts/bench_gating_overhead.py
-```
-
----
-
-## 2) Build & audit datasets
-
-```bash
-# Build standard JSONL datasets for all suites/sizes/seeds
-for suite in episodic semantic spatial episodic_multi episodic_cross episodic_capacity; do
-  for size in 50 200 1000; do
-    for seed in 1337 2025 4242; do
-      python scripts/make_datasets.py --suite "$suite" --profile default --size "$size" --seed "$seed" --out "data/${suite}/${size}_${seed}.jsonl"
-      python scripts/make_datasets.py --suite "$suite" --profile hard --size "$size" --seed "$seed" --out "data/${suite}_hard/${size}_${seed}.jsonl"
-    done
-  done
-done
-python scripts/audit_datasets.py
-```
-
-`--profile` selects a difficulty preset defined in `configs/datasets/`. The loop
-above emits both `default` and `hard` variants; use `dataset_profile=hard` when
-running evaluations for suites such as `episodic_cross` or `episodic_capacity`
-to avoid saturation.
-
----
-
-## 3) **Baseline grid (fix)**
-
-**Why this matters:** The previous step used `python scripts/run_baselines_bench.py`, which forwards to the **light-weight bench harness** (`hippo_eval.bench`). That harness returns **ground‑truth as predictions** by design (for CI plumbing), so runs are **extremely fast but not meaningful** for baseline quality. For a *real* baseline you must invoke the **model harness**.
-
-**Do this instead** — run the matrix with a **real model** and the baseline presets:
-
-```bash
-# Expand the SIZES/SEEDS arrays from §0 into comma‑separated lists
-NV=$(IFS=,; echo "${SIZES[*]}")
-SD=$(IFS=,; echo "${SEEDS[*]}")
-
-python scripts/eval_model.py +run_matrix=true run_id="$RUN_ID" \
-  presets=[baselines/core,baselines/span_short,baselines/rag,baselines/longctx] \
-  tasks=[episodic,semantic,spatial,episodic_multi] \
-  n_values=[$NV] seeds=[$SD] \
-  mode=teach model="$MODEL" outdir="$RUNS"
-
-# Hard profiles for suites prone to saturation
-python scripts/eval_model.py +run_matrix=true run_id="$RUN_ID" \
-  presets=[baselines/core,baselines/span_short,baselines/rag,baselines/longctx] \
-  tasks=[episodic_cross,episodic_capacity] dataset_profile=hard \
-  n_values=[$NV] seeds=[$SD] \
-  mode=teach model="$MODEL" outdir="$RUNS"
-
-python -m hippo_eval.baselines --run-id "${RUN_ID}"
-```
-
-Notes:
-- Baseline presets **disable** memory and retrieval as configured under `configs/eval/baselines/*.yaml`.
-- `mode=teach` avoids the `--store_dir/--session_id` requirement of `mode=test` and keeps runs stateless.
-- `SIZES` and `SEEDS` default to `(50 200 1000)` and `(1337 2025 4242)`; override them before sourcing `scripts/env_prelude.sh`.
-- You can extend `tasks` to include additional suites as needed.
-
-
----
-
-## 4) Memory grids with teach → replay → test
-
-We evaluate each algorithm with **pre‑replay** and **post‑replay** phases. Outputs are written under
-`runs/$RUN_ID/memory/<algo>/<suite>/<n>_<seed>/`. Pass `--store_dir "$STORES"`; each wrapper appends its
-own `<algo>` subfolder and nests traces under the provided `--session_id`.
-
-### 4.1) HEI‑NW (episodic + variants)
-
-```bash
-SID="hei_${RUN_ID}"  # session id for persistent store reuse
-# Default profile suites
-for suite in episodic episodic_multi; do
-  for n in "${SIZES[@]}"; do
-    for seed in "${SEEDS[@]}"; do
-      OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
-      # Teach & persist
-      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
-      # Validate persisted store layout
-      python scripts/validate_store.py --algo hei_nw --kind episodic
-      # Replay (3 cycles)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
-      # Test (post‑replay)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=default preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
-    done
-  done
-done
-
-# Hard-profile suites to avoid saturation
-for suite in episodic_cross episodic_capacity; do
-  for n in "${SIZES[@]}"; do
-    for seed in "${SEEDS[@]}"; do
-      OUT="$RUNS/memory/hei_nw/$suite/${n}_${seed}"
-      # Teach & persist
-      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
-      # Validate persisted store layout
-      python scripts/validate_store.py --algo hei_nw --kind episodic
-      # Replay (3 cycles)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
-      # Test (post‑replay)
-      python scripts/eval_cli.py suite="$suite" dataset_profile=hard preset=memory/hei_nw n="$n" seed="$seed" run_id="$RUN_ID" model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
-    done
-  done
-done
-```
-
-> When running with `SIZES=(50)` and `SEEDS=(1337)`, the expected store is `runs/$RUN_ID/stores/hei_nw/hei_$RUN_ID/episodic.jsonl`.
-
-```bash
-ls -l "runs/$RUN_ID/stores/hei_nw/hei_${RUN_ID}/episodic.jsonl"
-```
-
-### 4.2) SGC‑RSS (semantic)
-
-The teach step seeds the relational store with a minimal placeholder tuple, so this section runs even before tuple extraction is fully integrated.
-
-```bash
-SID="sgc_${RUN_ID}"
-suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
-    OUT="$RUNS/memory/sgc_rss/$suite/${n}_${seed}"
-    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
-    # Validate persisted store layout
-    python scripts/validate_store.py --algo sgc_rss --kind kg
-    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
-    python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite=semantic_mem n="$n" seed="$seed"       outdir="$RUNS/semantic_mem_baseline/${n}_${seed}"
+
+    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss       mode=teach --no-retrieval-during-teach n="$n" seed="$seed"       outdir="$RUNS/semantic_mem_teach/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+
+    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss       mode=test n="$n" seed="$seed"       outdir="$RUNS/semantic_mem_test/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
   done
 done
 ```
 
-### 4.3) SMPD (spatial)
-
-> The teach step must persist a **non-empty** `spatial.jsonl` under `stores/smpd/<SID>/`.
-> This file should at least contain the meta record and one node after a gate-accepted observation. Replay is **not** required for the file to be non-empty.
-
+## Episodic Cross Memory (hei_nw)
 ```bash
-SID="smpd_${RUN_ID}"
-suite=spatial
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
-    OUT="$RUNS/memory/smpd/$suite/${n}_${seed}"
-    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=teach persist=true store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
-    # Validate persisted store layout
-    python scripts/validate_store.py --algo smpd --kind spatial
-    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=replay persist=true store_dir="$STORES" session_id="$SID" replay.cycles=3 outdir="$OUT" --strict-telemetry
-    python scripts/eval_cli.py suite="$suite" preset=memory/smpd n="$n" seed="$seed" run_id="$RUN_ID"       model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" outdir="$OUT" --strict-telemetry
+    python scripts/eval_cli.py suite=episodic_cross_mem n="$n" seed="$seed"       outdir="$RUNS/episodic_cross_mem_baseline/${n}_${seed}"
+
+    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw       mode=teach --no-retrieval-during-teach n="$n" seed="$seed"       outdir="$RUNS/episodic_cross_mem_teach/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+
+    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw       mode=test n="$n" seed="$seed"       outdir="$RUNS/episodic_cross_mem_test/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
   done
 done
 ```
 
----
-
-## 5) Ablations (optional but recommended)
-
-Example ablations for gate toggles and retrieval. Reuse the session
-identifiers from §4 and iterate over the same `SIZES` and `SEEDS` arrays:
-
+## Spatial Multi (smpd)
 ```bash
-# Disable relational gating to quantify its impact
-SID="sgc_${RUN_ID}"
-suite=semantic
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
-    OUT="$RUNS/ablate/sgc_rss_no_gate/$suite/${n}_${seed}"
-      python scripts/eval_cli.py suite="$suite" preset=memory/sgc_rss n="$n" seed="$seed" run_id="$RUN_ID" \
-        model="$MODEL" mode=test store_dir="$STORES" session_id="$SID" \
-        gating_enabled=false outdir="$OUT" --strict-telemetry
-  done
-done
+    python scripts/eval_cli.py suite=spatial_multi n="$n" seed="$seed"       outdir="$RUNS/spatial_multi_baseline/${n}_${seed}"
 
-# Disable retrieval to isolate the long‑context baseline (stateless; `mode=teach` avoids store requirements)
-suite=semantic
-for n in "${SIZES[@]}"; do
-  for seed in "${SEEDS[@]}"; do
-    OUT="$RUNS/ablate/longctx_no_retrieval/$suite/${n}_${seed}"
-    python scripts/eval_model.py suite="$suite" preset=baselines/longctx n="$n" seed="$seed" run_id="$RUN_ID" \
-      model="$MODEL" mode=teach outdir="$OUT"
+    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd       mode=teach --no-retrieval-during-teach n="$n" seed="$seed"       outdir="$RUNS/spatial_multi_teach/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+
+    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd       mode=test n="$n" seed="$seed"       outdir="$RUNS/spatial_multi_test/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
   done
 done
 ```
 
----
-
-## 6) Gate threshold sweeps (clarified)
-
-These are **small, example sweeps** around the defaults to **check sensitivity**, **not** exhaustive grid searches. Keep them light to control runtime. Reuse the persisted stores from §4; `mode=test` requires `--store_dir` and `--session_id`.
-
-```bash
-# Choose small, symmetric ranges around the configured defaults:
-#   episodic tau (~0.5), relational threshold (=0.6), spatial block_threshold (=1.0)
-EPISODIC_TAUS=(0.3 0.5 0.7)
-RELATIONAL_THRESHOLDS=(0.4 0.6 0.8)
-SPATIAL_BLOCK_THRESHOLDS=(0.5 1.0 2.0)
-
-SWEEP_SIZES=(50)
-SWEEP_SEEDS=(1337 2025)
-
-# Reuse persisted stores from §4
-SID_HEI="hei_${RUN_ID}"
-SID_SGC="sgc_${RUN_ID}"
-SID_SMPD="smpd_${RUN_ID}"
-
-# HEI‑NW taus
-for tau in "${EPISODIC_TAUS[@]}"; do
-  python scripts/eval_cli.py suite=episodic preset=memory/hei_nw \
-    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" run_id="$RUN_ID" \
-    model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_HEI" \
-    episodic.gate.tau="$tau" outdir="$RUNS/sweeps/hei_nw_tau_${tau}" --strict-telemetry
-done
-
-# SGC‑RSS relational thresholds
-for thr in "${RELATIONAL_THRESHOLDS[@]}"; do
-  python scripts/eval_cli.py suite=semantic preset=memory/sgc_rss \
-    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" run_id="$RUN_ID" \
-    model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_SGC" \
-    relational.gate.threshold="$thr" \
-    outdir="$RUNS/sweeps/sgc_rss_thr_${thr}" --strict-telemetry
-done
-
-# SMPD spatial thresholds
-for thr in "${SPATIAL_BLOCK_THRESHOLDS[@]}"; do
-  python scripts/eval_cli.py suite=spatial preset=memory/smpd \
-    n="${SWEEP_SIZES[0]}" seed="${SWEEP_SEEDS[0]}" run_id="$RUN_ID" \
-    model="$MODEL" mode=test store_dir="$STORES" session_id="$SID_SMPD" \
-    spatial.gate.block_threshold="$thr" \
-    outdir="$RUNS/sweeps/smpd_thr_${thr}" --strict-telemetry
-done
-```
-
----
-
-## 7) Summaries & reports
-
-```bash
-# Per-preset summaries as CSV/JSON
-python scripts/summarize_runs.py "$RUNS" --out "$RUNS/summaries"
-
-# Markdown reports and plots
-python scripts/report.py --run-id "$RUN_ID" --runs-dir runs --out-dir reports --data-dir data --plots
-```
-
-Templates are resolved from `hippo_eval/reporting/templates`; `reports/` is an
-outputs-only directory.
-
----
-
-## 8) Consolidation checks (Milestone 9.5)
-
-Minimal smoke for **cross‑session recall** using the same store directory.
-
-> When running with `SIZES=(50)` and `SEEDS=(1337)`, the expected store is `runs/$RUN_ID/stores/hei_nw/hei_$RUN_ID/episodic.jsonl`.
-
-```bash
-# §8 prelude (self-contained)
-source scripts/env_prelude.sh
-
-SID="hei_${RUN_ID}"
-
-# Require a persisted HEI-NW store
-test -f "$STORES/hei_nw/$SID/episodic.jsonl" || {
-  echo "No persisted HEI-NW store for $SID. Run §4.1 (teach+replay with persist=true) first."
-  exit 1
-}
-ls -l "runs/$RUN_ID/stores/hei_nw/hei_${RUN_ID}/episodic.jsonl"
-
-# 1) Pre‑consolidation baseline (memory OFF)
-python scripts/test_consolidation.py --phase pre \
-  --suite episodic --n 50 --seed 1337 \
-  --model "$MODEL" --outdir "$RUNS/consolidation/pre"
-
-# 2) Replay → LoRA training
-python scripts/replay_consolidate.py \
-  --store_dir "$STORES" --session_id "$SID" \
-  --model "$MODEL" --config configs/consolidation/lora_small.yaml \
-  --outdir "$RUNS/consolidation/lora"
-
-# 3) Post‑consolidation test (memory OFF with adapter)
-python scripts/test_consolidation.py --phase post \
-  --suite episodic --n 50 --seed 1337 \
-  --model "$MODEL" --adapter "$RUNS/consolidation/lora" \
-  --pre_dir "$RUNS/consolidation/pre" --outdir "$RUNS/consolidation/post" \
-  --min-uplift 0.05
-```
-
-Use `--uplift-mode ci` when multiple seeds are present; the gate then
-requires the 95% CI of `(post - pre)` to exclude zero (significance
-controlled by `--alpha`, default 0.05).
-
----
-
-## 9) Final roll‑up
-
-```bash
-echo "Done. See:"
-echo "  - $RUNS        (raw run outputs)"
-echo "  - $RUNS/summaries (per‑preset CSV/JSON)"
-echo "  - $REPORTS     (Markdown summaries & plots)"
-echo "  - $ADAPTERS    (trained adapters, if any)"
-```
-
----
-
-### Appendix — Deprecated commands
-
-- `python scripts/run_baselines_bench.py`: **CI/plumbing‑only**. It calls the light‑weight bench that returns ground truth as predictions; **do not use** for real baselines.
-
-## Migration notes
-
-- Evaluation pipelines, metrics, reporting, and synthetic tasks moved to the
-  `hippo_eval` package. The `hippo_mem.*` entry points remain as shims and emit
-  `DeprecationWarning`.
-- Reporting templates now live under `hippo_eval/reporting/templates`; the root
-  `reports/` directory stores generated artifacts only.
+**Notes**
+- Do **not** pass `store_dir`/`session_id` for baselines.
+- Boolean flags are specified without `=true`.
