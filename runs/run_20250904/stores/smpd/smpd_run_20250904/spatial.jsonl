@@ -1,0 +1,157 @@
+{"schema": "spatial.v1", "type": "meta", "next_id": 52, "last_obs": 51, "step": 202, "position": [0.0, 0.0], "last_coord": null}
+{"schema": "spatial.v1", "type": "node", "id": 0, "context": "ctx_1", "coord": [0.3612726024261845, 0.9453574425879301], "last_seen": 1, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 1, "context": "ctx_2", "coord": [0.60688181887541, 0.06968795300221256], "last_seen": 2, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 2, "context": "ctx0", "coord": [0.23778133821622033, 0.07832455939574273], "last_seen": 153, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 3, "context": "ctx1", "coord": [0.3316395819028, 0.2922713054093233], "last_seen": 4, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 4, "context": "ctx2", "coord": [0.8105439841306172, 0.7627832455939574], "last_seen": 5, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 5, "context": "ctx3", "coord": [0.4504005493247883, 0.9501945525291828], "last_seen": 6, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 6, "context": "ctx4", "coord": [0.1036545357442588, 0.7864652475776303], "last_seen": 7, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 7, "context": "ctx5", "coord": [0.1727016098268101, 0.5048294804303044], "last_seen": 8, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 8, "context": "ctx6", "coord": [0.4822461280231937, 0.3364614328221561], "last_seen": 9, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 9, "context": "ctx7", "coord": [0.5173266193636988, 0.4485694666971847], "last_seen": 10, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 10, "context": "ctx8", "coord": [0.11981383993286031, 0.014129854276340887], "last_seen": 11, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 11, "context": "ctx9", "coord": [0.9660791943236439, 0.3888303959716182], "last_seen": 12, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 12, "context": "ctx10", "coord": [0.15535210193026627, 0.9818265049210345], "last_seen": 13, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 13, "context": "ctx11", "coord": [0.07104600595101854, 0.826840619516289], "last_seen": 14, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 14, "context": "ctx12", "coord": [0.7096971084153506, 0.4836346990157931], "last_seen": 15, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 15, "context": "ctx13", "coord": [0.3881437399862669, 0.6075226977950713], "last_seen": 16, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 16, "context": "ctx14", "coord": [0.2000610360875868, 0.4847791256580453], "last_seen": 17, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 17, "context": "ctx15", "coord": [0.33771267261768523, 0.6016327153429465], "last_seen": 18, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 18, "context": "ctx16", "coord": [0.1739528496223392, 0.3512169069962615], "last_seen": 19, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 19, "context": "ctx17", "coord": [0.7454184786755169, 0.6412909132524606], "last_seen": 20, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 20, "context": "ctx18", "coord": [0.709880216678111, 0.8268101014724956], "last_seen": 21, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 21, "context": "ctx19", "coord": [0.2127412832837415, 0.395223926146334], "last_seen": 22, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 22, "context": "ctx20", "coord": [0.2777447165636683, 0.8696879530022126], "last_seen": 23, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 23, "context": "ctx21", "coord": [0.19160753795681698, 0.6095063706416419], "last_seen": 24, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 24, "context": "ctx22", "coord": [0.08728160524910353, 0.2639200427252613], "last_seen": 25, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 25, "context": "ctx23", "coord": [0.34218356603341726, 0.7779049362935836], "last_seen": 26, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 26, "context": "ctx24", "coord": [0.017807278553444723, 0.2520332646677348], "last_seen": 27, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 27, "context": "ctx25", "coord": [0.10455481803616389, 0.6052796215762569], "last_seen": 28, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 28, "context": "ctx26", "coord": [0.6682688639658197, 0.07603570611123826], "last_seen": 29, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 29, "context": "ctx27", "coord": [0.7945525291828793, 0.8269626916914625], "last_seen": 30, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 30, "context": "ctx28", "coord": [0.5222400244144351, 0.5515831235217823], "last_seen": 31, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 31, "context": "ctx29", "coord": [0.5161669336995499, 0.5562676432440681], "last_seen": 32, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 32, "context": "ctx30", "coord": [0.0899519340810254, 0.9229877164873732], "last_seen": 33, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 33, "context": "ctx31", "coord": [0.2896772716868849, 0.7266803997863737], "last_seen": 34, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 34, "context": "ctx32", "coord": [0.856748302433814, 0.7117723353933013], "last_seen": 35, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 35, "context": "ctx33", "coord": [0.9689631494621195, 0.3824216067750057], "last_seen": 36, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 36, "context": "ctx34", "coord": [0.1611810482948043, 0.655039291981384], "last_seen": 37, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 37, "context": "ctx35", "coord": [0.6575570305943389, 0.8537575341420615], "last_seen": 38, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 38, "context": "ctx36", "coord": [0.6811627374685283, 0.35111009384298464], "last_seen": 39, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 39, "context": "ctx37", "coord": [0.2632181277180133, 0.3974212252994583], "last_seen": 40, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 40, "context": "ctx38", "coord": [0.4504463263904784, 0.46257724879835205], "last_seen": 41, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 41, "context": "ctx39", "coord": [0.33757534142061496, 0.5060196841382467], "last_seen": 42, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 42, "context": "ctx40", "coord": [0.29996185244525825, 0.6166628519111925], "last_seen": 43, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 43, "context": "ctx41", "coord": [0.1727168688487068, 0.11244373235675593], "last_seen": 44, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 44, "context": "ctx42", "coord": [0.8309300373846037, 0.9589532310978867], "last_seen": 45, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 45, "context": "ctx43", "coord": [0.926314183260853, 0.060364690623331045], "last_seen": 46, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 46, "context": "ctx44", "coord": [0.8211032272831311, 0.49878690775921264], "last_seen": 47, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 47, "context": "ctx45", "coord": [0.5027847714961471, 0.6763408865491722], "last_seen": 48, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 48, "context": "ctx46", "coord": [0.522041657129778, 0.31915770199130233], "last_seen": 49, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 49, "context": "ctx47", "coord": [0.7253681239032578, 0.9706569008926528], "last_seen": 50, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 50, "context": "ctx48", "coord": [0.8771648737315938, 0.18341344319829098], "last_seen": 51, "kind": "generic"}
+{"schema": "spatial.v1", "type": "node", "id": 51, "context": "ctx49", "coord": [0.5263904783703365, 0.025482566567483024], "last_seen": 52, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 0, "dst": 1, "cost": 1.0, "success": 1.0, "last_seen": 2, "weight": 1.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 1, "dst": 0, "cost": 1.0, "success": 1.0, "last_seen": 2, "weight": 1.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 1, "dst": 2, "cost": 1.0, "success": 1.0, "last_seen": 3, "weight": 1.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 2, "dst": 1, "cost": 1.0, "success": 1.0, "last_seen": 3, "weight": 1.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 2, "dst": 3, "cost": 1.0, "success": 1.0, "last_seen": 154, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 2, "dst": 51, "cost": 1.0, "success": 1.0, "last_seen": 153, "weight": 1.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 3, "dst": 2, "cost": 1.0, "success": 1.0, "last_seen": 154, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 3, "dst": 4, "cost": 1.0, "success": 1.0, "last_seen": 155, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 4, "dst": 3, "cost": 1.0, "success": 1.0, "last_seen": 155, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 4, "dst": 5, "cost": 1.0, "success": 1.0, "last_seen": 156, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 5, "dst": 4, "cost": 1.0, "success": 1.0, "last_seen": 156, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 5, "dst": 6, "cost": 1.0, "success": 1.0, "last_seen": 157, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 6, "dst": 5, "cost": 1.0, "success": 1.0, "last_seen": 157, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 6, "dst": 7, "cost": 1.0, "success": 1.0, "last_seen": 158, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 7, "dst": 6, "cost": 1.0, "success": 1.0, "last_seen": 158, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 7, "dst": 8, "cost": 1.0, "success": 1.0, "last_seen": 159, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 8, "dst": 7, "cost": 1.0, "success": 1.0, "last_seen": 159, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 8, "dst": 9, "cost": 1.0, "success": 1.0, "last_seen": 160, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 9, "dst": 8, "cost": 1.0, "success": 1.0, "last_seen": 160, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 9, "dst": 10, "cost": 1.0, "success": 1.0, "last_seen": 161, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 10, "dst": 9, "cost": 1.0, "success": 1.0, "last_seen": 161, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 10, "dst": 11, "cost": 1.0, "success": 1.0, "last_seen": 162, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 11, "dst": 10, "cost": 1.0, "success": 1.0, "last_seen": 162, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 11, "dst": 12, "cost": 1.0, "success": 1.0, "last_seen": 163, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 12, "dst": 11, "cost": 1.0, "success": 1.0, "last_seen": 163, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 12, "dst": 13, "cost": 1.0, "success": 1.0, "last_seen": 164, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 13, "dst": 12, "cost": 1.0, "success": 1.0, "last_seen": 164, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 13, "dst": 14, "cost": 1.0, "success": 1.0, "last_seen": 165, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 14, "dst": 13, "cost": 1.0, "success": 1.0, "last_seen": 165, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 14, "dst": 15, "cost": 1.0, "success": 1.0, "last_seen": 166, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 15, "dst": 14, "cost": 1.0, "success": 1.0, "last_seen": 166, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 15, "dst": 16, "cost": 1.0, "success": 1.0, "last_seen": 167, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 16, "dst": 15, "cost": 1.0, "success": 1.0, "last_seen": 167, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 16, "dst": 17, "cost": 1.0, "success": 1.0, "last_seen": 168, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 17, "dst": 16, "cost": 1.0, "success": 1.0, "last_seen": 168, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 17, "dst": 18, "cost": 1.0, "success": 1.0, "last_seen": 169, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 18, "dst": 17, "cost": 1.0, "success": 1.0, "last_seen": 169, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 18, "dst": 19, "cost": 1.0, "success": 1.0, "last_seen": 170, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 19, "dst": 18, "cost": 1.0, "success": 1.0, "last_seen": 170, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 19, "dst": 20, "cost": 1.0, "success": 1.0, "last_seen": 171, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 20, "dst": 19, "cost": 1.0, "success": 1.0, "last_seen": 171, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 20, "dst": 21, "cost": 1.0, "success": 1.0, "last_seen": 172, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 21, "dst": 20, "cost": 1.0, "success": 1.0, "last_seen": 172, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 21, "dst": 22, "cost": 1.0, "success": 1.0, "last_seen": 173, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 22, "dst": 21, "cost": 1.0, "success": 1.0, "last_seen": 173, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 22, "dst": 23, "cost": 1.0, "success": 1.0, "last_seen": 174, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 23, "dst": 22, "cost": 1.0, "success": 1.0, "last_seen": 174, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 23, "dst": 24, "cost": 1.0, "success": 1.0, "last_seen": 175, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 24, "dst": 23, "cost": 1.0, "success": 1.0, "last_seen": 175, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 24, "dst": 25, "cost": 1.0, "success": 1.0, "last_seen": 176, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 25, "dst": 24, "cost": 1.0, "success": 1.0, "last_seen": 176, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 25, "dst": 26, "cost": 1.0, "success": 1.0, "last_seen": 177, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 26, "dst": 25, "cost": 1.0, "success": 1.0, "last_seen": 177, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 26, "dst": 27, "cost": 1.0, "success": 1.0, "last_seen": 178, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 27, "dst": 26, "cost": 1.0, "success": 1.0, "last_seen": 178, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 27, "dst": 28, "cost": 1.0, "success": 1.0, "last_seen": 179, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 28, "dst": 27, "cost": 1.0, "success": 1.0, "last_seen": 179, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 28, "dst": 29, "cost": 1.0, "success": 1.0, "last_seen": 180, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 29, "dst": 28, "cost": 1.0, "success": 1.0, "last_seen": 180, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 29, "dst": 30, "cost": 1.0, "success": 1.0, "last_seen": 181, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 30, "dst": 29, "cost": 1.0, "success": 1.0, "last_seen": 181, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 30, "dst": 31, "cost": 1.0, "success": 1.0, "last_seen": 182, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 31, "dst": 30, "cost": 1.0, "success": 1.0, "last_seen": 182, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 31, "dst": 32, "cost": 1.0, "success": 1.0, "last_seen": 183, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 32, "dst": 31, "cost": 1.0, "success": 1.0, "last_seen": 183, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 32, "dst": 33, "cost": 1.0, "success": 1.0, "last_seen": 184, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 33, "dst": 32, "cost": 1.0, "success": 1.0, "last_seen": 184, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 33, "dst": 34, "cost": 1.0, "success": 1.0, "last_seen": 185, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 34, "dst": 33, "cost": 1.0, "success": 1.0, "last_seen": 185, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 34, "dst": 35, "cost": 1.0, "success": 1.0, "last_seen": 186, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 35, "dst": 34, "cost": 1.0, "success": 1.0, "last_seen": 186, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 35, "dst": 36, "cost": 1.0, "success": 1.0, "last_seen": 187, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 36, "dst": 35, "cost": 1.0, "success": 1.0, "last_seen": 187, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 36, "dst": 37, "cost": 1.0, "success": 1.0, "last_seen": 188, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 37, "dst": 36, "cost": 1.0, "success": 1.0, "last_seen": 188, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 37, "dst": 38, "cost": 1.0, "success": 1.0, "last_seen": 189, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 38, "dst": 37, "cost": 1.0, "success": 1.0, "last_seen": 189, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 38, "dst": 39, "cost": 1.0, "success": 1.0, "last_seen": 190, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 39, "dst": 38, "cost": 1.0, "success": 1.0, "last_seen": 190, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 39, "dst": 40, "cost": 1.0, "success": 1.0, "last_seen": 191, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 40, "dst": 39, "cost": 1.0, "success": 1.0, "last_seen": 191, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 40, "dst": 41, "cost": 1.0, "success": 1.0, "last_seen": 192, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 41, "dst": 40, "cost": 1.0, "success": 1.0, "last_seen": 192, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 41, "dst": 42, "cost": 1.0, "success": 1.0, "last_seen": 193, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 42, "dst": 41, "cost": 1.0, "success": 1.0, "last_seen": 193, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 42, "dst": 43, "cost": 1.0, "success": 1.0, "last_seen": 194, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 43, "dst": 42, "cost": 1.0, "success": 1.0, "last_seen": 194, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 43, "dst": 44, "cost": 1.0, "success": 1.0, "last_seen": 195, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 44, "dst": 43, "cost": 1.0, "success": 1.0, "last_seen": 195, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 44, "dst": 45, "cost": 1.0, "success": 1.0, "last_seen": 196, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 45, "dst": 44, "cost": 1.0, "success": 1.0, "last_seen": 196, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 45, "dst": 46, "cost": 1.0, "success": 1.0, "last_seen": 197, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 46, "dst": 45, "cost": 1.0, "success": 1.0, "last_seen": 197, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 46, "dst": 47, "cost": 1.0, "success": 1.0, "last_seen": 198, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 47, "dst": 46, "cost": 1.0, "success": 1.0, "last_seen": 198, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 47, "dst": 48, "cost": 1.0, "success": 1.0, "last_seen": 199, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 48, "dst": 47, "cost": 1.0, "success": 1.0, "last_seen": 199, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 48, "dst": 49, "cost": 1.0, "success": 1.0, "last_seen": 200, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 49, "dst": 48, "cost": 1.0, "success": 1.0, "last_seen": 200, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 49, "dst": 50, "cost": 1.0, "success": 1.0, "last_seen": 201, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 50, "dst": 49, "cost": 1.0, "success": 1.0, "last_seen": 201, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 50, "dst": 51, "cost": 1.0, "success": 1.0, "last_seen": 202, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 51, "dst": 50, "cost": 1.0, "success": 1.0, "last_seen": 202, "weight": 4.0, "kind": "generic"}
+{"schema": "spatial.v1", "type": "edge", "src": 51, "dst": 2, "cost": 1.0, "success": 1.0, "last_seen": 153, "weight": 1.0, "kind": "generic"}
