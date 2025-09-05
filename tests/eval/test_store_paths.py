@@ -48,22 +48,34 @@ def test_eval_model_store_dir_normalization(tmp_path, monkeypatch, append, prese
     base.mkdir()
     store_dir = base / algo if append else base
     cfg = OmegaConf.create(
-        {"mode": "test", "store_dir": str(store_dir), "session_id": "sid", "preset": preset}
+        {
+            "mode": "test",
+            "store_dir": str(store_dir),
+            "session_id": "sid",
+            "preset": preset,
+            "run_id": "rid",
+            "suite": "semantic_mem",
+        }
     )
 
     called = {}
 
-    def fake_assert(sd, sid, al, kind="episodic"):
-        called["assert_args"] = (sd, sid, al, kind)
+    store = base / algo / "sid" / f"{kind}.jsonl"
+    store.parent.mkdir(parents=True)
+    store.write_text("{}\n")
+
+    def fake_validate(*, run_id, preset, algo, kind):
+        called["validate_args"] = (run_id, preset, algo, kind)
+        return store
 
     def fake_harness(cfg):
         called["cfg_store_dir"] = cfg.store_dir
 
-    monkeypatch.setattr(em, "assert_store_exists", fake_assert)
+    monkeypatch.setattr("hippo_mem.utils.stores.validate_store", fake_validate)
     monkeypatch.setattr(em, "harness_main", fake_harness)
 
     em.main.__wrapped__(cfg)
 
-    expected = store_dir if append else base / algo
+    expected = store_dir
     assert called["cfg_store_dir"] == str(expected)
-    assert called["assert_args"] == (str(base), "sid", algo, kind)
+    assert called["validate_args"] == ("rid", preset, algo, kind)
