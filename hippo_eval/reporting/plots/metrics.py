@@ -147,3 +147,48 @@ def render_suite_plots(
     _plot_metric_bars(metric_keys, presets, out_dir, suite, plt)
     _plot_uplift(metric_keys, presets, out_dir, suite, plt)
     _plot_retrieval(retrieval, out_dir)
+    if suite == "spatial_multi":
+        _plot_learning_curve(presets, out_dir, suite, plt)
+        _write_macro_reuse_table(presets, out_dir)
+
+
+def _plot_learning_curve(presets: MetricStats, out_dir: Path, suite: str, plt) -> None:
+    """Plot per-episode success rates if available."""
+
+    for preset, sizes in presets.items():
+        for size, stats in sizes.items():
+            curve: list[float] = []
+            ep = 1
+            while (key := f"success_ep{ep}") in stats:
+                val = stats[key]
+                curve.append(val[0] if isinstance(val, tuple) else float(val))
+                ep += 1
+            if curve:
+                plt.figure()
+                plt.plot(range(1, len(curve) + 1), curve, marker="o")
+                plt.ylim(0, 1)
+                plt.xlabel("Episode")
+                plt.ylabel("Success rate")
+                plt.title(f"{suite} {preset}-{size} learning curve")
+                out_dir.mkdir(parents=True, exist_ok=True)
+                plt.savefig(out_dir / f"{preset}-{size}_learning_curve.png")
+                plt.close()
+
+
+def _write_macro_reuse_table(presets: MetricStats, out_dir: Path) -> None:
+    """Write a table with macro reuse deltas if available."""
+
+    lines = ["| Preset | Size | Δsteps | Δlatency_ms |", "|---|---:|---:|---:|"]
+    wrote = False
+    for preset, sizes in presets.items():
+        for size, stats in sizes.items():
+            steps = stats.get("macro_reuse_plen_delta")
+            lat = stats.get("macro_reuse_latency_delta_ms")
+            if steps or lat:
+                steps_v = steps[0] if steps else 0.0
+                lat_v = lat[0] if lat else 0.0
+                lines.append(f"{preset} | {size} | {steps_v:.2f} | {lat_v:.2f}")
+                wrote = True
+    if wrote:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "macro_reuse.md").write_text("\n".join(lines), encoding="utf-8")

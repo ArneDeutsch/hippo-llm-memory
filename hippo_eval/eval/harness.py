@@ -38,7 +38,7 @@ from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modu
 from hippo_eval.datasets.loaders import load_dataset
 from hippo_eval.harness.io import write_csv, write_meta, write_metrics
 from hippo_eval.harness.metrics import collect_metrics
-from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis
+from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis, spatial_multi_kpis
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import gate_registry, registry, set_strict_telemetry
@@ -530,8 +530,11 @@ def _evaluate(
         if compute_metrics
         else {}
     )
-    if compute_metrics and suite == "spatial":
-        metrics.update(spatial_kpis(task_list, rows))
+    if compute_metrics and suite in {"spatial", "spatial_multi"}:
+        if suite == "spatial_multi":
+            metrics.update(spatial_multi_kpis(task_list, rows))
+        else:
+            metrics.update(spatial_kpis(task_list, rows))
     return rows, metrics, input_tokens, gen_tokens, elapsed
 
 
