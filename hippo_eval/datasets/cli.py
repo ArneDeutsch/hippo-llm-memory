@@ -31,8 +31,6 @@ SUITE_STRATEGIES: Dict[str, Callable[[argparse.Namespace, Dict[str, Any]], Dict[
         "distractors": c.get("distractors", a.distractors or None),
     },
     "spatial_multi": lambda a, c: {
-        "num_teach": a.size,
-        "num_test": a.size,
         "grid_size": c.get("grid_size", a.grid_size),
         "obstacle_density": c.get("obstacle_density", a.obstacle_density),
     },
