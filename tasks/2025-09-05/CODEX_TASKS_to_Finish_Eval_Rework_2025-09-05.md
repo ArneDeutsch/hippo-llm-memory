@@ -185,18 +185,5 @@ python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd mode=test   n=
 
 ---
 
-## Task 7 — Commit and PR
-**Run**
-```bash
-git add -A
-git commit -m "chore(eval): minimal EVAL_PROTOCOL + dataset CLI fix + baseline store guard + CI sync"
-git push -u origin chore/eval-rework-min-protocol-2025-09-05
-```
-
-**DoD**
-- PR opened with passing smoke.
-
----
-
 ## Task 4 Deliverable — `EVAL_PROTOCOL_minimal.md`
 > Use the separate file attached in this task bundle, or copy it verbatim into `EVAL_PROTOCOL.md`.
