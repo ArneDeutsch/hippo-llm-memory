@@ -38,22 +38,23 @@ hippo-llm-memory/
 ├─ CODING_STANDARDS.md    # style guide
 ├─ DESIGN.md              # architecture and algorithms
 ├─ EVAL_PLAN.md           # evaluation protocol
-├─ PROJECT_PLAN.md        # milestones and work packages
 ├─ LICENSE
 ├─ Makefile
 ├─ pyproject.toml
 ├─ codex-env/             # environment setup and dependencies
 ├─ configs/               # Hydra configs for models, training, eval, memory
-├─ data/                  # synthetic benchmark datasets
+├─ data/                  # synthetic benchmark datasets (no source code)
 ├─ docs/                  # API surfaces, trace specs, inventories, experiments
 ├─ hippo_mem/             # core Python package with memory adapters and stores
 ├─ hippo_eval/            # evaluation pipelines, metrics, reporting, synthetic tasks
 ├─ models/                # tiny model fixtures for tests
+├─ plans/                 # project and milestone plans
 ├─ research/              # literature reviews and experiment synthesis
 ├─ review/                # progress reviews and planning notes
 ├─ reports/               # generated evaluation outputs (no source code)
-├─ runs/                  # run artifacts and metrics
+├─ runs/                  # generated run artifacts and metrics (no source code)
 ├─ scripts/               # dataset generation, training, evaluation utilities
+├─ tasks/                 # tasks to be executed to fullfill plans and reviews
 ├─ tests/                 # unit tests
 └─ .github/               # CI workflows and templates
 ```
@@ -120,12 +121,5 @@ hippo-llm-memory/
   memory hypotheses.
 - [DESIGN.md](DESIGN.md) – detailed architecture, data structures and
   algorithms.
-- [PROJECT_PLAN.md](PROJECT_PLAN.md) – milestones and work packages for
-  development.
 - [EVAL_PLAN.md](EVAL_PLAN.md) – datasets, baselines, metrics and ablations for
   validation.
-- [MILESTONE_9_PLAN.md](MILESTONE_9_PLAN.md) and
-  [MILESTONE_9_5_PLAN.md](MILESTONE_9_5_PLAN.md) – current milestone scopes.
-- [docs/TRACE_SPEC.md](docs/TRACE_SPEC.md) – schema for memory traces exchanged
-  with adapters.
-- [docs/api_surface.md](docs/api_surface.md) – current public APIs.
