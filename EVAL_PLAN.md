@@ -29,6 +29,88 @@ A run is **meaningful** only if it satisfies the [Meaningful Run Contract](EVAL_
 
 If any criterion fails, abort the run, fix the configuration, and re-run.
 
+# Memory-First Suites
+
+The evaluation pipeline now centers on **memory-required** suites that split
+facts from queries and enforce isolation between items.
+
+- `semantic_mem` – schema facts taught separately; test prompts contain only questions.
+- `episodic_cross_mem` – a single episodic fact taught in one session and queried later with no supporting context.
+- `spatial_multi` – progressive grid exploration with optional replay before testing novel start→goal pairs.
+
+## Paired Datasets (Teach/Test)
+
+Each suite emits two JSONL files:
+
+- `*_teach.jsonl` – facts or trajectories only.
+- `*_test.jsonl` – questions or goals only.
+
+Teach runs populate stores with retrieval **disabled**. Test runs read from the
+persisted store with retrieval **enabled**.
+
+## Modes and Isolation
+
+| Suite              | Mode sequence          | `--isolate` default |
+|--------------------|-----------------------|---------------------|
+| semantic_mem       | teach → test           | per_item            |
+| episodic_cross_mem | teach → test           | per_item            |
+| spatial_multi      | teach → replay → test | per_episode         |
+
+## Guardrails
+
+- Test prompts must contain **no facts**; `scripts/validate_prompts.py`
+  fails the run if a leak is detected.
+- For `semantic_mem` and `episodic_cross_mem`, a baseline exact-match (EM)
+  score **above 0.2** aborts the run unless `--allow-baseline-high` is set.
+
+## Acceptance & Smoke Tests
+
+The following commands validate the protocol at `n=50`, `seed=1337`:
+
+```bash
+RUN_ID=20250905_smoke
+BASE="n=50 seed=1337"
+
+# semantic_mem
+python scripts/eval_cli.py suite=semantic_mem preset=baseline $BASE \
+  outdir=runs/$RUN_ID/semantic_mem_baseline
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=teach --no-retrieval-during-teach=true $BASE \
+  outdir=runs/$RUN_ID/semantic_mem_teach \
+  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=test $BASE outdir=runs/$RUN_ID/semantic_mem_test \
+  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
+
+# episodic_cross_mem
+python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline $BASE \
+  outdir=runs/$RUN_ID/episodic_cross_mem_baseline
+python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
+  mode=teach --no-retrieval-during-teach=true $BASE \
+  outdir=runs/$RUN_ID/episodic_cross_mem_teach \
+  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
+python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
+  mode=test $BASE outdir=runs/$RUN_ID/episodic_cross_mem_test \
+  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
+
+# spatial_multi (includes replay)
+python scripts/eval_cli.py suite=spatial_multi preset=baseline $BASE \
+  outdir=runs/$RUN_ID/spatial_multi_baseline
+python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+  mode=teach --no-retrieval-during-teach=true $BASE \
+  outdir=runs/$RUN_ID/spatial_multi_teach \
+  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+  mode=replay $BASE outdir=runs/$RUN_ID/spatial_multi_replay \
+  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+  mode=test $BASE outdir=runs/$RUN_ID/spatial_multi_test \
+  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+```
+
+Smoke tests pass when baseline EM ≤ 0.2 for memory-required suites and
+memory runs show a clear uplift with non-zero retrieval.
+
 # 1) Hypotheses (what we expect to improve)
 
 - **HEI‑NW (episodic):** one‑shot episodic recall from partial cues with durability after replay; lower interference than long‑context.

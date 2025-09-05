@@ -297,6 +297,39 @@ Success bars:
 
 `semantic(default)` and `episodic_cross(default)` act as **smoke tests** only.
 
+## 10.2 Context-Keyed Memory Access
+
+Every example derives a stable **`context_key`** (e.g., `episode_id` or
+timestamp). The evaluation harness passes this key to store APIs:
+
+```python
+store.write(trace, context_key=episode_id)
+store.retrieve(query, k=K, context_key=episode_id)
+```
+
+Adapters propagate the key so retrieved traces can be attributed to the
+correct teaching context. Isolation modes (`per_item`, `per_episode`) use the
+`context_key` to fork or filter stores, and telemetry records the key for every
+write/read event.
+
+## 10.3 Justification & Leakage Telemetry
+
+When a prediction uses memory, telemetry logs **trace IDs** and a
+`context_match_rate` measuring how many retrieved traces match the supplied
+`context_key`.
+
+```json
+{
+  "qid": "semantic_mem/00042",
+  "retrieval": {"requests": 3, "hits": 3, "context_match_rate": 1.0,
+                "trace_ids": ["t101", "t099", "t055"]}
+}
+```
+
+Leakage probes inject contradictory facts across items; mismatched traces are
+counted under `leakage.mismatched` and should remain at zero under strict
+isolation.
+
 # 11) Ops: logging, provenance, rollback, and maintenance
 
 * Every write records `{text_span, doc_id, time, conf, source}`; **delete\_by\_provenance()** and snapshot/restore for all stores.
