@@ -182,8 +182,3 @@ python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd mode=test   n=
 **DoD**
 - Each phase writes `metrics.json` under its `outdir`.
 - Store files exist under `runs/$RUN_ID/stores/<algo>/$RUN_ID/`
-
----
-
-## Task 4 Deliverable — `EVAL_PROTOCOL_minimal.md`
-> Use the separate file attached in this task bundle, or copy it verbatim into `EVAL_PROTOCOL.md`.
