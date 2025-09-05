@@ -426,13 +426,11 @@ Eliminate bloat and ensure a single source of truth remains after the new pipeli
   - `hippo_eval/tasks/episodic_cross/generator_legacy.py` (if present)
   - `hippo_eval/tasks/spatial/generator.py` (the one-shot puzzle version), once `generator_multi.py` is adopted.
 - Legacy presets/configs referencing in-prompt facts.
-- `datasets/legacy/` artifacts (remove from repo; keep in release tags if needed).
 - Tests that only cover legacy behavior.
 - Doc references in `EVAL_PLAN.md`, `DESIGN.md`, `EVAL_PROTOCOL.md` to old suites.
 
 ## Safety Net
 
-- Before deletion, tag the repo (e.g., `v0_eval_legacy`).
 - Ensure two green runs on the new path.
 - Confirm wheels/binaries don’t grow.
 
