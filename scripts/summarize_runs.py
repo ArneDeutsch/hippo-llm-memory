@@ -1,5 +1,8 @@
 import argparse
+import sys
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from hippo_eval.reporting.report import sanity_sweep
 from hippo_eval.reporting.summarize import summarize_runs
