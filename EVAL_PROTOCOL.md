@@ -80,6 +80,67 @@ runs/$RUN_ID/stores/
 
 To control replay loops, pass `replay_cycles=<n>` or `replay.cycles=<n>`.
 
+## Memory-First Suite Recipes
+
+### semantic_mem
+
+```bash
+python scripts/build_datasets.py suite=semantic --require_memory=true \
+  --out datasets/semantic_mem
+python scripts/eval_cli.py suite=semantic_mem preset=baseline n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_baseline
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_teach \
+  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=test n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_test \
+  store_dir=stores/$RUN_ID/semantic_mem session_id=$RUN_ID
+```
+
+### episodic_cross_mem
+
+```bash
+python scripts/build_datasets.py suite=episodic_cross --out datasets/episodic_cross_mem
+python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline n=50 seed=1337 \
+  outdir=runs/$RUN_ID/episodic_cross_mem_baseline
+python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
+  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
+  outdir=runs/$RUN_ID/episodic_cross_mem_teach \
+  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
+python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
+  mode=test n=50 seed=1337 \
+  outdir=runs/$RUN_ID/episodic_cross_mem_test \
+  store_dir=stores/$RUN_ID/episodic_cross_mem session_id=$RUN_ID
+```
+
+### spatial_multi
+
+```bash
+python scripts/build_datasets.py suite=spatial_multi --out datasets/spatial_multi
+python scripts/eval_cli.py suite=spatial_multi preset=baseline n=50 seed=1337 \
+  outdir=runs/$RUN_ID/spatial_multi_baseline
+python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
+  outdir=runs/$RUN_ID/spatial_multi_teach \
+  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+  mode=replay n=50 seed=1337 \
+  outdir=runs/$RUN_ID/spatial_multi_replay \
+  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+  mode=test n=50 seed=1337 \
+  outdir=runs/$RUN_ID/spatial_multi_test \
+  store_dir=stores/$RUN_ID/spatial_multi session_id=$RUN_ID
+```
+
+### Smoke block (`n=50`, `seed=1337`)
+
+Run the above recipes with the given `RUN_ID`. Baseline EM must stay ≤0.2 on
+`semantic_mem` and `episodic_cross_mem`; memory variants should show clear
+uplift and non-zero retrieval requests.
+
 ### Dataset profiles
 
 Two difficulty profiles control task hardness and expected memory gains:
@@ -506,6 +567,19 @@ echo "  - $ADAPTERS    (trained adapters, if any)"
 ### Appendix — Deprecated commands
 
 - `python scripts/run_baselines_bench.py`: **CI/plumbing‑only**. It calls the light‑weight bench that returns ground truth as predictions; **do not use** for real baselines.
+
+### Appendix — Legacy Path (Deprecated)
+
+For a limited time the legacy suites `semantic`, `episodic_cross`, and
+`spatial` remain runnable for comparison:
+
+```bash
+python scripts/eval_cli.py suite=semantic preset=baseline n=50 seed=1337 \
+  outdir=runs/$RUN_ID/legacy_semantic_baseline
+```
+
+They retain facts inside prompts and will be removed after two consecutive
+green runs of the memory-first pipeline.
 
 ## Migration notes
 
