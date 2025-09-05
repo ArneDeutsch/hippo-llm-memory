@@ -69,7 +69,7 @@ git rm scripts/datasets_cli.py scripts/audit_datasets.py
 
 ### T0.6 — Docs cleanup + DEPRECATIONS.md
 **Actions**
-- Update `EVAL_PLAN.md`, `EVAL_PROTOCOL.md`, `DESIGN.md`, `MILESTONE_9_PLAN.md` to remove legacy references.
+- Update `EVAL_PLAN.md`, `EVAL_PROTOCOL.md`, `DESIGN.md` to remove legacy references.
 - Add `DEPRECATIONS.md` enumerating removals and the archival tag.
 
 **Accept**
