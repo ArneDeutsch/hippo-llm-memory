@@ -1,0 +1,27 @@
+{
+  "suite": "episodic_cross",
+  "sizes": [
+    50,
+    200,
+    1000
+  ],
+  "seeds": [
+    1337,
+    2025,
+    4242
+  ],
+  "generator_version": "c54da4b24ddd9fe0121bf4ced95250ea83338d1c",
+  "files": {
+    "50_1337.jsonl": "14cfb6cbc15d3e33e1b7946bb0fc5c29d792d67a8b4a24cd8fe76db5d2632571",
+    "50_2025.jsonl": "863e76bb181e3c5bebeeacfc19d83bacca62af12a885847941ed7fda12caaaf6",
+    "50_4242.jsonl": "43cbda2885a8ffb88fc33eadc55aed54fb9951208be0ec7f66f0a6d3cb6b712b",
+    "200_1337.jsonl": "15a381c7c4d00c29f950add66266e3ffcbc9872bced2789062f3ff82b572bef4",
+    "200_2025.jsonl": "664484099bfaa6ceb45de117becca92da5b6847c24c80d6070a7d50c65027117",
+    "200_4242.jsonl": "dfd2941a7de99420353e85a9861255dea43ae07be4d16ccd700c01993842ca2c",
+    "1000_1337.jsonl": "416e0493b873d864fd6f7d731af87f4f7dfe59f90e31ecd9f4ef66443cd738b5",
+    "1000_2025.jsonl": "cca47e88fcdfd669bc8f147b6319289b38278d5d819815a4e43f753adb6f52b6",
+    "1000_4242.jsonl": "07d6d2750806688830ad4b0e69832e7ca3ee8770f30360fc2459659d45208e05"
+  },
+  "created_utc": "2025-09-05T10:26:58.519535+00:00",
+  "cli_example": "python scripts/datasets_cli.py --suite episodic_cross --size <size> --seed <seed> --out data/episodic_cross/<size>_<seed>.jsonl"
+}
