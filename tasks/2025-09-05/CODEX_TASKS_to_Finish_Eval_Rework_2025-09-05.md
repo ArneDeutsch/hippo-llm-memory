@@ -113,21 +113,7 @@ python scripts/eval_cli.py suite=semantic_mem n=5 seed=0 outdir=runs/dev_smoke/b
 
 ---
 
-## Task 4 — Replace `EVAL_PROTOCOL.md` with the minimal version
-**Context:** The protocol has grown bloated. Replace it with a short, parameterized, copy‑pasteable recipe.
-**File:** `EVAL_PROTOCOL.md`
-
-**Action:** Replace the entire file content with the contents of `EVAL_PROTOCOL_minimal.md` (attached below in Task 4 Deliverable).
-
-**DoD**
-- File contains only the minimal protocol with variables `RUN_ID`, `SIZES`, `SEEDS` and the three suites.
-
-**Deliverable**  
-Paste the content from `EVAL_PROTOCOL_minimal.md` (see attachment/file in this task bundle).
-
----
-
-## Task 5 — Remove/rename deprecated references
+## Task 4 — Remove/rename deprecated references
 **Context:** Old names like `sgc_rss_mem` and path examples `store_dir=stores/...` linger in the repo.
 **Action:** Search and fix/remove.
 
@@ -149,7 +135,7 @@ rg -n "sgc_rss_mem" configs || true
 
 ---
 
-## Task 6 — Smoke the full minimal protocol (tiny sizes)
+## Task 5 — Smoke the full minimal protocol (tiny sizes)
 **Context:** Validate the end‑to‑end path with small inputs before committing.
 **Run**
 ```bash
