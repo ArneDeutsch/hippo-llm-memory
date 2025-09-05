@@ -1,7 +1,0 @@
-task,model,n,seed,em,f1,tokens,time_ms_per_100
-episodic_cross,Qwen/Qwen2.5-1.5B-Instruct,50,1337,1.0,1.0,3225,154.99228021705724
-semantic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.96,0.96,3262,128.3519118638932
-episodic_multi,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.5,0.5,6262,106.32976900355749
-spatial,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.0,10702,1373.5714994487037
-episodic_capacity,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.0,0.30999999999999994,38534,58.75720130533547
-episodic,Qwen/Qwen2.5-1.5B-Instruct,50,1337,0.1,0.22855699855699854,3062,276.3734552579938
