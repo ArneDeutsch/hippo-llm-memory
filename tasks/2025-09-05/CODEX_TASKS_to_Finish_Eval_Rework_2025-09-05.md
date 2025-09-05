@@ -13,19 +13,6 @@
 
 ---
 
-## Task 0 — Create branch and preflight
-**Context:** Keep changes isolated.
-- **Run**
-```bash
-git checkout -b chore/eval-rework-min-protocol-2025-09-05
-python -V
-```
-
-**DoD**
-- New branch exists.
-
----
-
 ## Task 1 — Fix dataset builder shim
 **Context:** `scripts/build_datasets.py` calls a missing helper. Use the package module entrypoint instead.
 **File:** `scripts/build_datasets.py`
