@@ -1,12 +1,5 @@
-episodic:
-  distractors: 2
-episodic_multi:
-  distractors: 10
-  corrections: true
 episodic_cross:
   entity_pool: 8
-episodic_capacity:
-  context_budget: 384
 semantic:
   hop_depth: 2
   inject_contradictions: true
@@ -14,6 +7,6 @@ semantic:
   entity_pool: 4
   paraphrase_prob: 0.0
   ambiguity_prob: 0.0
-spatial:
+spatial_multi:
   grid_size: 6
   obstacle_density: 0.25
