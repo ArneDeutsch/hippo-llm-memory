@@ -11,6 +11,7 @@ consolidation and updates ``metrics.json`` with ``post_*`` and
 ``delta_*`` fields.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -134,12 +135,18 @@ def main(cfg: DictConfig) -> None:
         )
         _ensure_populated(store_path, cfg)
     elif cfg.mode == "test":
+        # Only memory presets need a persisted store.
         if cfg.get("store_dir") or cfg.get("session_id"):
-            layout = _resolve_layout(cfg, algo)
-            store_path = assert_store_exists(
-                str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind
+            from hippo_mem.utils.stores import validate_store
+
+            maybe_store = validate_store(
+                run_id=str(cfg.get("run_id") or os.getenv("RUN_ID") or ""),
+                preset=str(cfg.preset),
+                algo=algo,
+                kind=store_kind,
             )
-            _ensure_populated(store_path, cfg)
+            if maybe_store is not None:
+                _ensure_populated(maybe_store, cfg)
         elif cfg.get("store_dir"):
             cfg.store_dir = _normalize_store_dir(str(cfg.store_dir), algo)
     elif cfg.get("store_dir"):
