@@ -787,13 +787,8 @@ class PlaceGraph(StoreLifecycleMixin, RollbackMixin):
         path = Path(directory) / session_id
         path.mkdir(parents=True, exist_ok=True)
         self._write_meta(path, replay_samples, gate_attempts)
-
-        file = path / "spatial.jsonl"
-        if replay_samples <= 0:
-            io.atomic_write_file(file, lambda tmp: open(tmp, "w", encoding="utf-8").write(""))
-            return
-
         if fmt == "jsonl":
+            # Always materialize JSONL (meta + nodes/edges), even for teach-only.
             self._save_jsonl(path)
         else:  # fmt == "parquet"
             self._save_parquet(path)

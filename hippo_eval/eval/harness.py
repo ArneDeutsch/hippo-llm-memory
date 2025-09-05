@@ -418,7 +418,8 @@ def _evaluate(
                 gc = gating["spatial"]
                 gc.attempts += 1
                 if decision.action == "insert" and mode == "teach":
-                    graph.observe("ctx")
+                    context = f"ctx_{getattr(item, 'qid', idx)}"
+                    graph.observe(context)
                     gc.accepted += 1
                 elif decision.action == "insert":
                     gc.accepted += 1
