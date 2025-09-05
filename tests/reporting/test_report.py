@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from hippo_eval.reporting import plots
 from hippo_eval.reporting.report import (
     _find_latest_run_id,
     main,
@@ -449,3 +450,23 @@ def test_missing_pre_suites_detector() -> None:
     data = {("episodic", "preset", 50): [{"post_em": 0.8}, {"post_em": 0.7, "pre_em": 0.6}]}
     _, missing_pre = summarise(data)
     assert missing_pre_suites(missing_pre) == ["episodic"]
+
+
+def test_write_reports_with_plots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic" / "50_1337"
+    _make_metrics(base_dir, "episodic", {"em": 1.0})
+    base = tmp_path / "runs" / "20250101"
+    summary, _ = summarise(collect_metrics(base))
+    retrieval = summarise_retrieval(collect_retrieval(base))
+    gates = summarise_gates(collect_gates(base))
+    gate_ablation = collect_gate_ablation(base)
+    out_dir = tmp_path / "reports" / "20250101"
+    called = False
+
+    def fake_render_suite_plots(*_args, **_kwargs) -> None:
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(plots, "render_suite_plots", fake_render_suite_plots)
+    write_reports(summary, retrieval, gates, gate_ablation, out_dir, plots=True, seed_count=1)
+    assert called

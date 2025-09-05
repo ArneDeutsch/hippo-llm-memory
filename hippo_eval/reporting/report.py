@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable
 
+from hippo_eval.reporting import plots as plot_utils
 from hippo_eval.reporting import rollup, tables
 
 log = logging.getLogger(__name__)
@@ -200,7 +201,7 @@ def write_reports(
         )
         paths[suite] = md_path
         if plots:
-            plots.render_suite_plots(suite, presets, suite_dir, retrieval.get(suite))
+            plot_utils.render_suite_plots(suite, presets, suite_dir, retrieval.get(suite))
     idx = rollup.write_index(
         summary,
         paths,
