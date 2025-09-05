@@ -132,7 +132,7 @@ python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
 ### spatial_multi
 
 ```bash
-python scripts/build_datasets.py --suite spatial --size 50 --seed 1337
+python scripts/build_datasets.py --suite spatial_multi --size 50 --seed 1337
 python scripts/eval_cli.py suite=spatial_multi preset=baseline n=50 seed=1337 \
   outdir=runs/$RUN_ID/spatial_multi_baseline
 python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
