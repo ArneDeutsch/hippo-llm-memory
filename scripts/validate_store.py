@@ -61,8 +61,9 @@ def validate_cli_store(args: argparse.Namespace) -> Path | None:
         raise ValueError(
             "empty store: "
             f"{path} — run:\n  python scripts/eval_model.py --mode teach --run-id {run_id}\n"
-            "hint: for SGC-RSS ensure the teach path actually writes tuples "
-            "(gate accepts *and* either schemas are seeded or direct upsert is used)."
+            "hint: teach path must persist data.\n"
+            "  - SGC-RSS: ensure tuples are written (gate accepts and schemas are seeded or direct upsert is used).\n"
+            "  - SMPD: ensure the spatial map writes nodes/edges (no blank JSONL on teach-only)."
         )
     return path
 

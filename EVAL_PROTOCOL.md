@@ -333,6 +333,9 @@ done
 
 ### 4.3) SMPD (spatial)
 
+> The teach step must persist a **non-empty** `spatial.jsonl` under `stores/smpd/<SID>/`.
+> This file should at least contain the meta record and one node after a gate-accepted observation. Replay is **not** required for the file to be non-empty.
+
 ```bash
 SID="smpd_${RUN_ID}"
 suite=spatial
