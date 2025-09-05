@@ -13,9 +13,12 @@ source scripts/_env.sh   # exports RUNS, STORES=runs/$RUN_ID/stores
 ## Build Datasets
 Run per suite (adjust size/seed loops as needed):
 ```bash
-python -m hippo_eval.datasets.cli --suite semantic_mem --size ${SIZES[0]} --seed ${SEEDS[0]}
-python -m hippo_eval.datasets.cli --suite episodic_cross_mem --size ${SIZES[0]} --seed ${SEEDS[0]}
-python -m hippo_eval.datasets.cli --suite spatial_multi --size ${SIZES[0]} --seed ${SEEDS[0]}
+python -m hippo_eval.datasets.cli --suite semantic_mem --size ${SIZES[0]} \
+  --seed ${SEEDS[0]} --out datasets/semantic_mem
+python -m hippo_eval.datasets.cli --suite episodic_cross_mem --size ${SIZES[0]} \
+  --seed ${SEEDS[0]} --out datasets/episodic_cross_mem
+python -m hippo_eval.datasets.cli --suite spatial_multi --size ${SIZES[0]} \
+  --seed ${SEEDS[0]} --out datasets/spatial_multi
 ```
 
 ## Semantic Memory (sgc_rss)
