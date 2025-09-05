@@ -20,6 +20,7 @@ class TraceValue:
     trace_id: Optional[str] = None
     sample_id: Optional[str] = None
     suite: Optional[str] = None
+    context_key: Optional[str] = None
 
 
 @dataclass

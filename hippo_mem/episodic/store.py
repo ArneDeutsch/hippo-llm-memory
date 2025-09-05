@@ -240,7 +240,13 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
 
     # ------------------------------------------------------------------
     # Public API
-    def write(self, key: Union[np.ndarray, DGKey], value: TraceValue | str) -> int:
+    def write(
+        self,
+        key: Union[np.ndarray, DGKey],
+        value: TraceValue | str,
+        *,
+        context_key: str | None = None,
+    ) -> int:
         """Store a key/value pair.
 
         Summary
@@ -279,6 +285,8 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
 
         if isinstance(value, str):
             value = TraceValue(provenance=value)
+        if context_key is not None:
+            value.context_key = context_key
 
         if isinstance(key, np.ndarray):
             if self.key_noise > 0:
@@ -314,7 +322,7 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         self.logger.increment("writes")
         return idx
 
-    def recall(self, query: np.ndarray, k: int) -> List[Trace]:
+    def recall(self, query: np.ndarray, k: int, *, context_key: str | None = None) -> List[Trace]:
         """Recall the ``k`` nearest traces for a query vector.
 
         Summary
@@ -357,7 +365,8 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
 
         query_arr = np.asarray(query, dtype="float32").reshape(1, -1)
         faiss.normalize_L2(query_arr)
-        scores, ids = self.index.search(query_arr, k)
+        search_k = k * 5 if context_key is not None else k
+        scores, ids = self.index.search(query_arr, search_k)
         traces: List[Trace] = []
         for score, idx in zip(scores[0], ids[0]):
             if idx == -1:
@@ -367,6 +376,8 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
             if trace is None:
                 continue
             value, key_vec, ts, salience = trace
+            if context_key is not None and value.context_key != context_key:
+                continue
             dg_key = DGKey(
                 indices=np.nonzero(key_vec)[0].astype("int64"),
                 values=key_vec[np.nonzero(key_vec)].astype("float32"),

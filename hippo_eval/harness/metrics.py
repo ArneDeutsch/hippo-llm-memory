@@ -100,6 +100,8 @@ def collect_metrics(
         lat_delta = sum(float(r.get("retrieval_latency_ms", 0.0)) for r in pre_rows)
         acc.metrics["memory_hit_rate"] = hits / max(1, len(pre_rows))
         acc.metrics["latency_ms_delta"] = lat_delta / max(1, len(pre_rows))
+        rates = [float(r.get("context_match_rate", 0.0)) for r in pre_rows]
+        acc.metrics["context_match_rate"] = sum(rates) / max(1, len(rates))
     if post_metrics is not None:
         acc.update_post(post_metrics)
         compute_deltas(acc, pre_metrics, post_metrics)

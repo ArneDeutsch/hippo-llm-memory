@@ -34,6 +34,8 @@ gating_enabled: true
 strict_telemetry: false
 allow_dummy_stores: false
 primary_em: norm
+no_retrieval_during_teach: true
+isolate: none
 
 # Control evaluation-time compute features.
 compute:

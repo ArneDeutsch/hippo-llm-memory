@@ -44,7 +44,7 @@ def _extract_vectors(store: EpisodicStore, traces: List, dim: int) -> np.ndarray
 
 
 def _recall_traces(
-    store: EpisodicStore, cue: np.ndarray, k: int
+    store: EpisodicStore, cue: np.ndarray, k: int, context_key: str | None = None
 ) -> tuple[np.ndarray, np.ndarray, int, List[TraceValue]]:
     """Recall ``k`` traces from ``store`` and return their vectors.
 
@@ -59,7 +59,13 @@ def _recall_traces(
     if k_wta > 0:
         cue_sparse = store.sparse_encode(cue, k_wta)
         cue = store.to_dense(cue_sparse)
-    traces = store.recall(cue, k) if k > 0 else []
+    if k > 0:
+        try:
+            traces = store.recall(cue, k, context_key=context_key)
+        except TypeError:  # pragma: no cover - backward compatibility
+            traces = store.recall(cue, k)
+    else:
+        traces = []
     hits = len(traces)
     vecs = _extract_vectors(store, traces, store.dim)
     values = [getattr(t, "value", TraceValue()) for t in traces]
@@ -104,6 +110,7 @@ def episodic_retrieve_and_pack(
     spec: TraceSpec,
     store: EpisodicStore,
     proj: nn.Module,
+    context_keys: list[str | None] | None = None,
 ) -> MemoryTokens:
     """Recall episodic traces and package them as ``MemoryTokens``."""
 
@@ -117,16 +124,20 @@ def episodic_retrieve_and_pack(
     span_meta: list[list[tuple[int, int]]] = []
     id_meta: list[list[str | None]] = []
 
+    ctx_meta: list[list[str | None]] = []
+
     def iter_retrieve():
         nonlocal placeholder_total, actual_hits
         for i in range(bsz):
             cue = batch_hidden[i, -1].detach().cpu().numpy()
-            cue, vecs, hits, values = _recall_traces(store, cue, k)
+            ctx = context_keys[i] if context_keys else None
+            cue, vecs, hits, values = _recall_traces(store, cue, k, context_key=ctx)
             vecs, mask_hits, placeholder = _apply_hopfield(store, vecs, cue, hits, k, spec)
             placeholder_total += placeholder
             actual_hits += hits
             span_meta.append([tuple(v.tokens_span) if v.tokens_span else (0, 0) for v in values])
             id_meta.append([v.trace_id for v in values])
+            ctx_meta.append([v.context_key for v in values])
             yield vecs, mask_hits
 
     def meta_fn(start: float, hits: int, k: int, bsz: int) -> dict[str, float]:
@@ -144,6 +155,7 @@ def episodic_retrieve_and_pack(
 
     mem.meta["tokens_span"] = span_meta
     mem.meta["trace_ids"] = id_meta
+    mem.meta["trace_context_keys"] = ctx_meta
 
     if placeholder_total:
         stats = registry.get("episodic")

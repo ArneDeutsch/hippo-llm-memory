@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 
 
@@ -26,4 +27,36 @@ def resolve_store_meta_path(preset: str, store_dir: Path, session_id: str) -> Pa
     return sd / algo / session_id / "store_meta.json"
 
 
-__all__ = ["resolve_store_meta_path"]
+def fork_store(store):
+    """Return a deep copy of ``store`` for isolation."""
+
+    return copy.deepcopy(store)
+
+
+def clear_store(store) -> None:
+    """Remove all items from ``store`` in-place."""
+
+    if hasattr(store, "persistence") and hasattr(store, "index"):
+        try:
+            store.persistence.db.conn.execute("DELETE FROM traces")
+            store.persistence.db.conn.commit()
+            try:
+                store.index.reset()
+            except Exception:
+                store.index = type(store.index)(
+                    store.dim,
+                    getattr(store.index, "index_str", "Flat"),
+                    getattr(store.index, "train_threshold", 100),
+                )
+        except Exception:
+            pass
+    if hasattr(store, "graph"):
+        try:
+            store.graph.clear()
+        except Exception:
+            store.graph = {}
+    if hasattr(store, "_context_to_id"):
+        store._context_to_id.clear()
+
+
+__all__ = ["resolve_store_meta_path", "fork_store", "clear_store"]
