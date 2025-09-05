@@ -6,9 +6,9 @@ export MODEL=${MODEL:-models/tiny-gpt2}
 export STRICT_TELEMETRY=${STRICT_TELEMETRY:-1}
 source "$(dirname "$0")/_env.sh"
 
-SUITE=${SUITE:-episodic}
-PRESET=${PRESET:-memory/hei_nw}
-SESSION_ID=${SESSION_ID:-$HEI_SESSION_ID}
+SUITE=${SUITE:-semantic_mem}
+PRESET=${PRESET:-memory/sgc_rss_mem}
+SESSION_ID=${SESSION_ID:-sgc_${RUN_ID}}
 
 # 1. Matrix baselines
 python scripts/eval_model.py +run_matrix=true \

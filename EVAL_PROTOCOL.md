@@ -4,6 +4,10 @@ _Updated: 2025-08-28 (by ChatGPT)_
 
 This protocol executes a **complete, reproducible** validation run across **baselines** and **memory-enabled** algorithms (HEI‑NW, SGC‑RSS, SMPD), plus **ablations** and **consolidation** checks (Milestone 9.5).
 
+The default path uses the memory‑first suites `semantic_mem`, `episodic_cross_mem`,
+and `spatial_multi`. Legacy in‑prompt suites remain available only for temporary
+comparison.
+
 Evaluation pipelines, metrics, reporting code, and synthetic tasks reside in the
 `hippo_eval` package. Legacy `hippo_mem.*` paths remain as shims emitting
 `DeprecationWarning`.
@@ -40,10 +44,18 @@ All outputs go to `runs/$RUN_ID/...`; no normalization happens.
 ```bash
 RUN_ID=my_experiment
 source scripts/_env.sh
-python scripts/eval_model.py +run_matrix=true run_id=$RUN_ID presets=[baselines/core] tasks=[episodic] n_values=[50] seeds=[1337] model=$MODEL
-python -m hippo_eval.baselines --run-id $RUN_ID
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID n=50 seed=1337 mode=teach persist=true store_dir=$STORES session_id=$HEI_SESSION_ID model=$MODEL
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw run_id=$RUN_ID n=50 seed=1337 mode=test store_dir=$STORES session_id=$HEI_SESSION_ID model=$MODEL
+export SGC_SESSION=sgc_$RUN_ID
+python scripts/build_datasets.py --suite semantic --size 50 --seed 1337
+python scripts/eval_cli.py suite=semantic_mem preset=baseline n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_baseline
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_teach \
+  store_dir=$STORES session_id=$SGC_SESSION
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=test n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_test \
+  store_dir=$STORES session_id=$SGC_SESSION
 python scripts/report.py --run-id $RUN_ID
 ```
 
@@ -53,23 +65,27 @@ python scripts/report.py --run-id $RUN_ID
 # Shared environment
 export RUN_ID=my_experiment
 export STORES=runs/$RUN_ID/stores
-export HEI_SESSION=hei_$RUN_ID      # per-algorithm session ids
+export SGC_SESSION=sgc_$RUN_ID      # per-algorithm session ids
 
 # 1) Teach – write experiences
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
-  run_id=$RUN_ID mode=teach persist=true store_dir=$STORES session_id=$HEI_SESSION
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=teach --no-retrieval-during-teach=true n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_teach \
+  store_dir=$STORES session_id=$SGC_SESSION
 
 # 2) Test – read from the same store
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw \
-  run_id=$RUN_ID mode=test store_dir=$STORES session_id=$HEI_SESSION
+python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
+  mode=test n=50 seed=1337 \
+  outdir=runs/$RUN_ID/semantic_mem_test \
+  store_dir=$STORES session_id=$SGC_SESSION
 ```
 
 Store layout:
 
 ```
 runs/$RUN_ID/stores/
-  hei_nw/$HEI_SESSION/episodic.jsonl
   sgc_rss/$SGC_SESSION/kg.jsonl
+  hei_nw/$HEI_SESSION/episodic.jsonl
   smpd/$SMPD_SESSION/spatial.jsonl
 ```
 
@@ -85,8 +101,7 @@ To control replay loops, pass `replay_cycles=<n>` or `replay.cycles=<n>`.
 ### semantic_mem
 
 ```bash
-python scripts/build_datasets.py suite=semantic --require_memory=true \
-  --out datasets/semantic_mem
+python scripts/build_datasets.py --suite semantic --size 50 --seed 1337
 python scripts/eval_cli.py suite=semantic_mem preset=baseline n=50 seed=1337 \
   outdir=runs/$RUN_ID/semantic_mem_baseline
 python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
@@ -102,7 +117,7 @@ python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss_mem \
 ### episodic_cross_mem
 
 ```bash
-python scripts/build_datasets.py suite=episodic_cross --out datasets/episodic_cross_mem
+python scripts/build_datasets.py --suite episodic_cross --size 50 --seed 1337
 python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline n=50 seed=1337 \
   outdir=runs/$RUN_ID/episodic_cross_mem_baseline
 python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
@@ -118,7 +133,7 @@ python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
 ### spatial_multi
 
 ```bash
-python scripts/build_datasets.py suite=spatial_multi --out datasets/spatial_multi
+python scripts/build_datasets.py --suite spatial --size 50 --seed 1337
 python scripts/eval_cli.py suite=spatial_multi preset=baseline n=50 seed=1337 \
   outdir=runs/$RUN_ID/spatial_multi_baseline
 python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
@@ -570,12 +585,22 @@ echo "  - $ADAPTERS    (trained adapters, if any)"
 
 ### Appendix — Legacy Path (Deprecated)
 
-For a limited time the legacy suites `semantic`, `episodic_cross`, and
-`spatial` remain runnable for comparison:
+> **Legacy Path (Deprecated)**
+> The in‑prompt suites remain runnable for side‑by‑side checks but are slated
+> for removal.
 
 ```bash
+# semantic
 python scripts/eval_cli.py suite=semantic preset=baseline n=50 seed=1337 \
   outdir=runs/$RUN_ID/legacy_semantic_baseline
+
+# episodic_cross
+python scripts/eval_cli.py suite=episodic_cross preset=baseline n=50 seed=1337 \
+  outdir=runs/$RUN_ID/legacy_episodic_cross_baseline
+
+# spatial
+python scripts/eval_cli.py suite=spatial preset=baseline n=50 seed=1337 \
+  outdir=runs/$RUN_ID/legacy_spatial_baseline
 ```
 
 They retain facts inside prompts and will be removed after two consecutive
