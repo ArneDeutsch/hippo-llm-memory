@@ -27,8 +27,9 @@ def test_round_trip_and_topk(data) -> None:
     query = vectors[qid]
     result = index.search(query, k=k)
     dists = np.linalg.norm(vectors - query, axis=1)
-    expected = np.argsort(dists)[:k]
-    assert all(r in expected for r in result)
+    threshold = np.partition(dists, k - 1)[k - 1]
+    expected = {i for i, d in enumerate(dists) if d <= threshold}
+    assert set(result).issubset(expected)
     returned = [dists[r] for r in result]
     assert returned == sorted(returned)
 
