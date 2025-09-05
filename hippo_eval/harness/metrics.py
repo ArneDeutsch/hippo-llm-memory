@@ -102,6 +102,12 @@ def collect_metrics(
         acc.metrics["latency_ms_delta"] = lat_delta / max(1, len(pre_rows))
         rates = [float(r.get("context_match_rate", 0.0)) for r in pre_rows]
         acc.metrics["context_match_rate"] = sum(rates) / max(1, len(rates))
+        just = sum(
+            1
+            for r in pre_rows
+            if int(r.get("memory_hit", 0)) and float(r.get("context_match_rate", 0.0)) > 0.0
+        )
+        acc.metrics["justification_coverage"] = just / max(1, len(pre_rows))
     if post_metrics is not None:
         acc.update_post(post_metrics)
         compute_deltas(acc, pre_metrics, post_metrics)
@@ -113,6 +119,12 @@ def collect_metrics(
         pre_lat = sum(float(r.get("latency_ms", 0.0)) for r in pre_rows) / max(1, len(pre_rows))
         post_lat = sum(float(r.get("latency_ms", 0.0)) for r in post_rows) / max(1, len(post_rows))
         acc.metrics["macro_reuse_latency_delta_ms"] = pre_lat - post_lat
+
+    if gating:
+        attempts = sum(int(g.attempts) for g in gating.values())
+        accepted = sum(int(g.accepted) for g in gating.values())
+        if attempts:
+            acc.metrics["gate_accept_rate"] = accepted / attempts
 
     metrics: Dict[str, object] = {
         "version": 2,
