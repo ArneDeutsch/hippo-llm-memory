@@ -13,23 +13,29 @@ source scripts/_env.sh   # exports RUNS, STORES=runs/$RUN_ID/stores
 ## Build Datasets
 Run per suite (adjust size/seed loops as needed):
 ```bash
-python -m hippo_eval.datasets.cli --suite semantic_mem --size ${SIZES[0]} \
-  --seed ${SEEDS[0]} --out datasets/semantic_mem
-python -m hippo_eval.datasets.cli --suite episodic_cross_mem --size ${SIZES[0]} \
-  --seed ${SEEDS[0]} --out datasets/episodic_cross_mem
-python -m hippo_eval.datasets.cli --suite spatial_multi --size ${SIZES[0]} \
-  --seed ${SEEDS[0]} --out datasets/spatial_multi
+python scripts/datasets_cli.py --suite semantic_mem --size ${SIZES[0]} \
+  --seed ${SEEDS[0]} --out data/semantic_mem
+python scripts/datasets_cli.py --suite episodic_cross_mem --size ${SIZES[0]} \
+  --seed ${SEEDS[0]} --out data/episodic_cross_mem
+python scripts/datasets_cli.py --suite spatial_multi --size ${SIZES[0]} \
+  --seed ${SEEDS[0]} --out data/spatial_multi
 ```
 
 ## Semantic Memory (sgc_rss)
 ```bash
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
-    python scripts/eval_cli.py suite=semantic_mem n="$n" seed="$seed"       outdir="$RUNS/semantic_mem_baseline/${n}_${seed}"
+    python scripts/eval_cli.py suite=semantic_mem n="$n" seed="$seed" \
+      outdir="$RUNS/semantic_mem_baseline/${n}_${seed}"
 
-    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss       mode=teach --no-retrieval-during-teach n="$n" seed="$seed"       outdir="$RUNS/semantic_mem_teach/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
+      mode=teach --no-retrieval-during-teach --persist \
+      n="$n" seed="$seed" \
+      outdir="$RUNS/semantic_mem_teach/${n}_${seed}"
 
-    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss       mode=test n="$n" seed="$seed"       outdir="$RUNS/semantic_mem_test/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
+      mode=test n="$n" seed="$seed" \
+      outdir="$RUNS/semantic_mem_test/${n}_${seed}"
   done
 done
 ```
@@ -38,11 +44,17 @@ done
 ```bash
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
-    python scripts/eval_cli.py suite=episodic_cross_mem n="$n" seed="$seed"       outdir="$RUNS/episodic_cross_mem_baseline/${n}_${seed}"
+    python scripts/eval_cli.py suite=episodic_cross_mem n="$n" seed="$seed" \
+      outdir="$RUNS/episodic_cross_mem_baseline/${n}_${seed}"
 
-    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw       mode=teach --no-retrieval-during-teach n="$n" seed="$seed"       outdir="$RUNS/episodic_cross_mem_teach/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw \
+      mode=teach --no-retrieval-during-teach --persist \
+      n="$n" seed="$seed" \
+      outdir="$RUNS/episodic_cross_mem_teach/${n}_${seed}"
 
-    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw       mode=test n="$n" seed="$seed"       outdir="$RUNS/episodic_cross_mem_test/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw \
+      mode=test n="$n" seed="$seed" \
+      outdir="$RUNS/episodic_cross_mem_test/${n}_${seed}"
   done
 done
 ```
@@ -51,15 +63,21 @@ done
 ```bash
 for n in "${SIZES[@]}"; do
   for seed in "${SEEDS[@]}"; do
-    python scripts/eval_cli.py suite=spatial_multi n="$n" seed="$seed"       outdir="$RUNS/spatial_multi_baseline/${n}_${seed}"
+    python scripts/eval_cli.py suite=spatial_multi n="$n" seed="$seed" \
+      outdir="$RUNS/spatial_multi_baseline/${n}_${seed}"
 
-    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd       mode=teach --no-retrieval-during-teach n="$n" seed="$seed"       outdir="$RUNS/spatial_multi_teach/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+      mode=teach --no-retrieval-during-teach --persist \
+      n="$n" seed="$seed" \
+      outdir="$RUNS/spatial_multi_teach/${n}_${seed}"
 
-    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd       mode=test n="$n" seed="$seed"       outdir="$RUNS/spatial_multi_test/${n}_${seed}"       store_dir="$STORES" session_id="$RUN_ID"
+    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+      mode=test n="$n" seed="$seed" \
+      outdir="$RUNS/spatial_multi_test/${n}_${seed}"
   done
 done
 ```
 
 **Notes**
-- Do **not** pass `store_dir`/`session_id` for baselines.
+- `store_dir` and `session_id` are derived from `RUN_ID`; no manual overrides needed.
 - Boolean flags are specified without `=true`.
