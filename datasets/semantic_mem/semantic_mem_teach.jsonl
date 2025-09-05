@@ -1,0 +1,100 @@
+{"fact": "Carol bought a apple at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00000"}
+{"fact": "StoreB is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00000"}
+{"fact": "Dave bought a apple at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00001"}
+{"fact": "StoreC is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00001"}
+{"fact": "Alice bought a ball at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00002"}
+{"fact": "StoreB is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00002"}
+{"fact": "Carol bought a book at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00003"}
+{"fact": "StoreB is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00003"}
+{"fact": "Dave bought a ball at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00004"}
+{"fact": "StoreA is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00004"}
+{"fact": "Alice bought a book at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00005"}
+{"fact": "StoreB is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00005"}
+{"fact": "Carol bought a apple at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00006"}
+{"fact": "StoreB is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00006"}
+{"fact": "Bob bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00007"}
+{"fact": "StoreC is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00007"}
+{"fact": "Bob bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00008"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00008"}
+{"fact": "Alice bought a coin at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00009"}
+{"fact": "StoreC is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00009"}
+{"fact": "Carol bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00010"}
+{"fact": "StoreC is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00010"}
+{"fact": "Alice bought a apple at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00011"}
+{"fact": "StoreB is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00011"}
+{"fact": "Alice bought a coin at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00012"}
+{"fact": "StoreB is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00012"}
+{"fact": "Bob bought a ball at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00013"}
+{"fact": "StoreC is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00013"}
+{"fact": "Dave bought a ball at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00014"}
+{"fact": "StoreA is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00014"}
+{"fact": "Bob bought a coin at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00015"}
+{"fact": "StoreA is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00015"}
+{"fact": "Bob bought a coin at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00016"}
+{"fact": "StoreB is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00016"}
+{"fact": "Carol bought a coin at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00017"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00017"}
+{"fact": "Carol bought a apple at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00018"}
+{"fact": "StoreB is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00018"}
+{"fact": "Carol bought a coin at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00019"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00019"}
+{"fact": "Dave bought a apple at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00020"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00020"}
+{"fact": "Bob bought a ball at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00021"}
+{"fact": "StoreC is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00021"}
+{"fact": "Bob bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00022"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00022"}
+{"fact": "Alice bought a coin at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00023"}
+{"fact": "StoreB is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00023"}
+{"fact": "Bob bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00024"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00024"}
+{"fact": "Carol bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00025"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00025"}
+{"fact": "Alice bought a book at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00026"}
+{"fact": "StoreB is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00026"}
+{"fact": "Dave bought a apple at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00027"}
+{"fact": "StoreA is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00027"}
+{"fact": "Dave bought a coin at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00028"}
+{"fact": "StoreC is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00028"}
+{"fact": "Bob bought a ball at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00029"}
+{"fact": "StoreB is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00029"}
+{"fact": "Bob bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00030"}
+{"fact": "StoreC is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00030"}
+{"fact": "Carol bought a apple at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00031"}
+{"fact": "StoreC is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00031"}
+{"fact": "Alice bought a ball at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00032"}
+{"fact": "StoreA is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00032"}
+{"fact": "Carol bought a coin at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00033"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00033"}
+{"fact": "Bob bought a apple at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00034"}
+{"fact": "StoreA is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00034"}
+{"fact": "Bob bought a coin at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00035"}
+{"fact": "StoreA is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00035"}
+{"fact": "Dave bought a ball at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00036"}
+{"fact": "StoreA is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00036"}
+{"fact": "Carol bought a ball at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00037"}
+{"fact": "StoreA is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00037"}
+{"fact": "Alice bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00038"}
+{"fact": "StoreC is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00038"}
+{"fact": "Dave bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00039"}
+{"fact": "StoreC is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00039"}
+{"fact": "Alice bought a ball at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00040"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00040"}
+{"fact": "Carol bought a ball at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00041"}
+{"fact": "StoreA is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00041"}
+{"fact": "Bob bought a apple at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00042"}
+{"fact": "StoreA is in Rome.", "schema_fit": true, "time": 1, "context_key": "sem/00042"}
+{"fact": "Bob bought a apple at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00043"}
+{"fact": "StoreC is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00043"}
+{"fact": "Carol bought a coin at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00044"}
+{"fact": "StoreB is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00044"}
+{"fact": "Bob bought a apple at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00045"}
+{"fact": "StoreA is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00045"}
+{"fact": "Alice bought a ball at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00046"}
+{"fact": "StoreA is in Paris.", "schema_fit": true, "time": 1, "context_key": "sem/00046"}
+{"fact": "Dave bought a coin at StoreA.", "schema_fit": true, "time": 0, "context_key": "sem/00047"}
+{"fact": "StoreA is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00047"}
+{"fact": "Bob bought a book at StoreC.", "schema_fit": true, "time": 0, "context_key": "sem/00048"}
+{"fact": "StoreC is in London.", "schema_fit": true, "time": 1, "context_key": "sem/00048"}
+{"fact": "Carol bought a book at StoreB.", "schema_fit": true, "time": 0, "context_key": "sem/00049"}
+{"fact": "StoreB is in Berlin.", "schema_fit": true, "time": 1, "context_key": "sem/00049"}
