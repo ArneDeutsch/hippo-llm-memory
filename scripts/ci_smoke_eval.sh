@@ -8,7 +8,9 @@ source "$(dirname "$0")/_env.sh"
 
 SUITE=${SUITE:-semantic_mem}
 PRESET=${PRESET:-memory/sgc_rss}
-SESSION_ID=${SESSION_ID:-sgc_${RUN_ID}}
+SESSION_ID=${SESSION_ID:-${SUITE}_${RUN_ID}}
+
+python -m hippo_eval.datasets.cli --suite "$SUITE" --size 50 --seed 1337 --out "datasets/$SUITE"
 
 # 1. Matrix baselines
 python scripts/eval_model.py +run_matrix=true \
