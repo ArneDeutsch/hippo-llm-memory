@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.utils.stores import derive
+
 pytestmark = pytest.mark.slow
 
 
@@ -94,7 +96,8 @@ def test_eval_model_cli_flags(tmp_path: Path) -> None:
 
 def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
-    store_dir = tmp_path / "stores"
+    run_id = "RIDCLI"
+    layout = derive(run_id=run_id, algo="hei_nw")
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
@@ -104,8 +107,9 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir}",
-        f"store_dir={store_dir}",
-        "session_id=s1",
+        f"store_dir={layout.base_dir}",
+        f"run_id={run_id}",
+        f"session_id={layout.session_id}",
         "mode=teach",
         "persist=true",
         "dry_run=true",
@@ -113,7 +117,7 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
     subprocess.run(cmd, check=True)
 
     # store persisted
-    assert (store_dir / "hei_nw" / "s1" / "episodic_cross_mem.jsonl").exists()
+    assert (layout.algo_dir / layout.session_id / "episodic.jsonl").exists()
 
     # metrics should not include scores
     with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
@@ -123,7 +127,8 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
 
 def test_load_store_and_memory_off(tmp_path: Path) -> None:
     outdir_teach = tmp_path / "teach"
-    store_dir = tmp_path / "stores"
+    run_id = "RIDSTORE"
+    layout = derive(run_id=run_id, algo="hei_nw")
     cmd_teach = [
         sys.executable,
         "scripts/eval_model.py",
@@ -133,8 +138,9 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir_teach}",
-        f"store_dir={store_dir}",
-        "session_id=s1",
+        f"store_dir={layout.base_dir}",
+        f"run_id={run_id}",
+        f"session_id={layout.session_id}",
         "mode=teach",
         "persist=true",
         "dry_run=true",
@@ -152,8 +158,9 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir_test}",
-        f"store_dir={store_dir}",
-        "session_id=s1",
+        f"store_dir={layout.algo_dir}",
+        f"run_id={run_id}",
+        f"session_id={layout.session_id}",
         "mode=test",
         "dry_run=true",
     ]
@@ -161,7 +168,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
     metrics = json.loads((outdir_test / "metrics.json").read_text())
     assert metrics["retrieval"]["episodic"]["requests"] >= 1
     assert metrics["gating"]["episodic"]["attempts"] > 0
-    assert metrics["metrics"]["episodic"]["memory_hit_rate"] > 0
+    assert metrics["metrics"]["episodic_cross_mem"]["memory_hit_rate"] > 0
 
     # memory explicitly off
     outdir_off = tmp_path / "test_off"
@@ -174,8 +181,9 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir_off}",
-        f"store_dir={store_dir}",
-        "session_id=s1",
+        f"store_dir={layout.algo_dir}",
+        f"run_id={run_id}",
+        f"session_id={layout.session_id}",
         "mode=test",
         "dry_run=true",
         "memory_off=true",

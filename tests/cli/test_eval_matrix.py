@@ -26,14 +26,14 @@ def test_run_matrix_generates_outputs(
         str(script),
         "+run_matrix=true",
         "preset=baselines/core",
-        "+suites=[episodic]",
+        "+suites=[episodic_cross_mem]",
         f"+n_values={n_values}",
         f"+seeds={seeds}",
         f"outdir={outdir}",
     ]
     subprocess.run(cmd, check=True)
 
-    metrics_paths = list((outdir / "episodic").glob("n*_seed*/metrics.json"))
+    metrics_paths = list((outdir / "episodic_cross_mem").glob("n*_seed*/metrics.json"))
     expected = {(n, seed) for n in n_values for seed in seeds}
     found = set()
     for path in metrics_paths:
