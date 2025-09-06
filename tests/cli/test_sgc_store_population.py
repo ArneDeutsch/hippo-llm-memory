@@ -9,7 +9,7 @@ def test_sgc_teach_populates_store(tmp_path):
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=semantic",
+        "suite=semantic_mem",
         "preset=memory/sgc_rss",
         "n=1",
         "seed=1337",

@@ -17,7 +17,7 @@ def test_eval_model_run_matrix(tmp_path: Path) -> None:
         "scripts/eval_model.py",
         "+run_matrix=true",
         "preset=memory/hei_nw",
-        "+suites=[episodic]",
+        "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
         "model=models/tiny-gpt2",
@@ -25,7 +25,7 @@ def test_eval_model_run_matrix(tmp_path: Path) -> None:
         "dry_run=true",
     ]
     subprocess.run(cmd, check=True)
-    expected = outdir / "episodic" / "2_1337" / "metrics.json"
+    expected = outdir / "episodic_cross_mem" / "2_1337" / "metrics.json"
     assert expected.exists()
     metrics = json.loads(expected.read_text())
     assert metrics["n"] == 2
@@ -42,7 +42,7 @@ def test_eval_model_run_matrix_episodic_multi(tmp_path: Path) -> None:
         "scripts/eval_model.py",
         "+run_matrix=true",
         "preset=memory/hei_nw",
-        "tasks=[episodic_multi]",
+        "tasks=[episodic_cross_mem]",
         "n_values=[2]",
         "seeds=[1337]",
         "model=models/tiny-gpt2",
@@ -50,7 +50,7 @@ def test_eval_model_run_matrix_episodic_multi(tmp_path: Path) -> None:
         "dry_run=true",
     ]
     subprocess.run(cmd, check=True)
-    expected = outdir / "episodic_multi" / "2_1337" / "metrics.json"
+    expected = outdir / "episodic_cross_mem" / "2_1337" / "metrics.json"
     assert expected.exists()
 
 
@@ -67,7 +67,7 @@ def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
         str(repo_root / "scripts" / "eval_model.py"),
         "+run_matrix=true",
         "preset=memory/hei_nw",
-        "+suites=[episodic]",
+        "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
         "model=models/tiny-gpt2",
@@ -75,7 +75,9 @@ def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
         "run_id=RID824",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path, env=env)
-    expected = tmp_path / "runs" / "RID824" / "hei_nw" / "episodic" / "2_1337" / "metrics.json"
+    expected = (
+        tmp_path / "runs" / "RID824" / "hei_nw" / "episodic_cross_mem" / "2_1337" / "metrics.json"
+    )
     assert expected.exists()
 
 
@@ -92,7 +94,7 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
         str(repo_root / "scripts" / "eval_model.py"),
         "+run_matrix=true",
         "preset=baselines/core",
-        "+suites=[episodic]",
+        "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
         "model=models/tiny-gpt2",
@@ -101,7 +103,14 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path, env=env)
     expected = (
-        tmp_path / "runs" / "RID824" / "baselines" / "core" / "episodic" / "2_1337" / "metrics.json"
+        tmp_path
+        / "runs"
+        / "RID824"
+        / "baselines"
+        / "core"
+        / "episodic_cross_mem"
+        / "2_1337"
+        / "metrics.json"
     )
     assert expected.exists()
 
@@ -119,7 +128,7 @@ def test_eval_model_run_matrix_date_time(tmp_path: Path) -> None:
         str(repo_root / "scripts" / "eval_model.py"),
         "+run_matrix=true",
         "preset=memory/hei_nw",
-        "+suites=[episodic]",
+        "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
         "model=models/tiny-gpt2",
@@ -127,7 +136,15 @@ def test_eval_model_run_matrix_date_time(tmp_path: Path) -> None:
         "run_id=RID2890841",
     ]
     subprocess.run(cmd, check=True, cwd=tmp_path, env=env)
-    expected = tmp_path / "runs" / "RID2890841" / "hei_nw" / "episodic" / "2_1337" / "metrics.json"
+    expected = (
+        tmp_path
+        / "runs"
+        / "RID2890841"
+        / "hei_nw"
+        / "episodic_cross_mem"
+        / "2_1337"
+        / "metrics.json"
+    )
     assert expected.exists()
 
 
@@ -140,7 +157,7 @@ def test_eval_model_run_matrix_presets(tmp_path: Path) -> None:
         "scripts/eval_model.py",
         "+run_matrix=true",
         "presets=[baselines/core,baselines/longctx]",
-        "tasks=[episodic]",
+        "tasks=[episodic_cross_mem]",
         "n_values=[2]",
         "seeds=[1337]",
         "model=models/tiny-gpt2",
@@ -149,5 +166,5 @@ def test_eval_model_run_matrix_presets(tmp_path: Path) -> None:
     ]
     subprocess.run(cmd, check=True)
     for preset in ("baselines/core", "baselines/longctx"):
-        metrics = tmp_path / preset / "episodic" / "2_1337" / "metrics.json"
+        metrics = tmp_path / preset / "episodic_cross_mem" / "2_1337" / "metrics.json"
         assert metrics.exists()

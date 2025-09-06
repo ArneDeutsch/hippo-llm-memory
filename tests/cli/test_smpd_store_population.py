@@ -8,7 +8,7 @@ def test_smpd_store_population(tmp_path: Path) -> None:
     run_id = "run_ci"
     stores = Path("runs") / run_id / "stores"
     sid = "smpd_run_ci"
-    dataset = Path("data") / "spatial_50_0.jsonl"
+    dataset = Path("data") / "spatial_multi_50_0.jsonl"
     dataset.write_text(
         '{"prompt": "p1", "answer": "a1"}\n{"prompt": "p2", "answer": "a2"}\n',
         encoding="utf-8",
@@ -18,7 +18,7 @@ def test_smpd_store_population(tmp_path: Path) -> None:
             [
                 sys.executable,
                 "scripts/eval_cli.py",
-                "suite=spatial",
+                "suite=spatial_multi",
                 "preset=memory/smpd",
                 "n=2",
                 "seed=0",

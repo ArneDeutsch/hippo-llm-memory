@@ -14,9 +14,9 @@ from hippo_eval.reporting.rollup import (
 
 
 def test_report_handles_null_em_raw(tmp_path: Path) -> None:
-    base = tmp_path / "runs" / "20250101" / "baselines" / "core" / "semantic" / "50_1337"
+    base = tmp_path / "runs" / "20250101" / "baselines" / "core" / "semantic_mem" / "50_1337"
     base.mkdir(parents=True)
-    content = {"metrics": {"semantic": {"em_raw": None}}}
+    content = {"metrics": {"semantic_mem": {"em_raw": None}}}
     (base / "metrics.json").write_text(json.dumps(content))
 
     runs_root = tmp_path / "runs" / "20250101"
@@ -26,4 +26,4 @@ def test_report_handles_null_em_raw(tmp_path: Path) -> None:
     gate_ablation = collect_gate_ablation(runs_root)
     out_dir = tmp_path / "reports" / "20250101"
     write_reports(summary, retrieval, gates, gate_ablation, out_dir, plots=False, seed_count=1)
-    assert (out_dir / "semantic" / "summary.md").exists()
+    assert (out_dir / "semantic_mem" / "summary.md").exists()

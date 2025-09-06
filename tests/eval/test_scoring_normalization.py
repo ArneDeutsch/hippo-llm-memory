@@ -20,7 +20,7 @@ def test_harness_writes_em_scores(tmp_path: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
@@ -31,5 +31,5 @@ def test_harness_writes_em_scores(tmp_path: Path) -> None:
     ]
     subprocess.run(cmd, check=True)
     metrics = json.loads((outdir / "metrics.json").read_text())
-    suite = metrics["metrics"]["episodic"]
+    suite = metrics["metrics"]["episodic_cross_mem"]
     assert "pre_em_raw" in suite and "pre_em_norm" in suite

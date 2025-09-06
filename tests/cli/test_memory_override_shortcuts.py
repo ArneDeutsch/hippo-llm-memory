@@ -25,7 +25,7 @@ def run_eval(args: list[str], outdir: Path) -> None:
 def test_memory_override_shortcuts(tmp_path: Path) -> None:
     run_eval(
         [
-            "suite=episodic",
+            "suite=episodic_cross_mem",
             "preset=memory/hei_nw",
             "episodic.gate.tau=0.3",
         ],
@@ -34,7 +34,7 @@ def test_memory_override_shortcuts(tmp_path: Path) -> None:
 
     run_eval(
         [
-            "suite=semantic",
+            "suite=semantic_mem",
             "preset=memory/sgc_rss",
             "relational.gate.threshold=0.4",
         ],
@@ -43,7 +43,7 @@ def test_memory_override_shortcuts(tmp_path: Path) -> None:
 
     run_eval(
         [
-            "suite=spatial",
+            "suite=spatial_multi",
             "preset=memory/smpd",
             "spatial.gate.block_threshold=2.0",
         ],

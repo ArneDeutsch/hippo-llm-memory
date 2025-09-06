@@ -45,7 +45,7 @@ def test_gate_metrics_propagate(tmp_path: Path) -> None:
     gate_registry.reset()
     cfg = OmegaConf.create(
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/memory/hei_nw.yaml",

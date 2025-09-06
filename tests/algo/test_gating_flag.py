@@ -10,7 +10,7 @@ def test_gating_flag_disables_gate(tmp_path: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=semantic",
+        "suite=semantic_mem",
         "preset=memory/sgc_rss",
         "n=1",
         "seed=1337",

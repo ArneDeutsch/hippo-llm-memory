@@ -18,7 +18,7 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
@@ -35,7 +35,7 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
         assert (outdir / name).exists()
 
     meta = json.loads((outdir / "meta.json").read_text())
-    assert meta["suite"] == "episodic"
+    assert meta["suite"] == "episodic_cross_mem"
     assert meta["preset"] == "memory/hei_nw"
     assert meta["n"] == 2
     assert meta["replay_cycles"] == 1
@@ -53,7 +53,7 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
     assert compute["latency_ms_mean"] > 0
     assert metrics["replay"]["samples"] == 2
     assert metrics["store"]["size"] >= 1
-    suite_metrics = metrics["metrics"]["episodic"]
+    suite_metrics = metrics["metrics"]["episodic_cross_mem"]
     assert "pre_refusal_rate" in suite_metrics
     assert "memory_hit_rate" in suite_metrics
     assert "latency_ms_delta" in suite_metrics
@@ -72,7 +72,7 @@ def test_eval_model_cli_flags(tmp_path: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
@@ -98,7 +98,7 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
@@ -113,7 +113,7 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
     subprocess.run(cmd, check=True)
 
     # store persisted
-    assert (store_dir / "hei_nw" / "s1" / "episodic.jsonl").exists()
+    assert (store_dir / "hei_nw" / "s1" / "episodic_cross_mem.jsonl").exists()
 
     # metrics should not include scores
     with (outdir / "metrics.csv").open("r", encoding="utf-8") as f:
@@ -127,7 +127,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
     cmd_teach = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
@@ -146,7 +146,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
     cmd_test = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
@@ -168,7 +168,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
     cmd_off = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
@@ -203,7 +203,7 @@ def test_run_id_parameter_controls_outdir(tmp_path: Path, preset: str, expected:
     cmd = [
         sys.executable,
         str(repo_root / "scripts" / "eval_model.py"),
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         f"preset={preset}",
         "n=2",
         "seed=1337",
@@ -216,7 +216,7 @@ def test_run_id_parameter_controls_outdir(tmp_path: Path, preset: str, expected:
     run_dir = tmp_path / "runs" / "RID0101"
     for part in expected:
         run_dir /= part
-    run_dir /= "episodic"
+    run_dir /= "episodic_cross_mem"
     assert (run_dir / "meta.json").exists()
     meta = json.loads((run_dir / "meta.json").read_text())
     assert meta["run_id"] == "RID0101"

@@ -5,13 +5,12 @@ from typing import Any, Callable, Dict
 
 from omegaconf import OmegaConf
 
-from . import SUITE_TO_GENERATOR, record_checksum, update_dataset_card, write_jsonl
-
-SUITE_ALIASES = {
-    "episodic": "episodic_cross_mem",
-    "semantic": "semantic_mem",
-    "spatial": "spatial_multi",
-}
+from . import (
+    SUITE_TO_GENERATOR,
+    record_checksum,
+    update_dataset_card,
+    write_jsonl,
+)
 
 
 def _load_profile(name: str) -> Dict[str, Any]:
@@ -54,11 +53,7 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
 def main() -> None:
     """CLI entry point for building memory-first synthetic datasets."""
     parser = argparse.ArgumentParser(description="Build synthetic evaluation data")
-    parser.add_argument(
-        "--suite",
-        choices=list(SUITE_TO_GENERATOR.keys()) + list(SUITE_ALIASES.keys()),
-        required=True,
-    )
+    parser.add_argument("--suite", choices=list(SUITE_TO_GENERATOR.keys()), required=True)
     parser.add_argument("--size", type=int, default=100, help="Number of teach/test items")
     parser.add_argument("--seed", type=int, default=0, help="RNG seed")
     parser.add_argument("--out", type=Path, required=True, help="Output directory")
@@ -93,7 +88,6 @@ def main() -> None:
         help="Pronoun ambiguity probability for semantic_mem",
     )
     args = parser.parse_args()
-    args.suite = SUITE_ALIASES.get(args.suite, args.suite)
     _validate_args(parser, args)
 
     profile_cfg = _load_profile(args.profile).get(args.suite, {})

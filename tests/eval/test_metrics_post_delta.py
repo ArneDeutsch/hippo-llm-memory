@@ -15,7 +15,7 @@ def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
     base_cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
@@ -36,7 +36,7 @@ def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
     )
     data = json.loads((outdir / "metrics.json").read_text())
     try:
-        suite = data["metrics"]["episodic"]
+        suite = data["metrics"]["episodic_cross_mem"]
         assert "post_em" in suite
         assert "delta_em" in suite
         assert "post_f1" in suite

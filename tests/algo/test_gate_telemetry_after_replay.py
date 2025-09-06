@@ -10,7 +10,7 @@ def test_gate_telemetry_after_replay(tmp_path: Path) -> None:
     base_cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",

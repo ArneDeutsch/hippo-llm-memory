@@ -17,13 +17,13 @@ def _write_metrics(
 
 
 def test_collect_and_write(tmp_path: Path) -> None:
-    _write_metrics(tmp_path, "core", "episodic", 0, 0.1, 0.2, 0.3)
-    _write_metrics(tmp_path, "core", "episodic", 1, 0.2, 0.3, 0.4)
+    _write_metrics(tmp_path, "core", "episodic_cross_mem", 0, 0.1, 0.2, 0.3)
+    _write_metrics(tmp_path, "core", "episodic_cross_mem", 1, 0.2, 0.3, 0.4)
     root = tmp_path / "runs" / "20250101" / "baselines"
     rows = aggregate_metrics(root)
     assert rows == [
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "preset": "core",
             "em_raw_mean": 0.15000000000000002,
             "em_raw_ci": pytest.approx(0.069, abs=1e-3),

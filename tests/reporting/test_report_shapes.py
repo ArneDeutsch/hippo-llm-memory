@@ -13,7 +13,7 @@ def test_metrics_csv_has_diagnostics(tmp_path: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=baselines/core",
         "n=1",
         "seed=1337",
@@ -33,6 +33,6 @@ def test_metrics_csv_has_diagnostics(tmp_path: Path) -> None:
         assert col in headers
 
     metrics = json.loads((outdir / "metrics.json").read_text())
-    diag = metrics["diagnostics"]["episodic"]
+    diag = metrics["diagnostics"]["episodic_cross_mem"]
     assert "pre_overlong" in diag
     assert "pre_format_violation" in diag
