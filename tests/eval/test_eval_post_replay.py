@@ -12,7 +12,7 @@ def test_post_replay_cycle_generates_metrics(tmp_path: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_bench.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=1",
         "seed=0",

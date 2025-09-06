@@ -9,7 +9,7 @@ from hippo_eval.eval.harness import evaluate
 def test_spatial_teach_writes_jsonl(tmp_path: Path) -> None:
     cfg = OmegaConf.create(
         {
-            "suite": "spatial",
+            "suite": "spatial_multi",
             "preset": "memory/smpd",
             "n": 2,
             "seed": 0,
@@ -30,7 +30,7 @@ def test_spatial_teach_writes_jsonl(tmp_path: Path) -> None:
             "memory": {"spatial": {"gate": {"enabled": True}}},
         }
     )
-    dataset = Path("data") / "spatial_50_0.jsonl"
+    dataset = Path("data") / "spatial_multi_50_0.jsonl"
     dataset.write_text(
         '{"prompt": "p1", "answer": "a1"}\n{"prompt": "p2", "answer": "a2"}\n',
         encoding="utf-8",

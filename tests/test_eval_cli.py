@@ -21,7 +21,7 @@ def test_explicit_overrides_ignore_env(monkeypatch):
         "argv",
         [
             "eval_cli.py",
-            "suite=semantic",
+            "suite=semantic_mem",
             "session_id=cli_sid",
             "store_dir=/cli/stores",
             "run_id=cli_run",

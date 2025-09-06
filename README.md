@@ -100,7 +100,7 @@ hippo-llm-memory/
 7. Evaluate:
 
    ```bash
-   python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=50 seed=1337
+   python scripts/eval_model.py suite=episodic_cross_mem preset=memory/hei_nw n=50 seed=1337
    ```
 
 ### Recommended base models (updated)

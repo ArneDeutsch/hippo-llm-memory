@@ -57,8 +57,8 @@ def _make_metrics(
 
 def test_report_aggregation(tmp_path: Path) -> None:
     base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core"
-    runs_on = base_dir / "gate_on" / "episodic"
-    runs_off = base_dir / "gate_off" / "episodic"
+    runs_on = base_dir / "gate_on" / "episodic_cross_mem"
+    runs_off = base_dir / "gate_off" / "episodic_cross_mem"
     gates_on = {
         "relational": {
             "attempts": 10,
@@ -97,7 +97,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     }
     _make_metrics(
         runs_on / "50_1337",
-        "episodic",
+        "episodic_cross_mem",
         {"em_raw": 0.5, "r": 0.7},
         {
             "input_tokens": 5,
@@ -113,7 +113,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     )
     _make_metrics(
         runs_on / "50_2025",
-        "episodic",
+        "episodic_cross_mem",
         {"em_raw": 0.7, "r": 0.9},
         {
             "input_tokens": 15,
@@ -129,7 +129,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     )
     _make_metrics(
         runs_off / "50_4242",
-        "episodic",
+        "episodic_cross_mem",
         {"em_raw": 0.6, "r": 0.8},
         {
             "input_tokens": 10,
@@ -144,10 +144,10 @@ def test_report_aggregation(tmp_path: Path) -> None:
         seed=4242,
     )
     # also create another suite to ensure per-suite report generation
-    other = tmp_path / "runs" / "20250101" / "baselines" / "core" / "semantic"
+    other = tmp_path / "runs" / "20250101" / "baselines" / "core" / "semantic_mem"
     _make_metrics(
         other / "50_1337",
-        "semantic",
+        "semantic_mem",
         {"post_em": 0.4},
         {
             "input_tokens": 2,
@@ -180,7 +180,7 @@ def test_report_aggregation(tmp_path: Path) -> None:
     gate_ablation = collect_gate_ablation(base)
     lineage = collect_lineage(base)
 
-    em_stats = summary["episodic"]["baselines/core/gate_on"][50]["em_raw"]
+    em_stats = summary["episodic_cross_mem"]["baselines/core/gate_on"][50]["em_raw"]
     assert em_stats[0] == 0.6
     assert round(em_stats[1], 3) == 0.196
 
@@ -196,8 +196,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
         lineage=lineage,
     )
     # per-suite summaries present
-    assert set(paths.keys()) == {"episodic", "semantic"}
-    md_path = paths["episodic"]
+    assert set(paths.keys()) == {"episodic_cross_mem", "semantic_mem"}
+    md_path = paths["episodic_cross_mem"]
     text = md_path.read_text()
     # table header contains all fields
     header = next(line for line in text.splitlines() if line.startswith("| Preset"))
@@ -225,8 +225,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
     header = next(line for line in idx_text.splitlines() if line.startswith("| Suite"))
     for col in ["EM (raw)", "r", "rss_mb", "time_ms_per_100", "total_tokens"]:
         assert col in header
-    assert "[episodic](episodic/summary.md)" in idx_text
-    assert "[semantic](semantic/summary.md)" in idx_text
+    assert "[episodic_cross_mem](episodic_cross_mem/summary.md)" in idx_text
+    assert "[semantic_mem](semantic_mem/summary.md)" in idx_text
     assert "_missing_" in idx_text
     assert "MissingPre" in idx_text
     # gate telemetry roll-up present
@@ -234,8 +234,8 @@ def test_report_aggregation(tmp_path: Path) -> None:
 
 
 def test_report_handles_missing_optional(tmp_path: Path) -> None:
-    base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
-    _make_metrics(base_dir / "50_1337", "episodic", {"em": 0.5}, {"total_tokens": 10})
+    base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic_cross_mem"
+    _make_metrics(base_dir / "50_1337", "episodic_cross_mem", {"em": 0.5}, {"total_tokens": 10})
     base = tmp_path / "runs" / "20250101"
     summary, _ = summarise(collect_metrics(base))
     retrieval = summarise_retrieval(collect_retrieval(base))
@@ -243,15 +243,15 @@ def test_report_handles_missing_optional(tmp_path: Path) -> None:
     gate_ablation = collect_gate_ablation(base)
     out = tmp_path / "reports" / "20250101"
     paths = write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
-    text = paths["episodic"].read_text()
+    text = paths["episodic_cross_mem"].read_text()
     assert "Retrieval Telemetry" not in text
 
 
 def test_report_warnings(tmp_path: Path) -> None:
     base = tmp_path / "runs" / "20250101"
     _make_metrics(
-        base / "baselines" / "core" / "episodic" / "50_1337",
-        "episodic",
+        base / "baselines" / "core" / "episodic_cross_mem" / "50_1337",
+        "episodic_cross_mem",
         {"pre_em_norm": 0.0},
         retrieval={
             "episodic": {
@@ -267,8 +267,8 @@ def test_report_warnings(tmp_path: Path) -> None:
         store={"size": 1},
     )
     _make_metrics(
-        base / "memory" / "hei_nw" / "episodic" / "50_1337",
-        "episodic",
+        base / "memory" / "hei_nw" / "episodic_cross_mem" / "50_1337",
+        "episodic_cross_mem",
         {"pre_em_norm": 1.0},
         gates={"episodic": {"attempts": 0}},
         retrieval={
@@ -285,8 +285,8 @@ def test_report_warnings(tmp_path: Path) -> None:
         store={"size": 5},
     )
     _make_metrics(
-        base / "ablate" / "no_retrieval" / "episodic" / "50_1337",
-        "episodic",
+        base / "ablate" / "no_retrieval" / "episodic_cross_mem" / "50_1337",
+        "episodic_cross_mem",
         {"pre_em_norm": 0.1},
         retrieval={
             "episodic": {
@@ -307,7 +307,7 @@ def test_report_warnings(tmp_path: Path) -> None:
     gate_ablation = collect_gate_ablation(base)
     out = tmp_path / "reports" / "20250101"
     write_reports(summary, retrieval, gates, gate_ablation, out, plots=False, seed_count=1)
-    text = (out / "episodic" / "summary.md").read_text()
+    text = (out / "episodic_cross_mem" / "summary.md").read_text()
     assert "BaselineTelemetry" in text
     assert "NoRetrievalTelemetry" in text
     assert "SaturationSuspect" in text
@@ -325,9 +325,9 @@ def test_find_latest_run_id(tmp_path: Path) -> None:
 
 def test_report_paths_run_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     run_id = "RID123"
-    metrics_dir = tmp_path / "runs" / run_id / "baselines" / "core" / "episodic" / "50_1337"
+    metrics_dir = tmp_path / "runs" / run_id / "baselines" / "core" / "episodic_cross_mem" / "50_1337"
     metrics_dir.mkdir(parents=True)
-    (metrics_dir / "metrics.json").write_text(json.dumps({"metrics": {"episodic": {"em": 1.0}}}))
+    (metrics_dir / "metrics.json").write_text(json.dumps({"metrics": {"episodic_cross_mem": {"em": 1.0}}}))
     args = [
         "report",
         "--runs-dir",
@@ -344,15 +344,15 @@ def test_report_paths_run_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
 
 def test_smoke_report(tmp_path: Path) -> None:
     data_root = tmp_path / "data"
-    for suite in ["episodic", "semantic", "spatial"]:
+    for suite in ["episodic_cross_mem", "semantic_mem", "spatial_multi"]:
         suite_dir = data_root / suite
         suite_dir.mkdir(parents=True)
         (suite_dir / "50_1337.jsonl").write_text('{"prompt":"Q","answer":"A"}\n')
 
-    runs_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
+    runs_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic_cross_mem"
     _make_metrics(
         runs_dir / "50_1337",
-        "episodic",
+        "episodic_cross_mem",
         {"em": 1.0},
         {
             "input_tokens": 1,
@@ -382,7 +382,7 @@ def test_smoke_report(tmp_path: Path) -> None:
 def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> None:
     """Report generation works for bench-style and harness metrics."""
 
-    base = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic"
+    base = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic_cross_mem"
     retrieval = None
     gates = None
     if telemetry:
@@ -400,7 +400,7 @@ def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> N
         gates = {"episodic": {"attempts": 1}}
     _make_metrics(
         base / "50_1337",
-        "episodic",
+        "episodic_cross_mem",
         {"em": 0.5},
         retrieval=retrieval,
         gates=gates,
@@ -414,7 +414,7 @@ def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> N
     gate_ablation = collect_gate_ablation(root)
     out_dir = tmp_path / "reports" / "20250101"
     write_reports(summary, retrieval_s, gates_s, gate_ablation, out_dir, plots=False, seed_count=1)
-    text = (out_dir / "episodic" / "summary.md").read_text()
+    text = (out_dir / "episodic_cross_mem" / "summary.md").read_text()
     if telemetry:
         assert "Retrieval Telemetry" in text or "Gate Telemetry" in text
     else:
@@ -424,37 +424,37 @@ def test_report_handles_optional_telemetry(tmp_path: Path, telemetry: bool) -> N
 
 def test_collect_lineage_tracks_dataset_profile_and_store_source(tmp_path: Path) -> None:
     base = tmp_path / "runs" / "20250101"
-    metrics_dir = base / "baselines" / "core" / "episodic" / "50_1337"
+    metrics_dir = base / "baselines" / "core" / "episodic_cross_mem" / "50_1337"
     _make_metrics(
         metrics_dir,
-        "episodic",
+        "episodic_cross_mem",
         {"em": 0.5},
         bench=True,
         store={"size": 0, "source": "replay"},
         dataset_profile="hard",
     )
     lineage = collect_lineage(base)
-    assert lineage["episodic"]["profiles"] == {"hard"}
-    assert lineage["episodic"]["store_source"] == {"replay"}
+    assert lineage["episodic_cross_mem"]["profiles"] == {"hard"}
+    assert lineage["episodic_cross_mem"]["store_source"] == {"replay"}
 
 
 def test_missing_post_metrics_detector() -> None:
-    data = {("episodic", "preset", 50): [{"pre_em": 0.1}]}
+    data = {("episodic_cross_mem", "preset", 50): [{"pre_em": 0.1}]}
     from scripts.report import _missing_post_metrics
 
     missing = _missing_post_metrics(data)
-    assert missing == [("episodic", "preset", 50)]
+    assert missing == [("episodic_cross_mem", "preset", 50)]
 
 
 def test_missing_pre_suites_detector() -> None:
-    data = {("episodic", "preset", 50): [{"post_em": 0.8}, {"post_em": 0.7, "pre_em": 0.6}]}
+    data = {("episodic_cross_mem", "preset", 50): [{"post_em": 0.8}, {"post_em": 0.7, "pre_em": 0.6}]}
     _, missing_pre = summarise(data)
-    assert missing_pre_suites(missing_pre) == ["episodic"]
+    assert missing_pre_suites(missing_pre) == ["episodic_cross_mem"]
 
 
 def test_write_reports_with_plots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic" / "50_1337"
-    _make_metrics(base_dir, "episodic", {"em": 1.0})
+    base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic_cross_mem" / "50_1337"
+    _make_metrics(base_dir, "episodic_cross_mem", {"em": 1.0})
     base = tmp_path / "runs" / "20250101"
     summary, _ = summarise(collect_metrics(base))
     retrieval = summarise_retrieval(collect_retrieval(base))

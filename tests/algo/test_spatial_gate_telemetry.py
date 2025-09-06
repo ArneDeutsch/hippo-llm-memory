@@ -10,7 +10,7 @@ def test_spatial_gate_telemetry() -> None:
     gate_registry.reset()
     cfg = OmegaConf.create(
         {
-            "suite": "spatial",
+            "suite": "spatial_multi",
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/memory/smpd.yaml",

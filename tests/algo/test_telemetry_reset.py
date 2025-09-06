@@ -8,7 +8,7 @@ def test_telemetry_resets_between_runs() -> None:
     registry.reset()
     cfg_mem = OmegaConf.create(
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/memory/hei_nw.yaml",
@@ -21,7 +21,7 @@ def test_telemetry_resets_between_runs() -> None:
 
     cfg_base = OmegaConf.create(
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/baselines/core.yaml",

@@ -408,7 +408,7 @@ def test_retrieval_meta_contains_ids_and_spans() -> None:
     store = EpisodicStore(dim=4)
     key = np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")
     val = TraceValue(
-        tokens_span=(1, 3), trace_id="t1", sample_id="s1", suite="episodic", provenance="p"
+        tokens_span=(1, 3), trace_id="t1", sample_id="s1", suite="episodic_cross_mem", provenance="p"
     )
     store.write(key, val)
 

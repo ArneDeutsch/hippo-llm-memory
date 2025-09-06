@@ -10,7 +10,7 @@ def test_retrieval_counters_propagate(tmp_path: Path) -> None:
     registry.reset()
     cfg = OmegaConf.create(
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/memory/hei_nw.yaml",

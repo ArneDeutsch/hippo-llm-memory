@@ -29,7 +29,7 @@ def test_retrieval_requests_guard(
 
     cfg = OmegaConf.create(
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "n": 0,
             "seed": 0,
             "preset": preset,
@@ -53,7 +53,7 @@ def test_retrieval_tokens_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
 
     cfg = OmegaConf.create(
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "n": 0,
             "seed": 0,
             "preset": "configs/eval/memory/hei_nw.yaml",
@@ -124,7 +124,7 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
 
     cfg = OmegaConf.create(
         {
-            "suite": "episodic",
+            "suite": "episodic_cross_mem",
             "n": 1,
             "seed": 0,
             "preset": "configs/eval/baselines/core.yaml",
@@ -144,8 +144,8 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     pre_dir = tmp_path / "pre"
     pre_dir.mkdir()
     pre_data = {
-        "suite": "episodic",
-        "metrics": {"episodic": {"pre_em": 0.0}},
+        "suite": "episodic_cross_mem",
+        "metrics": {"episodic_cross_mem": {"pre_em": 0.0}},
     }
     (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
 
@@ -157,8 +157,8 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
     def fake_eval(cfg, outdir):  # pragma: no cover - helper
         data = {
-            "suite": "episodic",
-            "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.1}},
+            "suite": "episodic_cross_mem",
+            "metrics": {"episodic_cross_mem": {"pre_em": 0.0, "post_em": 0.1}},
         }
         Path(outdir).mkdir(parents=True, exist_ok=True)
         (Path(outdir) / "metrics.json").write_text(json.dumps(data))
@@ -170,7 +170,7 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "--phase",
         "post",
         "--suite",
-        "episodic",
+        "episodic_cross_mem",
         "--n",
         "50",
         "--seed",
@@ -199,7 +199,7 @@ def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
 
     pre_dir = tmp_path / "pre"
     pre_dir.mkdir()
-    pre_data = {"suite": "episodic", "metrics": {"episodic": {"pre_em": 0.0}}}
+    pre_data = {"suite": "episodic_cross_mem", "metrics": {"episodic_cross_mem": {"pre_em": 0.0}}}
     (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
 
     meta = tmp_path / "stores" / "hei_nw" / "sid" / "store_meta.json"
@@ -210,16 +210,16 @@ def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     seed_a = post_root / "seed_a"
     seed_a.mkdir(parents=True)
     existing = {
-        "suite": "episodic",
-        "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.1}},
+        "suite": "episodic_cross_mem",
+        "metrics": {"episodic_cross_mem": {"pre_em": 0.0, "post_em": 0.1}},
         "delta": {"em": 0.1},
     }
     (seed_a / "metrics.json").write_text(json.dumps(existing))
 
     def fake_eval(cfg, outdir):  # pragma: no cover - helper
         data = {
-            "suite": "episodic",
-            "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.12}},
+            "suite": "episodic_cross_mem",
+            "metrics": {"episodic_cross_mem": {"pre_em": 0.0, "post_em": 0.12}},
         }
         Path(outdir).mkdir(parents=True, exist_ok=True)
         (Path(outdir) / "metrics.json").write_text(json.dumps(data))
@@ -231,7 +231,7 @@ def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
         "--phase",
         "post",
         "--suite",
-        "episodic",
+        "episodic_cross_mem",
         "--n",
         "50",
         "--seed",
@@ -258,7 +258,7 @@ def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
     pre_dir = tmp_path / "pre"
     pre_dir.mkdir()
-    pre_data = {"suite": "episodic", "metrics": {"episodic": {"pre_em": 0.0}}}
+    pre_data = {"suite": "episodic_cross_mem", "metrics": {"episodic_cross_mem": {"pre_em": 0.0}}}
     (pre_dir / "metrics.json").write_text(json.dumps(pre_data))
 
     meta = tmp_path / "stores" / "hei_nw" / "sid" / "store_meta.json"
@@ -269,16 +269,16 @@ def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     seed_a = post_root / "seed_a"
     seed_a.mkdir(parents=True)
     existing = {
-        "suite": "episodic",
-        "metrics": {"episodic": {"pre_em": 0.0, "post_em": -0.05}},
+        "suite": "episodic_cross_mem",
+        "metrics": {"episodic_cross_mem": {"pre_em": 0.0, "post_em": -0.05}},
         "delta": {"em": -0.05},
     }
     (seed_a / "metrics.json").write_text(json.dumps(existing))
 
     def fake_eval(cfg, outdir):  # pragma: no cover - helper
         data = {
-            "suite": "episodic",
-            "metrics": {"episodic": {"pre_em": 0.0, "post_em": 0.01}},
+            "suite": "episodic_cross_mem",
+            "metrics": {"episodic_cross_mem": {"pre_em": 0.0, "post_em": 0.01}},
         }
         Path(outdir).mkdir(parents=True, exist_ok=True)
         (Path(outdir) / "metrics.json").write_text(json.dumps(data))
@@ -290,7 +290,7 @@ def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "--phase",
         "post",
         "--suite",
-        "episodic",
+        "episodic_cross_mem",
         "--n",
         "50",
         "--seed",

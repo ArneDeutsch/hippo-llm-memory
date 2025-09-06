@@ -11,7 +11,7 @@ def test_replay_cycles_config_fallback(tmp_path: Path) -> None:
     cmd_nested = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
@@ -28,7 +28,7 @@ def test_replay_cycles_config_fallback(tmp_path: Path) -> None:
     cmd_flat = [
         sys.executable,
         "scripts/eval_model.py",
-        "suite=episodic",
+        "suite=episodic_cross_mem",
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
