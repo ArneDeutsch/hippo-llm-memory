@@ -16,7 +16,9 @@ def test_write_read_roundtrip(tmp_path: Path) -> None:
     write_csv(tmp_path / "rows.csv", rows)
     assert json.loads((tmp_path / "meta.json").read_text())["suite"] == "episodic_cross_mem"
     assert (
-        json.loads((tmp_path / "metrics.json").read_text())["metrics"]["episodic_cross_mem"]["pre_em"]
+        json.loads((tmp_path / "metrics.json").read_text())["metrics"]["episodic_cross_mem"][
+            "pre_em"
+        ]
         == 1.0
     )
     with (tmp_path / "rows.csv").open() as fh:

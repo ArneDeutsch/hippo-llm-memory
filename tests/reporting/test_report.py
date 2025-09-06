@@ -325,9 +325,13 @@ def test_find_latest_run_id(tmp_path: Path) -> None:
 
 def test_report_paths_run_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     run_id = "RID123"
-    metrics_dir = tmp_path / "runs" / run_id / "baselines" / "core" / "episodic_cross_mem" / "50_1337"
+    metrics_dir = (
+        tmp_path / "runs" / run_id / "baselines" / "core" / "episodic_cross_mem" / "50_1337"
+    )
     metrics_dir.mkdir(parents=True)
-    (metrics_dir / "metrics.json").write_text(json.dumps({"metrics": {"episodic_cross_mem": {"em": 1.0}}}))
+    (metrics_dir / "metrics.json").write_text(
+        json.dumps({"metrics": {"episodic_cross_mem": {"em": 1.0}}})
+    )
     args = [
         "report",
         "--runs-dir",
@@ -447,13 +451,17 @@ def test_missing_post_metrics_detector() -> None:
 
 
 def test_missing_pre_suites_detector() -> None:
-    data = {("episodic_cross_mem", "preset", 50): [{"post_em": 0.8}, {"post_em": 0.7, "pre_em": 0.6}]}
+    data = {
+        ("episodic_cross_mem", "preset", 50): [{"post_em": 0.8}, {"post_em": 0.7, "pre_em": 0.6}]
+    }
     _, missing_pre = summarise(data)
     assert missing_pre_suites(missing_pre) == ["episodic_cross_mem"]
 
 
 def test_write_reports_with_plots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    base_dir = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic_cross_mem" / "50_1337"
+    base_dir = (
+        tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic_cross_mem" / "50_1337"
+    )
     _make_metrics(base_dir, "episodic_cross_mem", {"em": 1.0})
     base = tmp_path / "runs" / "20250101"
     summary, _ = summarise(collect_metrics(base))

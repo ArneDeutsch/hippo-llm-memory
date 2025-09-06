@@ -8,7 +8,13 @@ from hippo_mem.common.gates import GateCounters
 
 def test_collect_metrics_shape() -> None:
     cfg = OmegaConf.create(
-        {"suite": "episodic_cross_mem", "preset": "baselines/core", "n": 2, "seed": 1337, "mode": "test"}
+        {
+            "suite": "episodic_cross_mem",
+            "preset": "baselines/core",
+            "n": 2,
+            "seed": 1337,
+            "mode": "test",
+        }
     )
     gating = {"episodic": GateCounters(attempts=2, accepted=1)}
     pre_rows = [

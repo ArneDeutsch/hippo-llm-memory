@@ -24,7 +24,9 @@ def test_meta_records_cuda_and_env(tmp_path, monkeypatch, driver):
     else:
         monkeypatch.setattr(torch._C, "_cuda_getDriverVersion", lambda: driver, raising=False)
 
-    cfg = OmegaConf.create({"seed": 0, "suite": "episodic_cross_mem", "preset": "baselines/core", "n": 0})
+    cfg = OmegaConf.create(
+        {"seed": 0, "suite": "episodic_cross_mem", "preset": "baselines/core", "n": 0}
+    )
     eval_bench.write_outputs(tmp_path, BenchRun([], {"acc": 1.0}), {}, cfg)
 
     meta = json.loads((tmp_path / "meta.json").read_text())
