@@ -136,11 +136,11 @@ def _build_cfg(model_path: str, args: Args) -> Any:
     cfg = eval_model._load_preset(cfg)
     cfg = eval_model._apply_model_defaults(cfg)
     try:
-        eval_model._dataset_path(cfg.suite, cfg.n, cfg.seed)
+        eval_model._dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.get("dataset_profile"), cfg.mode)
     except FileNotFoundError:
         size = 50 if cfg.n <= 50 else cfg.n
-        out = Path("data") / cfg.suite / f"{size}_{cfg.seed}.jsonl"
-        out.parent.mkdir(parents=True, exist_ok=True)
+        outdir = Path("data") / cfg.suite
+        outdir.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [
                 sys.executable,
@@ -153,7 +153,7 @@ def _build_cfg(model_path: str, args: Args) -> Any:
                 "--seed",
                 str(cfg.seed),
                 "--out",
-                str(out),
+                str(outdir),
             ],
             check=True,
         )

@@ -18,7 +18,12 @@ def main() -> int:
     )
     parser.add_argument("overrides", nargs="*", help="Hydra-style key=value overrides")
     parser.add_argument("--mode", help="Phase: teach, replay, or test")
-    parser.add_argument("--persist", help="Write to store_dir during teach/replay")
+    parser.add_argument(
+        "--persist",
+        dest="persist",
+        action=argparse.BooleanOptionalAction,
+        help="Write to store_dir during teach/replay",
+    )
     parser.add_argument(
         "--store_dir", help="Base directory for persistent stores (e.g., runs/$RUN_ID/stores)"
     )

@@ -37,7 +37,9 @@ def test_retrieval_requests_guard(
         }
     )
 
-    monkeypatch.setattr(eval_helpers, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(
+        eval_helpers, "_dataset_path", lambda s, n, seed, profile=None, mode=None: data_file
+    )
     with pytest.raises(RuntimeError) as exc:
         build_runner(cfg).run()
     assert "retrieval.requests == 0" in str(exc.value)
@@ -59,7 +61,9 @@ def test_retrieval_tokens_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
         }
     )
 
-    monkeypatch.setattr(eval_helpers, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(
+        eval_helpers, "_dataset_path", lambda s, n, seed, profile=None, mode=None: data_file
+    )
     monkeypatch.setattr(
         eval_helpers.registry,
         "all_snapshots",
@@ -76,7 +80,9 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     # dataset
     data_file = tmp_path / "d.jsonl"
     data_file.write_text(json.dumps({"prompt": "p", "answer": "a"}) + "\n")
-    monkeypatch.setattr(eval_helpers, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(
+        eval_helpers, "_dataset_path", lambda s, n, seed, profile=None, mode=None: data_file
+    )
 
     class DummyTokenizer:
         pad_token_id = 0

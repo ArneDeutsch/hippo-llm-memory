@@ -57,7 +57,11 @@ class Runner:
             base_cfg = OmegaConf.merge(base_cfg, preset_cfg)
 
         dataset = _h._dataset_path(
-            self.cfg.suite, self.cfg.n, self.cfg.seed, self.cfg.get("dataset_profile")
+            self.cfg.suite,
+            self.cfg.n,
+            self.cfg.seed,
+            self.cfg.get("dataset_profile"),
+            self.cfg.get("mode", "test"),
         )
         raw_tasks = load_dataset(dataset, {"n": self.cfg.n})
         tasks = [

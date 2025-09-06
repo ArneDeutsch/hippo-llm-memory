@@ -18,7 +18,9 @@ def _setup_cfg(
 
     data_file = tmp_path / "d.jsonl"
     data_file.write_text(json.dumps({"prompt": "p", "answer": "a"}) + "\n")
-    monkeypatch.setattr(harness, "_dataset_path", lambda s, n, seed, profile=None: data_file)
+    monkeypatch.setattr(
+        harness, "_dataset_path", lambda s, n, seed, profile=None, mode=None: data_file
+    )
 
     repo_root = Path(__file__).resolve().parents[2]
     cfg = OmegaConf.load(repo_root / "configs" / "eval" / "default.yaml")

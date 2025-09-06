@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import time
@@ -54,6 +55,12 @@ from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 from .encode import encode_prompt
 from .models import load_model_config
 from .store_utils import clear_store, resolve_store_meta_path
+
+SUITE_ALIASES = {
+    "episodic": "episodic_cross_mem",
+    "semantic": "semantic_mem",
+    "spatial": "spatial_multi",
+}
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -194,7 +201,13 @@ class Task:
     episode_id: str | None = None
 
 
-def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> Path:
+def _dataset_path(
+    suite: str,
+    n: int,
+    seed: int,
+    profile: str | None = None,
+    mode: str | None = None,
+) -> Path:
     """Return path to a JSONL dataset for ``suite`` covering ``n`` items.
 
     Parameters
@@ -212,15 +225,28 @@ def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> 
         before falling back to the default lookup logic.
     """
 
+    canonical = SUITE_ALIASES.get(suite, suite)
     sizes = [50, 200, 1000]
     size = next((s for s in sizes if n <= s), sizes[-1])
 
     candidates: List[Path] = []
+    file_mode = "test" if mode in (None, "teach", "replay") else mode
+    if file_mode:
+        candidates.append(Path("data") / canonical / f"{canonical}_{file_mode}.jsonl")
+        candidates.append(Path("data") / f"{canonical}_{file_mode}.jsonl")
+        if canonical != suite:
+            candidates.append(Path("data") / suite / f"{suite}_{file_mode}.jsonl")
     if profile and profile != "default":
-        candidates.append(Path("data") / f"{suite}_{profile}_{size}_{seed}.jsonl")
-        candidates.append(Path("data") / f"{suite}_{profile}" / f"{size}_{seed}.jsonl")
-    candidates.append(Path("data") / f"{suite}_{size}_{seed}.jsonl")
-    candidates.append(Path("data") / suite / f"{size}_{seed}.jsonl")
+        candidates.append(Path("data") / f"{canonical}_{profile}_{size}_{seed}.jsonl")
+        candidates.append(Path("data") / f"{canonical}_{profile}" / f"{size}_{seed}.jsonl")
+        if canonical != suite:
+            candidates.append(Path("data") / f"{suite}_{profile}_{size}_{seed}.jsonl")
+            candidates.append(Path("data") / f"{suite}_{profile}" / f"{size}_{seed}.jsonl")
+    candidates.append(Path("data") / f"{canonical}_{size}_{seed}.jsonl")
+    candidates.append(Path("data") / canonical / f"{size}_{seed}.jsonl")
+    if canonical != suite:
+        candidates.append(Path("data") / f"{suite}_{size}_{seed}.jsonl")
+        candidates.append(Path("data") / suite / f"{size}_{seed}.jsonl")
     for path in candidates:
         if path.exists():
             return path
@@ -243,6 +269,33 @@ def _dataset_path(suite: str, n: int, seed: int, profile: str | None = None) -> 
         matches = sorted(subdir.glob(f"*_{size}_{seed}.jsonl"))
         if matches:
             return matches[0]
+    # Attempt to build dataset on-the-fly
+    try:
+        outdir = Path("data") / canonical
+        outdir.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "hippo_eval.datasets.cli",
+                "--suite",
+                canonical,
+                "--size",
+                str(size),
+                "--seed",
+                str(seed),
+                "--out",
+                str(outdir),
+            ],
+            check=True,
+        )
+        if file_mode:
+            gen = outdir / f"{canonical}_{file_mode}.jsonl"
+            if gen.exists():
+                return gen
+    except Exception:
+        pass
+
     raise FileNotFoundError(
         "Dataset not found; run scripts/datasets_cli.py or check suite name",
     )
@@ -994,7 +1047,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     cfg.no_retrieval_during_teach = cfg.get("no_retrieval_during_teach", True)
     cfg.isolate = cfg.get("isolate", "none")
 
-    dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile)
+    dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile, cfg.get("mode"))
     raw_tasks = load_dataset(dataset, {"n": cfg.n})
     tasks = [Task(prompt=str(obj["prompt"]), answer=str(obj["answer"])) for obj in raw_tasks]
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
