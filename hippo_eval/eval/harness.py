@@ -1454,7 +1454,7 @@ def main(cfg: DictConfig) -> None:
             if outdir_cfg is not None:
                 base_outdir = Path(to_absolute_path(str(outdir_cfg)))
             else:
-                base_outdir = Path("runs") / run_id
+                base_outdir = Path(to_absolute_path("runs")) / run_id
             for preset in presets:
                 run_cfg = OmegaConf.merge(base_cfg, {"preset": preset})
                 run_cfg = _load_preset(run_cfg)
@@ -1473,9 +1473,14 @@ def main(cfg: DictConfig) -> None:
             else:
                 preset_path = Path(str(cfg.preset))
                 if preset_path.parts and preset_path.parts[0] == "baselines":
-                    root_outdir = Path("runs") / run_id / preset_path.parts[0] / preset_path.name
+                    root_outdir = (
+                        Path(to_absolute_path("runs"))
+                        / run_id
+                        / preset_path.parts[0]
+                        / preset_path.name
+                    )
                 else:
-                    root_outdir = Path("runs") / run_id / preset_path.name
+                    root_outdir = Path(to_absolute_path("runs")) / run_id / preset_path.name
             evaluate_matrix(cfg, root_outdir)
     else:
         cfg = _load_preset(cfg)
@@ -1487,7 +1492,13 @@ def main(cfg: DictConfig) -> None:
         else:
             preset_path = Path(str(cfg.preset))
             if preset_path.parts and preset_path.parts[0] == "baselines":
-                outdir = Path("runs") / run_id / preset_path.parts[0] / preset_path.name / cfg.suite
+                outdir = (
+                    Path(to_absolute_path("runs"))
+                    / run_id
+                    / preset_path.parts[0]
+                    / preset_path.name
+                    / cfg.suite
+                )
             else:
-                outdir = Path("runs") / run_id / preset_path.name / cfg.suite
+                outdir = Path(to_absolute_path("runs")) / run_id / preset_path.name / cfg.suite
         evaluate(cfg, outdir)
