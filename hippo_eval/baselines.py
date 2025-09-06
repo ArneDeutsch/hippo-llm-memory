@@ -36,10 +36,19 @@ def aggregate_metrics(root: Path) -> List[Dict[str, float]]:
                 em_raw_vals: List[float] = []
                 em_norm_vals: List[float] = []
                 f1_vals: List[float] = []
+
+                metrics_paths = []
+                direct = suite_dir / "metrics.json"
+                if direct.exists():
+                    metrics_paths.append(direct)
                 for run_dir in suite_dir.iterdir():
-                    metrics_path = run_dir / "metrics.json"
-                    if not metrics_path.exists():
+                    if not run_dir.is_dir():
                         continue
+                    metrics_path = run_dir / "metrics.json"
+                    if metrics_path.exists():
+                        metrics_paths.append(metrics_path)
+
+                for metrics_path in metrics_paths:
                     with metrics_path.open("r", encoding="utf-8") as fh:
                         record = json.load(fh)
                     suite_metrics = record.get("metrics", {}).get(suite, {})
@@ -51,6 +60,7 @@ def aggregate_metrics(root: Path) -> List[Dict[str, float]]:
                     em_raw_vals.append(float(em_raw))
                     em_norm_vals.append(float(em_norm))
                     f1_vals.append(float(f1))
+
                 if em_raw_vals and em_norm_vals and f1_vals:
                     rows.append(
                         {

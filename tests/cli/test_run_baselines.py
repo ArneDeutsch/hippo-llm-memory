@@ -37,3 +37,25 @@ def test_collect_and_write(tmp_path: Path) -> None:
     csv_path = write_baseline_metrics(rows, out_dir)
     assert csv_path.exists()
     assert (out_dir / "baselines_ok.flag").exists()
+
+
+def test_collect_metrics_flat_layout(tmp_path: Path) -> None:
+    root = tmp_path / "runs" / "20250101" / "baselines" / "core" / "episodic_cross_mem"
+    root.mkdir(parents=True)
+    metrics = {
+        "metrics": {"episodic_cross_mem": {"pre_em_raw": 0.3, "pre_em_norm": 0.4, "pre_f1": 0.5}}
+    }
+    (root / "metrics.json").write_text(json.dumps(metrics))
+    rows = aggregate_metrics(root.parent.parent)
+    assert rows == [
+        {
+            "suite": "episodic_cross_mem",
+            "preset": "core",
+            "em_raw_mean": 0.3,
+            "em_raw_ci": 0.0,
+            "em_norm_mean": 0.4,
+            "em_norm_ci": 0.0,
+            "f1_mean": 0.5,
+            "f1_ci": 0.0,
+        }
+    ]
