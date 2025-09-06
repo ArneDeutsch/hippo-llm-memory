@@ -42,7 +42,12 @@ from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis, spatial_multi_kpis
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.gates import GateCounters
-from hippo_mem.common.telemetry import gate_registry, registry, set_strict_telemetry
+from hippo_mem.common.telemetry import (
+    _STRICT,
+    gate_registry,
+    registry,
+    set_strict_telemetry,
+)
 from hippo_mem.episodic.gating import WriteGate, gate_batch
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
 from hippo_mem.relational.gating import RelationalGate
@@ -513,6 +518,41 @@ def _evaluate(
                     context_hits += 1
         context_match_rate = (context_hits / total_tr) if total_tr else 0.0
 
+        injected_context: List[str] = []
+        positions: List[tuple[int, int] | None] = []
+        sources: List[str | None] = []
+        for mem in mems:
+            src = mem.meta.get("source")
+            if src == "episodic":
+                texts = (mem.meta.get("text") or [[]])[0]
+                spans = (mem.meta.get("tokens_span") or [[]])[0]
+                ids = (mem.meta.get("trace_ids") or [[]])[0]
+            elif src == "relational":
+                texts = (mem.meta.get("nodes") or [[]])[0]
+                spans = [None] * len(texts)
+                ids = texts
+            elif src == "spatial":
+                hint = mem.meta.get("hint")
+                if hint:
+                    texts = [hint]
+                    spans = [None]
+                    ids = (mem.meta.get("trace_context_keys") or [[]])[0] or [None]
+                else:
+                    texts = []
+                    spans = []
+                    ids = []
+            else:
+                texts = []
+                spans = []
+                ids = []
+            for t, s, i in zip(texts, spans, ids):
+                if t:
+                    injected_context.append(t)
+                    positions.append(s)
+                    sources.append(i)
+        if _STRICT and retrieval_requests > 0 and not injected_context:
+            raise SystemExit("missing injected_context")
+
         input_tokens += inputs["input_ids"].shape[-1]
         gen_tokens += gen.shape[-1]
         item_t1 = time.perf_counter()
@@ -538,6 +578,9 @@ def _evaluate(
                 "topk_keys": topk_keys or None,
                 "distance": None,
                 "justification": None,
+                "injected_context": injected_context or None,
+                "positions": positions or None,
+                "source": sources or None,
                 "context_key": context_key,
                 "retrieval_requests": retrieval_requests,
                 "writes_count": writes_count,
@@ -850,6 +893,9 @@ def _write_outputs(
             "topk_keys",
             "distance",
             "justification",
+            "injected_context",
+            "positions",
+            "source",
             "context_key",
             "retrieval_requests",
             "writes_count",
@@ -881,6 +927,9 @@ def _write_outputs(
                     "topk_keys": row.get("topk_keys"),
                     "distance": row.get("distance"),
                     "justification": row.get("justification"),
+                    "injected_context": row.get("injected_context"),
+                    "positions": row.get("positions"),
+                    "source": row.get("source"),
                 }
             )
         with (outdir / "audit_sample.jsonl").open("w", encoding="utf-8") as f:

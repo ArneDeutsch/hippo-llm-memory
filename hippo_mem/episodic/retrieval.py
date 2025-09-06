@@ -123,7 +123,7 @@ def episodic_retrieve_and_pack(
     actual_hits = 0
     span_meta: list[list[tuple[int, int]]] = []
     id_meta: list[list[str | None]] = []
-
+    text_meta: list[list[str | None]] = []
     ctx_meta: list[list[str | None]] = []
 
     def iter_retrieve():
@@ -137,6 +137,9 @@ def episodic_retrieve_and_pack(
             actual_hits += hits
             span_meta.append([tuple(v.tokens_span) if v.tokens_span else (0, 0) for v in values])
             id_meta.append([v.trace_id for v in values])
+            text_meta.append(
+                [" ".join(v.state_sketch) if v.state_sketch else v.provenance for v in values]
+            )
             ctx_meta.append([v.context_key for v in values])
             yield vecs, mask_hits
 
@@ -155,6 +158,7 @@ def episodic_retrieve_and_pack(
 
     mem.meta["tokens_span"] = span_meta
     mem.meta["trace_ids"] = id_meta
+    mem.meta["text"] = text_meta
     mem.meta["trace_context_keys"] = ctx_meta
 
     if placeholder_total:
