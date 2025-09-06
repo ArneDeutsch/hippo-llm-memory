@@ -38,6 +38,9 @@ jobs:
           export FAST_TESTS=1
           coverage run -m pytest -q -m "not slow and not integration"
           coverage report -m
+      - name: Integration (CLI/Hydra) + Slow
+        run: |
+          pytest -q --runintegration --runslow
       - name: Ablation smoke
         run: python tests/fixtures/ci/ablation_smoke.py
       - name: Smoke eval (HEI-NW)
@@ -61,6 +64,3 @@ jobs:
           SUITE: spatial_multi
           PRESET: memory/smpd
           SESSION_ID: smpd_${{ github.run_id }}
-      - name: Integration (CLI/Hydra) + Slow
-        run: |
-          pytest -q --runintegration --runslow
