@@ -89,17 +89,34 @@ def assert_store_exists(store_dir: str, session_id: str, algo: str, kind: str = 
 
 
 def validate_store(
-    run_id: str | None = None,
-    algo: str = "hei_nw",
+    run_id: str,
+    preset: str,
+    algo: str,
     kind: str = "episodic",
-    preset: str | None = None,
+    store_dir: str | None = None,
+    session_id: str | None = None,
 ) -> Path | None:
-    """Validate expected persisted store layout before replay.
+    """Resolve the expected store path and assert it exists.
 
-    For memory presets this asserts that the store file exists and returns its
-    path. For baseline presets it verifies that no store directory has been
-    created and returns ``None``.
+    Prefer explicit ``store_dir``/``session_id`` when provided; otherwise derive
+    the layout from ``run_id`` and ``algo``.
     """
+
+    if store_dir and session_id:
+        base = Path(store_dir)
+        algo_dir = base if base.name == algo else base / algo
+        filename = {
+            "episodic": "episodic.jsonl",
+            "kg": "kg.jsonl",
+            "spatial": "spatial.jsonl",
+        }[kind]
+        path = algo_dir / session_id / filename
+        if path.exists():
+            return path
+        alt = base / session_id / filename
+        if alt.exists():
+            return alt
+        raise FileNotFoundError(f"Persisted store not found. Expected path: {path}")
 
     layout = derive(run_id=run_id, algo=algo)
     if preset and not is_memory_preset(preset):

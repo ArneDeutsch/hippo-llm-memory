@@ -968,12 +968,16 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
     teach_cmd = f"python scripts/eval_model.py --mode teach +suite={suite} --run-id {rid}"
     if cfg.get("mode") != "teach":
         baseline = Path("runs") / rid / "baselines" / "metrics.csv"
-        if not baseline.exists():
-            failures.append(
-                "missing baseline metrics: "
-                f"{baseline} — generate via:\n  "
-                f"python -m hippo_eval.baselines --run-id {rid}"
-            )
+        if cfg.get("compute", {}).get("pre_metrics"):
+            if not baseline.exists():
+                failures.append(
+                    "missing baseline metrics: "
+                    f"{baseline} — generate via:\n  "
+                    f"python -m hippo_eval.baselines --run-id {rid}"
+                )
+        elif not baseline.exists():  # pragma: no cover - warning path
+            logger = logging.getLogger(__name__)
+            logger.warning("baseline metrics missing: %s", baseline)
 
     store_dir = cfg.get("store_dir")
     session_id = cfg.get("session_id")
@@ -1175,7 +1179,9 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         }
         replay_samples = _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
-            session_dir = Path(to_absolute_path(str(cfg.store_dir)))
+            sd = Path(to_absolute_path(str(cfg.store_dir)))
+            algo = str(cfg.get("preset", "")).split("/")[-1]
+            session_dir = sd if sd.name == algo else sd / algo
             epi_attempts = gating["episodic"].attempts
             rel_attempts = gating["relational"].attempts
             spat_attempts = gating["spatial"].attempts

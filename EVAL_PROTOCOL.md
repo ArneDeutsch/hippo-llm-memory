@@ -1,83 +1,43 @@
-# EVAL_PROTOCOL — Minimal, Parameterized (GPU)
-**Purpose:** Run the evaluation pipeline with minimal, consistent commands.
+# EVAL_PROTOCOL — Memory-First Pipeline
+
+Use a two-phase flow: **Teach** with persistence, then **Test** reading the
+store. All paths are parameterized by environment variables so runs are
+reproducible and isolated.
 
 ## Variables
-Set once per run:
 ```bash
 export RUN_ID=run_YYYYMMDD
 export SIZES=(50)      # e.g., 50 100 200
 export SEEDS=(1337)    # e.g., 1337 2025
-source scripts/_env.sh   # exports RUNS, STORES=runs/$RUN_ID/stores
+source scripts/_env.sh  # sets RUNS, STORES=runs/$RUN_ID/stores
 ```
 
-## Build Datasets
-Run per suite (adjust size/seed loops as needed):
+## Build datasets
 ```bash
-python scripts/datasets_cli.py --suite semantic_mem --size ${SIZES[0]} \
-  --seed ${SEEDS[0]} --out data/semantic_mem
-python scripts/datasets_cli.py --suite episodic_cross_mem --size ${SIZES[0]} \
-  --seed ${SEEDS[0]} --out data/episodic_cross_mem
-python scripts/datasets_cli.py --suite spatial_multi --size ${SIZES[0]} \
-  --seed ${SEEDS[0]} --out data/spatial_multi
-```
-
-## Semantic Memory (sgc_rss)
-```bash
-for n in "${SIZES[@]}"; do
-  for seed in "${SEEDS[@]}"; do
-    python scripts/eval_cli.py suite=semantic_mem n="$n" seed="$seed" \
-      outdir="$RUNS/semantic_mem_baseline/${n}_${seed}"
-
-    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
-      mode=teach --no-retrieval-during-teach --persist \
-      n="$n" seed="$seed" \
-      outdir="$RUNS/semantic_mem_teach/${n}_${seed}"
-
-    python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
-      mode=test n="$n" seed="$seed" \
-      outdir="$RUNS/semantic_mem_test/${n}_${seed}"
-  done
+for suite in episodic_cross_mem semantic_mem spatial_multi; do
+  python -m hippo_eval.datasets.cli --suite "$suite" --size ${SIZES[0]} \
+    --seed ${SEEDS[0]} --out datasets/$suite
 done
 ```
 
-## Episodic Cross Memory (hei_nw)
+## Teach with persistence
 ```bash
-for n in "${SIZES[@]}"; do
-  for seed in "${SEEDS[@]}"; do
-    python scripts/eval_cli.py suite=episodic_cross_mem n="$n" seed="$seed" \
-      outdir="$RUNS/episodic_cross_mem_baseline/${n}_${seed}"
-
-    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw \
-      mode=teach --no-retrieval-during-teach --persist \
-      n="$n" seed="$seed" \
-      outdir="$RUNS/episodic_cross_mem_teach/${n}_${seed}"
-
-    python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw \
-      mode=test n="$n" seed="$seed" \
-      outdir="$RUNS/episodic_cross_mem_test/${n}_${seed}"
-  done
-done
+python scripts/eval_model.py \
+  suite=$SUITE preset=$PRESET run_id=$RUN_ID \
+  n=${SIZES[0]} seed=${SEEDS[0]} mode=teach persist=true \
+  store_dir=$STORES session_id=${PRESET##*/}_$RUN_ID \
+  model=models/tiny-gpt2
 ```
 
-## Spatial Multi (smpd)
+## Test using the persisted store
 ```bash
-for n in "${SIZES[@]}"; do
-  for seed in "${SEEDS[@]}"; do
-    python scripts/eval_cli.py suite=spatial_multi n="$n" seed="$seed" \
-      outdir="$RUNS/spatial_multi_baseline/${n}_${seed}"
-
-    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
-      mode=teach --no-retrieval-during-teach --persist \
-      n="$n" seed="$seed" \
-      outdir="$RUNS/spatial_multi_teach/${n}_${seed}"
-
-    python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
-      mode=test n="$n" seed="$seed" \
-      outdir="$RUNS/spatial_multi_test/${n}_${seed}"
-  done
-done
+python scripts/eval_model.py \
+  suite=$SUITE preset=$PRESET run_id=$RUN_ID \
+  n=${SIZES[0]} seed=${SEEDS[0]} mode=test \
+  store_dir=$STORES session_id=${PRESET##*/}_$RUN_ID \
+  model=models/tiny-gpt2
 ```
 
-**Notes**
-- `store_dir` and `session_id` are derived from `RUN_ID`; no manual overrides needed.
-- Boolean flags are specified without `=true`.
+`SUITE` takes values `episodic_cross_mem`, `semantic_mem`, or `spatial_multi`.
+`PRESET` takes `memory/hei_nw`, `memory/sgc_rss`, or `memory/smpd`.
+All flags use Hydra's `key=value` style; avoid legacy `--flag=value` forms.

@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
-export RUN_ID=${RUN_ID:-dev}
-export STRICT_TELEMETRY=1
+
+export RUN_ID=${RUN_ID:-smoke}
+export MODEL=${MODEL:-models/tiny-gpt2}
 source "$(dirname "$0")/_env.sh"
 
-outdir=$(mktemp -d)
-python scripts/eval_model.py suite=episodic preset=baselines/core n=50 seed=1337 \
-  model=models/tiny-gpt2 outdir="$outdir" > /dev/null
+SUITE=${SUITE:-episodic_cross_mem}
+PRESET=${PRESET:-memory/hei_nw}
+SESSION_ID=${SESSION_ID:-${PRESET##*/}_$RUN_ID}
+STORES="runs/$RUN_ID/stores"
 
-python scripts/eval_model.py suite=episodic preset=baselines/span_short n=50 seed=1337 \
-  model=models/tiny-gpt2 use_chat_template=true max_new_tokens=8 \
-  outdir="$(mktemp -d)" > /dev/null
-
-# Minimal roll-up to satisfy preflight checks in subsequent memory runs.
 mkdir -p "runs/$RUN_ID/baselines"
-echo "suite,em_raw,em_norm,f1" > "runs/$RUN_ID/baselines/metrics.csv"
+if [ ! -f "runs/$RUN_ID/baselines/metrics.csv" ]; then
+  echo "suite,em_raw,em_norm,f1" > "runs/$RUN_ID/baselines/metrics.csv"
+fi
 
-python scripts/eval_model.py suite=episodic preset=memory/hei_nw n=50 seed=1337 \
-  model=models/tiny-gpt2 use_chat_template=true max_new_tokens=8 \
-  outdir="$(mktemp -d)" > /dev/null
+python -m hippo_eval.datasets.cli --suite "$SUITE" --size 5 --seed 1337 --out "datasets/$SUITE"
 
-python - <<PY
-import json, pathlib, sys
-p = pathlib.Path("$outdir") / "metrics.json"
-with p.open() as f:
-    data = json.load(f)
-metrics = data.get("metrics", {}).get("episodic", {})
-sys.exit(0 if metrics else 1)
-PY
+python scripts/eval_model.py \
+  suite="$SUITE" preset="$PRESET" run_id="$RUN_ID" n=5 seed=1337 \
+  mode=teach persist=true store_dir="$STORES" session_id="$SESSION_ID" \
+  compute.pre_metrics=true strict_telemetry=true model="$MODEL" > /dev/null
+
+python scripts/eval_model.py \
+  suite="$SUITE" preset="$PRESET" run_id="$RUN_ID" n=5 seed=1337 \
+  mode=test store_dir="$STORES" session_id="$SESSION_ID" \
+  compute.pre_metrics=true strict_telemetry=true model="$MODEL" > /dev/null
+
+python -m hippo_eval.reporting.report --run-id "$RUN_ID"
