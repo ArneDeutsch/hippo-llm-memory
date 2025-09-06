@@ -46,12 +46,6 @@ def main() -> int:
     parser.add_argument("--run-id", help="Run identifier")
     parser.add_argument("--verbose", action="store_true", help="Print resolved run_id")
     parser.add_argument(
-        "--no-retrieval-during-teach",
-        dest="no_retrieval_during_teach",
-        action=argparse.BooleanOptionalAction,
-        help="Disable retrieval during teach phase",
-    )
-    parser.add_argument(
         "--isolate",
         choices=["per_item", "per_episode", "none"],
         help="Isolation level for memory stores",
@@ -99,8 +93,6 @@ def main() -> int:
         if args.verbose:
             print(f"run_id={run_id}", file=sys.stderr)
 
-    if args.no_retrieval_during_teach is not None:
-        overrides.append(f"no_retrieval_during_teach={str(args.no_retrieval_during_teach).lower()}")
     if args.isolate is not None:
         overrides.append(f"isolate={args.isolate}")
 

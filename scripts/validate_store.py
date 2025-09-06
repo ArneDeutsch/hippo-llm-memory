@@ -37,7 +37,13 @@ def validate_cli_store(args: argparse.Namespace) -> Path | None:
         raise SystemExit(1)
 
     try:
-        path = validate_store(run_id=run_id, algo=args.algo, kind=args.kind, preset=args.preset)
+        preset = args.preset or f"memory/{args.algo}"
+        path = validate_store(
+            run_id=run_id,
+            preset=preset,
+            algo=args.algo,
+            kind=args.kind,
+        )
     except (FileExistsError, FileNotFoundError, ValueError) as err:  # pragma: no cover - CLI
         print(err, file=sys.stderr)
         raise SystemExit(1) from err

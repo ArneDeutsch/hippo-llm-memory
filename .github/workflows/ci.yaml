@@ -49,18 +49,15 @@ jobs:
           RUN_ID: ci_${{ github.run_id }}_episodic_cross_mem
           SUITE: episodic_cross_mem
           PRESET: memory/hei_nw
-          SESSION_ID: hei_${{ github.run_id }}
       - name: Smoke eval (SGC_RSS)
         run: scripts/ci_smoke_eval.sh
         env:
           RUN_ID: ci_${{ github.run_id }}_semantic_mem
           SUITE: semantic_mem
           PRESET: memory/sgc_rss
-          SESSION_ID: sgc_${{ github.run_id }}
       - name: Smoke eval (SMPD)
         run: scripts/ci_smoke_eval.sh
         env:
           RUN_ID: ci_${{ github.run_id }}_spatial_multi
           SUITE: spatial_multi
           PRESET: memory/smpd
-          SESSION_ID: smpd_${{ github.run_id }}

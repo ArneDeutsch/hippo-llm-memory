@@ -73,23 +73,26 @@ def _store_kind(algo: str) -> str:
 
 
 def _normalize_store_dir(store_dir: str, algo: str) -> str:
-    """Append algorithm subfolder to ``store_dir`` if missing."""
+    """Return base ``store_dir`` without trailing algorithm suffix."""
 
     root = Path(store_dir)
-    return str(root if root.name == algo else root / algo)
+    return str(root.parent if root.name == algo else root)
 
 
 def _resolve_layout(cfg: DictConfig, algo: str) -> StoreLayout:
     """Resolve persisted store layout and update ``cfg`` in-place."""
 
     if cfg.get("store_dir") and cfg.get("session_id"):
-        root = Path(str(cfg.store_dir))
-        base_dir = root.parent if root.name == algo else root
-        cfg.store_dir = _normalize_store_dir(str(cfg.store_dir), algo)
-        return StoreLayout(base_dir, Path(cfg.store_dir), str(cfg.session_id))
+        base = _normalize_store_dir(str(cfg.store_dir), algo)
+        base_dir = Path(base)
+        algo_dir = base_dir / algo
+        with open_dict(cfg):
+            cfg.store_dir = str(algo_dir)
+        return StoreLayout(base_dir, algo_dir, str(cfg.session_id))
     layout = derive_store_layout(algo=algo)
-    cfg.store_dir = cfg.get("store_dir") or str(layout.algo_dir)
-    cfg.session_id = cfg.get("session_id") or layout.session_id
+    with open_dict(cfg):
+        cfg.store_dir = cfg.get("store_dir") or str(layout.base_dir)
+        cfg.session_id = cfg.get("session_id") or layout.session_id
     return layout
 
 
@@ -128,15 +131,21 @@ def main(cfg: DictConfig) -> None:
         return
 
     layout: StoreLayout | None = None
-    if cfg.mode == "replay":
+    if cfg.get("store_dir") and cfg.get("session_id"):
         layout = _resolve_layout(cfg, algo)
+
+    if cfg.mode == "replay" and layout is not None:
         store_path = assert_store_exists(
             str(layout.base_dir), str(cfg.session_id), algo, kind=store_kind
         )
         _ensure_populated(store_path, cfg)
     elif cfg.mode == "test":
-        # Only memory presets need a persisted store.
-        if cfg.get("store_dir") or cfg.get("session_id"):
+        needs_store = (
+            str(cfg.get("preset", "")).startswith("memory/")
+            and str(cfg.get("mode", "test")) in {"test", "replay"}
+            and layout is not None
+        )
+        if needs_store:
             from hippo_mem.utils.stores import validate_store
 
             maybe_store = validate_store(
@@ -144,11 +153,11 @@ def main(cfg: DictConfig) -> None:
                 preset=str(cfg.preset),
                 algo=algo,
                 kind=store_kind,
+                store_dir=str(layout.base_dir),
+                session_id=str(cfg.get("session_id")),
             )
             if maybe_store is not None:
                 _ensure_populated(maybe_store, cfg)
-        elif cfg.get("store_dir"):
-            cfg.store_dir = _normalize_store_dir(str(cfg.store_dir), algo)
     elif cfg.get("store_dir"):
         cfg.store_dir = _normalize_store_dir(str(cfg.store_dir), algo)
 

@@ -64,8 +64,9 @@ def test_eval_model_store_dir_normalization(tmp_path, monkeypatch, append, prese
     store.parent.mkdir(parents=True)
     store.write_text("{}\n")
 
-    def fake_validate(*, run_id, preset, algo, kind):
+    def fake_validate(*, run_id, preset, algo, kind, store_dir=None, session_id=None):
         called["validate_args"] = (run_id, preset, algo, kind)
+        called["validate_explicit"] = (store_dir, session_id)
         return store
 
     def fake_harness(cfg):
@@ -76,6 +77,7 @@ def test_eval_model_store_dir_normalization(tmp_path, monkeypatch, append, prese
 
     em.main.__wrapped__(cfg)
 
-    expected = store_dir
+    expected = base / algo
     assert called["cfg_store_dir"] == str(expected)
     assert called["validate_args"] == ("rid", preset, algo, kind)
+    assert called["validate_explicit"] == (str(base), "sid")

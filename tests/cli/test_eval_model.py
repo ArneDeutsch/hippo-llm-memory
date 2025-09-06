@@ -89,7 +89,7 @@ def test_eval_model_cli_flags(tmp_path: Path) -> None:
     subprocess.run(cmd, check=True)
     meta = json.loads((outdir / "meta.json").read_text())
     assert meta["mode"] == "teach"
-    assert meta["store_dir"] == str(store_dir / "hei_nw")
+    assert meta["store_dir"] == str(store_dir)
     assert meta["session_id"] == "abc"
     assert meta["persist"] is True
 
