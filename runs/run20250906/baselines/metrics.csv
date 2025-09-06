@@ -1,0 +1,4 @@
+suite,preset,em_raw_mean,em_raw_ci,em_norm_mean,em_norm_ci,f1_mean,f1_ci
+episodic_cross_mem,core,0.0,0.0,0.0,0.0,0.0,0.0
+spatial_multi,core,0.0,0.0,0.0,0.0,0.0,0.0
+semantic_mem,core,0.0,0.0,0.0,0.0,0.0,0.0
