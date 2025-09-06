@@ -83,6 +83,9 @@ class RelationalGate:
         """Return a :class:`GateDecision` for ``tup``."""
         stats = gate_registry.get("relational")
         stats.attempts += 1
+        if not tup:
+            stats.null_input += 1
+            return GateDecision("skip", "empty_tuple", 0.0)
 
         head, rel, tail = tup[:3]
         conf = tup[5] if len(tup) > 5 else 1.0

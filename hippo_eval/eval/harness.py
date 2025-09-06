@@ -994,12 +994,10 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
                 if meta.get("source") == "stub":
                     failures.append(f"store_meta.source == 'stub' in {meta_path}")
                 else:
-                    store_files = {
-                        "hei_nw": "episodic.jsonl",
-                        "sgc_rss": "kg.jsonl",
-                        "smpd": "spatial.jsonl",
-                    }
-                    store_file = meta_path.parent / store_files.get(algo, f"{algo}.jsonl")
+                    # Normalize algorithm aliases and resolve store kind to canonical filenames
+                    base = re.sub(r"(_mem|_cross)$", "", algo)
+                    kind = {"sgc_rss": "kg", "smpd": "spatial"}.get(base, "episodic")
+                    store_file = meta_path.parent / f"{kind}.jsonl"
                     has_data = False
                     if store_file.exists():
                         with store_file.open("r", encoding="utf-8") as fh:

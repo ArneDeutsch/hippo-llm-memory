@@ -50,6 +50,9 @@ class SpatialGate:
         """Return a :class:`GateDecision` for a context transition."""
         stats = gate_registry.get("spatial")
         stats.attempts += 1
+        if not context:
+            stats.null_input += 1
+            return GateDecision("skip", "empty_context", 0.0)
 
         repeat_pen = 0.0
         if len(self._ctx_hist) >= self.repeat_N - 1 and all(

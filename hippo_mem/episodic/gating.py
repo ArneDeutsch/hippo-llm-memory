@@ -480,6 +480,7 @@ def gate_batch(
     decisions: list[GateDecision] = []
     stats = gate_registry.get("episodic")
     if len(probs) == 0:
+        stats.attempts += 1
         stats.null_input += 1
         logger.info("write_accept_rate=0.00")
         return decisions, 0.0
