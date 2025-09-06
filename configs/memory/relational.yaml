@@ -5,8 +5,8 @@
 
 # Summary: settings for SGC-RSS knowledge graph. Defaults mirror EVAL_PLAN §3.2.
 
-# Minimum confidence for ``SchemaIndex`` fast-track routing; default 0.7.
-schema_threshold: 0.7
+# Minimum confidence for ``SchemaIndex`` fast-track routing; default 0.55.
+schema_threshold: 0.55
 
 # Enable lightweight message-passing updates to node embeddings; default true.
 gnn_updates: true

@@ -85,12 +85,17 @@ class SchemaIndex:
     ----------
     threshold : float, optional
         Minimum score and tuple confidence required for KG insertion.
+    add_defaults : bool, optional
+        When ``True`` preload simple schemas for synthetic data.
     """
 
-    def __init__(self, threshold: float = 0.8) -> None:
+    def __init__(self, threshold: float = 0.55, *, add_defaults: bool = True) -> None:
         self.schemas: Dict[str, Schema] = {}
         self.threshold = threshold
         self.episodic_buffer: List[TupleType] = []
+        if add_defaults:
+            for rel in ("bought", "bought_at", "is", "in", "located_in", "at"):
+                self.add_schema(rel, rel)
 
     # kept: used by tests/test_relational.py and tests/test_replay_scheduler.py
     def add_schema(
