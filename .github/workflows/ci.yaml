@@ -12,12 +12,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -25,93 +23,44 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('codex-env/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
       - name: Install dependencies (CPU-only)
         run: |
           python -m pip install -U pip
           pip install -r codex-env/requirements.txt
-
       - name: Lint
         run: make lint
       - name: Unit & Smoke
         run: |
           export FAST_TESTS=1
           pytest -q -m "not slow and not integration"
-
       - name: Coverage
         run: |
           export FAST_TESTS=1
           coverage run -m pytest -q -m "not slow and not integration"
           coverage report -m
-
       - name: Ablation smoke
         run: python tests/fixtures/ci/ablation_smoke.py
-
-  smoke-new:
-    needs: ci
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - suite: semantic_mem
-            preset: memory/sgc_rss_mem
-            session: sgc
-          - suite: episodic_cross_mem
-            preset: memory/hei_nw_cross
-            session: hei
-          - suite: spatial_multi
-            preset: memory/smpd
-            session: smpd
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      - name: Install dependencies (CPU-only)
-        run: |
-          python -m pip install -U pip
-          pip install -r codex-env/requirements.txt
       - name: Smoke eval (new path)
         run: scripts/ci_smoke_eval.sh
         env:
-          RUN_ID: ci_${{ github.run_id }}_${{ matrix.suite }}
-          SUITE: ${{ matrix.suite }}
-          PRESET: ${{ matrix.preset }}
-          SESSION_ID: ${{ matrix.session }}_${{ github.run_id }}
-
-  smoke-legacy:
-    needs: ci
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      matrix:
-        include:
-          - suite: semantic
-            preset: memory/sgc_rss
-            session: sgc
-          - suite: episodic_cross
-            preset: memory/hei_nw
-            session: hei
-          - suite: spatial
-            preset: memory/smpd
-            session: smpd
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      - name: Install dependencies (CPU-only)
-        run: |
-          python -m pip install -U pip
-          pip install -r codex-env/requirements.txt
-      - name: Smoke eval (legacy path)
+          RUN_ID: ci_${{ github.run_id }}_semantic_mem
+          SUITE: semantic_mem
+          PRESET: memory/sgc_rss_mem
+          SESSION_ID: sgc_${{ github.run_id }}
+      - name: Smoke eval (new path)
         run: scripts/ci_smoke_eval.sh
         env:
-          RUN_ID: ci_${{ github.run_id }}_${{ matrix.suite }}
-          SUITE: ${{ matrix.suite }}
-          PRESET: ${{ matrix.preset }}
-          SESSION_ID: ${{ matrix.session }}_${{ github.run_id }}
+          RUN_ID: ci_${{ github.run_id }}_episodic_cross_mem
+          SUITE: episodic_cross_mem
+          PRESET: memory/hei_nw_cross
+          SESSION_ID: hei_${{ github.run_id }}
+      - name: Smoke eval (new path)
+        run: scripts/ci_smoke_eval.sh
+        env:
+          RUN_ID: ci_${{ github.run_id }}_spatial_multi
+          SUITE: spatial_multi
+          PRESET: memory/smpd
+          SESSION_ID: smpd_${{ github.run_id }}
+      - name: Integration (CLI/Hydra) + Slow
+        run: |
+          pytest -q --runintegration --runslow
