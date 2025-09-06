@@ -1487,7 +1487,16 @@ def main(cfg: DictConfig) -> None:
         else:
             preset_path = Path(str(cfg.preset))
             if preset_path.parts and preset_path.parts[0] == "baselines":
-                outdir = Path("runs") / run_id / preset_path.parts[0] / preset_path.name / cfg.suite
+                outdir = (
+                    Path("runs")
+                    / run_id
+                    / preset_path.parts[0]
+                    / preset_path.name
+                    / cfg.suite
+                    / f"{cfg.n}_{cfg.seed}"
+                )
             else:
-                outdir = Path("runs") / run_id / preset_path.name / cfg.suite
+                outdir = (
+                    Path("runs") / run_id / preset_path.name / cfg.suite / f"{cfg.n}_{cfg.seed}"
+                )
         evaluate(cfg, outdir)
