@@ -107,7 +107,7 @@ def k_wta(query: np.ndarray, k: int) -> DGKey:
     query : numpy.ndarray
         Dense input vector with shape ``(d,)``.
     k : int
-        Number of winners; ``k <= 0`` returns an empty key.
+        Number of winners; ``k <= 0`` is clamped to ``1``.
 
     Returns
     -------
@@ -130,11 +130,8 @@ def k_wta(query: np.ndarray, k: int) -> DGKey:
 
     q = np.asarray(query, dtype="float32").reshape(-1)
     if k <= 0:
-        return DGKey(
-            indices=np.empty(0, dtype=np.int64),
-            values=np.empty(0, dtype="float32"),
-            dim=q.size,
-        )
+        logger.warning("k_wta called with k<=0; clamping to 1")
+        k = 1
     k = min(k, q.size)
     # why: argpartition finds the largest magnitudes without full sort
     idx = np.argpartition(-np.abs(q), k - 1)[:k]

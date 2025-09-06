@@ -654,18 +654,31 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         if replay_samples <= 0:
             return
 
-        records = []
+        records: list[dict] = []
+        nonzero = 0
         for idx, value, key_vec, ts, salience in self.persistence.all():
+            dg_key = DGKey(
+                indices=np.nonzero(key_vec)[0].astype("int64"),
+                values=key_vec[np.nonzero(key_vec)].astype("float32"),
+                dim=self.dim,
+            )
+            dense_key = self._to_dense(dg_key)
+            if np.linalg.norm(dense_key) > 0:
+                nonzero += 1
             records.append(
                 {
                     "schema": "episodic.v1",
                     "id": idx,
-                    "key": key_vec.tolist(),
+                    "key": dense_key.tolist(),
                     "value": asdict(value),
                     "ts": ts,
                     "salience": salience,
                 }
             )
+        if records:
+            ratio = nonzero / len(records)
+            if ratio < 0.9:
+                raise RuntimeError(f"non-zero key ratio {ratio:.2f} < 0.9")
         file = path / f"episodic.{fmt}"
         if fmt == "jsonl":
             io.atomic_write_jsonl(file, records)
