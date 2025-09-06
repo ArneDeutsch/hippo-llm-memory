@@ -1,0 +1,20 @@
+{
+  "suite": "semantic_mem",
+  "sizes": [
+    50,
+    200,
+    1000
+  ],
+  "seeds": [
+    1337,
+    2025,
+    4242
+  ],
+  "generator_version": "923abbd9e2799b87c5b4816b9595d7470aed2f3e",
+  "files": {
+    "semantic_mem_teach.jsonl": "fef17f00adc367ef611d8909bbc9ac05cc7ed8c7244b3efa7b1f10843f8fdc5f",
+    "semantic_mem_test.jsonl": "f4ed45c65a0d5382781fc4491fd355e84cd6686152aaaac8f894d6d1b1ea1a4a"
+  },
+  "created_utc": "2025-09-06T09:46:31.255553+00:00",
+  "cli_example": "python scripts/datasets_cli.py --suite semantic_mem --size <size> --seed <seed> --out datasets/semantic_mem"
+}

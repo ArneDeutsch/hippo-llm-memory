@@ -1,0 +1,20 @@
+{
+  "suite": "spatial_multi",
+  "sizes": [
+    50,
+    200,
+    1000
+  ],
+  "seeds": [
+    1337,
+    2025,
+    4242
+  ],
+  "generator_version": "923abbd9e2799b87c5b4816b9595d7470aed2f3e",
+  "files": {
+    "spatial_multi_teach.jsonl": "2b35c25a69caed51db93c1d58944f520c8e6d7ffbd4f334222480107e47ba3e8",
+    "spatial_multi_test.jsonl": "076e80c509f06155bf6c9f6ce0bed01503d3c2925e792f17f713c501ef2e1e3e"
+  },
+  "created_utc": "2025-09-06T09:46:31.462243+00:00",
+  "cli_example": "python scripts/datasets_cli.py --suite spatial_multi --size <size> --seed <seed> --out datasets/spatial_multi"
+}
