@@ -14,15 +14,15 @@ source scripts/_env.sh  # sets RUNS, STORES=runs/$RUN_ID/stores
 
 ## Build datasets
 ```bash
-for suite in episodic_cross_mem semantic_mem spatial_multi; do
-  python -m hippo_eval.datasets.cli --suite "$suite" --size ${SIZES[0]} \
-    --seed ${SEEDS[0]} --out datasets/$suite
+for SUITE in episodic_cross_mem semantic_mem spatial_multi; do
+  python -m hippo_eval.datasets.cli --suite "$SUITE" --size ${SIZES[0]} \
+    --seed ${SEEDS[0]} --out data/$SUITE
 done
 ```
 
 ## Teach with persistence
 ```bash
-for suite in episodic_cross_mem semantic_mem spatial_multi; do
+for SUITE in episodic_cross_mem semantic_mem spatial_multi; do
   python scripts/eval_model.py \
     suite=$SUITE preset=$PRESET run_id=$RUN_ID \
     n=${SIZES[0]} seed=${SEEDS[0]} mode=teach persist=true \
@@ -33,7 +33,7 @@ done
 
 ## Test using the persisted store
 ```bash
-for suite in episodic_cross_mem semantic_mem spatial_multi; do
+for SUITE in episodic_cross_mem semantic_mem spatial_multi; do
   python scripts/eval_model.py \
     suite=$SUITE preset=$PRESET run_id=$RUN_ID \
     n=${SIZES[0]} seed=${SEEDS[0]} mode=test \
