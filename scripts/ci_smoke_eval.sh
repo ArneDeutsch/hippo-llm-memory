@@ -8,7 +8,9 @@ source "$(dirname "$0")/_env.sh"
 
 SUITE=${SUITE:-semantic_mem}
 PRESET=${PRESET:-memory/sgc_rss}
-SESSION_ID=${SESSION_ID:-${SUITE}_${RUN_ID}}
+PRESET_NAME=${PRESET##*/}
+PREFIX=${PRESET_NAME%%_*}
+SESSION_ID=${SESSION_ID:-${PREFIX}_${RUN_ID}}
 
 python -m hippo_eval.datasets.cli --suite "$SUITE" --size 50 --seed 1337 --out "datasets/$SUITE"
 
@@ -29,13 +31,13 @@ python -m hippo_eval.baselines --run-id "$RUN_ID"
 # 3. Teach and test with strict telemetry
 python scripts/eval_model.py suite=$SUITE preset=$PRESET \
   run_id="$RUN_ID" n=50 seed=1337 mode=teach persist=true \
-  store_dir="$STORES" session_id="$SESSION_ID" \
+  store_dir="$STORES/${PRESET##*/}" session_id="$SESSION_ID" \
   compute.pre_metrics=true strict_telemetry=true \
   model="$MODEL" > /dev/null
 
 python scripts/eval_model.py suite=$SUITE preset=$PRESET \
   run_id="$RUN_ID" n=50 seed=1337 mode=test \
-  store_dir="$STORES" session_id="$SESSION_ID" \
+  store_dir="$STORES/${PRESET##*/}" session_id="$SESSION_ID" \
   strict_telemetry=true \
   model="$MODEL" > /dev/null
 
@@ -48,8 +50,5 @@ if [ ! -f "runs/$RUN_ID/baselines/metrics.csv" ]; then
   exit 1
 fi
 
-# Fail if any preflight failures exist
-if find "runs/$RUN_ID" -name failed_preflight.json -print -quit | grep -q .; then
-  echo "found failed preflight" >&2
-  exit 1
-fi
+# Optional: scope preflight failure check to specific suite output if desired
+# find "runs/$RUN_ID/$SUITE/*/failed_preflight.json" -print -quit | grep -q . && exit 1

@@ -1,0 +1,18 @@
+# Alias of memory/sgc_rss
+# Semantic/relational memory preset using SGC-RSS store with replay and gating.
+gating_enabled: true
+dataset_profile: hard
+memory:
+  relational:
+    gate:
+      enabled: ${gating_enabled}
+replay:
+  cycles: 1
+  samples: 3
+retrieval:
+  enabled: true
+
+# Generation/encoding tweaks (consumed by scripts/eval_model.py)
+use_chat_template: true
+system_prompt: "Answer with the exact shortest span from the prompt. No explanations."
+max_new_tokens: 8
