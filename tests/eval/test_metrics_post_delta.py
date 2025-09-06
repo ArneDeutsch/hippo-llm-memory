@@ -6,12 +6,14 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.utils.stores import derive
+
 
 @pytest.mark.slow
 def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
-    store_dir = tmp_path / "stores"
     run_id = "RIDMETRICS"
+    layout = derive(run_id=run_id, algo="hei_nw")
     base_cmd = [
         sys.executable,
         "scripts/eval_model.py",
@@ -21,9 +23,9 @@ def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
         "seed=1337",
         "model=models/tiny-gpt2",
         f"outdir={outdir}",
-        f"store_dir={store_dir}",
         f"run_id={run_id}",
-        "session_id=s1",
+        f"store_dir={layout.algo_dir}",
+        f"session_id={layout.session_id}",
     ]
     subprocess.run(base_cmd + ["mode=teach", "persist=true"], check=True)
     baseline_path = Path("runs") / run_id / "baselines" / "metrics.csv"
