@@ -22,20 +22,24 @@ done
 
 ## Teach with persistence
 ```bash
-python scripts/eval_model.py \
-  suite=$SUITE preset=$PRESET run_id=$RUN_ID \
-  n=${SIZES[0]} seed=${SEEDS[0]} mode=teach persist=true \
-  store_dir=$STORES session_id=${PRESET##*/}_$RUN_ID \
-  model=Qwen/Qwen2.5-1.5B-Instruct
+for suite in episodic_cross_mem semantic_mem spatial_multi; do
+  python scripts/eval_model.py \
+    suite=$SUITE preset=$PRESET run_id=$RUN_ID \
+    n=${SIZES[0]} seed=${SEEDS[0]} mode=teach persist=true \
+    store_dir=$STORES session_id=${PRESET##*/}_$RUN_ID \
+    model=Qwen/Qwen2.5-1.5B-Instruct
+done
 ```
 
 ## Test using the persisted store
 ```bash
-python scripts/eval_model.py \
-  suite=$SUITE preset=$PRESET run_id=$RUN_ID \
-  n=${SIZES[0]} seed=${SEEDS[0]} mode=test \
-  store_dir=$STORES session_id=${PRESET##*/}_$RUN_ID \
-  model=Qwen/Qwen2.5-1.5B-Instruct
+for suite in episodic_cross_mem semantic_mem spatial_multi; do
+  python scripts/eval_model.py \
+    suite=$SUITE preset=$PRESET run_id=$RUN_ID \
+    n=${SIZES[0]} seed=${SEEDS[0]} mode=test \
+    store_dir=$STORES session_id=${PRESET##*/}_$RUN_ID \
+    model=Qwen/Qwen2.5-1.5B-Instruct
+done
 ```
 
 `SUITE` takes values `episodic_cross_mem`, `semantic_mem`, or `spatial_multi`.
