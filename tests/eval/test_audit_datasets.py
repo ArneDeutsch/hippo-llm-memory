@@ -1,11 +1,30 @@
 import json
+import sys
 from pathlib import Path
+from subprocess import run
 
 from hippo_eval.eval import audit as audit_datasets
 
 
 def test_audit_datasets_passes() -> None:
     """All required datasets and configs are present with correct checksums."""
+    for suite in audit_datasets.SUITES:
+        run(
+            [
+                sys.executable,
+                "-m",
+                "hippo_eval.datasets.cli",
+                "--suite",
+                suite,
+                "--size",
+                "50",
+                "--seed",
+                "1337",
+                "--out",
+                f"data/{suite}",
+            ],
+            check=True,
+        )
     ok, issues = audit_datasets.audit()
     assert ok, f"Audit reported issues: {issues}"
     assert issues == []

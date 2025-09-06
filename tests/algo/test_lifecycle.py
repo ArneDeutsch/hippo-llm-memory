@@ -31,7 +31,7 @@ def test_double_start_background_tasks(factory, kwargs):
     store.start_background_tasks(interval=0.01)
     thread2 = store._task_manager._thread  # type: ignore[attr-defined]
     assert thread1 is thread2
-    time.sleep(0.025)
+    time.sleep(0.05)
     store.stop_background_tasks()
     stopped = calls["n"]
     time.sleep(0.02)

@@ -11,7 +11,7 @@ from hippo_eval.datasets import sha256_file
 SIZES = [50, 200, 1000]
 SEEDS = [1337, 2025, 4242]
 
-SUITES = ["episodic", "semantic", "spatial"]
+SUITES = ["episodic_cross_mem", "semantic_mem", "spatial_multi"]
 
 MEMORY_CONFIGS = [
     Path("configs/eval/memory/hei_nw.yaml"),
@@ -43,10 +43,8 @@ def audit(data_dir: Path | None = None) -> Tuple[bool, List[str]]:
         except json.JSONDecodeError:
             issues.append(f"Invalid JSON: {checksum_file}")
             continue
-        for size in SIZES:
-            for seed in SEEDS:
-                fname = f"{size}_{seed}.jsonl"
-                verify_file(suite_dir / fname, checksums, issues)
+        for fname in checksums:
+            verify_file(suite_dir / fname, checksums, issues)
 
     for cfg in MEMORY_CONFIGS + BASELINE_CONFIGS:
         if not cfg.exists():
