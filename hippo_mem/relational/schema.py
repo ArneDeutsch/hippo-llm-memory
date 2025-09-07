@@ -156,7 +156,7 @@ class SchemaIndex:
             ``True`` if the tuple was written to ``kg``.
         """
 
-        best_score = 0.0
+        best_score = 1.0 if not self.schemas else 0.0
         for schema in self.schemas.values():
             s = self.score(schema, tup)
             if s > best_score:
@@ -184,7 +184,7 @@ class SchemaIndex:
 
         remaining: List[TupleType] = []
         for tup in self.episodic_buffer:
-            best_score = 0.0
+            best_score = 1.0 if not self.schemas else 0.0
             for schema in self.schemas.values():
                 s = self.score(schema, tup)
                 if s > best_score:
