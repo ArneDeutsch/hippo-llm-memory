@@ -31,3 +31,10 @@ def test_kg_auto_embeddings(kg: KnowledgeGraph) -> None:
     assert {"Carol", "StoreB", "Berlin"} <= set(sub.nodes())
     rels = {d["relation"] for _, _, d in sub.edges(data=True)}
     assert {"bought_at", "located_in"} <= rels
+
+
+def test_kg_retrieve_mismatched_dim(kg: KnowledgeGraph) -> None:
+    kg.upsert("A", "likes", "B", "A likes B")
+    vec = [0.1] * 8  # shorter than default 16-dim embeddings
+    sub = kg.retrieve(vec, k=1)
+    assert set(sub.nodes()) == {"A", "B"}

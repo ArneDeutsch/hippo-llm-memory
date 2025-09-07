@@ -433,6 +433,12 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
             raise ValueError("graph contains nodes without embeddings")
 
         q = np.asarray(list(query_embedding), dtype=float)
+        dim = self.dim
+        if q.shape[0] != dim:
+            if q.shape[0] > dim:
+                q = q[:dim]
+            else:
+                q = np.pad(q, (0, dim - q.shape[0]))
         scores = {n: float(np.dot(vec, q)) for n, vec in self.node_embeddings.items()}
         top = sorted(scores, key=scores.get, reverse=True)[:k]
 
