@@ -45,6 +45,10 @@ def test_smpd_store_population(tmp_path: Path) -> None:
             ],
             check=True,
         )
+        store_file = stores / "smpd" / sid / "spatial.jsonl"
+        assert store_file.exists()
+        metrics_files = list((Path("runs") / run_id).rglob("metrics.json"))
+        assert metrics_files
     finally:
         dataset.unlink(missing_ok=True)
         shutil.rmtree(Path("runs") / run_id, ignore_errors=True)
