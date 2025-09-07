@@ -286,9 +286,13 @@ def main() -> None:
     args = parse_args()
     run_id = args.run_id or os.environ.get("RUN_ID") or ""
     path = validate_cli_store(args)
-    verify_metrics(path, args.kind, args.metrics)
-    if args.strict_telemetry:
-        strict_telemetry_checks(path, args.kind, run_id, args.algo, args.metrics)
+    try:
+        verify_metrics(path, args.kind, args.metrics)
+        if args.strict_telemetry:
+            strict_telemetry_checks(path, args.kind, run_id, args.algo, args.metrics)
+    except (FileNotFoundError, ValueError) as err:
+        print(err, file=sys.stderr)
+        raise SystemExit(1) from err
     if path is None:
         print(f"OK: no store for baseline {args.preset}")
     else:
