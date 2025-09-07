@@ -28,7 +28,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-import numpy as np
 import torch
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf, open_dict
@@ -37,6 +36,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 from hippo_eval.datasets.loaders import load_dataset
+from hippo_eval.eval.adapters import EpisodicEvalAdapter, EvalAdapter, enabled_adapters
 from hippo_eval.harness.io import write_csv, write_meta, write_metrics
 from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import (
@@ -57,13 +57,10 @@ from hippo_mem.common.telemetry import (
     registry,
     set_strict_telemetry,
 )
-from hippo_mem.episodic.gating import DGKey, WriteGate, gate_batch, k_wta
-from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
-from hippo_mem.episodic.types import TraceValue
+from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
 from hippo_mem.relational.tuples import extract_tuples
-from hippo_mem.retrieval.embed import embed_text
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from hippo_mem.utils import validate_run_id
@@ -193,62 +190,6 @@ class Task:
     context_key: str | None = None
     fact: str | None = None
     facts: list[dict] | None = None
-
-
-def _episodic_key_from_text(text: str, dim: int, k: int) -> tuple[np.ndarray, DGKey]:
-    """Return dense and sparse keys derived from ``text``.
-
-    The dense vector is L2 normalised.  When ``k`` is greater than zero the
-    function also returns a :class:`~hippo_mem.episodic.gating.DGKey` containing
-    the top‑``k`` activations; otherwise an empty sparse key is produced.  The
-    helper is pure and performs no writes.
-    """
-
-    vec = np.array(embed_text(text, dim=dim), dtype="float32")
-    norm = np.linalg.norm(vec)
-    if norm > 0:
-        vec /= norm
-    sparse = (
-        k_wta(vec, k)
-        if k > 0
-        else DGKey(np.array([], dtype="int64"), np.array([], dtype="float32"), dim)
-    )
-    return vec, sparse
-
-
-def _ingest_episodic(
-    item: Task,
-    modules: Dict[str, Dict[str, object]],
-    gate: WriteGate,
-    gc: GateCounters,
-    suite: str,
-    dry_run: bool,
-) -> None:
-    """Insert an episodic ``fact`` into the store when accepted by ``gate``.
-
-    Side Effects
-    ------------
-    Writes to the store only when ``decision.action == "insert"`` and
-    ``dry_run`` is ``False``.  Gate counters are updated regardless.  This
-    helper must not be used for telemetry probes.
-    """
-
-    store = modules["episodic"]["store"]
-    text = item.fact or item.prompt
-    if not text:
-        return
-    k = getattr(store, "k_wta", 0)
-    dense, sparse = _episodic_key_from_text(text, store.dim, k)
-    decision = gate.decide(0.5, dense, store.keys(), provenance="teach")
-    gc.attempts += 1
-    if decision.action == "insert":
-        if not dry_run:
-            value = TraceValue(provenance="teach", context_key=item.context_key, suite=suite)
-            key = sparse if k > 0 else dense
-            store.write(key, value, context_key=item.context_key)
-        gc.accepted += 1
-    else:
-        gc.skipped += 1
 
 
 def _ingest_semantic(
@@ -466,6 +407,8 @@ def _evaluate(
     model,
     max_new_tokens: int,
     *,
+    cfg: DictConfig | None = None,
+    adapters: Dict[str, "EvalAdapter"] | None = None,
     use_chat_template: bool,
     system_prompt: str | None,
     compute_metrics: bool = True,
@@ -481,6 +424,7 @@ def _evaluate(
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
+    cfg = cfg or OmegaConf.create({})
     registry.reset()
     gate_registry.reset()
     oracle = oracle or _env_flag("HIPPO_ORACLE")
@@ -511,22 +455,20 @@ def _evaluate(
         req_before = {k: registry.get(k).requests for k in ("episodic", "relational", "spatial")}
         size_before_map, _ = _store_sizes(modules)
         size_before = sum(size_before_map.values())
+        active_adapters = dict(adapters or {})
+        if "episodic" in modules and "episodic" not in active_adapters:
+            active_adapters["episodic"] = EpisodicEvalAdapter()
         if retrieval_enabled and modules:
             hidden = torch.zeros(1, 1, 8)
-            if "episodic" in modules:
-                store = modules["episodic"]["store"]
-                adapter = modules["episodic"]["adapter"]
-                proj = getattr(adapter, "proj", nn.Linear(store.dim, 8))
-                adapter.proj = proj  # type: ignore[attr-defined]
-                spec = TraceSpec(source="episodic", k=1)
-                mem = episodic_retrieve_and_pack(
-                    hidden, spec, store, proj, context_keys=[context_key]
+            if "episodic" in modules and "episodic" in active_adapters:
+                res = active_adapters["episodic"].retrieve(
+                    cfg, modules["episodic"], item, context_key=context_key, hidden=hidden
                 )
-                mems.append(mem)
-                mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
-                mem_latency += float(mem.meta.get("latency_ms", 0.0))
+                mems.append(res.mem)
+                mem_hit = mem_hit or res.hit
+                mem_latency += res.latency_ms
                 router_path.append("episodic")
-                topk_keys.extend(mem.meta.get("trace_ids", []) or [])
+                topk_keys.extend(res.topk_keys)
             if "relational" in modules:
                 kg = modules["relational"]["kg"]
                 adapter = modules["relational"]["adapter"]
@@ -616,14 +558,18 @@ def _evaluate(
         # write phase guarded by gates
         if modules:
             if mode == "teach":
-                if "episodic" in modules and modules["episodic"].get("gate") is not None:
-                    _ingest_episodic(
+                if (
+                    "episodic" in modules
+                    and modules["episodic"].get("gate") is not None
+                    and "episodic" in active_adapters
+                ):
+                    active_adapters["episodic"].teach(
+                        cfg,
+                        modules["episodic"],
                         item,
-                        modules,
-                        modules["episodic"]["gate"],
-                        gating["episodic"],
-                        suite or "",
-                        dry_run,
+                        dry_run=dry_run,
+                        gc=gating["episodic"],
+                        suite=suite or "",
                     )
                 if "relational" in modules:
                     _ingest_semantic(
@@ -642,17 +588,19 @@ def _evaluate(
                         dry_run,
                     )
             else:
-                if "episodic" in modules and modules["episodic"].get("gate") is not None:
-                    store = modules["episodic"]["store"]
-                    gate = modules["episodic"]["gate"]
-                    q = np.zeros(store.dim, dtype="float32")
-                    decision = gate.decide(0.5, q, store.keys())
-                    gc = gating["episodic"]
-                    gc.attempts += 1
-                    if decision.action == "insert":
-                        gc.accepted += 1
-                    else:
-                        gc.skipped += 1
+                if (
+                    "episodic" in modules
+                    and modules["episodic"].get("gate") is not None
+                    and "episodic" in active_adapters
+                ):
+                    active_adapters["episodic"].teach(
+                        cfg,
+                        modules["episodic"],
+                        item,
+                        dry_run=True,
+                        gc=gating["episodic"],
+                        suite=suite or "",
+                    )
                 if "relational" in modules and modules["relational"].get("gate") is not None:
                     kg = modules["relational"]["kg"]
                     gate = modules["relational"]["gate"]
@@ -828,9 +776,9 @@ def _run_replay(
 
     task_list = list(tasks)
     count = 0
+    adapters = enabled_adapters(cfg)
 
-    if "episodic" in modules:
-        store = modules["episodic"]["store"]
+    if "episodic" in modules and "episodic" in adapters:
         gate_cfg = (
             (cfg.get("memory", {}).get("episodic", {}).get("gate", {}))
             if isinstance(cfg, DictConfig)
@@ -840,19 +788,20 @@ def _run_replay(
         if gate_cfg.get("enabled", True):
             params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
             gate = WriteGate(**params)
-        keys = store.keys()
-        probs = np.full(len(task_list), 0.5)
-        queries = np.stack([np.full(store.dim, i, dtype="float32") for i in range(len(task_list))])
-        if gate is None:
-            for q, task in zip(queries, task_list):
-                store.write(q, task.answer)
+        modules["episodic"]["gate"] = gate
+        gc = GateCounters()
+        for task in task_list:
+            before = gc.accepted
+            adapters["episodic"].teach(
+                cfg,
+                modules["episodic"],
+                task,
+                dry_run=False,
+                gc=gc,
+                suite="replay",
+            )
+            if gc.accepted > before:
                 count += 1
-        else:
-            decisions, _ = gate_batch(gate, probs, queries, keys, provenance="replay")
-            for dec, q, task in zip(decisions, queries, task_list):
-                if dec.action == "insert":
-                    store.write(q, task.answer)
-                    count += 1
 
     if "relational" in modules:
         kg = modules["relational"]["kg"]
@@ -908,16 +857,10 @@ def _store_sizes(
     sizes: Dict[str, int] = {}
     diags: Dict[str, Dict[str, int]] = {}
     if "episodic" in modules:
-        store = modules["episodic"]["store"]
-        try:
-            cur = store.persistence.db.conn.cursor()
-            cur.execute("SELECT value FROM traces")
-            rows = cur.fetchall()
-            sizes["episodic"] = sum(
-                1 for (val,) in rows if json.loads(val or "{}").get("provenance") != "dummy"
-            )
-        except Exception:
-            sizes["episodic"] = 0
+        size, diag = EpisodicEvalAdapter().store_size(modules["episodic"])
+        sizes["episodic"] = size
+        if diag:
+            diags["episodic"] = diag
     if "relational" in modules:
         kg = modules["relational"]["kg"]
         sizes["relational"] = int(kg.graph.number_of_edges())
@@ -1319,6 +1262,9 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         flat_ablate,
         allow_dummy_stores=bool(cfg.get("allow_dummy_stores", False)),
     )
+    adapters = enabled_adapters(cfg)
+    if "episodic" in adapters:
+        modules["episodic"] = adapters["episodic"].build(cfg)
     if cfg.preset and not is_memory_preset(str(cfg.preset)):
         modules = {}
     if cfg.memory_off:
@@ -1340,8 +1286,6 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             if spat_file.exists():
                 modules["spatial"]["map"].load(str(session_dir), sid)
 
-    if "episodic" in modules:
-        modules["episodic"]["gate"] = WriteGate()
     if "relational" in modules:
         modules["relational"]["gate"] = RelationalGate()
     if "spatial" in modules:
@@ -1388,6 +1332,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             tokenizer,
             model,
             int(cfg.max_new_tokens),
+            cfg=cfg,
+            adapters=adapters,
             use_chat_template=cfg.use_chat_template,
             system_prompt=cfg.system_prompt,
             compute_metrics=compute_metrics,
@@ -1537,6 +1483,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             tokenizer,
             model,
             int(cfg.max_new_tokens),
+            cfg=cfg,
+            adapters=adapters,
             use_chat_template=cfg.use_chat_template,
             system_prompt=cfg.system_prompt,
             compute_metrics=True,
@@ -1601,6 +1549,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         tokenizer,
         model,
         int(cfg.max_new_tokens),
+        cfg=cfg,
+        adapters=adapters,
         use_chat_template=cfg.use_chat_template,
         system_prompt=cfg.system_prompt,
         compute_metrics=pre_compute,
