@@ -68,21 +68,27 @@ class EpisodicEvalAdapter(EvalAdapter):
     ) -> None:
         gate: WriteGate | None = modules.get("gate")
         store = modules["store"]
-        if gate is None:
-            return
         text = getattr(item, "fact", None) or getattr(item, "prompt", "")
         if not text:
             return
         k = getattr(store, "k_wta", 0)
         dense, sparse = episodic_key_from_text(text, store.dim, k)
-        decision = gate.decide(0.5, dense, store.keys(), provenance="teach")
+        key = dense if getattr(sparse, "indices", np.array([])).size == 0 else sparse
         gc.attempts += 1
+        if gate is None:
+            if not dry_run:
+                value = TraceValue(
+                    provenance="teach", context_key=getattr(item, "context_key", None), suite=suite
+                )
+                store.write(key, value, context_key=getattr(item, "context_key", None))
+            gc.accepted += 1
+            return
+        decision = gate.decide(0.5, dense, store.keys(), provenance="teach")
         if decision.action == "insert":
             if not dry_run:
                 value = TraceValue(
                     provenance="teach", context_key=getattr(item, "context_key", None), suite=suite
                 )
-                key = sparse if sparse is not None else dense
                 store.write(key, value, context_key=getattr(item, "context_key", None))
             gc.accepted += 1
         else:
