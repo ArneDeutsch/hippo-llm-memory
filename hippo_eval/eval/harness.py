@@ -39,7 +39,14 @@ from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modu
 from hippo_eval.datasets.loaders import load_dataset
 from hippo_eval.harness.io import write_csv, write_meta, write_metrics
 from hippo_eval.harness.metrics import collect_metrics
-from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis, spatial_multi_kpis
+from hippo_eval.metrics.scoring import (
+    em_norm,
+    em_raw,
+    enforce_short_answer,
+    f1,
+    spatial_kpis,
+    spatial_multi_kpis,
+)
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import (
@@ -445,11 +452,12 @@ def _evaluate(
             eos_token_id=tokenizer.eos_token_id,
         )
         gen = out[:, inputs["input_ids"].shape[-1] :]
-        pred = tokenizer.decode(gen[0], skip_special_tokens=True).strip()
+        raw_pred = tokenizer.decode(gen[0], skip_special_tokens=True).strip()
+        pred = enforce_short_answer(raw_pred)
         pred_len = len(pred.split())
         gold_len = len(item.answer.split())
         overlong = int(pred_len > gold_len)
-        fmt = int(bool(FORMAT_VIOL_RE.search(pred)))
+        fmt = int(bool(FORMAT_VIOL_RE.search(raw_pred)) or pred != raw_pred)
         em_r = em_raw(pred, item.answer) if compute_metrics else None
         em_n = em_norm(pred, item.answer) if compute_metrics else None
         f1_val = f1(pred, item.answer) if compute_metrics else None
@@ -459,7 +467,7 @@ def _evaluate(
             f1_total += f1_val or 0.0
             overlong_total += overlong
             fmt_total += fmt
-            refusal_total += int(bool(REFUSAL_RE.search(pred)))
+            refusal_total += int(bool(REFUSAL_RE.search(raw_pred)))
         # write phase guarded by gates
         if modules:
             if "episodic" in modules and modules["episodic"].get("gate") is not None:
@@ -563,7 +571,8 @@ def _evaluate(
                 "idx": idx - 1,
                 "prompt": item.prompt,
                 "answer": item.answer,
-                "pred": pred,
+                "pred": raw_pred,
+                "normalized_pred": pred,
                 "em_raw": em_r,
                 "em_norm": em_n,
                 "f1": f1_val,
@@ -879,6 +888,7 @@ def _write_outputs(
             "prompt",
             "answer",
             "pred",
+            "normalized_pred",
             "em_raw",
             "em_norm",
             "f1",
