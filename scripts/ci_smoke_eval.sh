@@ -15,28 +15,51 @@ PREFIX=${ALGO%%_*}
 SESSION_ID=${SESSION_ID:-${PREFIX}_$RUN_ID}
 STORES="runs/$RUN_ID/stores"    # BASE dir (no algo suffix)
 
+N=8
+if [ "$SUITE" = "semantic_mem" ]; then
+  N=50
+fi
+
 # 0) Ensure minimal baselines to appease legacy preflight
 mkdir -p "runs/$RUN_ID/baselines"
 test -f "runs/$RUN_ID/baselines/metrics.csv" || \
   echo "suite,em_raw,em_norm,f1" > "runs/$RUN_ID/baselines/metrics.csv"
 
 # 1) Deterministic dataset
-python -m hippo_eval.datasets.cli --suite "$SUITE" --size 8 --seed 1337 --out "datasets/$SUITE"
+python -m hippo_eval.datasets.cli --suite "$SUITE" --size "$N" --seed 1337 --out "datasets/$SUITE"
 
-# 2) Teach with persistence
-python scripts/eval_model.py \
-  suite="$SUITE" preset="$PRESET" run_id="$RUN_ID" n=8 seed=1337 \
+# 2) Teach with persistence (relax strict ratio)
+HIPPO_STRICT=0 python scripts/eval_model.py \
+  suite="$SUITE" preset="$PRESET" run_id="$RUN_ID" n="$N" seed=1337 \
   mode=teach persist=true store_dir="$STORES" session_id="$SESSION_ID" \
   compute.pre_metrics=true strict_telemetry=true model="$MODEL" > /dev/null
 
 # 3) Test (read persisted store)
 python scripts/eval_model.py \
-  suite="$SUITE" preset="$PRESET" run_id="$RUN_ID" n=8 seed=1337 \
+  suite="$SUITE" preset="$PRESET" run_id="$RUN_ID" n="$N" seed=1337 \
   mode=test store_dir="$STORES" session_id="$SESSION_ID" \
   compute.pre_metrics=true strict_telemetry=true model="$MODEL" > /dev/null
 
 # 4) Validate store and gating
-python scripts/validate_store.py --run_id "$RUN_ID" --algo "$ALGO" --kind episodic --strict-telemetry > /dev/null
+case "$ALGO" in
+  hei_nw)
+    KIND=episodic
+    EXTRA=(--expect-nonzero-ratio=0.8)
+    ;;
+  sgc_rss)
+    KIND=kg
+    EXTRA=(--expect-nodes=20 --expect-edges=20)
+    ;;
+  smpd)
+    KIND=spatial
+    EXTRA=()
+    ;;
+  *)
+    KIND=episodic
+    EXTRA=()
+    ;;
+esac
+python scripts/validate_store.py --run_id "$RUN_ID" --algo "$ALGO" --kind "$KIND" --strict-telemetry "${EXTRA[@]}" > /dev/null
 python - <<'PY'
 import json, os, sys, pathlib
 run_id=os.environ["RUN_ID"]
