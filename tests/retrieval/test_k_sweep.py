@@ -13,10 +13,6 @@ def test_k_sweep_hit_rates_monotonic():
         store.write(vec, "t")
     query = vectors[0]
     ks = [1, 4, 8, 16]
-    hit_rates = []
-    for k in ks:
-        traces = store.recall(query, k)
-        hit = 1.0 if any(t.id == target_id for t in traces) else 0.0
-        hit_rates.append(hit)
+    hit_rates = store.hit_rate_sweep(query, target_id, ks)
     assert hit_rates[0] <= hit_rates[1] <= hit_rates[2] <= hit_rates[3]
     assert any(hr > 0 for hr in hit_rates)
