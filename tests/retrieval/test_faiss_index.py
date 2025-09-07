@@ -44,7 +44,7 @@ def test_dimension_mismatch() -> None:
 
 
 def test_search_before_train_returns_empty() -> None:
-    index = FaissIndex(dim=4, use_pq=True)
+    index = FaissIndex(dim=4, use_pq=True, m=2)
     result = index.search([0.0, 0.0, 0.0, 0.0], k=1)
     assert result == []
 

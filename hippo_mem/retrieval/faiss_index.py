@@ -76,7 +76,9 @@ class FaissBackend(BaseIndex):
         if idx < 0:
             raise ValueError("index must be non-negative")
         ids = np.array([idx], dtype="int64")
-        self.index.remove_ids(ids)
+        removed = self.index.remove_ids(ids)
+        if removed == 0:
+            raise IndexError("index out of range")
 
     def __len__(self) -> int:
         return int(self.index.ntotal)
