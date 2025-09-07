@@ -69,6 +69,30 @@ _MOVE_DIRS = {
     "D": (0, 1),
 }
 
+# Regex to enforce `UDLR` action policy with max length 64.
+_UDLR_RE = re.compile(r"^[UDLR]{1,64}$")
+
+
+def normalize_udlr(pred: str) -> tuple[str, bool]:
+    """Return uppercase move string and flag policy violations.
+
+    Parameters
+    ----------
+    pred:
+        Raw model prediction.
+
+    Returns
+    -------
+    tuple
+        ``(normalized, invalid)`` where ``invalid`` is ``True`` when
+        ``pred`` violates the ``UDLR`` policy or exceeds 64 actions.
+    """
+
+    norm = pred.strip().upper()
+    if _UDLR_RE.fullmatch(norm):
+        return norm, False
+    return "", True
+
 
 def _parse_coord(text: str) -> tuple[int, int] | None:
     """Return ``(x, y)`` parsed from ``text`` if possible."""
@@ -322,22 +346,38 @@ def spatial_kpis(tasks, rows):
     """Update ``rows`` with spatial metrics and return aggregates."""
 
     acc = _MetricAccumulator(len(rows))
+    oracle_hits = 0
     for task, row in zip(tasks, rows):
         prompt = task.prompt
-        pred = row.get("pred", "")
+        pred = row.get("normalized_pred") or row.get("pred", "")
         size, obstacles, start, goal, path_moves = _extract_metadata(prompt)
         if path_moves and start is not None:
             strategy: SpatialTaskStrategy = _MoveTraceStrategy(path_moves)
+            oracle_steps = path_moves
         elif start is None or goal is None:
             _default_row(row)
             continue
         elif "shortest path length" in prompt.lower():
             strategy = _PathLengthStrategy()
+            oracle_steps = _astar(start, goal, size, obstacles)
         else:
             strategy = _PathSequenceStrategy()
+            oracle_steps = _astar(start, goal, size, obstacles)
         strategy.evaluate(pred, start, goal, size, obstacles, row)
+        if oracle_steps:
+            oracle_path = "".join(oracle_steps)
+            row["oracle_path"] = oracle_path
+            row["oracle_success"] = True
+            row["pred_matches_oracle"] = pred == oracle_path
+            oracle_hits += 1
+        else:
+            row["oracle_path"] = ""
+            row["oracle_success"] = False
+            row["pred_matches_oracle"] = False
         acc.add(row)
-    return acc.metrics()
+    metrics = acc.metrics()
+    metrics["oracle_success_rate"] = oracle_hits / len(rows) if rows else 0.0
+    return metrics
 
 
 def spatial_multi_kpis(tasks, rows):
@@ -345,25 +385,40 @@ def spatial_multi_kpis(tasks, rows):
 
     acc = _MultiMetricAccumulator(len(rows))
     per_ep: dict[str, tuple[int, int]] = {}
+    oracle_hits = 0
     for task, row in zip(tasks, rows):
         prompt = task.prompt
-        pred = row.get("pred", "")
+        pred = row.get("normalized_pred") or row.get("pred", "")
         size, obstacles, start, goal, path_moves = _extract_metadata(prompt)
         if path_moves and start is not None:
             strategy: SpatialTaskStrategy = _MoveTraceStrategy(path_moves)
+            oracle_steps = path_moves
         elif start is None or goal is None:
             _default_row(row)
             continue
         elif "shortest path length" in prompt.lower():
             strategy = _PathLengthStrategy()
+            oracle_steps = _astar(start, goal, size, obstacles)
         else:
             strategy = _PathSequenceStrategy()
+            oracle_steps = _astar(start, goal, size, obstacles)
         strategy.evaluate(pred, start, goal, size, obstacles, row)
+        if oracle_steps:
+            oracle_path = "".join(oracle_steps)
+            row["oracle_path"] = oracle_path
+            row["oracle_success"] = True
+            row["pred_matches_oracle"] = pred == oracle_path
+            oracle_hits += 1
+        else:
+            row["oracle_path"] = ""
+            row["oracle_success"] = False
+            row["pred_matches_oracle"] = False
         acc.add(row)
         ep = getattr(task, "episode_id", None) or "0"
         succ, tot = per_ep.get(ep, (0, 0))
         per_ep[ep] = (succ + int(row["success"]), tot + 1)
     metrics = acc.metrics()
+    metrics["oracle_success_rate"] = oracle_hits / len(rows) if rows else 0.0
     for idx, ep in enumerate(sorted(per_ep), start=1):
         succ, tot = per_ep[ep]
         metrics[f"success_ep{idx}"] = succ / tot if tot else 0.0

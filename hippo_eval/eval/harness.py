@@ -39,7 +39,14 @@ from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modu
 from hippo_eval.datasets.loaders import load_dataset
 from hippo_eval.harness.io import write_csv, write_meta, write_metrics
 from hippo_eval.harness.metrics import collect_metrics
-from hippo_eval.metrics.scoring import em_norm, em_raw, f1, spatial_kpis, spatial_multi_kpis
+from hippo_eval.metrics.scoring import (
+    em_norm,
+    em_raw,
+    f1,
+    normalize_udlr,
+    spatial_kpis,
+    spatial_multi_kpis,
+)
 from hippo_mem.common import MemoryTokens, TraceSpec
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import (
@@ -450,6 +457,10 @@ def _evaluate(
         gold_len = len(item.answer.split())
         overlong = int(pred_len > gold_len)
         fmt = int(bool(FORMAT_VIOL_RE.search(pred)))
+        norm_pred = pred
+        if suite in {"spatial", "spatial_multi"}:
+            norm_pred, bad = normalize_udlr(pred)
+            fmt = int(fmt or bad)
         em_r = em_raw(pred, item.answer) if compute_metrics else None
         em_n = em_norm(pred, item.answer) if compute_metrics else None
         f1_val = f1(pred, item.answer) if compute_metrics else None
@@ -564,6 +575,7 @@ def _evaluate(
                 "prompt": item.prompt,
                 "answer": item.answer,
                 "pred": pred,
+                "normalized_pred": norm_pred,
                 "em_raw": em_r,
                 "em_norm": em_n,
                 "f1": f1_val,
@@ -631,6 +643,8 @@ def _evaluate(
             metrics.update(spatial_multi_kpis(task_list, rows))
         else:
             metrics.update(spatial_kpis(task_list, rows))
+        valid = sum(1 for r in rows if r.get("normalized_pred"))
+        metrics["valid_action_rate"] = valid / n if n else 0.0
     return rows, metrics, input_tokens, gen_tokens, elapsed
 
 
