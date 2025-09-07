@@ -330,6 +330,12 @@ Leakage probes inject contradictory facts across items; mismatched traces are
 counted under `leakage.mismatched` and should remain at zero under strict
 isolation.
 
+## 10.4 Fail-fast telemetry guards
+
+- Abort when stores fall below expected sizes per suite.
+- Require `embedding.nonzero_ratio ≥ 0.9` for episodic and semantic stores.
+- Log `injected_context` on every retrieval attempt.
+
 # 11) Ops: logging, provenance, rollback, and maintenance
 
 * Every write records `{text_span, doc_id, time, conf, source}`; **delete\_by\_provenance()** and snapshot/restore for all stores.
