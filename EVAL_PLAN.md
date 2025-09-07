@@ -21,7 +21,7 @@ This script performs baselines → memory (teach+replay) → report and fails if
 
 # 0.2) Decision criteria & stop-go gate
 
-A run is **meaningful** only if it satisfies the [Meaningful Run Contract](EVAL_PROTOCOL.md#meaningful-run-contract). At minimum:
+A run is **meaningful** only if it follows the steps in [EVAL_PROTOCOL.md](EVAL_PROTOCOL.md) and meets the checks below:
 
 - Baseline EM for each suite falls within the expected ranges (see §1.2).
 - `metrics.json` for memory runs includes non-NaN `pre_*` fields.
@@ -72,41 +72,51 @@ RUN_ID=20250905_smoke
 BASE="n=50 seed=1337"
 
 # semantic_mem
-python scripts/eval_cli.py suite=semantic_mem preset=baseline $BASE \
+python scripts/eval_model.py suite=semantic_mem preset=baseline $BASE \
   outdir=runs/$RUN_ID/semantic_mem_baseline
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
+python scripts/eval_model.py suite=semantic_mem preset=memory/sgc_rss \
   mode=teach --no-retrieval-during-teach=true $BASE \
   outdir=runs/$RUN_ID/semantic_mem_teach \
   store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
-python scripts/eval_cli.py suite=semantic_mem preset=memory/sgc_rss \
+python scripts/eval_model.py suite=semantic_mem preset=memory/sgc_rss \
   mode=test $BASE outdir=runs/$RUN_ID/semantic_mem_test \
   store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 
 # episodic_cross_mem
-python scripts/eval_cli.py suite=episodic_cross_mem preset=baseline $BASE \
+python scripts/eval_model.py suite=episodic_cross_mem preset=baseline $BASE \
   outdir=runs/$RUN_ID/episodic_cross_mem_baseline
-python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
+python scripts/eval_model.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
   mode=teach --no-retrieval-during-teach=true $BASE \
   outdir=runs/$RUN_ID/episodic_cross_mem_teach \
   store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
-python scripts/eval_cli.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
+python scripts/eval_model.py suite=episodic_cross_mem preset=memory/hei_nw_cross \
   mode=test $BASE outdir=runs/$RUN_ID/episodic_cross_mem_test \
   store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 
 # spatial_multi (includes replay)
-python scripts/eval_cli.py suite=spatial_multi preset=baseline $BASE \
+python scripts/eval_model.py suite=spatial_multi preset=baseline $BASE \
   outdir=runs/$RUN_ID/spatial_multi_baseline
-python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+python scripts/eval_model.py suite=spatial_multi preset=memory/smpd \
   mode=teach --no-retrieval-during-teach=true $BASE \
   outdir=runs/$RUN_ID/spatial_multi_teach \
   store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
-python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+python scripts/eval_model.py suite=spatial_multi preset=memory/smpd \
   mode=replay $BASE outdir=runs/$RUN_ID/spatial_multi_replay \
   store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
-python scripts/eval_cli.py suite=spatial_multi preset=memory/smpd \
+python scripts/eval_model.py suite=spatial_multi preset=memory/smpd \
   mode=test $BASE outdir=runs/$RUN_ID/spatial_multi_test \
   store_dir=runs/$RUN_ID/stores session_id=$RUN_ID
 ```
+
+# validate stores
+python scripts/validate_store.py --run_id $RUN_ID --algo hei_nw --kind episodic \
+  --expect-nonzero-ratio 0.9
+python scripts/validate_store.py --run_id $RUN_ID --algo sgc_rss --kind kg \
+  --expect-nodes 100 --expect-edges 100 --expect-embedding-coverage 0.9
+python scripts/validate_store.py --run_id $RUN_ID --algo smpd --kind spatial
+
+Add `--oracle` to test commands to record `oracle_em` and `oracle_f1` as upper
+bounds.
 
 Smoke tests pass when baseline EM ≤ 0.2 for memory-required suites and
 memory runs show a clear uplift with non-zero retrieval.
@@ -196,7 +206,7 @@ Implemented by `scripts/build_datasets.py`. All generators are **deterministic**
 Each suite provides a minimal `n=50` split for smoke and cross‑session experiments.
 
 Generators expose `profile` options forwarded via `dataset_profile`. Profiles
-tune difficulty, expected baseline EM, and memory uplift (see `EVAL_PROTOCOL.md` §Dataset profiles):
+tune difficulty, expected baseline EM, and memory uplift:
 
 | Suite          | `base` evaluates                      | `hard` adds to probe                       |
 | -------------- | ------------------------------------- | ------------------------------------------ |
