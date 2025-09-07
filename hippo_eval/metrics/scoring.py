@@ -12,6 +12,25 @@ _ARTICLES = {"a", "an", "the"}
 _PUNCT_RE = re.compile(f"[{re.escape(string.punctuation)}]")
 _MOVE_SET = {"U", "D", "L", "R"}
 
+_SHORT_ANS_RE = re.compile(r"^[A-Za-z0-9 ,'-]+$")
+
+
+def enforce_short_answer(text: str, max_len: int = 64) -> str:
+    """Return ``text`` if it satisfies the short-answer policy else ``""``.
+
+    Parameters
+    ----------
+    text:
+        Candidate answer from the model.
+    max_len:
+        Maximum allowed character length after stripping whitespace.
+    """
+
+    text = text.strip()
+    if not text or len(text) > max_len or not _SHORT_ANS_RE.fullmatch(text):
+        return ""
+    return text
+
 
 def normalize(s: str) -> str:
     """Return lowercase string without punctuation or articles."""

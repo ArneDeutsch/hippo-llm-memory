@@ -45,7 +45,7 @@ import torch
 import yaml
 from omegaconf import DictConfig, OmegaConf, open_dict
 
-from hippo_eval.metrics.scoring import em_norm, em_raw, f1
+from hippo_eval.metrics.scoring import em_norm, em_raw, enforce_short_answer, f1
 from hippo_mem.adapters import (
     EpisodicMemoryAdapter,
     RelationalMemoryAdapter,
@@ -328,12 +328,13 @@ def _eval_tasks(
         if long_context_enabled and not retrieval_enabled:
             prompt = f"{prompt} [CTX]"
         answer = str(item["answer"])
-        pred = str(item.get("pred", answer))
+        raw_pred = str(item.get("pred", answer))
+        pred = enforce_short_answer(raw_pred)
 
         pred_len = len(pred.split())
         gold_len = len(answer.split())
         overlong = int(pred_len > gold_len)
-        fmt = int(bool(FORMAT_VIOL_RE.search(pred)))
+        fmt = int(bool(FORMAT_VIOL_RE.search(raw_pred)) or pred != raw_pred)
         em_r = em_raw(pred, answer)
         em_n = em_norm(pred, answer)
         f1_val = f1(pred, answer)
@@ -352,7 +353,8 @@ def _eval_tasks(
                 "idx": start_idx + off,
                 "prompt": prompt,
                 "answer": answer,
-                "pred": pred,
+                "pred": raw_pred,
+                "normalized_pred": pred,
                 "em_raw": em_r,
                 "em_norm": em_n,
                 "f1": f1_val,
@@ -534,6 +536,7 @@ def write_metrics_csv(
         "prompt",
         "answer",
         "pred",
+        "normalized_pred",
         "em_raw",
         "em_norm",
         "f1",
