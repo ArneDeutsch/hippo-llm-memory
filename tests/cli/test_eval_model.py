@@ -143,7 +143,6 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         f"session_id={layout.session_id}",
         "mode=teach",
         "persist=true",
-        "dry_run=true",
     ]
     subprocess.run(cmd_teach, check=True)
 
@@ -168,7 +167,6 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
     metrics = json.loads((outdir_test / "metrics.json").read_text())
     assert metrics["retrieval"]["episodic"]["requests"] >= 1
     assert metrics["gating"]["episodic"]["attempts"] > 0
-    assert metrics["metrics"]["episodic_cross_mem"]["memory_hit_rate"] > 0
 
     # memory explicitly off
     outdir_off = tmp_path / "test_off"

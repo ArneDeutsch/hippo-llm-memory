@@ -24,7 +24,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -257,13 +256,15 @@ def _ingest_episodic(
     text = item.fact or item.prompt
     if not text:
         return
-    dense, sparse = _episodic_key_from_text(text, store.dim, getattr(store, "k_wta", 0))
+    k = getattr(store, "k_wta", 0)
+    dense, sparse = _episodic_key_from_text(text, store.dim, k)
     decision = gate.decide(0.5, dense, store.keys(), provenance="teach")
     gc.attempts += 1
     if decision.action == "insert":
         if not dry_run:
             value = TraceValue(provenance="teach", context_key=item.context_key, suite=suite)
-            store.write(sparse, value, context_key=item.context_key)
+            key = sparse if k > 0 else dense
+            store.write(key, value, context_key=item.context_key)
         gc.accepted += 1
     else:
         gc.skipped += 1
@@ -1272,10 +1273,7 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
         gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
     )
     if attempts == 0:
-        warnings.warn(
-            f"gate.attempts == 0 in dry-run — run:\n  {teach_cmd}",
-            UserWarning,
-        )
+        failures.append(f"gate.attempts == 0 in dry-run — run:\n  {teach_cmd}")
 
     if failures:
         outdir.mkdir(parents=True, exist_ok=True)
