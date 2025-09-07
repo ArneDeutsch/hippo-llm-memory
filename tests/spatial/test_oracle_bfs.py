@@ -2,7 +2,9 @@ from hippo_eval.eval.harness import Task
 from hippo_eval.metrics.scoring import enforce_udlr, spatial_multi_kpis
 
 
-def test_enforce_udlr_and_oracle_path() -> None:
+def test_enforce_udlr_and_oracle_path(monkeypatch) -> None:
+    monkeypatch.setenv("HIPPO_ENFORCE_UDLR", "1")
+    monkeypatch.setenv("HIPPO_ORACLE", "1")
     assert enforce_udlr("UDLR") == "UDLR"
     assert enforce_udlr("XYZ") == ""
     task = Task(

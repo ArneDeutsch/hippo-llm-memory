@@ -56,7 +56,8 @@ class DummyAdapter:
         return hidden
 
 
-def test_oracle_scores_retrieved_answer():
+def test_oracle_scores_retrieved_answer(monkeypatch):
+    monkeypatch.setenv("HIPPO_ORACLE", "1")
     tasks = [Task(prompt="Where did Carol go?", answer="Library")]
     modules = {"episodic": {"store": DummyStore(), "adapter": DummyAdapter()}}
     rows, metrics, *_ = _evaluate(

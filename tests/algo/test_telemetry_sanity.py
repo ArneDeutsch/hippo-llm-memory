@@ -48,7 +48,7 @@ def test_hit_rate_mismatch_raises() -> None:
 
 
 def test_env_var_enables_strict(monkeypatch, tmp_path) -> None:
-    monkeypatch.setenv("STRICT_TELEMETRY", "1")
+    monkeypatch.setenv("HIPPO_STRICT", "1")
     cfg = OmegaConf.create(
         {
             "suite": "missing",
