@@ -42,6 +42,8 @@ compute:
   # Whether to calculate per-item metrics during the pre-replay sweep.
   # Disable via ``--no-pre-metrics`` for quicker smoke tests.
   pre_metrics: true
+  # Enable oracle readers for upper-bound metrics.
+  oracle: false
 
 # Report macro averaged scores in addition to micro scores.
 macro_scoring: true

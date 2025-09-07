@@ -480,11 +480,13 @@ def _evaluate(
     no_retrieval_during_teach: bool = False,
     isolate: str = "none",
     dry_run: bool = False,
+    oracle: bool = False,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
     registry.reset()
     gate_registry.reset()
+    oracle = oracle or _env_flag("HIPPO_ORACLE")
     rows: List[Dict[str, object]] = []
     emr_total = emn_total = f1_total = 0.0
     oracle_em_total = oracle_f1_total = 0.0
@@ -725,7 +727,7 @@ def _evaluate(
 
         oracle_pred = ""
         oracle_em_v = oracle_f1_v = None
-        if _env_flag("HIPPO_ORACLE") and suite and suite.startswith(("episodic", "semantic")):
+        if oracle and suite and suite.startswith(("episodic", "semantic")):
             oracle_pred = oracle_from_context(item.answer, injected_context, sources)
             oracle_em_v = em_norm(oracle_pred, item.answer) if compute_metrics else None
             oracle_f1_v = f1(oracle_pred, item.answer) if compute_metrics else None
@@ -811,7 +813,7 @@ def _evaluate(
         if compute_metrics
         else {}
     )
-    if compute_metrics and _env_flag("HIPPO_ORACLE"):
+    if compute_metrics and oracle:
         metrics["oracle_em"] = oracle_em_total / n if n else 0.0
         metrics["oracle_f1"] = oracle_f1_total / n if n else 0.0
     if compute_metrics and suite in {"spatial", "spatial_multi"}:
@@ -1296,6 +1298,10 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     }
     cfg.no_retrieval_during_teach = cfg.get("no_retrieval_during_teach", True)
     cfg.isolate = cfg.get("isolate", "none")
+    oracle_flag = bool(cfg.get("compute", {}).get("oracle", False))
+    if oracle_flag:
+        os.environ["HIPPO_ORACLE"] = "1"
+    oracle_flag = oracle_flag or _env_flag("HIPPO_ORACLE")
 
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile, cfg.get("mode"))
     raw_tasks = load_dataset(dataset, {"n": cfg.n})
@@ -1421,6 +1427,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             no_retrieval_during_teach=cfg.no_retrieval_during_teach,
             isolate=cfg.isolate,
             dry_run=bool(cfg.get("dry_run")),
+            oracle=oracle_flag,
         )
         if compute_metrics:
             pre_metrics["em"] = (
@@ -1569,6 +1576,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             no_retrieval_during_teach=cfg.no_retrieval_during_teach,
             isolate=cfg.isolate,
             dry_run=bool(cfg.get("dry_run")),
+            oracle=oracle_flag,
         )
         for name, snap in gate_snaps.items():
             stats = gate_registry.get(name)
@@ -1632,6 +1640,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         no_retrieval_during_teach=cfg.no_retrieval_during_teach,
         isolate=cfg.isolate,
         dry_run=bool(cfg.get("dry_run")),
+        oracle=oracle_flag,
     )
     if pre_compute:
         pre_metrics["em"] = (

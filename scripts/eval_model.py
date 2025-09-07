@@ -28,6 +28,11 @@ if "--mode" in sys.argv:
         sys.argv[idx] = f"mode={val}"
         del sys.argv[idx + 1]
 
+# expose oracle metrics via a boolean flag
+if "--oracle" in sys.argv:
+    idx = sys.argv.index("--oracle")
+    sys.argv[idx] = "compute.oracle=true"
+
 from hippo_eval.eval.harness import (
     AutoModelForCausalLM,
     AutoTokenizer,

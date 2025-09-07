@@ -163,6 +163,7 @@ class Runner:
             gating=gating,
             no_retrieval_during_teach=self.cfg.no_retrieval_during_teach,
             isolate=self.cfg.isolate,
+            oracle=bool(base_cfg.get("compute", {}).get("oracle", False)),
         )
         metrics["em"] = (
             metrics.get("em_norm", 0.0)
