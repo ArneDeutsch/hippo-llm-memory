@@ -43,7 +43,7 @@
 
 ---
 
-## P0 — Implement real *teach* ingestion for all suites
+## P1 — Implement real *teach* ingestion for all suites
 
 ### A) Episodic (HEI‑NW)
 
@@ -94,7 +94,7 @@
 
 ---
 
-## P0 — Strengthen validators and CLI ergonomics
+## P2 — Strengthen validators and CLI ergonomics
 
 **Files**: `scripts/validate_store.py`, `hippo_eval/eval/store_utils.py` (if present), `hippo_mem/utils/stores.py`
 
@@ -114,7 +114,7 @@
 
 ---
 
-## P0 — Schema defaults or schemaless fallback
+## P3 — Schema defaults or schemaless fallback
 
 **Files**: `configs/memory/relational.yaml`, `hippo_mem/relational/schema.py`
 
@@ -136,7 +136,7 @@
 
 ---
 
-## P0 — Guarantee KG embedding backfill
+## P4 — Guarantee KG embedding backfill
 
 **Files**: `hippo_mem/relational/kg.py`
 
@@ -152,7 +152,7 @@
 
 ---
 
-## P1 — Oracle metrics as a first‑class flag
+## P5 — Oracle metrics as a first‑class flag
 
 **Files**: `scripts/eval_model.py`, `hippo_eval/eval/harness.py`, tests under `tests/eval/test_oracle_readers.py`
 
@@ -167,7 +167,7 @@
 
 ---
 
-## P1 — Preflight & smoke alignment (no state change; positive data checks)
+## P6 — Preflight & smoke alignment (no state change; positive data checks)
 
 **Files**: `hippo_eval/eval/harness.py` (function `preflight_check`), `tests/eval/test_smoke_memory_flow.py`
 
@@ -184,7 +184,7 @@
 
 ---
 
-## P1 — Refactor harness for clarity (small, targeted)
+## P7 — Refactor harness for clarity (small, targeted)
 
 **Files**: `hippo_eval/eval/harness.py`
 
@@ -202,7 +202,7 @@
 
 ---
 
-## P2 — Minimal EVAL_PROTOCOL.md & docs refresh
+## P8 — Minimal EVAL_PROTOCOL.md & docs refresh
 
 **Files**: `EVAL_PROTOCOL.md`, `EVAL_PLAN.md`, `DESIGN.md`
 
