@@ -41,3 +41,16 @@ def test_dimension_mismatch() -> None:
     index.add([0.0, 0.0, 0.0])
     with pytest.raises(ValueError):
         index.search([0.0, 0.0], k=1)
+
+
+def test_search_before_train_returns_empty() -> None:
+    index = FaissIndex(dim=4, use_pq=True)
+    result = index.search([0.0, 0.0, 0.0, 0.0], k=1)
+    assert result == []
+
+
+def test_remove_missing_id_raises() -> None:
+    index = FaissIndex(dim=2)
+    index.add([0.0, 0.0])
+    with pytest.raises(IndexError):
+        index.remove(5)

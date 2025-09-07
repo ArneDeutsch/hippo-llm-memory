@@ -13,16 +13,18 @@ def test_no_hippo_eval_imports_in_hippo_mem() -> None:
     """Ensure core package does not depend on hippo_eval."""
 
     base = Path(__file__).resolve().parents[1] / "hippo_mem"
+    offenders: list[str] = []
     for path in base.rglob("*.py"):
         tree = ast.parse(path.read_text(), filename=str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     if alias.name.startswith("hippo_eval"):
-                        raise AssertionError(f"{path} imports {alias.name}")
+                        offenders.append(f"{path}:{alias.name}")
             elif isinstance(node, ast.ImportFrom):
                 if node.module and node.module.startswith("hippo_eval"):
-                    raise AssertionError(f"{path} imports {node.module}")
+                    offenders.append(f"{path}:{node.module}")
+    assert not offenders, f"hippo_mem should not import hippo_eval: {offenders}"
 
 
 def test_legacy_paths_removed() -> None:
