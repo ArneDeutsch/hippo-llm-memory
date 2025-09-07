@@ -31,6 +31,7 @@ hippo_mem.relational.tuples.extract_tuples
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 from datetime import datetime, timezone
@@ -51,6 +52,8 @@ from .gating import RelationalGate
 from .maintenance import MaintenanceManager
 from .schema import SchemaIndex
 from .tuples import TupleType
+
+_log = logging.getLogger(__name__)
 
 
 def _ensure_vec(text: str, dim: int = 16) -> list[float]:
@@ -123,6 +126,7 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         self._coref_index: Dict[str, str] = {}
         StoreLifecycleMixin.__init__(self)
         RollbackMixin.__init__(self, int(self.config.get("max_undo", 5)))
+        self._backfill_embeddings()
 
     # ------------------------------------------------------------------
     # Graph manipulation
@@ -310,6 +314,33 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         elif decision.action == "route_to_episodic":
             self.route_to_episodic(tup)
         return decision
+
+    def _backfill_embeddings(self) -> None:
+        """Compute and persist embeddings when missing."""
+
+        dim = self.dim or 16
+        missing_nodes = [n for n in self.graph.nodes if n not in self.node_embeddings]
+        for n in missing_nodes:
+            vec = _ensure_vec(n, dim)
+            self.node_embeddings[n] = np.asarray(vec, dtype=float)
+            self.backend.exec(
+                "INSERT OR REPLACE INTO nodes(name, embedding) VALUES (?, ?)",
+                (n, json.dumps(vec)),
+            )
+        if missing_nodes:
+            _log.warning("backfilled %d node embeddings", len(missing_nodes))
+        missing_edges = 0
+        for u, v, k, data in self.graph.edges(data=True, keys=True):
+            if data.get("embedding") is None:
+                vec = _ensure_vec(f"{u}:{data.get('relation')}:{v}", dim)
+                data["embedding"] = np.asarray(vec, dtype=float)
+                self.backend.exec(
+                    "UPDATE edges SET embedding=? WHERE id=?",
+                    (json.dumps(vec), k),
+                )
+                missing_edges += 1
+        if missing_edges:
+            _log.warning("backfilled %d edge embeddings", missing_edges)
 
     def aggregate_duplicate(self, tup: TupleType) -> None:
         """Increase edge evidence for an existing tuple."""

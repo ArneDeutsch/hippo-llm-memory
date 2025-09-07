@@ -3,7 +3,8 @@ set -euo pipefail
 
 export RUN_ID=${RUN_ID:-ci_smoke}
 export MODEL=${MODEL:-models/tiny-gpt2}
-export STRICT_TELEMETRY=${STRICT_TELEMETRY:-1}
+export HIPPO_STRICT=${HIPPO_STRICT:-1}
+export STRICT_TELEMETRY=${STRICT_TELEMETRY:-$HIPPO_STRICT}
 source "$(dirname "$0")/_env.sh"
 
 # --- BEGIN canonical CI smoke ---

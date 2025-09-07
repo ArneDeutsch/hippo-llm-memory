@@ -29,6 +29,7 @@ class DummyModel:
 
 
 def test_short_answer_violation(monkeypatch):
+    monkeypatch.setenv("HIPPO_ENFORCE_SHORT_ANSWER", "1")
     tok = DummyTokenizer()
 
     def fake_decode(ids, skip_special_tokens=True):
@@ -52,6 +53,7 @@ def test_short_answer_violation(monkeypatch):
 
 
 def test_short_answer_valid(monkeypatch):
+    monkeypatch.setenv("HIPPO_ENFORCE_SHORT_ANSWER", "1")
     tok = DummyTokenizer()
 
     def fake_decode(ids, skip_special_tokens=True):

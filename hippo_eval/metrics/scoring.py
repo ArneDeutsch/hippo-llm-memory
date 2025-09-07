@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import heapq
+import os
 import re
 import string
 from collections import Counter
@@ -14,6 +15,12 @@ _MOVE_SET = {"U", "D", "L", "R"}
 
 _SHORT_ANS_RE = re.compile(r"^[A-Za-z0-9 ,'-]+$")
 _UDLR_RE = re.compile(r"^[UDLR]{1,64}$")
+
+
+def _flag(name: str) -> bool:
+    """Return ``True`` when env var ``name`` is truthy."""
+
+    return os.getenv(name, "").lower() in {"1", "true", "yes"}
 
 
 def enforce_short_answer(text: str, max_len: int = 64) -> str:
@@ -28,6 +35,8 @@ def enforce_short_answer(text: str, max_len: int = 64) -> str:
     """
 
     text = text.strip()
+    if not _flag("HIPPO_ENFORCE_SHORT_ANSWER"):
+        return text
     if not text or len(text) > max_len or not _SHORT_ANS_RE.fullmatch(text):
         return ""
     return text
@@ -37,9 +46,11 @@ def enforce_udlr(text: str, max_len: int = 64) -> str:
     """Return uppercased path if it matches ``UDLR`` policy else ``""``."""
 
     text = text.strip().upper()
-    if _UDLR_RE.fullmatch(text):
+    if not _flag("HIPPO_ENFORCE_UDLR"):
         return text
-    return ""
+    if len(text) > max_len or not _UDLR_RE.fullmatch(text):
+        return ""
+    return text
 
 
 def normalize(s: str) -> str:
@@ -389,18 +400,22 @@ def spatial_kpis(tasks, rows):
         else:
             strategy = _PathSequenceStrategy()
         strategy.evaluate(pred, start, goal, size, obstacles, row)
-        oracle = _astar(start, goal, size, obstacles) if start and goal else None
+        oracle = (
+            _astar(start, goal, size, obstacles)
+            if _flag("HIPPO_ORACLE") and start and goal
+            else None
+        )
         row["oracle_path"] = "".join(oracle) if oracle else None
         row["oracle_success"] = bool(oracle)
         norm = row.get("normalized_pred") or ""
-        row["pred_matches_oracle"] = bool(oracle) and norm == row["oracle_path"]
+        row["pred_matches_oracle"] = bool(oracle) and norm == row.get("oracle_path")
         oracle_ok += int(bool(oracle))
         valid += int(bool(norm))
         acc.add(row)
     metrics = acc.metrics()
     total = len(rows)
     metrics["valid_action_rate"] = valid / total if total else 0.0
-    metrics["oracle_success_rate"] = oracle_ok / total if total else 0.0
+    metrics["oracle_success_rate"] = oracle_ok / total if total and _flag("HIPPO_ORACLE") else 0.0
     return metrics
 
 
@@ -425,11 +440,15 @@ def spatial_multi_kpis(tasks, rows):
         else:
             strategy = _PathSequenceStrategy()
         strategy.evaluate(pred, start, goal, size, obstacles, row)
-        oracle = _astar(start, goal, size, obstacles) if start and goal else None
+        oracle = (
+            _astar(start, goal, size, obstacles)
+            if _flag("HIPPO_ORACLE") and start and goal
+            else None
+        )
         row["oracle_path"] = "".join(oracle) if oracle else None
         row["oracle_success"] = bool(oracle)
         norm = row.get("normalized_pred") or ""
-        row["pred_matches_oracle"] = bool(oracle) and norm == row["oracle_path"]
+        row["pred_matches_oracle"] = bool(oracle) and norm == row.get("oracle_path")
         oracle_ok += int(bool(oracle))
         valid += int(bool(norm))
         acc.add(row)
@@ -442,5 +461,5 @@ def spatial_multi_kpis(tasks, rows):
         metrics[f"success_ep{idx}"] = succ / tot if tot else 0.0
     total = len(rows)
     metrics["valid_action_rate"] = valid / total if total else 0.0
-    metrics["oracle_success_rate"] = oracle_ok / total if total else 0.0
+    metrics["oracle_success_rate"] = oracle_ok / total if total and _flag("HIPPO_ORACLE") else 0.0
     return metrics

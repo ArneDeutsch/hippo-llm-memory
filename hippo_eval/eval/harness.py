@@ -88,6 +88,12 @@ REFUSAL_RE = re.compile(
 FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
 
+def _env_flag(name: str) -> bool:
+    """Return ``True`` when env var ``name`` is truthy."""
+
+    return os.getenv(name, "").lower() in {"1", "true", "yes"}
+
+
 def _ensure_list(name: str, val: object | None) -> object | None:
     """Validate that Hydra list inputs are proper sequences.
 
@@ -576,13 +582,14 @@ def _evaluate(
             raise SystemExit("missing injected_context")
 
         oracle_pred = ""
-        if suite and suite.startswith(("episodic", "semantic")):
+        oracle_em_v = oracle_f1_v = None
+        if _env_flag("HIPPO_ORACLE") and suite and suite.startswith(("episodic", "semantic")):
             oracle_pred = oracle_from_context(item.answer, injected_context, sources)
-        oracle_em_v = em_norm(oracle_pred, item.answer) if compute_metrics else None
-        oracle_f1_v = f1(oracle_pred, item.answer) if compute_metrics else None
-        if compute_metrics:
-            oracle_em_total += oracle_em_v or 0
-            oracle_f1_total += oracle_f1_v or 0.0
+            oracle_em_v = em_norm(oracle_pred, item.answer) if compute_metrics else None
+            oracle_f1_v = f1(oracle_pred, item.answer) if compute_metrics else None
+            if compute_metrics:
+                oracle_em_total += oracle_em_v or 0
+                oracle_f1_total += oracle_f1_v or 0.0
 
         input_tokens += inputs["input_ids"].shape[-1]
         gen_tokens += gen.shape[-1]
@@ -653,8 +660,6 @@ def _evaluate(
             "em_raw": emr_total / n if n else 0.0,
             "em_norm": emn_total / n if n else 0.0,
             "f1": f1_total / n if n else 0.0,
-            "oracle_em": oracle_em_total / n if n else 0.0,
-            "oracle_f1": oracle_f1_total / n if n else 0.0,
             "refusal_rate": refusal_total / n if n else 0.0,
             "overlong": overlong_total,
             "format_violation": fmt_total,
@@ -662,6 +667,9 @@ def _evaluate(
         if compute_metrics
         else {}
     )
+    if compute_metrics and _env_flag("HIPPO_ORACLE"):
+        metrics["oracle_em"] = oracle_em_total / n if n else 0.0
+        metrics["oracle_f1"] = oracle_f1_total / n if n else 0.0
     if compute_metrics and suite in {"spatial", "spatial_multi"}:
         if suite == "spatial_multi":
             metrics.update(spatial_multi_kpis(task_list, rows))
@@ -1038,10 +1046,12 @@ def _strict_flag(cfg: DictConfig) -> bool:
     cfg_val = cfg.get("strict_telemetry")
     if cfg_val is not None:
         return bool(cfg_val)
-    env_val = os.environ.get("STRICT_TELEMETRY")
+    env_val = os.environ.get("HIPPO_STRICT")
+    if env_val is None:
+        env_val = os.environ.get("STRICT_TELEMETRY")
     if env_val is None:
         return False
-    return env_val not in ("0", "false", "False", "")
+    return env_val.lower() not in {"0", "false", ""}
 
 
 def preflight_check(cfg: DictConfig, outdir: Path) -> None:
