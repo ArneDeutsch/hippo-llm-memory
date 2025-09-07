@@ -326,6 +326,9 @@ When a prediction uses memory, telemetry logs **trace IDs** and a
 }
 ```
 
+An optional `--oracle` flag answers directly from injected context and logs
+`oracle_em`/`oracle_f1` as upper bounds.
+
 Leakage probes inject contradictory facts across items; mismatched traces are
 counted under `leakage.mismatched` and should remain at zero under strict
 isolation.
