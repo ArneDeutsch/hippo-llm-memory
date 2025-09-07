@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Tuple
+
+import numpy as np
 
 
 @dataclass
@@ -88,6 +92,81 @@ def assert_store_exists(store_dir: str, session_id: str, algo: str, kind: str = 
     return p
 
 
+def scan_episodic_store(path: Path) -> Tuple[int, int]:
+    """Return trace count and number of non-zero keys."""
+
+    count = nz = 0
+    if path.suffix == ".jsonl":
+        with path.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                key = rec.get("key") or []
+                if any(abs(float(v)) > 1e-12 for v in key):
+                    nz += 1
+                count += 1
+    else:
+        from hippo_mem.episodic.persistence import TracePersistence
+
+        tp = TracePersistence(str(path))
+        for _idx, _val, key, _ts, _sal in tp.all():
+            count += 1
+            if float(np.linalg.norm(key)) > 1e-12:
+                nz += 1
+    return count, nz
+
+
+def scan_kg_store(path: Path) -> Tuple[int, int, int, int]:
+    """Return node and edge counts plus non-zero embedding totals."""
+
+    nodes = edges = node_nz = edge_nz = 0
+    if path.suffix == ".jsonl":
+        with path.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                typ = rec.get("type")
+                emb = rec.get("embedding")
+                has_emb = emb and any(abs(float(v)) > 1e-12 for v in emb)
+                if typ == "node":
+                    nodes += 1
+                    if has_emb:
+                        node_nz += 1
+                elif typ == "edge":
+                    edges += 1
+                    if has_emb:
+                        edge_nz += 1
+    else:
+        from hippo_mem.relational.backend import SQLiteBackend
+
+        backend = SQLiteBackend(str(path))
+        node_rows = backend.exec("SELECT embedding FROM nodes", fetch="all") or []
+        nodes = len(node_rows)
+        for (emb_json,) in node_rows:
+            if emb_json:
+                emb = json.loads(emb_json)
+                if any(abs(float(v)) > 1e-12 for v in emb):
+                    node_nz += 1
+        edge_rows = backend.exec("SELECT embedding FROM edges", fetch="all") or []
+        edges = len(edge_rows)
+        for (emb_json,) in edge_rows:
+            if emb_json:
+                emb = json.loads(emb_json)
+                if any(abs(float(v)) > 1e-12 for v in emb):
+                    edge_nz += 1
+    return nodes, edges, node_nz, edge_nz
+
+
 def validate_store(
     run_id: str,
     preset: str,
@@ -128,4 +207,12 @@ def validate_store(
     return assert_store_exists(str(layout.base_dir), layout.session_id, algo, kind=kind)
 
 
-__all__ = ["StoreLayout", "derive", "is_memory_preset", "assert_store_exists", "validate_store"]
+__all__ = [
+    "StoreLayout",
+    "derive",
+    "is_memory_preset",
+    "assert_store_exists",
+    "scan_episodic_store",
+    "scan_kg_store",
+    "validate_store",
+]
