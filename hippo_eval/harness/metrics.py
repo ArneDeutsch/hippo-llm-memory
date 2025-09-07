@@ -32,6 +32,8 @@ class SuiteAccumulator:
                 "post_em_raw": post_metrics.get("em_raw", 0.0),
                 "post_em_norm": post_metrics.get("em_norm", 0.0),
                 "post_f1": post_metrics.get("f1", 0.0),
+                "post_oracle_em": post_metrics.get("oracle_em", 0.0),
+                "post_oracle_f1": post_metrics.get("oracle_f1", 0.0),
                 "post_refusal_rate": post_metrics.get("refusal_rate", 0.0),
             }
         )
@@ -55,6 +57,8 @@ def init_suite_metrics(pre_metrics: Dict[str, float]) -> SuiteAccumulator:
         "pre_em_norm": pre_metrics.get("em_norm"),
         "pre_f1": pre_metrics.get("f1"),
         "pre_refusal_rate": pre_metrics.get("refusal_rate"),
+        "oracle_em": pre_metrics.get("oracle_em"),
+        "oracle_f1": pre_metrics.get("oracle_f1"),
         "memory_hit_rate": 0.0,
         "latency_ms_delta": 0.0,
     }

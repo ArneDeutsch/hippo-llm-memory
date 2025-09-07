@@ -44,6 +44,7 @@ from hippo_eval.metrics.scoring import (
     em_raw,
     enforce_short_answer,
     f1,
+    oracle_from_context,
     spatial_kpis,
     spatial_multi_kpis,
 )
@@ -353,6 +354,7 @@ def _evaluate(
     gate_registry.reset()
     rows: List[Dict[str, object]] = []
     emr_total = emn_total = f1_total = 0.0
+    oracle_em_total = oracle_f1_total = 0.0
     overlong_total = fmt_total = refusal_total = 0
     input_tokens = gen_tokens = 0
     latencies: List[float] = []
@@ -561,6 +563,15 @@ def _evaluate(
         if _STRICT and retrieval_requests > 0 and not injected_context:
             raise SystemExit("missing injected_context")
 
+        oracle_pred = ""
+        if suite and suite.startswith(("episodic", "semantic")):
+            oracle_pred = oracle_from_context(item.answer, injected_context, sources)
+        oracle_em_v = em_norm(oracle_pred, item.answer) if compute_metrics else None
+        oracle_f1_v = f1(oracle_pred, item.answer) if compute_metrics else None
+        if compute_metrics:
+            oracle_em_total += oracle_em_v or 0
+            oracle_f1_total += oracle_f1_v or 0.0
+
         input_tokens += inputs["input_ids"].shape[-1]
         gen_tokens += gen.shape[-1]
         item_t1 = time.perf_counter()
@@ -576,6 +587,8 @@ def _evaluate(
                 "em_raw": em_r,
                 "em_norm": em_n,
                 "f1": f1_val,
+                "oracle_em": oracle_em_v,
+                "oracle_f1": oracle_f1_v,
                 "pred_len": pred_len,
                 "gold_len": gold_len,
                 "overlong": overlong,
@@ -628,6 +641,8 @@ def _evaluate(
             "em_raw": emr_total / n if n else 0.0,
             "em_norm": emn_total / n if n else 0.0,
             "f1": f1_total / n if n else 0.0,
+            "oracle_em": oracle_em_total / n if n else 0.0,
+            "oracle_f1": oracle_f1_total / n if n else 0.0,
             "refusal_rate": refusal_total / n if n else 0.0,
             "overlong": overlong_total,
             "format_violation": fmt_total,
@@ -892,6 +907,8 @@ def _write_outputs(
             "em_raw",
             "em_norm",
             "f1",
+            "oracle_em",
+            "oracle_f1",
             "pred_len",
             "gold_len",
             "overlong",

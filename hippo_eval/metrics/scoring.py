@@ -79,6 +79,25 @@ def f1(pred: str, gold: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def oracle_from_context(
+    answer: str,
+    contexts: list[str] | None,
+    ids: list[str | None] | None = None,
+) -> str:
+    """Return ``answer`` if it appears in ``contexts`` or ``ids``."""
+
+    gold = answer.strip().lower()
+    for text in contexts or []:
+        if gold and gold in text.lower():
+            return answer
+    for ident in ids or []:
+        if ident is None:
+            continue
+        if gold and gold == str(ident).strip().lower():
+            return answer
+    return ""
+
+
 # -- Spatial helpers -----------------------------------------------------
 
 _MOVE_DIRS = {
