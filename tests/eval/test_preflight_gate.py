@@ -144,3 +144,52 @@ def test_preflight_gate_attempts_zero_warns(
         assert not (outdir / "failed_preflight.json").exists()
     finally:
         shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
+
+
+def test_dry_run_has_no_store_side_effects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+
+    from hippo_mem.episodic.store import EpisodicStore
+    from hippo_mem.relational.kg import KnowledgeGraph
+    from hippo_mem.spatial.map import PlaceGraph
+
+    calls = {"write": 0, "upsert": 0, "observe": 0}
+
+    def spy_write(self, *args, **kwargs):  # type: ignore[unused-arg]
+        calls["write"] += 1
+
+    def spy_upsert(self, *args, **kwargs):  # type: ignore[unused-arg]
+        calls["upsert"] += 1
+
+    def spy_observe(self, *args, **kwargs):  # type: ignore[unused-arg]
+        calls["observe"] += 1
+
+    monkeypatch.setattr(EpisodicStore, "write", spy_write)
+    monkeypatch.setattr(KnowledgeGraph, "upsert", spy_upsert)
+    monkeypatch.setattr(PlaceGraph, "observe", spy_observe)
+
+    def run(preset: str, run_idx: int) -> None:
+        cfg = OmegaConf.create(
+            {
+                "model": str(repo_root / "models" / "tiny-gpt2"),
+                "suite": "episodic_cross_mem",
+                "preset": preset,
+                "n": 1,
+                "seed": 0,
+                "mode": "teach",
+                "dry_run": True,
+                "persist": False,
+                "run_id": f"testrun{run_idx}",
+            }
+        )
+        cfg = harness._load_preset(cfg)
+        cfg = harness._apply_model_defaults(cfg)
+        harness.evaluate(cfg, tmp_path / f"out{run_idx}", preflight=False)
+
+    run("memory/hei_nw", 0)
+    run("memory/sgc_rss", 1)
+    run("memory/smpd", 2)
+
+    assert calls["write"] == 0
+    assert calls["upsert"] == 0
+    assert calls["observe"] == 0
