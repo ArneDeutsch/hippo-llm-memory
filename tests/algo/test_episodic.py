@@ -460,15 +460,18 @@ def test_sparse_encode_k_wta_idempotent(vec: np.ndarray, k: int) -> None:
     assert np.allclose(key.values, key2.values)
 
 
-def test_k_wta_returns_empty_for_non_positive_k() -> None:
-    """Non-positive ``k`` yields an empty key."""
+def test_k_wta_clamps_non_positive_k(caplog) -> None:
+    """Non-positive ``k`` is clamped to ``1`` and warns."""
 
     q = np.array([0.2, -0.3], dtype=np.float32)
     for invalid_k in (0, -1):
-        key = k_wta(q, invalid_k)
-        assert key.indices.size == 0
-        assert key.values.size == 0
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            key = k_wta(q, invalid_k)
+        assert key.indices.size == 1
+        assert key.values.size == 1
         assert key.dim == q.size
+        assert "clamping to 1" in caplog.text
 
 
 def test_kwta_produces_sparse_indices() -> None:

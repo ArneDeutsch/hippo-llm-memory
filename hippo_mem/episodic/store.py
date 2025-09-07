@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 import time
 from dataclasses import asdict
@@ -622,6 +623,7 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         fmt: str = "jsonl",
         replay_samples: int = 0,
         gate_attempts: int = 0,
+        strict: bool | None = None,
     ) -> None:
         """Save all traces under ``directory/session_id``.
 
@@ -637,6 +639,8 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
             Number of replayed samples driving persistence.
         gate_attempts : int, optional
             Gate attempts during teach; marks source as ``"teach"`` when positive.
+        strict : bool, optional
+            Fail when <90% of keys have non-zero norm; defaults to env ``HIPPO_STRICT``.
         """
 
         path = Path(directory) / session_id
@@ -654,18 +658,37 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         if replay_samples <= 0:
             return
 
-        records = []
+        if strict is None:
+            strict = os.getenv("HIPPO_STRICT") not in {"", "0", "false", "False", None}
+
+        records: list[dict] = []
+        nonzero = 0
         for idx, value, key_vec, ts, salience in self.persistence.all():
+            dg_key = DGKey(
+                indices=np.nonzero(key_vec)[0].astype("int64"),
+                values=key_vec[np.nonzero(key_vec)].astype("float32"),
+                dim=self.dim,
+            )
+            dense_key = self._to_dense(dg_key)
+            if np.linalg.norm(dense_key) > 0:
+                nonzero += 1
             records.append(
                 {
                     "schema": "episodic.v1",
                     "id": idx,
-                    "key": key_vec.tolist(),
+                    "key": dense_key.tolist(),
                     "value": asdict(value),
                     "ts": ts,
                     "salience": salience,
                 }
             )
+        if records:
+            ratio = nonzero / len(records)
+            if ratio < 0.9:
+                msg = f"non-zero key ratio {ratio:.2f} < 0.9"
+                if strict:
+                    raise RuntimeError(msg)
+                logger.warning(msg)
         file = path / f"episodic.{fmt}"
         if fmt == "jsonl":
             io.atomic_write_jsonl(file, records)
