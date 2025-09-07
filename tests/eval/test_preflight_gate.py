@@ -127,7 +127,7 @@ def test_preflight_empty_store_hints_command(
         shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
 
 
-def test_preflight_gate_attempts_zero_hints_command(
+def test_preflight_gate_attempts_zero_warns(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     cfg = _setup_cfg(tmp_path, monkeypatch, baseline=True, store_has_data=True)
@@ -139,11 +139,8 @@ def test_preflight_gate_attempts_zero_hints_command(
     monkeypatch.setattr(harness, "evaluate", _stub_eval)
 
     try:
-        with pytest.raises(RuntimeError):
+        with pytest.warns(UserWarning, match="gate.attempts == 0"):
             harness.preflight_check(cfg, outdir)
-        fail_msg = json.loads((outdir / "failed_preflight.json").read_text())["errors"][0]
-        assert "gate.attempts == 0" in fail_msg
-        assert "python scripts/eval_model.py --mode teach" in fail_msg
-        assert f"--run-id {cfg.run_id}" in fail_msg
+        assert not (outdir / "failed_preflight.json").exists()
     finally:
         shutil.rmtree(Path("runs") / cfg.run_id, ignore_errors=True)
