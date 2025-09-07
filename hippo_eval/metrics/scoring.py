@@ -13,6 +13,7 @@ _PUNCT_RE = re.compile(f"[{re.escape(string.punctuation)}]")
 _MOVE_SET = {"U", "D", "L", "R"}
 
 _SHORT_ANS_RE = re.compile(r"^[A-Za-z0-9 ,'-]+$")
+_UDLR_RE = re.compile(r"^[UDLR]{1,64}$")
 
 
 def enforce_short_answer(text: str, max_len: int = 64) -> str:
@@ -30,6 +31,15 @@ def enforce_short_answer(text: str, max_len: int = 64) -> str:
     if not text or len(text) > max_len or not _SHORT_ANS_RE.fullmatch(text):
         return ""
     return text
+
+
+def enforce_udlr(text: str, max_len: int = 64) -> str:
+    """Return uppercased path if it matches ``UDLR`` policy else ``""``."""
+
+    text = text.strip().upper()
+    if _UDLR_RE.fullmatch(text):
+        return text
+    return ""
 
 
 def normalize(s: str) -> str:
@@ -276,6 +286,9 @@ def _default_row(row: dict) -> None:
     row["steps_pred"] = 0
     row["steps_opt"] = 0
     row["suboptimality"] = 0.0
+    row["oracle_path"] = None
+    row["oracle_success"] = False
+    row["pred_matches_oracle"] = False
 
 
 class _MoveTraceStrategy:
@@ -360,6 +373,8 @@ def spatial_kpis(tasks, rows):
     """Update ``rows`` with spatial metrics and return aggregates."""
 
     acc = _MetricAccumulator(len(rows))
+    oracle_ok = 0
+    valid = 0
     for task, row in zip(tasks, rows):
         prompt = task.prompt
         pred = row.get("pred", "")
@@ -374,8 +389,19 @@ def spatial_kpis(tasks, rows):
         else:
             strategy = _PathSequenceStrategy()
         strategy.evaluate(pred, start, goal, size, obstacles, row)
+        oracle = _astar(start, goal, size, obstacles) if start and goal else None
+        row["oracle_path"] = "".join(oracle) if oracle else None
+        row["oracle_success"] = bool(oracle)
+        norm = row.get("normalized_pred") or ""
+        row["pred_matches_oracle"] = bool(oracle) and norm == row["oracle_path"]
+        oracle_ok += int(bool(oracle))
+        valid += int(bool(norm))
         acc.add(row)
-    return acc.metrics()
+    metrics = acc.metrics()
+    total = len(rows)
+    metrics["valid_action_rate"] = valid / total if total else 0.0
+    metrics["oracle_success_rate"] = oracle_ok / total if total else 0.0
+    return metrics
 
 
 def spatial_multi_kpis(tasks, rows):
@@ -383,6 +409,8 @@ def spatial_multi_kpis(tasks, rows):
 
     acc = _MultiMetricAccumulator(len(rows))
     per_ep: dict[str, tuple[int, int]] = {}
+    oracle_ok = 0
+    valid = 0
     for task, row in zip(tasks, rows):
         prompt = task.prompt
         pred = row.get("pred", "")
@@ -397,6 +425,13 @@ def spatial_multi_kpis(tasks, rows):
         else:
             strategy = _PathSequenceStrategy()
         strategy.evaluate(pred, start, goal, size, obstacles, row)
+        oracle = _astar(start, goal, size, obstacles) if start and goal else None
+        row["oracle_path"] = "".join(oracle) if oracle else None
+        row["oracle_success"] = bool(oracle)
+        norm = row.get("normalized_pred") or ""
+        row["pred_matches_oracle"] = bool(oracle) and norm == row["oracle_path"]
+        oracle_ok += int(bool(oracle))
+        valid += int(bool(norm))
         acc.add(row)
         ep = getattr(task, "episode_id", None) or "0"
         succ, tot = per_ep.get(ep, (0, 0))
@@ -405,4 +440,7 @@ def spatial_multi_kpis(tasks, rows):
     for idx, ep in enumerate(sorted(per_ep), start=1):
         succ, tot = per_ep[ep]
         metrics[f"success_ep{idx}"] = succ / tot if tot else 0.0
+    total = len(rows)
+    metrics["valid_action_rate"] = valid / total if total else 0.0
+    metrics["oracle_success_rate"] = oracle_ok / total if total else 0.0
     return metrics
