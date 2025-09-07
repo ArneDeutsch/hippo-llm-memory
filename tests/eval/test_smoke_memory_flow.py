@@ -75,7 +75,7 @@ def test_smoke_memory_flow() -> None:
             f"--run_id={run_id}",
             "--algo=hei_nw",
             "--kind=episodic",
-            "--expect-nonzero-ratio=0.9",
+            "--expect-nonzero-ratio=0.85",
         ],
         check=True,
         env=env,

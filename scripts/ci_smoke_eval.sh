@@ -8,8 +8,8 @@ export STRICT_TELEMETRY=${STRICT_TELEMETRY:-$HIPPO_STRICT}
 source "$(dirname "$0")/_env.sh"
 
 # --- BEGIN canonical CI smoke ---
-SUITE=${SUITE:-episodic_cross_mem}
-PRESET=${PRESET:-memory/hei_nw}
+export SUITE=${SUITE:-episodic_cross_mem}
+export PRESET=${PRESET:-memory/hei_nw}
 ALGO=${PRESET##*/}
 PREFIX=${ALGO%%_*}
 SESSION_ID=${SESSION_ID:-${PREFIX}_$RUN_ID}
@@ -44,7 +44,7 @@ python scripts/eval_model.py \
 case "$ALGO" in
   hei_nw)
     KIND=episodic
-    EXTRA=(--expect-nonzero-ratio=0.8)
+    EXTRA=(--expect-nonzero-ratio=0.85)
     ;;
   sgc_rss)
     KIND=kg

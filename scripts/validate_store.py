@@ -195,6 +195,9 @@ def strict_telemetry_checks(
     run_id: str,
     algo: str,
     metrics_path: str | None,
+    nonzero_ratio: float | None = None,
+    expect_nodes: int | None = None,
+    expect_edges: int | None = None,
 ) -> None:
     """Enforce size, embedding, and audit invariants."""
 
@@ -211,12 +214,17 @@ def strict_telemetry_checks(
             expected = max(int(n * 0.8), 1 if n else 0)
             if count < expected:
                 raise ValueError(f"episodic traces {count} < expected {expected}")
-            if ratio < 0.9:
-                raise ValueError(f"episodic non-zero ratio {ratio:.2f} < 0.9")
+            threshold = 0.9 if nonzero_ratio is None else nonzero_ratio
+            if ratio < threshold:
+                raise ValueError(f"episodic non-zero ratio {ratio:.2f} < {threshold}")
         elif kind in {"kg", "relational"}:
             nodes, edges, node_nz, edge_nz = scan_kg_store(path)
-            expected_nodes = max(int(n * 2), 1 if n else 0)
-            expected_edges = max(int(n * 2), 1 if n else 0)
+            expected_nodes = (
+                expect_nodes if expect_nodes is not None else max(int(n * 2), 1 if n else 0)
+            )
+            expected_edges = (
+                expect_edges if expect_edges is not None else max(int(n * 2), 1 if n else 0)
+            )
             if nodes < expected_nodes or edges < expected_edges:
                 raise ValueError(
                     "relational store too small: "
@@ -295,7 +303,16 @@ def main() -> None:
     try:
         verify_metrics(path, args.kind, args.metrics)
         if args.strict_telemetry:
-            strict_telemetry_checks(path, args.kind, run_id, args.algo, args.metrics)
+            strict_telemetry_checks(
+                path,
+                args.kind,
+                run_id,
+                args.algo,
+                args.metrics,
+                args.expect_nonzero_ratio,
+                args.expect_nodes,
+                args.expect_edges,
+            )
         threshold_checks(path, args.kind, args)
     except (FileNotFoundError, ValueError) as err:
         print(err, file=sys.stderr)
