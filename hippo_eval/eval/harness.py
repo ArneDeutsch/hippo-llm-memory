@@ -36,7 +36,12 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
 from hippo_eval.datasets.loaders import load_dataset
-from hippo_eval.eval.adapters import EpisodicEvalAdapter, EvalAdapter, enabled_adapters
+from hippo_eval.eval.adapters import (
+    EpisodicEvalAdapter,
+    EvalAdapter,
+    RelationalEvalAdapter,
+    enabled_adapters,
+)
 from hippo_eval.harness.io import write_csv, write_meta, write_metrics
 from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import (
@@ -59,8 +64,6 @@ from hippo_mem.common.telemetry import (
 )
 from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.relational.gating import RelationalGate
-from hippo_mem.relational.retrieval import relational_retrieve_and_pack
-from hippo_mem.relational.tuples import extract_tuples
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from hippo_mem.utils import validate_run_id
@@ -190,44 +193,6 @@ class Task:
     context_key: str | None = None
     fact: str | None = None
     facts: list[dict] | None = None
-
-
-def _ingest_semantic(
-    item: Task,
-    modules: Dict[str, Dict[str, object]],
-    gate: RelationalGate | None,
-    gc: GateCounters,
-    dry_run: bool,
-) -> None:
-    """Extract tuples from ``item`` and route them into the knowledge graph.
-
-    Side Effects
-    ------------
-    Tuples are committed to the knowledge graph only when the gate permits the
-    insert and ``dry_run`` is ``False``.  Telemetry callers should avoid invoking
-    this helper to keep the graph immutable.
-    """
-
-    kg = modules["relational"]["kg"]
-    texts: list[str] = []
-    if item.fact:
-        texts = [item.fact]
-    elif item.facts:
-        texts = [f.get("text", "") for f in item.facts]
-    for text in texts:
-        for tup in extract_tuples(text, threshold=0.2):
-            if gate is not None:
-                decision = gate.decide(tup, kg)
-                gc.attempts += 1
-                if decision.action == "insert":
-                    if not dry_run:
-                        kg.schema_index.fast_track(tup, kg)
-                    gc.accepted += 1
-                else:
-                    gc.skipped += 1
-            else:
-                if not dry_run:
-                    kg.schema_index.fast_track(tup, kg)
 
 
 def _ingest_spatial(
@@ -458,6 +423,8 @@ def _evaluate(
         active_adapters = dict(adapters or {})
         if "episodic" in modules and "episodic" not in active_adapters:
             active_adapters["episodic"] = EpisodicEvalAdapter()
+        if "relational" in modules and "relational" not in active_adapters:
+            active_adapters["relational"] = RelationalEvalAdapter()
         if retrieval_enabled and modules:
             hidden = torch.zeros(1, 1, 8)
             if "episodic" in modules and "episodic" in active_adapters:
@@ -469,22 +436,15 @@ def _evaluate(
                 mem_latency += res.latency_ms
                 router_path.append("episodic")
                 topk_keys.extend(res.topk_keys)
-            if "relational" in modules:
-                kg = modules["relational"]["kg"]
-                adapter = modules["relational"]["adapter"]
-                hidden_dim = hidden.size(-1)
-                in_dim = getattr(kg, "dim", 0) or hidden_dim
-                proj = getattr(adapter, "proj", nn.Linear(in_dim, hidden_dim))
-                adapter.proj = proj  # type: ignore[attr-defined]
-                spec = TraceSpec(source="relational", k=1)
-                mem = relational_retrieve_and_pack(
-                    hidden, spec, kg, proj, context_keys=[context_key]
+            if "relational" in modules and "relational" in active_adapters:
+                res = active_adapters["relational"].retrieve(
+                    cfg, modules["relational"], item, context_key=context_key, hidden=hidden
                 )
-                mems.append(mem)
-                mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
-                mem_latency += float(mem.meta.get("latency_ms", 0.0))
+                mems.append(res.mem)
+                mem_hit = mem_hit or res.hit
+                mem_latency += res.latency_ms
                 router_path.append("relational")
-                topk_keys.extend(mem.meta.get("trace_ids", []) or [])
+                topk_keys.extend(res.topk_keys)
             if "spatial" in modules:
                 graph = modules["spatial"]["map"]
                 adapter = modules["spatial"]["adapter"]
@@ -571,13 +531,14 @@ def _evaluate(
                         gc=gating["episodic"],
                         suite=suite or "",
                     )
-                if "relational" in modules:
-                    _ingest_semantic(
+                if "relational" in modules and "relational" in active_adapters:
+                    active_adapters["relational"].teach(
+                        cfg,
+                        modules["relational"],
                         item,
-                        modules,
-                        modules["relational"].get("gate"),
-                        gating["relational"],
-                        dry_run,
+                        dry_run=dry_run,
+                        gc=gating["relational"],
+                        suite=suite or "",
                     )
                 if "spatial" in modules and modules["spatial"].get("gate") is not None:
                     _ingest_spatial(
@@ -601,17 +562,33 @@ def _evaluate(
                         gc=gating["episodic"],
                         suite=suite or "",
                     )
-                if "relational" in modules and modules["relational"].get("gate") is not None:
-                    kg = modules["relational"]["kg"]
-                    gate = modules["relational"]["gate"]
-                    tup = ("a", "rel", "b", "ctx", None, 1.0, 0)
-                    decision = gate.decide(tup, kg)
-                    gc = gating["relational"]
-                    gc.attempts += 1
-                    if decision.action == "insert":
-                        gc.accepted += 1
-                    else:
-                        gc.skipped += 1
+                if (
+                    "relational" in modules
+                    and modules["relational"].get("gate") is not None
+                    and "relational" in active_adapters
+                ):
+                    before_attempts = gating["relational"].attempts
+                    active_adapters["relational"].teach(
+                        cfg,
+                        modules["relational"],
+                        item,
+                        dry_run=True,
+                        gc=gating["relational"],
+                        suite=suite or "",
+                    )
+                    if gating["relational"].attempts == before_attempts:
+                        gate = modules["relational"].get("gate")
+                        if gate is not None:
+                            decision = gate.decide(
+                                ("a", "rel", "b", "ctx", None, 1.0, 0),
+                                modules["relational"]["kg"],
+                            )
+                            gc = gating["relational"]
+                            gc.attempts += 1
+                            if decision.action == "insert":
+                                gc.accepted += 1
+                            else:
+                                gc.skipped += 1
                 if "spatial" in modules and modules["spatial"].get("gate") is not None:
                     graph = modules["spatial"]["map"]
                     gate = modules["spatial"]["gate"]
@@ -803,19 +780,40 @@ def _run_replay(
             if gc.accepted > before:
                 count += 1
 
-    if "relational" in modules:
-        kg = modules["relational"]["kg"]
+    if "relational" in modules and "relational" in adapters:
         gate_cfg = (
             (cfg.get("memory", {}).get("relational", {}).get("gate", {}))
             if isinstance(cfg, DictConfig)
             else {}
         )
+        gate: RelationalGate | None = None
         if gate_cfg.get("enabled", False):
             params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
-            kg.gate = RelationalGate(**params)
-        for idx, _task in enumerate(task_list):
-            tup = (f"h{idx}", "rel", f"t{idx}", "ctx", None, 1.0, idx)
-            kg.ingest(tup)
+            gate = RelationalGate(**params)
+        modules["relational"]["gate"] = gate
+        gc = GateCounters()
+        for task in task_list:
+            before_acc = gc.accepted
+            before_attempts = gc.attempts
+            adapters["relational"].teach(
+                cfg,
+                modules["relational"],
+                task,
+                dry_run=False,
+                gc=gc,
+                suite="replay",
+            )
+            if gc.attempts == before_attempts and gate is not None:
+                decision = gate.decide(
+                    ("a", "rel", "b", "ctx", None, 1.0, 0), modules["relational"]["kg"]
+                )
+                gc.attempts += 1
+                if decision.action == "insert":
+                    gc.accepted += 1
+                else:
+                    gc.skipped += 1
+            if gc.accepted > before_acc:
+                count += 1
 
     if "spatial" in modules:
         graph = modules["spatial"]["map"]
@@ -862,14 +860,10 @@ def _store_sizes(
         if diag:
             diags["episodic"] = diag
     if "relational" in modules:
-        kg = modules["relational"]["kg"]
-        sizes["relational"] = int(kg.graph.number_of_edges())
-        status = kg.log_status()
-        diags["relational"] = {
-            "nodes_added": int(status.get("nodes_added", kg.graph.number_of_nodes())),
-            "edges_added": int(status.get("edges_added", kg.graph.number_of_edges())),
-            "coref_merges": int(status.get("coref_merges", 0)),
-        }
+        size, diag = RelationalEvalAdapter().store_size(modules["relational"])
+        sizes["relational"] = size
+        if diag:
+            diags["relational"] = diag
     if "spatial" in modules:
         g = modules["spatial"].get("map")
         nodes = len(getattr(g, "_context_to_id", {}))
@@ -1265,6 +1259,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
     adapters = enabled_adapters(cfg)
     if "episodic" in adapters:
         modules["episodic"] = adapters["episodic"].build(cfg)
+    if "relational" in adapters:
+        modules["relational"] = adapters["relational"].build(cfg)
     if cfg.preset and not is_memory_preset(str(cfg.preset)):
         modules = {}
     if cfg.memory_off:
@@ -1286,8 +1282,6 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             if spat_file.exists():
                 modules["spatial"]["map"].load(str(session_dir), sid)
 
-    if "relational" in modules:
-        modules["relational"]["gate"] = RelationalGate()
     if "spatial" in modules:
         modules["spatial"]["gate"] = SpatialGate()
 
