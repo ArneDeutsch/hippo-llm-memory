@@ -11,7 +11,11 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from hippo_eval.eval.store_utils import resolve_store_meta_path
-from hippo_mem.utils.stores import validate_store
+from hippo_mem.utils.stores import (
+    scan_episodic_store,
+    scan_kg_store,
+    validate_store,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,6 +29,30 @@ def parse_args() -> argparse.Namespace:
         "--preset", help="Preset identifier; baselines must not produce stores", default=None
     )
     parser.add_argument("--metrics", help="Path to metrics.json for count validation", default=None)
+    parser.add_argument(
+        "--expect-nonzero-ratio",
+        type=float,
+        default=None,
+        help="Minimum fraction of episodic keys with non-zero norm",
+    )
+    parser.add_argument(
+        "--expect-nodes",
+        type=int,
+        default=None,
+        help="Minimum node count for KG stores",
+    )
+    parser.add_argument(
+        "--expect-edges",
+        type=int,
+        default=None,
+        help="Minimum edge count for KG stores",
+    )
+    parser.add_argument(
+        "--expect-embedding-coverage",
+        type=float,
+        default=None,
+        help="Minimum embedding coverage for KG stores",
+    )
     parser.add_argument(
         "--strict-telemetry",
         action="store_true",
@@ -140,56 +168,6 @@ def _find_metrics(run_id: str, algo: str) -> Path | None:
     return None
 
 
-def _scan_episodic(path: Path) -> tuple[int, float]:
-    """Return record count and non-zero key ratio for episodic stores."""
-
-    total = 0
-    nonzero = 0
-    with path.open("r", encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            total += 1
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            key = rec.get("key") or []
-            if any(abs(float(v)) > 1e-12 for v in key):
-                nonzero += 1
-    ratio = nonzero / total if total else 0.0
-    return total, ratio
-
-
-def _scan_relational(path: Path) -> tuple[int, int, float, float]:
-    """Return node/edge counts and non-zero embedding ratios for KG stores."""
-
-    nodes = edges = nodes_nz = edges_nz = 0
-    with path.open("r", encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            typ = rec.get("type")
-            emb = rec.get("embedding")
-            if typ == "node":
-                nodes += 1
-                if emb and any(abs(float(v)) > 1e-12 for v in emb):
-                    nodes_nz += 1
-            elif typ == "edge":
-                edges += 1
-                if emb and any(abs(float(v)) > 1e-12 for v in emb):
-                    edges_nz += 1
-    node_ratio = nodes_nz / nodes if nodes else 0.0
-    edge_ratio = edges_nz / edges if edges else 0.0
-    return nodes, edges, node_ratio, edge_ratio
-
-
 def _scan_spatial(path: Path) -> tuple[int, int]:
     """Return node and edge counts for spatial stores."""
 
@@ -228,14 +206,15 @@ def strict_telemetry_checks(
     n = int(metrics.get("n", 0))
     if path is not None:
         if kind == "episodic":
-            count, ratio = _scan_episodic(path)
+            count, nz = scan_episodic_store(path)
+            ratio = nz / count if count else 0.0
             expected = max(int(n * 0.8), 1 if n else 0)
             if count < expected:
                 raise ValueError(f"episodic traces {count} < expected {expected}")
             if ratio < 0.9:
                 raise ValueError(f"episodic non-zero ratio {ratio:.2f} < 0.9")
         elif kind in {"kg", "relational"}:
-            nodes, edges, nr, er = _scan_relational(path)
+            nodes, edges, node_nz, edge_nz = scan_kg_store(path)
             expected_nodes = max(int(n * 2), 1 if n else 0)
             expected_edges = max(int(n * 2), 1 if n else 0)
             if nodes < expected_nodes or edges < expected_edges:
@@ -243,6 +222,8 @@ def strict_telemetry_checks(
                     "relational store too small: "
                     f"nodes {nodes} < {expected_nodes} or edges {edges} < {expected_edges}"
                 )
+            nr = node_nz / nodes if nodes else 0.0
+            er = edge_nz / edges if edges else 0.0
             if nr < 0.9 or er < 0.9:
                 raise ValueError("relational embedding ratio < 0.9")
         elif kind in {"spatial", "map"}:
@@ -280,6 +261,31 @@ def strict_telemetry_checks(
             )
 
 
+def threshold_checks(path: Path | None, kind: str, args: argparse.Namespace) -> None:
+    """Apply user-specified expectations on the store."""
+
+    if path is None:
+        return
+    if kind == "episodic" and args.expect_nonzero_ratio is not None:
+        count, nz = scan_episodic_store(path)
+        ratio = nz / count if count else 0.0
+        if ratio < args.expect_nonzero_ratio:
+            raise ValueError(f"episodic non-zero ratio {ratio:.2f} < {args.expect_nonzero_ratio}")
+    elif kind in {"kg", "relational"}:
+        nodes, edges, node_nz, edge_nz = scan_kg_store(path)
+        if args.expect_nodes is not None and nodes < args.expect_nodes:
+            raise ValueError(f"kg nodes {nodes} < expected {args.expect_nodes}")
+        if args.expect_edges is not None and edges < args.expect_edges:
+            raise ValueError(f"kg edges {edges} < expected {args.expect_edges}")
+        if args.expect_embedding_coverage is not None:
+            total = nodes + edges
+            coverage = (node_nz + edge_nz) / total if total else 0.0
+            if coverage < args.expect_embedding_coverage:
+                raise ValueError(
+                    "kg embedding coverage " f"{coverage:.2f} < {args.expect_embedding_coverage}"
+                )
+
+
 def main() -> None:
     """CLI entry point."""
 
@@ -290,6 +296,7 @@ def main() -> None:
         verify_metrics(path, args.kind, args.metrics)
         if args.strict_telemetry:
             strict_telemetry_checks(path, args.kind, run_id, args.algo, args.metrics)
+        threshold_checks(path, args.kind, args)
     except (FileNotFoundError, ValueError) as err:
         print(err, file=sys.stderr)
         raise SystemExit(1) from err

@@ -71,3 +71,74 @@ def test_validate_store_strict_injected_context(tmp_path, monkeypatch):
         monkeypatch,
         ["--algo", "hei_nw", "--metrics", str(run_dir / "metrics.json"), "--strict-telemetry"],
     )
+
+
+def test_expect_nonzero_ratio(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("RUN_ID", "foo")
+    layout = derive(run_id="foo", algo="hei_nw")
+    store = layout.algo_dir / layout.session_id / "episodic.jsonl"
+    store.parent.mkdir(parents=True)
+    recs = [
+        {"schema": "episodic.v1", "id": 1, "key": [0.0], "value": {}, "ts": 0, "salience": 0},
+        {"schema": "episodic.v1", "id": 2, "key": [1.0], "value": {}, "ts": 0, "salience": 0},
+    ]
+    store.write_text("\n".join(json.dumps(r) for r in recs) + "\n")
+    (store.parent / "store_meta.json").write_text("{}")
+    with pytest.raises(SystemExit):
+        run_validator(
+            monkeypatch,
+            ["--algo", "hei_nw", "--expect-nonzero-ratio", "0.9"],
+        )
+    run_validator(monkeypatch, ["--algo", "hei_nw", "--expect-nonzero-ratio", "0.5"])
+
+
+def test_expect_kg_thresholds(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("RUN_ID", "foo")
+    layout = derive(run_id="foo", algo="sgc_rss")
+    store = layout.algo_dir / layout.session_id / "kg.jsonl"
+    store.parent.mkdir(parents=True)
+    node = {"type": "node", "name": "a", "embedding": [1.0]}
+    edge = {"type": "edge", "src": "a", "dst": "b", "relation": "r"}
+    store.write_text(json.dumps(node) + "\n" + json.dumps(edge) + "\n")
+    (store.parent / "store_meta.json").write_text("{}")
+    with pytest.raises(SystemExit):
+        run_validator(
+            monkeypatch,
+            [
+                "--algo",
+                "sgc_rss",
+                "--kind",
+                "kg",
+                "--expect-nodes",
+                "2",
+            ],
+        )
+    with pytest.raises(SystemExit):
+        run_validator(
+            monkeypatch,
+            [
+                "--algo",
+                "sgc_rss",
+                "--kind",
+                "kg",
+                "--expect-embedding-coverage",
+                "0.9",
+            ],
+        )
+    run_validator(
+        monkeypatch,
+        [
+            "--algo",
+            "sgc_rss",
+            "--kind",
+            "kg",
+            "--expect-nodes",
+            "1",
+            "--expect-edges",
+            "1",
+            "--expect-embedding-coverage",
+            "0.5",
+        ],
+    )
