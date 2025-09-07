@@ -500,8 +500,6 @@ def _evaluate(
                 gc.attempts += 1
                 if decision.action == "insert":
                     gc.accepted += 1
-                    if mode == "teach":
-                        store.write(q, item.answer, context_key=context_key)
                 else:
                     gc.skipped += 1
             if "relational" in modules and modules["relational"].get("gate") is not None:
@@ -513,11 +511,6 @@ def _evaluate(
                 gc.attempts += 1
                 if decision.action == "insert":
                     gc.accepted += 1
-                    if mode == "teach":
-                        # Bypass schema dependency for the placeholder tuple;
-                        # avoid double-gating by writing directly.
-                        head, rel, tail, ctx, time_str, conf, prov = tup
-                        kg.upsert(head, rel, tail, ctx, "entity", "entity", time_str, conf, prov)
                 else:
                     gc.skipped += 1
             if "spatial" in modules and modules["spatial"].get("gate") is not None:
@@ -526,11 +519,7 @@ def _evaluate(
                 decision = gate.decide(None, "ctx", graph)
                 gc = gating["spatial"]
                 gc.attempts += 1
-                if decision.action == "insert" and mode == "teach":
-                    context = f"ctx_{getattr(item, 'qid', idx)}"
-                    graph.observe(context)
-                    gc.accepted += 1
-                elif decision.action == "insert":
+                if decision.action == "insert":
                     gc.accepted += 1
                 else:
                     gc.skipped += 1
@@ -1282,7 +1271,9 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             "rss_mb": _rss_mb(),
             "latency_ms_mean": sum(r["latency_ms"] for r in pre_rows) / max(1, len(pre_rows)),
         }
-        replay_samples = _run_replay(cfg, modules, tasks)
+        replay_samples = 0
+        if not cfg.get("dry_run"):
+            replay_samples = _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
             sd = Path(to_absolute_path(str(cfg.store_dir)))
             algo = str(cfg.get("preset", "")).split("/")[-1]
