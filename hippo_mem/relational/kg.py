@@ -44,12 +44,30 @@ import hippo_mem.common.io as io
 from hippo_mem.common import GateDecision
 from hippo_mem.common.history import HistoryEntry, RollbackMixin
 from hippo_mem.common.lifecycle import StoreLifecycleMixin
+from hippo_mem.retrieval.embed import embed_text
 
 from .backend import PersistenceStrategy, SQLiteBackend
 from .gating import RelationalGate
 from .maintenance import MaintenanceManager
 from .schema import SchemaIndex
 from .tuples import TupleType
+
+
+def _ensure_vec(text: str, dim: int = 16) -> list[float]:
+    """Return a non-zero embedding for ``text``.
+
+    Parameters
+    ----------
+    text : str
+        Text to embed.
+    dim : int, optional
+        Embedding size, default ``16``.
+    """
+
+    vec = embed_text(text, dim=dim)
+    if len(vec) != dim or not any(abs(v) > 1e-12 for v in vec):
+        raise ValueError("embedding generation failed")
+    return vec
 
 
 class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
@@ -167,6 +185,24 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
 
         head = self._resolve_name(head)
         tail = self._resolve_name(tail)
+        if head_embedding is not None:
+            head_embedding = list(head_embedding)
+            dim = len(head_embedding)
+        else:
+            dim = self.dim or 16
+            head_embedding = _ensure_vec(head, dim)
+        if tail_embedding is not None:
+            tail_embedding = list(tail_embedding)
+            if len(tail_embedding) != dim:
+                raise ValueError("tail embedding dimension mismatch")
+        else:
+            tail_embedding = _ensure_vec(tail, dim)
+        if edge_embedding is not None:
+            edge_embedding = list(edge_embedding)
+            if len(edge_embedding) != dim:
+                raise ValueError("edge embedding dimension mismatch")
+        else:
+            edge_embedding = _ensure_vec(f"{head}:{relation}:{tail}", dim)
         if head not in self.graph:
             self.graph.add_node(head, type=head_type)
             self.counters["nodes_added"] += 1
@@ -393,8 +429,16 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
 
         if not self.node_embeddings:
             return nx.MultiDiGraph()
+        if len(self.node_embeddings) != self.graph.number_of_nodes():
+            raise ValueError("graph contains nodes without embeddings")
 
         q = np.asarray(list(query_embedding), dtype=float)
+        dim = self.dim
+        if q.shape[0] != dim:
+            if q.shape[0] > dim:
+                q = q[:dim]
+            else:
+                q = np.pad(q, (0, dim - q.shape[0]))
         scores = {n: float(np.dot(vec, q)) for n, vec in self.node_embeddings.items()}
         top = sorted(scores, key=scores.get, reverse=True)[:k]
 
