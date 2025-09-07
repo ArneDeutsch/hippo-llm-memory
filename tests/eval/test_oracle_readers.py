@@ -56,7 +56,28 @@ class DummyAdapter:
         return hidden
 
 
-def test_oracle_scores_retrieved_answer(monkeypatch):
+def test_oracle_flag_scores_retrieved_answer():
+    tasks = [Task(prompt="Where did Carol go?", answer="Library")]
+    modules = {"episodic": {"store": DummyStore(), "adapter": DummyAdapter()}}
+    rows, metrics, *_ = _evaluate(
+        tasks,
+        modules=modules,
+        tokenizer=DummyTokenizer(),
+        model=DummyModel(),
+        max_new_tokens=1,
+        use_chat_template=False,
+        system_prompt=None,
+        suite="episodic_cross_mem",
+        oracle=True,
+    )
+    row = rows[0]
+    assert row["oracle_em"] == 1
+    assert row["oracle_f1"] == 1.0
+    assert metrics["oracle_em"] == 1.0
+    assert metrics["oracle_f1"] == 1.0
+
+
+def test_oracle_env_var_fallback(monkeypatch):
     monkeypatch.setenv("HIPPO_ORACLE", "1")
     tasks = [Task(prompt="Where did Carol go?", answer="Library")]
     modules = {"episodic": {"store": DummyStore(), "adapter": DummyAdapter()}}
