@@ -43,6 +43,7 @@ from hippo_eval.metrics.scoring import (
     em_norm,
     em_raw,
     enforce_short_answer,
+    enforce_udlr,
     f1,
     spatial_kpis,
     spatial_multi_kpis,
@@ -453,14 +454,25 @@ def _evaluate(
         )
         gen = out[:, inputs["input_ids"].shape[-1] :]
         raw_pred = tokenizer.decode(gen[0], skip_special_tokens=True).strip()
-        pred = enforce_short_answer(raw_pred)
-        pred_len = len(pred.split())
-        gold_len = len(item.answer.split())
-        overlong = int(pred_len > gold_len)
-        fmt = int(bool(FORMAT_VIOL_RE.search(raw_pred)) or pred != raw_pred)
-        em_r = em_raw(pred, item.answer) if compute_metrics else None
-        em_n = em_norm(pred, item.answer) if compute_metrics else None
-        f1_val = f1(pred, item.answer) if compute_metrics else None
+        suite_is_spatial = suite in {"spatial", "spatial_multi"}
+        if suite_is_spatial:
+            pred = enforce_udlr(raw_pred)
+            fmt = int(pred != raw_pred.strip().upper())
+            pred_len = len(pred)
+            gold_len = len(item.answer)
+            overlong = int(pred_len > gold_len)
+            em_r = em_raw(pred, item.answer) if compute_metrics else None
+            em_n = em_norm(pred, item.answer) if compute_metrics else None
+            f1_val = 1.0 if pred == item.answer else 0.0 if compute_metrics else None
+        else:
+            pred = enforce_short_answer(raw_pred)
+            pred_len = len(pred.split())
+            gold_len = len(item.answer.split())
+            overlong = int(pred_len > gold_len)
+            fmt = int(bool(FORMAT_VIOL_RE.search(raw_pred)) or pred != raw_pred)
+            em_r = em_raw(pred, item.answer) if compute_metrics else None
+            em_n = em_norm(pred, item.answer) if compute_metrics else None
+            f1_val = f1(pred, item.answer) if compute_metrics else None
         if compute_metrics:
             emr_total += em_r or 0
             emn_total += em_n or 0
