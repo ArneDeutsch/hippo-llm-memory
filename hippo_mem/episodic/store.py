@@ -49,7 +49,7 @@ import time
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 import numpy as np
 
@@ -398,6 +398,62 @@ class EpisodicStore(StoreLifecycleMixin, RollbackMixin):
         self.logger.increment("hits", len(traces))
         self.logger.increment("requests", k)
         return traces
+
+    def recall_sweep(
+        self,
+        query: np.ndarray,
+        ks: Iterable[int],
+        *,
+        context_key: str | None = None,
+    ) -> dict[int, List[Trace]]:
+        """Recall neighbours for multiple ``k`` values.
+
+        The store is queried once at ``max(ks)`` and the result truncated to
+        each requested ``k`` to ensure consistency across the sweep.
+
+        Parameters
+        ----------
+        query:
+            Dense query vector of shape ``(d,)``.
+        ks:
+            Iterable of ``k`` values to evaluate.
+        context_key:
+            Optional context key filter.
+
+        Returns
+        -------
+        dict[int, list[Trace]]
+            Mapping of ``k`` to the top ``k`` traces.
+        """
+
+        k_list = sorted({int(k) for k in ks if int(k) > 0})
+        if not k_list:
+            return {}
+        max_k = max(k_list)
+        base = self.recall(query, max_k, context_key=context_key)
+        return {k: base[:k] for k in k_list}
+
+    def hit_rate_sweep(
+        self,
+        query: np.ndarray,
+        target_id: int,
+        ks: Iterable[int],
+        *,
+        context_key: str | None = None,
+    ) -> List[float]:
+        """Return binary hit rates for each ``k`` in ``ks``.
+
+        ``1.0`` indicates the target identifier was retrieved within the top
+        ``k`` results.
+        """
+
+        traces_by_k = self.recall_sweep(query, ks, context_key=context_key)
+        rates: List[float] = []
+        for k in sorted(traces_by_k):
+            traces = traces_by_k[k]
+            hit = 1.0 if any(t.id == target_id for t in traces) else 0.0
+            rates.append(hit)
+        return rates
 
     def to_dense(self, key: DGKey) -> np.ndarray:
         """Convert a sparse ``DGKey`` into a dense vector."""
