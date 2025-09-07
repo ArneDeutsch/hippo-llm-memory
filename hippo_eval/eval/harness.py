@@ -228,7 +228,13 @@ class Task:
 
 
 def _episodic_key_from_text(text: str, dim: int, k: int) -> tuple[np.ndarray, DGKey]:
-    """Return dense and sparse keys derived from ``text``."""
+    """Return dense and sparse keys derived from ``text``.
+
+    The dense vector is L2 normalised.  When ``k`` is greater than zero the
+    function also returns a :class:`~hippo_mem.episodic.gating.DGKey` containing
+    the top‑``k`` activations; otherwise an empty sparse key is produced.  The
+    helper is pure and performs no writes.
+    """
 
     vec = np.array(embed_text(text, dim=dim), dtype="float32")
     norm = np.linalg.norm(vec)
@@ -250,7 +256,14 @@ def _ingest_episodic(
     suite: str,
     dry_run: bool,
 ) -> None:
-    """Insert an episodic ``fact`` into the store when accepted by ``gate``."""
+    """Insert an episodic ``fact`` into the store when accepted by ``gate``.
+
+    Side Effects
+    ------------
+    Writes to the store only when ``decision.action == "insert"`` and
+    ``dry_run`` is ``False``.  Gate counters are updated regardless.  This
+    helper must not be used for telemetry probes.
+    """
 
     store = modules["episodic"]["store"]
     text = item.fact or item.prompt
@@ -277,7 +290,14 @@ def _ingest_semantic(
     gc: GateCounters,
     dry_run: bool,
 ) -> None:
-    """Extract tuples from ``item`` and route them into the knowledge graph."""
+    """Extract tuples from ``item`` and route them into the knowledge graph.
+
+    Side Effects
+    ------------
+    Tuples are committed to the knowledge graph only when the gate permits the
+    insert and ``dry_run`` is ``False``.  Telemetry callers should avoid invoking
+    this helper to keep the graph immutable.
+    """
 
     kg = modules["relational"]["kg"]
     texts: list[str] = []
@@ -308,7 +328,15 @@ def _ingest_spatial(
     gc: GateCounters,
     dry_run: bool,
 ) -> None:
-    """Ingest a trajectory defined by ``item.answer`` into the place graph."""
+    """Ingest a trajectory defined by ``item.answer`` into the place graph.
+
+    Side Effects
+    ------------
+    Observations are written only when the gate returns ``"insert"`` and
+    ``dry_run`` is ``False``.  Duplicate edges may be aggregated but no other
+    modifications occur.  Telemetry probes should use the gate directly instead
+    of this helper to avoid unintended writes.
+    """
 
     graph = modules["spatial"]["map"]
     m = re.search(r"Start \((\d+),\s*(\d+)\)", item.prompt or "")
