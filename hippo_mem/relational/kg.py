@@ -124,9 +124,10 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         self._maintenance = maintenance or MaintenanceManager(self)
         self.counters = {"nodes_added": 0, "edges_added": 0, "coref_merges": 0}
         self._coref_index: Dict[str, str] = {}
+        self._auto_backfill = bool(self.config.get("embeddings", {}).get("auto_backfill", True))
         StoreLifecycleMixin.__init__(self)
         RollbackMixin.__init__(self, int(self.config.get("max_undo", 5)))
-        self._backfill_embeddings()
+        self.backfill_embeddings()
 
     # ------------------------------------------------------------------
     # Graph manipulation
@@ -141,6 +142,11 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
             return canon
         self._coref_index[key] = name
         return name
+
+    def backfill_embeddings(self) -> None:
+        """Compute missing node and edge embeddings."""
+
+        self._backfill_embeddings()
 
     def upsert(
         self,
@@ -670,8 +676,21 @@ class KnowledgeGraph(StoreLifecycleMixin, RollbackMixin):
         fmt: str = "jsonl",
         replay_samples: int = 0,
         gate_attempts: int = 0,
+        ensure_embeddings: Optional[bool] = None,
     ) -> None:
-        """Save graph to ``directory/session_id``."""
+        """Save graph to ``directory/session_id``.
+
+        Parameters
+        ----------
+        ensure_embeddings : Optional[bool]
+            If ``True`` compute missing embeddings before persisting. Defaults
+            to ``embeddings.auto_backfill`` from ``config`` (``True``).
+        """
+
+        if ensure_embeddings is None:
+            ensure_embeddings = self._auto_backfill
+        if ensure_embeddings:
+            self.backfill_embeddings()
 
         path = Path(directory) / session_id
         path.mkdir(parents=True, exist_ok=True)
