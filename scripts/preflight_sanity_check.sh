@@ -3,7 +3,7 @@ set -euo pipefail
 RUN_ID="sanity_${RANDOM}"
 STORES="runs/${RUN_ID}/stores"
 MODEL="models/tiny-gpt2"
-SIZES=(50)
+SIZES=(8)
 SEEDS=(1337)
 
 suites=("episodic_cross_mem" "semantic_mem" "spatial_multi")

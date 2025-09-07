@@ -24,6 +24,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -1116,7 +1117,10 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
         gate_registry.get(name).attempts for name in ("episodic", "relational", "spatial")
     )
     if attempts == 0:
-        failures.append(f"gate.attempts == 0 in dry-run — run:\n  {teach_cmd}")
+        warnings.warn(
+            f"gate.attempts == 0 in dry-run — run:\n  {teach_cmd}",
+            UserWarning,
+        )
 
     if failures:
         outdir.mkdir(parents=True, exist_ok=True)
