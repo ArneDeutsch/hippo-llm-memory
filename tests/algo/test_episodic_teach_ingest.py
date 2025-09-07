@@ -1,8 +1,9 @@
 from types import SimpleNamespace
 
 import numpy as np
+from omegaconf import OmegaConf
 
-from hippo_eval.eval.harness import _ingest_episodic
+from hippo_eval.eval.adapters import EpisodicEvalAdapter
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.episodic.store import EpisodicStore
@@ -11,7 +12,9 @@ from hippo_mem.episodic.store import EpisodicStore
 def test_episodic_teach_ingest_populates_store() -> None:
     store = EpisodicStore(dim=8, k_wta=2)
     gate = WriteGate(tau=0.0)
-    modules = {"episodic": {"store": store}}
+    modules = {"store": store, "gate": gate}
+    adapter = EpisodicEvalAdapter()
+    cfg = OmegaConf.create({})
     gc = GateCounters()
     for i in range(5):
         item = SimpleNamespace(
@@ -20,7 +23,7 @@ def test_episodic_teach_ingest_populates_store() -> None:
             prompt="",
             answer="",
         )
-        _ingest_episodic(item, modules, gate, gc, "episodic_cross_mem", False)
+        adapter.teach(cfg, modules, item, dry_run=False, gc=gc, suite="episodic_cross_mem")
     keys = store.keys()
     nonzero = sum(np.linalg.norm(k) > 0 for k in keys)
     assert nonzero / len(keys) >= 0.9
