@@ -99,7 +99,7 @@ def _resolve_layout(cfg: DictConfig, algo: str) -> StoreLayout:
 def _ensure_populated(store_path: Path | None, cfg: DictConfig) -> None:
     """Raise ``FileNotFoundError`` if ``store_path`` has no data."""
 
-    if store_path is None:
+    if store_path is None or bool(cfg.get("dry_run")):
         return
     if store_path.exists():
         with store_path.open("r", encoding="utf-8") as fh:

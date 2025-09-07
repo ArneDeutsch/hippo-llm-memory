@@ -58,10 +58,13 @@ from hippo_mem.common.telemetry import (
     registry,
     set_strict_telemetry,
 )
-from hippo_mem.episodic.gating import WriteGate, gate_batch
+from hippo_mem.episodic.gating import DGKey, WriteGate, gate_batch, k_wta
 from hippo_mem.episodic.retrieval import episodic_retrieve_and_pack
+from hippo_mem.episodic.types import TraceValue
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.retrieval import relational_retrieve_and_pack
+from hippo_mem.relational.tuples import extract_tuples
+from hippo_mem.retrieval.embed import embed_text
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from hippo_mem.utils import validate_run_id
@@ -220,6 +223,127 @@ class Task:
     answer: str
     qid: str | None = None
     episode_id: str | None = None
+    context_key: str | None = None
+    fact: str | None = None
+    facts: list[dict] | None = None
+
+
+def _episodic_key_from_text(text: str, dim: int, k: int) -> tuple[np.ndarray, DGKey]:
+    """Return dense and sparse keys derived from ``text``."""
+
+    vec = np.array(embed_text(text, dim=dim), dtype="float32")
+    norm = np.linalg.norm(vec)
+    if norm > 0:
+        vec /= norm
+    sparse = (
+        k_wta(vec, k)
+        if k > 0
+        else DGKey(np.array([], dtype="int64"), np.array([], dtype="float32"), dim)
+    )
+    return vec, sparse
+
+
+def _ingest_episodic(
+    item: Task,
+    modules: Dict[str, Dict[str, object]],
+    gate: WriteGate,
+    gc: GateCounters,
+    suite: str,
+    dry_run: bool,
+) -> None:
+    """Insert an episodic ``fact`` into the store when accepted by ``gate``."""
+
+    store = modules["episodic"]["store"]
+    text = item.fact or item.prompt
+    if not text:
+        return
+    dense, sparse = _episodic_key_from_text(text, store.dim, getattr(store, "k_wta", 0))
+    decision = gate.decide(0.5, dense, store.keys(), provenance="teach")
+    gc.attempts += 1
+    if decision.action == "insert":
+        if not dry_run:
+            value = TraceValue(provenance="teach", context_key=item.context_key, suite=suite)
+            store.write(sparse, value, context_key=item.context_key)
+        gc.accepted += 1
+    else:
+        gc.skipped += 1
+
+
+def _ingest_semantic(
+    item: Task,
+    modules: Dict[str, Dict[str, object]],
+    gate: RelationalGate | None,
+    gc: GateCounters,
+    dry_run: bool,
+) -> None:
+    """Extract tuples from ``item`` and route them into the knowledge graph."""
+
+    kg = modules["relational"]["kg"]
+    texts: list[str] = []
+    if item.fact:
+        texts = [item.fact]
+    elif item.facts:
+        texts = [f.get("text", "") for f in item.facts]
+    for text in texts:
+        for tup in extract_tuples(text, threshold=0.2):
+            if gate is not None:
+                decision = gate.decide(tup, kg)
+                gc.attempts += 1
+                if decision.action == "insert":
+                    if not dry_run:
+                        kg.schema_index.fast_track(tup, kg)
+                    gc.accepted += 1
+                else:
+                    gc.skipped += 1
+            else:
+                if not dry_run:
+                    kg.schema_index.fast_track(tup, kg)
+
+
+def _ingest_spatial(
+    item: Task,
+    modules: Dict[str, Dict[str, object]],
+    gate: SpatialGate,
+    gc: GateCounters,
+    dry_run: bool,
+) -> None:
+    """Ingest a trajectory defined by ``item.answer`` into the place graph."""
+
+    graph = modules["spatial"]["map"]
+    m = re.search(r"Start \((\d+),\s*(\d+)\)", item.prompt or "")
+    if not m:
+        return
+    x, y = map(int, m.groups())
+    prev: str | None = None
+    ctx = f"{item.context_key}:{x},{y}" if item.context_key else f"{x},{y}"
+    decision = gate.decide(prev, ctx, graph)
+    gc.attempts += 1
+    if decision.action == "insert":
+        if not dry_run:
+            graph.observe(ctx)
+        gc.accepted += 1
+    else:
+        gc.skipped += 1
+    prev = ctx
+    moves = {"U": (-1, 0), "D": (1, 0), "L": (0, -1), "R": (0, 1)}
+    for step in item.answer:
+        dx, dy = moves.get(step, (0, 0))
+        x += dx
+        y += dy
+        ctx = f"{item.context_key}:{x},{y}" if item.context_key else f"{x},{y}"
+        decision = gate.decide(prev, ctx, graph)
+        gc.attempts += 1
+        if decision.action == "insert":
+            if not dry_run:
+                graph.observe(ctx)
+            gc.accepted += 1
+        elif decision.action == "aggregate":
+            if not dry_run and prev is not None:
+                graph.aggregate_duplicate(prev, ctx)
+            gc.skipped += 1
+        else:
+            gc.skipped += 1
+        prev = ctx
 
 
 def _dataset_path(
@@ -251,7 +375,7 @@ def _dataset_path(
     size = next((s for s in sizes if n <= s), sizes[-1])
 
     candidates: List[Path] = []
-    file_mode = "test" if mode in (None, "teach", "replay") else mode
+    file_mode = "test" if mode in (None, "replay") else mode
     if file_mode:
         candidates.append(Path("data") / canonical / f"{canonical}_{file_mode}.jsonl")
         candidates.append(Path("data") / f"{canonical}_{file_mode}.jsonl")
@@ -355,6 +479,7 @@ def _evaluate(
     gating: Dict[str, GateCounters] | None = None,
     no_retrieval_during_teach: bool = False,
     isolate: str = "none",
+    dry_run: bool = False,
 ) -> Tuple[List[Dict[str, object]], Dict[str, float], int, int, float]:
     """Generate predictions and diagnostics for ``tasks``."""
 
@@ -491,38 +616,65 @@ def _evaluate(
             refusal_total += int(bool(REFUSAL_RE.search(raw_pred)))
         # write phase guarded by gates
         if modules:
-            if "episodic" in modules and modules["episodic"].get("gate") is not None:
-                store = modules["episodic"]["store"]
-                gate = modules["episodic"]["gate"]
-                q = np.zeros(store.dim, dtype="float32")
-                decision = gate.decide(0.5, q, store.keys())
-                gc = gating["episodic"]
-                gc.attempts += 1
-                if decision.action == "insert":
-                    gc.accepted += 1
-                else:
-                    gc.skipped += 1
-            if "relational" in modules and modules["relational"].get("gate") is not None:
-                kg = modules["relational"]["kg"]
-                gate = modules["relational"]["gate"]
-                tup = ("a", "rel", "b", "ctx", None, 1.0, 0)
-                decision = gate.decide(tup, kg)
-                gc = gating["relational"]
-                gc.attempts += 1
-                if decision.action == "insert":
-                    gc.accepted += 1
-                else:
-                    gc.skipped += 1
-            if "spatial" in modules and modules["spatial"].get("gate") is not None:
-                graph = modules["spatial"]["map"]
-                gate = modules["spatial"]["gate"]
-                decision = gate.decide(None, "ctx", graph)
-                gc = gating["spatial"]
-                gc.attempts += 1
-                if decision.action == "insert":
-                    gc.accepted += 1
-                else:
-                    gc.skipped += 1
+            if mode == "teach":
+                if "episodic" in modules and modules["episodic"].get("gate") is not None:
+                    _ingest_episodic(
+                        item,
+                        modules,
+                        modules["episodic"]["gate"],
+                        gating["episodic"],
+                        suite or "",
+                        dry_run,
+                    )
+                if "relational" in modules:
+                    _ingest_semantic(
+                        item,
+                        modules,
+                        modules["relational"].get("gate"),
+                        gating["relational"],
+                        dry_run,
+                    )
+                if "spatial" in modules and modules["spatial"].get("gate") is not None:
+                    _ingest_spatial(
+                        item,
+                        modules,
+                        modules["spatial"]["gate"],
+                        gating["spatial"],
+                        dry_run,
+                    )
+            else:
+                if "episodic" in modules and modules["episodic"].get("gate") is not None:
+                    store = modules["episodic"]["store"]
+                    gate = modules["episodic"]["gate"]
+                    q = np.zeros(store.dim, dtype="float32")
+                    decision = gate.decide(0.5, q, store.keys())
+                    gc = gating["episodic"]
+                    gc.attempts += 1
+                    if decision.action == "insert":
+                        gc.accepted += 1
+                    else:
+                        gc.skipped += 1
+                if "relational" in modules and modules["relational"].get("gate") is not None:
+                    kg = modules["relational"]["kg"]
+                    gate = modules["relational"]["gate"]
+                    tup = ("a", "rel", "b", "ctx", None, 1.0, 0)
+                    decision = gate.decide(tup, kg)
+                    gc = gating["relational"]
+                    gc.attempts += 1
+                    if decision.action == "insert":
+                        gc.accepted += 1
+                    else:
+                        gc.skipped += 1
+                if "spatial" in modules and modules["spatial"].get("gate") is not None:
+                    graph = modules["spatial"]["map"]
+                    gate = modules["spatial"]["gate"]
+                    decision = gate.decide(None, "ctx", graph)
+                    gc = gating["spatial"]
+                    gc.attempts += 1
+                    if decision.action == "insert":
+                        gc.accepted += 1
+                    else:
+                        gc.skipped += 1
         req_after = {k: registry.get(k).requests for k in ("episodic", "relational", "spatial")}
         retrieval_requests = sum(req_after.values()) - sum(req_before.values())
         size_after_map, _ = _store_sizes(modules)
@@ -637,6 +789,8 @@ def _evaluate(
                         clear_store(mod["store"])
         if idx % progress_interval == 0 or idx == total:
             log.info("    processed %d/%d tasks", idx, total)
+    if mode == "teach" and "relational" in modules:
+        modules["relational"]["kg"].schema_index.flush(modules["relational"]["kg"])
     n = len(rows)
     t1 = time.perf_counter()
     if all(lat == 0.0 for lat in latencies) and latencies:
@@ -1145,7 +1299,18 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
 
     dataset = _dataset_path(cfg.suite, cfg.n, cfg.seed, cfg.dataset_profile, cfg.get("mode"))
     raw_tasks = load_dataset(dataset, {"n": cfg.n})
-    tasks = [Task(prompt=str(obj["prompt"]), answer=str(obj["answer"])) for obj in raw_tasks]
+    tasks = [
+        Task(
+            prompt=str(obj.get("prompt") or obj.get("fact") or ""),
+            answer=str(obj.get("answer", "")),
+            qid=obj.get("qid"),
+            episode_id=obj.get("episode_id"),
+            context_key=obj.get("context_key"),
+            fact=obj.get("fact"),
+            facts=obj.get("facts"),
+        )
+        for obj in raw_tasks
+    ]
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     mem_cfg = cfg.get("memory")
     if isinstance(mem_cfg, DictConfig):
@@ -1255,6 +1420,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             gating=gating,
             no_retrieval_during_teach=cfg.no_retrieval_during_teach,
             isolate=cfg.isolate,
+            dry_run=bool(cfg.get("dry_run")),
         )
         if compute_metrics:
             pre_metrics["em"] = (
@@ -1282,24 +1448,27 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             rel_attempts = gating["relational"].attempts
             spat_attempts = gating["spatial"].attempts
             if "episodic" in modules:
+                rs = replay_samples if replay_samples > 0 else 1
                 modules["episodic"]["store"].save(
                     str(session_dir),
                     str(cfg.session_id),
-                    replay_samples=replay_samples,
+                    replay_samples=rs,
                     gate_attempts=epi_attempts,
                 )
             if "relational" in modules:
+                rs = replay_samples if replay_samples > 0 else 1
                 modules["relational"]["kg"].save(
                     str(session_dir),
                     str(cfg.session_id),
-                    replay_samples=replay_samples,
+                    replay_samples=rs,
                     gate_attempts=rel_attempts,
                 )
             if "spatial" in modules:
+                rs = replay_samples if replay_samples > 0 else 1
                 modules["spatial"]["map"].save(
                     str(session_dir),
                     str(cfg.session_id),
-                    replay_samples=replay_samples,
+                    replay_samples=rs,
                     gate_attempts=spat_attempts,
                 )
         store_sizes, store_diags = _store_sizes(modules)
@@ -1399,6 +1568,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             gating=gating,
             no_retrieval_during_teach=cfg.no_retrieval_during_teach,
             isolate=cfg.isolate,
+            dry_run=bool(cfg.get("dry_run")),
         )
         for name, snap in gate_snaps.items():
             stats = gate_registry.get(name)
@@ -1461,6 +1631,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         gating=gating,
         no_retrieval_during_teach=cfg.no_retrieval_during_teach,
         isolate=cfg.isolate,
+        dry_run=bool(cfg.get("dry_run")),
     )
     if pre_compute:
         pre_metrics["em"] = (
@@ -1535,9 +1706,7 @@ def main(cfg: DictConfig) -> None:
     """Run evaluation based on ``cfg``."""
     # Resolve run identifier and freeze it early so repeated accesses do not drift.
     with open_dict(cfg):
-        run_id = cfg.get("run_id")
-        if run_id is None:
-            raise ValueError("run_id is required")
+        run_id = cfg.get("run_id") or os.getenv("RUN_ID") or "local"
         cfg.run_id = validate_run_id(str(run_id))
         cfg.strict_telemetry = _strict_flag(cfg)
         set_strict_telemetry(cfg.strict_telemetry)
