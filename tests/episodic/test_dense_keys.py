@@ -10,7 +10,7 @@ def test_dense_keys_written(tmp_path):
     rng = np.random.default_rng(0)
     for i in range(5):
         store.write(rng.random(4, dtype="float32"), TraceValue(provenance=str(i)))
-    store.save(str(tmp_path), "sess", replay_samples=5, gate_attempts=5)
+    store.save(str(tmp_path), "sess", replay_samples=5, gate_attempts=5, strict=True)
     rows = list(io.read_jsonl(tmp_path / "sess" / "episodic.jsonl"))
     assert len(rows) == 5
     for rec in rows:
