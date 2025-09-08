@@ -17,9 +17,10 @@
    - Recompute metrics from step 1 and **assert improvements** (or equality where required).
    - Run fast and slow tests, smoke scripts, and CI integration commands from this repo.
 
-5. **Document**
+5. **Document and Cleanup**
    - Update docstrings and module‐level narrative (what moved where and why).
    - Add a brief `CHANGELOG` entry for internal maintainers.
+   - Remove temporary artifacts created for the refactoring only (snapshot, metrics)
 
 ## Guardrails the agent **must enforce**
 
