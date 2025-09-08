@@ -1535,3 +1535,17 @@ def main(cfg: DictConfig) -> None:
             else:
                 outdir = Path(to_absolute_path("runs")) / run_id / preset_path.name / cfg.suite
         evaluate(cfg, outdir)
+
+
+__all__ = [
+    "Task",
+    "_apply_model_defaults",
+    "_enforce_guardrails",
+    "_evaluate",
+    "_init_modules",
+    "_run_replay",
+    "_store_sizes",
+    "evaluate",
+    "evaluate_matrix",
+    "main",
+]
