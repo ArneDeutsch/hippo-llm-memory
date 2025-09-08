@@ -1,6 +1,7 @@
 from omegaconf import OmegaConf
 
-from hippo_eval.eval.harness import Task, _run_replay
+from hippo_eval.eval.harness import _run_replay
+from hippo_eval.eval.types import Task
 from hippo_mem.episodic.store import EpisodicStore
 
 

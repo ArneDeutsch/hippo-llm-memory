@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import torch
 
-from hippo_eval.eval.harness import Task, _evaluate
+from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.types import Task
 
 
 class DummyTokenizer:

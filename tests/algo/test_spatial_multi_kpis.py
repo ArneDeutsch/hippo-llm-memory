@@ -1,4 +1,4 @@
-from hippo_eval.eval.harness import Task
+from hippo_eval.eval.types import Task
 from hippo_eval.metrics.scoring import spatial_multi_kpis
 
 

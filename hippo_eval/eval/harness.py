@@ -24,7 +24,6 @@ import subprocess
 import sys
 import tempfile
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -42,6 +41,7 @@ from hippo_eval.eval.adapters import (
     SpatialEvalAdapter,
     enabled_adapters,
 )
+from hippo_eval.eval.types import Task
 from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import (
     em_norm,
@@ -183,19 +183,6 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
         cfg.replay_cycles = get_replay_cycles(cfg)
     merge_memory_shortcuts(cfg)
     return cfg
-
-
-@dataclass
-class Task:
-    """Simple container for evaluation items."""
-
-    prompt: str
-    answer: str
-    qid: str | None = None
-    episode_id: str | None = None
-    context_key: str | None = None
-    fact: str | None = None
-    facts: list[dict] | None = None
 
 
 def _dataset_path(
