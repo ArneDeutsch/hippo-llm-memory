@@ -20,7 +20,7 @@
 5. **Document and Cleanup**
    - Update docstrings and module‐level narrative (what moved where and why).
    - Add a brief `CHANGELOG` entry for internal maintainers.
-   - Remove temporary artifacts created for the refactoring only (snapshot, metrics)
+   - Remove temporary artifacts created for the refactoring only (snapshot, metrics, e.g. `artifacts/refactor_baseline.json`)
 
 ## Guardrails the agent **must enforce**
 
