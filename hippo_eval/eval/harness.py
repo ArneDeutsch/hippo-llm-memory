@@ -31,7 +31,6 @@ from typing import Dict, Iterable, List, Optional, Tuple
 import torch
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf, open_dict
-from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_eval.bench import _config_hash, _flatten_ablate, _git_sha, _init_modules
@@ -40,6 +39,7 @@ from hippo_eval.eval.adapters import (
     EpisodicEvalAdapter,
     EvalAdapter,
     RelationalEvalAdapter,
+    SpatialEvalAdapter,
     enabled_adapters,
 )
 from hippo_eval.harness.io import write_csv, write_meta, write_metrics
@@ -54,7 +54,7 @@ from hippo_eval.metrics.scoring import (
     spatial_kpis,
     spatial_multi_kpis,
 )
-from hippo_mem.common import MemoryTokens, TraceSpec
+from hippo_mem.common import MemoryTokens
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import (
     _STRICT,
@@ -65,7 +65,6 @@ from hippo_mem.common.telemetry import (
 from hippo_mem.episodic.gating import WriteGate
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.spatial.gating import SpatialGate
-from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
 from hippo_mem.utils import validate_run_id
 from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
@@ -193,60 +192,6 @@ class Task:
     context_key: str | None = None
     fact: str | None = None
     facts: list[dict] | None = None
-
-
-def _ingest_spatial(
-    item: Task,
-    modules: Dict[str, Dict[str, object]],
-    gate: SpatialGate,
-    gc: GateCounters,
-    dry_run: bool,
-) -> None:
-    """Ingest a trajectory defined by ``item.answer`` into the place graph.
-
-    Side Effects
-    ------------
-    Observations are written only when the gate returns ``"insert"`` and
-    ``dry_run`` is ``False``.  Duplicate edges may be aggregated but no other
-    modifications occur.  Telemetry probes should use the gate directly instead
-    of this helper to avoid unintended writes.
-    """
-
-    graph = modules["spatial"]["map"]
-    m = re.search(r"Start \((\d+),\s*(\d+)\)", item.prompt or "")
-    if not m:
-        return
-    x, y = map(int, m.groups())
-    prev: str | None = None
-    ctx = f"{item.context_key}:{x},{y}" if item.context_key else f"{x},{y}"
-    decision = gate.decide(prev, ctx, graph)
-    gc.attempts += 1
-    if decision.action == "insert":
-        if not dry_run:
-            graph.observe(ctx)
-        gc.accepted += 1
-    else:
-        gc.skipped += 1
-    prev = ctx
-    moves = {"U": (-1, 0), "D": (1, 0), "L": (0, -1), "R": (0, 1)}
-    for step in item.answer:
-        dx, dy = moves.get(step, (0, 0))
-        x += dx
-        y += dy
-        ctx = f"{item.context_key}:{x},{y}" if item.context_key else f"{x},{y}"
-        decision = gate.decide(prev, ctx, graph)
-        gc.attempts += 1
-        if decision.action == "insert":
-            if not dry_run:
-                graph.observe(ctx)
-            gc.accepted += 1
-        elif decision.action == "aggregate":
-            if not dry_run and prev is not None:
-                graph.aggregate_duplicate(prev, ctx)
-            gc.skipped += 1
-        else:
-            gc.skipped += 1
-        prev = ctx
 
 
 def _dataset_path(
@@ -425,6 +370,8 @@ def _evaluate(
             active_adapters["episodic"] = EpisodicEvalAdapter()
         if "relational" in modules and "relational" not in active_adapters:
             active_adapters["relational"] = RelationalEvalAdapter()
+        if "spatial" in modules and "spatial" not in active_adapters:
+            active_adapters["spatial"] = SpatialEvalAdapter()
         if retrieval_enabled and modules:
             hidden = torch.zeros(1, 1, 8)
             if "episodic" in modules and "episodic" in active_adapters:
@@ -445,20 +392,15 @@ def _evaluate(
                 mem_latency += res.latency_ms
                 router_path.append("relational")
                 topk_keys.extend(res.topk_keys)
-            if "spatial" in modules:
-                graph = modules["spatial"]["map"]
-                adapter = modules["spatial"]["adapter"]
-                proj = getattr(adapter, "proj", nn.Linear(4, 8))
-                adapter.proj = proj  # type: ignore[attr-defined]
-                spec = TraceSpec(source="spatial")
-                mem = spatial_retrieve_and_pack(
-                    "origin", spec, graph, proj, context_keys=[context_key]
+            if "spatial" in modules and "spatial" in active_adapters:
+                res = active_adapters["spatial"].retrieve(
+                    cfg, modules["spatial"], item, context_key=context_key, hidden=hidden
                 )
-                mems.append(mem)
-                mem_hit = mem_hit or bool(mem.meta.get("hit_rate", 0.0) > 0)
-                mem_latency += float(mem.meta.get("latency_ms", 0.0))
+                mems.append(res.mem)
+                mem_hit = mem_hit or res.hit
+                mem_latency += res.latency_ms
                 router_path.append("spatial")
-                topk_keys.extend(mem.meta.get("trace_ids", []) or [])
+                topk_keys.extend(res.topk_keys)
             if mems:
                 tokens = torch.cat([m.tokens for m in mems], dim=1)
                 mask = torch.cat([m.mask for m in mems], dim=1)
@@ -540,13 +482,18 @@ def _evaluate(
                         gc=gating["relational"],
                         suite=suite or "",
                     )
-                if "spatial" in modules and modules["spatial"].get("gate") is not None:
-                    _ingest_spatial(
+                if (
+                    "spatial" in modules
+                    and modules["spatial"].get("gate") is not None
+                    and "spatial" in active_adapters
+                ):
+                    active_adapters["spatial"].teach(
+                        cfg,
+                        modules["spatial"],
                         item,
-                        modules,
-                        modules["spatial"]["gate"],
-                        gating["spatial"],
-                        dry_run,
+                        dry_run=dry_run,
+                        gc=gating["spatial"],
+                        suite=suite or "",
                     )
             else:
                 if (
@@ -589,16 +536,20 @@ def _evaluate(
                                 gc.accepted += 1
                             else:
                                 gc.skipped += 1
-                if "spatial" in modules and modules["spatial"].get("gate") is not None:
-                    graph = modules["spatial"]["map"]
-                    gate = modules["spatial"]["gate"]
-                    decision = gate.decide(None, "ctx", graph)
-                    gc = gating["spatial"]
-                    gc.attempts += 1
-                    if decision.action == "insert":
-                        gc.accepted += 1
-                    else:
-                        gc.skipped += 1
+                if (
+                    "spatial" in modules
+                    and modules["spatial"].get("gate") is not None
+                    and "spatial" in active_adapters
+                ):
+                    dummy = Task(prompt="Start (0,0)", answer="", context_key=None)
+                    active_adapters["spatial"].teach(
+                        cfg,
+                        modules["spatial"],
+                        dummy,
+                        dry_run=True,
+                        gc=gating["spatial"],
+                        suite=suite or "",
+                    )
         req_after = {k: registry.get(k).requests for k in ("episodic", "relational", "spatial")}
         retrieval_requests = sum(req_after.values()) - sum(req_before.values())
         size_after_map, _ = _store_sizes(modules)
@@ -815,8 +766,7 @@ def _run_replay(
             if gc.accepted > before_acc:
                 count += 1
 
-    if "spatial" in modules:
-        graph = modules["spatial"]["map"]
+    if "spatial" in modules and "spatial" in adapters:
         gate_cfg = (
             (cfg.get("memory", {}).get("spatial", {}).get("gate", {}))
             if isinstance(cfg, DictConfig)
@@ -826,18 +776,19 @@ def _run_replay(
         if gate_cfg.get("enabled", False):
             params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
             gate = SpatialGate(**params)
-        prev: str | None = None
-        for idx in range(len(task_list)):
-            ctx = f"ctx{idx}"
-            if gate is None:
-                graph.observe(ctx)
-            else:
-                decision = gate.decide(prev, ctx, graph)
-                if decision.action == "insert":
-                    graph.observe(ctx)
-                elif decision.action == "aggregate" and prev is not None:
-                    graph.aggregate_duplicate(prev, ctx)
-            prev = ctx
+        modules["spatial"]["gate"] = gate
+        if gate is not None:
+            gc = GateCounters()
+            for idx in range(len(task_list)):
+                item = Task(prompt=f"Start ({idx},0)", answer="", context_key=None)
+                adapters["spatial"].teach(
+                    cfg,
+                    modules["spatial"],
+                    item,
+                    dry_run=False,
+                    gc=gc,
+                    suite="replay",
+                )
 
     return count
 
@@ -865,11 +816,10 @@ def _store_sizes(
         if diag:
             diags["relational"] = diag
     if "spatial" in modules:
-        g = modules["spatial"].get("map")
-        nodes = len(getattr(g, "_context_to_id", {}))
-        edges = sum(len(nbrs) for nbrs in getattr(g, "graph", {}).values())
-        sizes["spatial"] = int(nodes + edges)
-        diags["spatial"] = {"writes": int(g.log_status().get("writes", 0))}
+        size, diag = SpatialEvalAdapter().store_size(modules["spatial"])
+        sizes["spatial"] = size
+        if diag:
+            diags["spatial"] = diag
     return sizes, diags
 
 
@@ -1261,6 +1211,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         modules["episodic"] = adapters["episodic"].build(cfg)
     if "relational" in adapters:
         modules["relational"] = adapters["relational"].build(cfg)
+    if "spatial" in adapters:
+        modules["spatial"] = adapters["spatial"].build(cfg)
     if cfg.preset and not is_memory_preset(str(cfg.preset)):
         modules = {}
     if cfg.memory_off:
@@ -1281,9 +1233,6 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             spat_file = session_dir / sid / "spatial.jsonl"
             if spat_file.exists():
                 modules["spatial"]["map"].load(str(session_dir), sid)
-
-    if "spatial" in modules:
-        modules["spatial"]["gate"] = SpatialGate()
 
     retrieval_enabled = bool(cfg.get("retrieval", {}).get("enabled", False))
     long_ctx_enabled = bool(cfg.get("long_context", {}).get("enabled", False))
