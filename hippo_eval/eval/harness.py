@@ -997,20 +997,24 @@ def preflight_check(cfg: DictConfig, outdir: Path) -> None:
         raise RuntimeError(f"preflight check failed (see {fail_path})")
 
 
-def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
-    """Run a single evaluation and write outputs to ``outdir``."""
+def build_run_inputs(cfg: DictConfig) -> tuple[
+    list[Task],
+    dict[str, dict[str, object]],
+    dict[str, EvalAdapter],
+    object,
+    object,
+    ModeStrategy,
+    dict[str, GateCounters],
+    dict,
+    bool,
+    bool,
+    bool,
+]:
+    """Prepare tasks, modules, model, and strategy for a run."""
 
-    if preflight:
-        preflight_check(cfg, outdir)
-
-    set_strict_telemetry(_strict_flag(cfg))
-    registry.reset()
-    gate_registry.reset()
-    gating: Dict[str, GateCounters] = {
+    gating: dict[str, GateCounters] = {
         k: GateCounters() for k in ("episodic", "relational", "spatial")
     }
-    cfg.no_retrieval_during_teach = cfg.get("no_retrieval_during_teach", True)
-    cfg.isolate = cfg.get("isolate", "none")
     oracle_flag = bool(cfg.get("compute", {}).get("oracle", False))
     if oracle_flag:
         os.environ["HIPPO_ORACLE"] = "1"
@@ -1030,6 +1034,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         )
         for obj in raw_tasks
     ]
+
     flat_ablate = _flatten_ablate(cfg.get("ablate"))
     apply_ablation_flags(cfg, flat_ablate)
     mem_cfg = cfg.get("memory")
@@ -1049,26 +1054,10 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         modules = {}
     if cfg.memory_off:
         modules = {}
-    strategy = get_mode_strategy(Mode(cfg.mode))
-    if isinstance(strategy, TeachStrategy) and not cfg.no_retrieval_during_teach:
-        strategy.retrieval_enabled = True
 
-    if modules and strategy.load_store and cfg.store_dir and cfg.session_id:
-        session_dir = Path(to_absolute_path(str(cfg.store_dir)))
-        sid = str(cfg.session_id)
-        store_kind = {"sgc_rss": "kg", "smpd": "spatial"}.get(session_dir.name, "episodic")
-        assert_store_exists(str(session_dir.parent), sid, session_dir.name, kind=store_kind)
-        if "episodic" in modules:
-            modules["episodic"]["store"].load(str(session_dir), sid)
-        if "relational" in modules:
-            kg_file = session_dir / sid / "kg.jsonl"
-            rel_file = session_dir / sid / "relational.jsonl"
-            if kg_file.exists() or rel_file.exists():
-                modules["relational"]["kg"].load(str(session_dir), sid)
-        if "spatial" in modules:
-            spat_file = session_dir / sid / "spatial.jsonl"
-            if spat_file.exists():
-                modules["spatial"]["map"].load(str(session_dir), sid)
+    strategy = get_mode_strategy(Mode(cfg.mode))
+    if isinstance(strategy, TeachStrategy) and not cfg.get("no_retrieval_during_teach", True):
+        strategy.retrieval_enabled = True
 
     retrieval_enabled = bool(cfg.get("retrieval", {}).get("enabled", False))
     long_ctx_enabled = bool(cfg.get("long_context", {}).get("enabled", False))
@@ -1099,6 +1088,63 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         model.generation_config.eos_token_id = cfg.eos_token_id
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
+
+    return (
+        tasks,
+        modules,
+        adapters,
+        tokenizer,
+        model,
+        strategy,
+        gating,
+        flat_ablate,
+        retrieval_enabled,
+        long_ctx_enabled,
+        oracle_flag,
+    )
+
+
+def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
+    """Run a single evaluation and write outputs to ``outdir``."""
+
+    if preflight:
+        preflight_check(cfg, outdir)
+
+    set_strict_telemetry(_strict_flag(cfg))
+    registry.reset()
+    gate_registry.reset()
+    cfg.no_retrieval_during_teach = cfg.get("no_retrieval_during_teach", True)
+    cfg.isolate = cfg.get("isolate", "none")
+    (
+        tasks,
+        modules,
+        adapters,
+        tokenizer,
+        model,
+        strategy,
+        gating,
+        flat_ablate,
+        retrieval_enabled,
+        long_ctx_enabled,
+        oracle_flag,
+    ) = build_run_inputs(cfg)
+
+    if modules and strategy.load_store and cfg.store_dir and cfg.session_id:
+        session_dir = Path(to_absolute_path(str(cfg.store_dir)))
+        sid = str(cfg.session_id)
+        store_kind = {"sgc_rss": "kg", "smpd": "spatial"}.get(session_dir.name, "episodic")
+        assert_store_exists(str(session_dir.parent), sid, session_dir.name, kind=store_kind)
+        if "episodic" in modules:
+            modules["episodic"]["store"].load(str(session_dir), sid)
+        if "relational" in modules:
+            kg_file = session_dir / sid / "kg.jsonl"
+            rel_file = session_dir / sid / "relational.jsonl"
+            if kg_file.exists() or rel_file.exists():
+                modules["relational"]["kg"].load(str(session_dir), sid)
+        if "spatial" in modules:
+            spat_file = session_dir / sid / "spatial.jsonl"
+            if spat_file.exists():
+                modules["spatial"]["map"].load(str(session_dir), sid)
 
     replay_samples = 0
 
