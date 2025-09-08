@@ -8,6 +8,15 @@ comparable, auditable results.
 Evaluation code, metrics, reporting, and synthetic tasks reside in the
 `hippo_eval` package. The former `hippo_mem.*` modules are maintained as shims
 that issue `DeprecationWarning`.
+
+## Evaluation adapters
+
+Per-algorithm adapters under `hippo_eval.eval.adapters` implement `build`,
+`retrieve`, `teach`, and `store_size`. The harness iterates over enabled
+adapters to assemble injected context, run replay, and collect diagnostics while
+keeping CLI semantics unchanged. Adding a new memory algorithm involves writing
+an adapter and registering it with the factory in `adapters/__init__.py`.
+
 # 0.1) Quick smoke test
 
 For a fast end‑to‑end check at `n=50`, `seed=1337`, run:

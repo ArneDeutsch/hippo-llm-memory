@@ -62,9 +62,6 @@ from hippo_mem.common.telemetry import (
     registry,
     set_strict_telemetry,
 )
-from hippo_mem.episodic.gating import WriteGate
-from hippo_mem.relational.gating import RelationalGate
-from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.utils import validate_run_id
 from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
@@ -636,29 +633,11 @@ def _run_replay(
     task_list = list(tasks)
     count = 0
     adapters = enabled_adapters(cfg)
-    gate_defaults = {"episodic": True, "relational": False, "spatial": False}
-    gate_cls = {
-        "episodic": WriteGate,
-        "relational": RelationalGate,
-        "spatial": SpatialGate,
-    }
     for name in ADAPTER_ORDER:
         if name not in modules or name not in adapters:
             continue
-        gate_cfg = (
-            (cfg.get("memory", {}).get(name, {}).get("gate", {}))
-            if isinstance(cfg, DictConfig)
-            else {}
-        )
-        gate = None
-        if gate_cfg.get("enabled", gate_defaults[name]):
-            params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
-            gate = gate_cls[name](**params)
-        modules[name]["gate"] = gate
         gc = GateCounters()
         if name == "spatial":
-            if gate is None:
-                continue
             for idx in range(len(task_list)):
                 item = Task(prompt=f"Start ({idx},0)", answer="", context_key=None)
                 adapters[name].teach(
@@ -672,7 +651,6 @@ def _run_replay(
         else:
             for task in task_list:
                 before_acc = gc.accepted
-                before_attempts = gc.attempts
                 adapters[name].teach(
                     cfg,
                     modules[name],
@@ -681,15 +659,6 @@ def _run_replay(
                     gc=gc,
                     suite="replay",
                 )
-                if name == "relational" and gc.attempts == before_attempts and gate is not None:
-                    decision = gate.decide(
-                        ("a", "rel", "b", "ctx", None, 1.0, 0), modules[name]["kg"]
-                    )
-                    gc.attempts += 1
-                    if decision.action == "insert":
-                        gc.accepted += 1
-                    else:
-                        gc.skipped += 1
                 if gc.accepted > before_acc:
                     count += 1
     return count
