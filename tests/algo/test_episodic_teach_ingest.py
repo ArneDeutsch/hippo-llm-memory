@@ -30,3 +30,19 @@ def test_episodic_teach_ingest_populates_store() -> None:
     for _idx, val, _k, _ts, _sal in store.persistence.all():
         assert val.provenance == "teach"
         assert val.context_key is not None
+    size, _diag = adapter.store_size(modules)
+    assert size >= len(keys)
+
+
+def test_episodic_teach_ablation_skips_writes() -> None:
+    store = EpisodicStore(dim=8, k_wta=2)
+    gate = WriteGate(tau=1.0)
+    modules = {"store": store, "gate": gate}
+    adapter = EpisodicEvalAdapter()
+    cfg = OmegaConf.create({})
+    gc = GateCounters()
+    item = SimpleNamespace(fact="A went to B.", context_key="ep/00", prompt="", answer="")
+    adapter.teach(cfg, modules, item, dry_run=False, gc=gc, suite="episodic_cross_mem")
+    size, _diag = adapter.store_size(modules)
+    assert size == 0
+    assert gc.skipped >= 1

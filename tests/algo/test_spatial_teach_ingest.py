@@ -19,3 +19,19 @@ def test_spatial_teach_ingest_builds_graph() -> None:
     adapter.teach(cfg, modules, item, dry_run=False, gc=gc, suite="spatial_multi")
     assert gc.accepted > 0
     assert len(graph.graph) >= 2
+    size, _diag = adapter.store_size(modules)
+    assert size > 0
+
+
+def test_spatial_teach_ablation_skips_writes() -> None:
+    graph = PlaceGraph()
+    gate = SpatialGate(block_threshold=0.0)
+    modules = {"map": graph, "gate": gate}
+    adapter = SpatialEvalAdapter()
+    cfg = OmegaConf.create({})
+    gc = GateCounters()
+    item = SimpleNamespace(prompt="Start (0,0)", answer="UR", context_key=None)
+    adapter.teach(cfg, modules, item, dry_run=False, gc=gc, suite="spatial_multi")
+    size, _diag = adapter.store_size(modules)
+    assert size == 0
+    assert gc.skipped >= 1
