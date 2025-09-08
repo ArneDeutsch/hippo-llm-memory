@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-from hippo_eval.eval.harness import Task, _evaluate
+from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.types import Task
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import registry
 from hippo_mem.episodic.gating import WriteGate

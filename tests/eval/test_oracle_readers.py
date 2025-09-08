@@ -4,7 +4,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from hippo_eval.eval.harness import Task, _evaluate
+from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.types import Task
 from hippo_mem.episodic.types import TraceValue
 
 

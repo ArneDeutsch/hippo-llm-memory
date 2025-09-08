@@ -1,4 +1,4 @@
-from hippo_eval.eval.harness import Task
+from hippo_eval.eval.types import Task
 from hippo_eval.metrics.scoring import enforce_udlr, spatial_multi_kpis
 
 

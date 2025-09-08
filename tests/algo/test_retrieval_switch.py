@@ -1,7 +1,8 @@
 import pytest
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from hippo_eval.eval.harness import Task, _evaluate, _init_modules
+from hippo_eval.eval.harness import _evaluate, _init_modules
+from hippo_eval.eval.types import Task
 from hippo_mem.common.telemetry import registry
 
 

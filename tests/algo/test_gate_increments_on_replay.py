@@ -1,7 +1,8 @@
 from omegaconf import OmegaConf
 
 from hippo_eval.eval.adapters import enabled_adapters
-from hippo_eval.eval.harness import Task, _run_replay
+from hippo_eval.eval.harness import _run_replay
+from hippo_eval.eval.types import Task
 from hippo_mem.common.telemetry import gate_registry
 
 
