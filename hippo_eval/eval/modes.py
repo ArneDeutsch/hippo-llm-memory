@@ -21,10 +21,12 @@ class Mode(str, Enum):
 
 
 class ModeStrategy(Protocol):
-    """Skeleton strategy interface for evaluation modes."""
+    """Interface for mode-specific evaluation behaviour."""
 
     retrieval_enabled: bool
     ingest_enabled: bool
+    load_store: bool
+    replay_mode: bool
 
     def pre_run(self, inputs: Any) -> None:
         """Hook executed before a run starts."""
@@ -38,54 +40,60 @@ class ModeStrategy(Protocol):
 
 @dataclass
 class TeachStrategy:
-    """No-op strategy for :class:`Mode.TEACH`."""
+    """Strategy for :class:`Mode.TEACH`."""
 
     retrieval_enabled: bool = False
     ingest_enabled: bool = True
+    load_store: bool = False
+    replay_mode: bool = False
 
-    def pre_run(self, inputs: Any) -> None:
+    def pre_run(self, inputs: Any) -> None:  # pragma: no cover - hooks used later
         return None
 
-    def process_task(self, inputs: Any, task: Any) -> Any:
+    def process_task(self, inputs: Any, task: Any) -> Any:  # pragma: no cover
         return None
 
-    def post_run(self, inputs: Any) -> None:
+    def post_run(self, inputs: Any) -> None:  # pragma: no cover
         return None
 
 
 @dataclass
 class TestStrategy:
-    """No-op strategy for :class:`Mode.TEST`."""
+    """Strategy for :class:`Mode.TEST`."""
 
     __test__ = False
 
     retrieval_enabled: bool = True
     ingest_enabled: bool = False
+    load_store: bool = True
+    replay_mode: bool = False
 
-    def pre_run(self, inputs: Any) -> None:
+    def pre_run(self, inputs: Any) -> None:  # pragma: no cover
         return None
 
-    def process_task(self, inputs: Any, task: Any) -> Any:
+    def process_task(self, inputs: Any, task: Any) -> Any:  # pragma: no cover
         return None
 
-    def post_run(self, inputs: Any) -> None:
+    def post_run(self, inputs: Any) -> None:  # pragma: no cover
         return None
 
 
 @dataclass
 class ReplayStrategy:
-    """No-op strategy for :class:`Mode.REPLAY`."""
+    """Strategy for :class:`Mode.REPLAY`."""
 
     retrieval_enabled: bool = True
     ingest_enabled: bool = False
+    load_store: bool = True
+    replay_mode: bool = True
 
-    def pre_run(self, inputs: Any) -> None:
+    def pre_run(self, inputs: Any) -> None:  # pragma: no cover
         return None
 
-    def process_task(self, inputs: Any, task: Any) -> Any:
+    def process_task(self, inputs: Any, task: Any) -> Any:  # pragma: no cover
         return None
 
-    def post_run(self, inputs: Any) -> None:
+    def post_run(self, inputs: Any) -> None:  # pragma: no cover
         return None
 
 

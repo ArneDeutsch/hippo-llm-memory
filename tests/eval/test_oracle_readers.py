@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.modes import TestStrategy
 from hippo_eval.eval.types import Task
 from hippo_mem.episodic.types import TraceValue
 
@@ -70,6 +71,7 @@ def test_oracle_flag_scores_retrieved_answer():
         system_prompt=None,
         suite="episodic_cross_mem",
         oracle=True,
+        strategy=TestStrategy(),
     )
     row = rows[0]
     assert row["oracle_em"] == 1
@@ -91,6 +93,7 @@ def test_oracle_env_var_fallback(monkeypatch):
         use_chat_template=False,
         system_prompt=None,
         suite="episodic_cross_mem",
+        strategy=TestStrategy(),
     )
     row = rows[0]
     assert row["oracle_em"] == 1

@@ -2,6 +2,7 @@ import pytest
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from hippo_eval.eval.harness import _evaluate, _init_modules
+from hippo_eval.eval.modes import TestStrategy
 from hippo_eval.eval.types import Task
 from hippo_mem.common.telemetry import registry
 
@@ -25,6 +26,7 @@ def test_retrieval_flag_disables_memory(monkeypatch: pytest.MonkeyPatch) -> None
         system_prompt=None,
         retrieval_enabled=False,
         long_context_enabled=False,
+        strategy=TestStrategy(),
     )
     snaps = registry.all_snapshots()
     assert all(snap["requests"] == 0 for snap in snaps.values())

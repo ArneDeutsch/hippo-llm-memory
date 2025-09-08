@@ -7,6 +7,7 @@ import time
 import torch
 
 from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.modes import TestStrategy
 from hippo_eval.eval.types import Task
 
 
@@ -45,6 +46,7 @@ def test_time_ms_per_100_calculation(monkeypatch):
         max_new_tokens=2,
         use_chat_template=False,
         system_prompt=None,
+        strategy=TestStrategy(),
     )
 
     assert in_tok == 2
@@ -82,6 +84,7 @@ def test_refusal_rate_detection(monkeypatch):
         max_new_tokens=2,
         use_chat_template=False,
         system_prompt=None,
+        strategy=TestStrategy(),
     )
     assert rows
     assert metrics["refusal_rate"] == 1.0

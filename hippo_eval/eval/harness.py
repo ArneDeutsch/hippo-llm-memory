@@ -41,6 +41,7 @@ from hippo_eval.eval.adapters import (
     SpatialEvalAdapter,
     enabled_adapters,
 )
+from hippo_eval.eval.modes import Mode, ModeStrategy, TeachStrategy, get_mode_strategy
 from hippo_eval.eval.types import Task
 from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import (
@@ -312,9 +313,8 @@ def _evaluate(
     suite: str | None = None,
     retrieval_enabled: bool = True,
     long_context_enabled: bool = False,
-    mode: str = "test",
+    strategy: ModeStrategy,
     gating: Dict[str, GateCounters] | None = None,
-    no_retrieval_during_teach: bool = False,
     isolate: str = "none",
     dry_run: bool = False,
     oracle: bool = False,
@@ -324,6 +324,8 @@ def _evaluate(
     cfg = cfg or OmegaConf.create({})
     registry.reset()
     gate_registry.reset()
+    if gating is None:
+        gating = {k: GateCounters() for k in ("episodic", "relational", "spatial")}
     oracle = oracle or _env_flag("HIPPO_ORACLE")
     rows: List[Dict[str, object]] = []
     emr_total = emn_total = f1_total = 0.0
@@ -335,8 +337,7 @@ def _evaluate(
     total = len(task_list)
     progress_interval = max(1, total // 10) if total else 1
     t0 = time.perf_counter()
-    if mode == "teach" and no_retrieval_during_teach:
-        retrieval_enabled = False
+    retrieval_enabled = retrieval_enabled and strategy.retrieval_enabled
     for idx, item in enumerate(task_list, 1):
         item_t0 = time.perf_counter()
         mem_hit = False
@@ -412,14 +413,14 @@ def _evaluate(
             refusal_total += int(bool(REFUSAL_RE.search(raw_pred)))
         # write phase guarded by gates
         if modules:
-            dry = dry_run if mode == "teach" else True
+            dry = dry_run if strategy.ingest_enabled else True
             for name in ADAPTER_ORDER:
                 if name not in modules or name not in active_adapters:
                     continue
                 if modules[name].get("gate") is None:
                     continue
                 teach_item = item
-                if mode != "teach" and name == "spatial":
+                if not strategy.ingest_enabled and name == "spatial":
                     teach_item = Task(prompt="Start (0,0)", answer="", context_key=None)
                 before_attempts = gating[name].attempts
                 active_adapters[name].teach(
@@ -431,7 +432,7 @@ def _evaluate(
                     suite=suite or "",
                 )
                 if (
-                    mode != "teach"
+                    not strategy.ingest_enabled
                     and name == "relational"
                     and gating[name].attempts == before_attempts
                 ):
@@ -560,7 +561,7 @@ def _evaluate(
                         clear_store(mod["store"])
         if idx % progress_interval == 0 or idx == total:
             log.info("    processed %d/%d tasks", idx, total)
-    if mode == "teach" and "relational" in modules:
+    if strategy.ingest_enabled and "relational" in modules:
         modules["relational"]["kg"].schema_index.flush(modules["relational"]["kg"])
     n = len(rows)
     t1 = time.perf_counter()
@@ -1048,7 +1049,11 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         modules = {}
     if cfg.memory_off:
         modules = {}
-    elif modules and cfg.mode in ("test", "replay") and cfg.store_dir and cfg.session_id:
+    strategy = get_mode_strategy(Mode(cfg.mode))
+    if isinstance(strategy, TeachStrategy) and not cfg.no_retrieval_during_teach:
+        strategy.retrieval_enabled = True
+
+    if modules and strategy.load_store and cfg.store_dir and cfg.session_id:
         session_dir = Path(to_absolute_path(str(cfg.store_dir)))
         sid = str(cfg.session_id)
         store_kind = {"sgc_rss": "kg", "smpd": "spatial"}.get(session_dir.name, "episodic")
@@ -1097,7 +1102,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
 
     replay_samples = 0
 
-    if cfg.mode == "teach":
+    if strategy.ingest_enabled:
         preset = str(cfg.get("preset", ""))
         compute_metrics = preset.startswith("baselines/")
         pre_rows, pre_metrics, in_tok, gen_tok, elapsed = _evaluate(
@@ -1114,9 +1119,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             suite=cfg.suite,
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
-            mode="teach",
+            strategy=strategy,
             gating=gating,
-            no_retrieval_during_teach=cfg.no_retrieval_during_teach,
             isolate=cfg.isolate,
             dry_run=bool(cfg.get("dry_run")),
             oracle=oracle_flag,
@@ -1189,7 +1193,7 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         )
         return
 
-    if cfg.mode == "replay":
+    if strategy.replay_mode:
         for _ in range(get_replay_cycles(cfg)):
             replay_samples += _run_replay(cfg, modules, tasks)
         if cfg.persist and cfg.store_dir and cfg.session_id:
@@ -1265,9 +1269,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
             suite=cfg.suite,
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
-            mode=cfg.mode,
+            strategy=strategy,
             gating=gating,
-            no_retrieval_during_teach=cfg.no_retrieval_during_teach,
             isolate=cfg.isolate,
             dry_run=bool(cfg.get("dry_run")),
             oracle=oracle_flag,
@@ -1331,9 +1334,8 @@ def evaluate(cfg: DictConfig, outdir: Path, *, preflight: bool = True) -> None:
         suite=cfg.suite,
         retrieval_enabled=retrieval_enabled,
         long_context_enabled=long_ctx_enabled,
-        mode=cfg.mode,
+        strategy=strategy,
         gating=gating,
-        no_retrieval_during_teach=cfg.no_retrieval_during_teach,
         isolate=cfg.isolate,
         dry_run=bool(cfg.get("dry_run")),
         oracle=oracle_flag,

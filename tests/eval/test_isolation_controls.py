@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.modes import TeachStrategy
 from hippo_eval.eval.types import Task
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import registry
@@ -66,9 +67,8 @@ def test_no_retrieval_during_teach() -> None:
         use_chat_template=False,
         system_prompt=None,
         retrieval_enabled=True,
-        mode="teach",
+        strategy=TeachStrategy(),
         gating=gating,
-        no_retrieval_during_teach=True,
         isolate="none",
     )
     assert registry.get("episodic").requests == 0
@@ -86,9 +86,8 @@ def test_per_item_isolation_clears_store() -> None:
         use_chat_template=False,
         system_prompt=None,
         retrieval_enabled=False,
-        mode="teach",
+        strategy=TeachStrategy(),
         gating=gating,
-        no_retrieval_during_teach=True,
         isolate="per_item",
     )
     store = modules["episodic"]["store"]

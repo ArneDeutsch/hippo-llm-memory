@@ -10,6 +10,7 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 
 from hippo_eval.datasets.loaders import load_dataset
+from hippo_eval.eval.modes import TestStrategy
 from hippo_mem.common.gates import GateCounters
 from hippo_mem.common.telemetry import gate_registry, registry
 from hippo_mem.episodic.gating import WriteGate
@@ -159,9 +160,8 @@ class Runner:
             retrieval_enabled=retrieval_enabled,
             long_context_enabled=long_ctx_enabled,
             compute_metrics=True,
-            mode="test",
+            strategy=TestStrategy(),
             gating=gating,
-            no_retrieval_during_teach=self.cfg.no_retrieval_during_teach,
             isolate=self.cfg.isolate,
             oracle=bool(base_cfg.get("compute", {}).get("oracle", False)),
         )
