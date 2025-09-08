@@ -9,7 +9,7 @@ from pathlib import Path
 from statistics import mean, pstdev
 from typing import Dict, Iterable, List
 
-from hippo_eval.harness.io import write_baseline_metrics
+from hippo_eval.eval.writers import write_baseline_metrics
 from hippo_mem.utils import validate_run_id
 
 

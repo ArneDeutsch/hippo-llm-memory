@@ -4,7 +4,7 @@ import csv
 import json
 from pathlib import Path
 
-from hippo_eval.harness.io import write_csv, write_meta, write_metrics
+from hippo_eval.eval.writers import write_csv, write_meta, write_metrics
 
 
 def test_write_read_roundtrip(tmp_path: Path) -> None:

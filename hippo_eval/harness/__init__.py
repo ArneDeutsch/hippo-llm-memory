@@ -1,6 +1,6 @@
 """Evaluation harness utilities."""
 
-from hippo_eval.harness.io import (
+from hippo_eval.eval.writers import (
     ensure_run_dirs,
     write_baseline_metrics,
     write_csv,

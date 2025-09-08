@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from hippo_eval.baselines import aggregate_metrics
-from hippo_eval.harness.io import write_baseline_metrics
+from hippo_eval.eval.writers import write_baseline_metrics
 
 
 def _write_metrics(

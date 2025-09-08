@@ -42,7 +42,6 @@ from hippo_eval.eval.adapters import (
     SpatialEvalAdapter,
     enabled_adapters,
 )
-from hippo_eval.harness.io import write_csv, write_meta, write_metrics
 from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import (
     em_norm,
@@ -69,6 +68,7 @@ from .config_utils import apply_ablation_flags, merge_memory_shortcuts
 from .encode import encode_prompt
 from .models import load_model_config
 from .store_utils import clear_store, resolve_store_meta_path
+from .writers import write_csv, write_meta, write_metrics
 
 SUITE_ALIASES = {
     "episodic": "episodic_cross_mem",
