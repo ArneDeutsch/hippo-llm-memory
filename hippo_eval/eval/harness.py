@@ -79,6 +79,13 @@ SUITE_ALIASES = {
     "spatial": "spatial_multi",
 }
 
+ADAPTER_ORDER = ("episodic", "relational", "spatial")
+ADAPTER_CLS = {
+    "episodic": EpisodicEvalAdapter,
+    "relational": RelationalEvalAdapter,
+    "spatial": SpatialEvalAdapter,
+}
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
@@ -365,42 +372,23 @@ def _evaluate(
         req_before = {k: registry.get(k).requests for k in ("episodic", "relational", "spatial")}
         size_before_map, _ = _store_sizes(modules)
         size_before = sum(size_before_map.values())
-        active_adapters = dict(adapters or {})
-        if "episodic" in modules and "episodic" not in active_adapters:
-            active_adapters["episodic"] = EpisodicEvalAdapter()
-        if "relational" in modules and "relational" not in active_adapters:
-            active_adapters["relational"] = RelationalEvalAdapter()
-        if "spatial" in modules and "spatial" not in active_adapters:
-            active_adapters["spatial"] = SpatialEvalAdapter()
+        active_adapters = {
+            name: (adapters or {}).get(name, ADAPTER_CLS[name]())
+            for name in ADAPTER_ORDER
+            if name in modules
+        }
         if retrieval_enabled and modules:
             hidden = torch.zeros(1, 1, 8)
-            if "episodic" in modules and "episodic" in active_adapters:
-                res = active_adapters["episodic"].retrieve(
-                    cfg, modules["episodic"], item, context_key=context_key, hidden=hidden
-                )
-                mems.append(res.mem)
-                mem_hit = mem_hit or res.hit
-                mem_latency += res.latency_ms
-                router_path.append("episodic")
-                topk_keys.extend(res.topk_keys)
-            if "relational" in modules and "relational" in active_adapters:
-                res = active_adapters["relational"].retrieve(
-                    cfg, modules["relational"], item, context_key=context_key, hidden=hidden
-                )
-                mems.append(res.mem)
-                mem_hit = mem_hit or res.hit
-                mem_latency += res.latency_ms
-                router_path.append("relational")
-                topk_keys.extend(res.topk_keys)
-            if "spatial" in modules and "spatial" in active_adapters:
-                res = active_adapters["spatial"].retrieve(
-                    cfg, modules["spatial"], item, context_key=context_key, hidden=hidden
-                )
-                mems.append(res.mem)
-                mem_hit = mem_hit or res.hit
-                mem_latency += res.latency_ms
-                router_path.append("spatial")
-                topk_keys.extend(res.topk_keys)
+            for name in ADAPTER_ORDER:
+                if name in modules and name in active_adapters:
+                    res = active_adapters[name].retrieve(
+                        cfg, modules[name], item, context_key=context_key, hidden=hidden
+                    )
+                    mems.append(res.mem)
+                    mem_hit = mem_hit or res.hit
+                    mem_latency += res.latency_ms
+                    router_path.append(name)
+                    topk_keys.extend(res.topk_keys)
             if mems:
                 tokens = torch.cat([m.tokens for m in mems], dim=1)
                 mask = torch.cat([m.mask for m in mems], dim=1)
@@ -459,97 +447,40 @@ def _evaluate(
             refusal_total += int(bool(REFUSAL_RE.search(raw_pred)))
         # write phase guarded by gates
         if modules:
-            if mode == "teach":
+            dry = dry_run if mode == "teach" else True
+            for name in ADAPTER_ORDER:
+                if name not in modules or name not in active_adapters:
+                    continue
+                if modules[name].get("gate") is None:
+                    continue
+                teach_item = item
+                if mode != "teach" and name == "spatial":
+                    teach_item = Task(prompt="Start (0,0)", answer="", context_key=None)
+                before_attempts = gating[name].attempts
+                active_adapters[name].teach(
+                    cfg,
+                    modules[name],
+                    teach_item,
+                    dry_run=dry,
+                    gc=gating[name],
+                    suite=suite or "",
+                )
                 if (
-                    "episodic" in modules
-                    and modules["episodic"].get("gate") is not None
-                    and "episodic" in active_adapters
+                    mode != "teach"
+                    and name == "relational"
+                    and gating[name].attempts == before_attempts
                 ):
-                    active_adapters["episodic"].teach(
-                        cfg,
-                        modules["episodic"],
-                        item,
-                        dry_run=dry_run,
-                        gc=gating["episodic"],
-                        suite=suite or "",
-                    )
-                if "relational" in modules and "relational" in active_adapters:
-                    active_adapters["relational"].teach(
-                        cfg,
-                        modules["relational"],
-                        item,
-                        dry_run=dry_run,
-                        gc=gating["relational"],
-                        suite=suite or "",
-                    )
-                if (
-                    "spatial" in modules
-                    and modules["spatial"].get("gate") is not None
-                    and "spatial" in active_adapters
-                ):
-                    active_adapters["spatial"].teach(
-                        cfg,
-                        modules["spatial"],
-                        item,
-                        dry_run=dry_run,
-                        gc=gating["spatial"],
-                        suite=suite or "",
-                    )
-            else:
-                if (
-                    "episodic" in modules
-                    and modules["episodic"].get("gate") is not None
-                    and "episodic" in active_adapters
-                ):
-                    active_adapters["episodic"].teach(
-                        cfg,
-                        modules["episodic"],
-                        item,
-                        dry_run=True,
-                        gc=gating["episodic"],
-                        suite=suite or "",
-                    )
-                if (
-                    "relational" in modules
-                    and modules["relational"].get("gate") is not None
-                    and "relational" in active_adapters
-                ):
-                    before_attempts = gating["relational"].attempts
-                    active_adapters["relational"].teach(
-                        cfg,
-                        modules["relational"],
-                        item,
-                        dry_run=True,
-                        gc=gating["relational"],
-                        suite=suite or "",
-                    )
-                    if gating["relational"].attempts == before_attempts:
-                        gate = modules["relational"].get("gate")
-                        if gate is not None:
-                            decision = gate.decide(
-                                ("a", "rel", "b", "ctx", None, 1.0, 0),
-                                modules["relational"]["kg"],
-                            )
-                            gc = gating["relational"]
-                            gc.attempts += 1
-                            if decision.action == "insert":
-                                gc.accepted += 1
-                            else:
-                                gc.skipped += 1
-                if (
-                    "spatial" in modules
-                    and modules["spatial"].get("gate") is not None
-                    and "spatial" in active_adapters
-                ):
-                    dummy = Task(prompt="Start (0,0)", answer="", context_key=None)
-                    active_adapters["spatial"].teach(
-                        cfg,
-                        modules["spatial"],
-                        dummy,
-                        dry_run=True,
-                        gc=gating["spatial"],
-                        suite=suite or "",
-                    )
+                    gate = modules[name].get("gate")
+                    if gate is not None:
+                        decision = gate.decide(
+                            ("a", "rel", "b", "ctx", None, 1.0, 0), modules[name]["kg"]
+                        )
+                        gc = gating[name]
+                        gc.attempts += 1
+                        if decision.action == "insert":
+                            gc.accepted += 1
+                        else:
+                            gc.skipped += 1
         req_after = {k: registry.get(k).requests for k in ("episodic", "relational", "spatial")}
         retrieval_requests = sum(req_after.values()) - sum(req_before.values())
         size_after_map, _ = _store_sizes(modules)
@@ -705,91 +636,62 @@ def _run_replay(
     task_list = list(tasks)
     count = 0
     adapters = enabled_adapters(cfg)
-
-    if "episodic" in modules and "episodic" in adapters:
+    gate_defaults = {"episodic": True, "relational": False, "spatial": False}
+    gate_cls = {
+        "episodic": WriteGate,
+        "relational": RelationalGate,
+        "spatial": SpatialGate,
+    }
+    for name in ADAPTER_ORDER:
+        if name not in modules or name not in adapters:
+            continue
         gate_cfg = (
-            (cfg.get("memory", {}).get("episodic", {}).get("gate", {}))
+            (cfg.get("memory", {}).get(name, {}).get("gate", {}))
             if isinstance(cfg, DictConfig)
             else {}
         )
-        gate: WriteGate | None = None
-        if gate_cfg.get("enabled", True):
+        gate = None
+        if gate_cfg.get("enabled", gate_defaults[name]):
             params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
-            gate = WriteGate(**params)
-        modules["episodic"]["gate"] = gate
+            gate = gate_cls[name](**params)
+        modules[name]["gate"] = gate
         gc = GateCounters()
-        for task in task_list:
-            before = gc.accepted
-            adapters["episodic"].teach(
-                cfg,
-                modules["episodic"],
-                task,
-                dry_run=False,
-                gc=gc,
-                suite="replay",
-            )
-            if gc.accepted > before:
-                count += 1
-
-    if "relational" in modules and "relational" in adapters:
-        gate_cfg = (
-            (cfg.get("memory", {}).get("relational", {}).get("gate", {}))
-            if isinstance(cfg, DictConfig)
-            else {}
-        )
-        gate: RelationalGate | None = None
-        if gate_cfg.get("enabled", False):
-            params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
-            gate = RelationalGate(**params)
-        modules["relational"]["gate"] = gate
-        gc = GateCounters()
-        for task in task_list:
-            before_acc = gc.accepted
-            before_attempts = gc.attempts
-            adapters["relational"].teach(
-                cfg,
-                modules["relational"],
-                task,
-                dry_run=False,
-                gc=gc,
-                suite="replay",
-            )
-            if gc.attempts == before_attempts and gate is not None:
-                decision = gate.decide(
-                    ("a", "rel", "b", "ctx", None, 1.0, 0), modules["relational"]["kg"]
-                )
-                gc.attempts += 1
-                if decision.action == "insert":
-                    gc.accepted += 1
-                else:
-                    gc.skipped += 1
-            if gc.accepted > before_acc:
-                count += 1
-
-    if "spatial" in modules and "spatial" in adapters:
-        gate_cfg = (
-            (cfg.get("memory", {}).get("spatial", {}).get("gate", {}))
-            if isinstance(cfg, DictConfig)
-            else {}
-        )
-        gate: SpatialGate | None = None
-        if gate_cfg.get("enabled", False):
-            params = {k: v for k, v in gate_cfg.items() if k != "enabled"}
-            gate = SpatialGate(**params)
-        modules["spatial"]["gate"] = gate
-        if gate is not None:
-            gc = GateCounters()
+        if name == "spatial":
+            if gate is None:
+                continue
             for idx in range(len(task_list)):
                 item = Task(prompt=f"Start ({idx},0)", answer="", context_key=None)
-                adapters["spatial"].teach(
+                adapters[name].teach(
                     cfg,
-                    modules["spatial"],
+                    modules[name],
                     item,
                     dry_run=False,
                     gc=gc,
                     suite="replay",
                 )
-
+        else:
+            for task in task_list:
+                before_acc = gc.accepted
+                before_attempts = gc.attempts
+                adapters[name].teach(
+                    cfg,
+                    modules[name],
+                    task,
+                    dry_run=False,
+                    gc=gc,
+                    suite="replay",
+                )
+                if name == "relational" and gc.attempts == before_attempts and gate is not None:
+                    decision = gate.decide(
+                        ("a", "rel", "b", "ctx", None, 1.0, 0), modules[name]["kg"]
+                    )
+                    gc.attempts += 1
+                    if decision.action == "insert":
+                        gc.accepted += 1
+                    else:
+                        gc.skipped += 1
+                if gc.accepted > before_acc:
+                    count += 1
     return count
 
 
@@ -805,21 +707,13 @@ def _store_sizes(
 
     sizes: Dict[str, int] = {}
     diags: Dict[str, Dict[str, int]] = {}
-    if "episodic" in modules:
-        size, diag = EpisodicEvalAdapter().store_size(modules["episodic"])
-        sizes["episodic"] = size
+    for name in ADAPTER_ORDER:
+        if name not in modules:
+            continue
+        size, diag = ADAPTER_CLS[name]().store_size(modules[name])
+        sizes[name] = size
         if diag:
-            diags["episodic"] = diag
-    if "relational" in modules:
-        size, diag = RelationalEvalAdapter().store_size(modules["relational"])
-        sizes["relational"] = size
-        if diag:
-            diags["relational"] = diag
-    if "spatial" in modules:
-        size, diag = SpatialEvalAdapter().store_size(modules["spatial"])
-        sizes["spatial"] = size
-        if diag:
-            diags["spatial"] = diag
+            diags[name] = diag
     return sizes, diags
 
 
