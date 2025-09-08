@@ -6,6 +6,7 @@ import torch
 
 from hippo_eval.eval import encode_prompt
 from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.modes import TestStrategy
 from hippo_eval.eval.types import Task
 
 
@@ -72,6 +73,7 @@ def test_generated_slice_excludes_input():
         max_new_tokens=2,
         use_chat_template=False,
         system_prompt=None,
+        strategy=TestStrategy(),
     )
     assert rows[0]["pred"] == "9 8"
     assert in_tok == 2 and gen_tok == 2

@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 
 from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.modes import TestStrategy
 from hippo_eval.eval.types import Task
 
 
@@ -46,6 +47,7 @@ def test_short_answer_violation(monkeypatch):
         max_new_tokens=2,
         use_chat_template=False,
         system_prompt=None,
+        strategy=TestStrategy(),
     )
     assert rows[0]["pred"] == "Library!!!"
     assert rows[0]["normalized_pred"] == ""
@@ -70,6 +72,7 @@ def test_short_answer_valid(monkeypatch):
         max_new_tokens=2,
         use_chat_template=False,
         system_prompt=None,
+        strategy=TestStrategy(),
     )
     assert rows[0]["pred"] == "Library"
     assert rows[0]["normalized_pred"] == "Library"

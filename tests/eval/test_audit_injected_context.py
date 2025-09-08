@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 from hippo_eval.eval.harness import _evaluate
+from hippo_eval.eval.modes import TestStrategy
 from hippo_eval.eval.types import Task
 from hippo_mem.episodic.types import TraceValue
 
@@ -68,6 +69,7 @@ def test_audit_includes_context():
         max_new_tokens=1,
         use_chat_template=False,
         system_prompt=None,
+        strategy=TestStrategy(),
     )
     row = rows[0]
     assert row["injected_context"] == ["Carol visited Library"]
