@@ -45,9 +45,6 @@ from hippo_eval.eval.types import Task
 from hippo_eval.harness.metrics import collect_metrics
 from hippo_eval.metrics.scoring import (
     em_norm,
-    em_raw,
-    enforce_short_answer,
-    enforce_udlr,
     f1,
     oracle_from_context,
     spatial_kpis,
@@ -65,7 +62,8 @@ from hippo_mem.utils import validate_run_id
 from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
 from .config_utils import apply_ablation_flags, merge_memory_shortcuts
-from .encode import encode_prompt
+from .generation import apply_chat_template, postprocess
+from .generation import generate as generate_text
 from .models import load_model_config
 from .store_utils import clear_store, resolve_store_meta_path
 from .writers import write_csv, write_meta, write_metrics
@@ -91,8 +89,6 @@ REFUSAL_RE = re.compile(
     r"as\s+an\s+language\s+model|i\s+am\s+unable|i\s+do\s+not\s+have)",
     re.IGNORECASE,
 )
-
-FORMAT_VIOL_RE = re.compile(r"\n|\.$")
 
 
 def _env_flag(name: str) -> bool:
@@ -383,45 +379,30 @@ def _evaluate(
                         adapter(hidden, memory=mem)
 
         prompt = item.prompt
-        if long_context_enabled and not retrieval_enabled:
-            prompt = f"{prompt} [CTX]"
-        inputs = encode_prompt(
+        if use_chat_template:
+            prompt = apply_chat_template(
+                tokenizer,
+                system_prompt
+                or "Answer with the exact shortest span from the prompt. No explanations.",
+                prompt,
+            )
+        raw_pred, in_tok, gen_tok = generate_text(
+            model,
             tokenizer,
             prompt,
-            model.device,
-            use_chat_template=use_chat_template,
-            system_prompt=(
-                system_prompt
-                or "Answer with the exact shortest span from the prompt. No explanations."
-            ),
+            max_new_tokens,
+            long_context=long_context_enabled and not retrieval_enabled,
         )
-        out = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            pad_token_id=tokenizer.pad_token_id,
-            eos_token_id=tokenizer.eos_token_id,
-        )
-        gen = out[:, inputs["input_ids"].shape[-1] :]
-        raw_pred = tokenizer.decode(gen[0], skip_special_tokens=True).strip()
-        suite_is_spatial = suite in {"spatial", "spatial_multi"}
-        if suite_is_spatial:
-            pred = enforce_udlr(raw_pred)
-            fmt = int(pred != raw_pred.strip().upper())
-            pred_len = len(pred)
-            gold_len = len(item.answer)
-            overlong = int(pred_len > gold_len)
-            em_r = em_raw(pred, item.answer) if compute_metrics else None
-            em_n = em_norm(pred, item.answer) if compute_metrics else None
-            f1_val = 1.0 if pred == item.answer else 0.0 if compute_metrics else None
-        else:
-            pred = enforce_short_answer(raw_pred)
-            pred_len = len(pred.split())
-            gold_len = len(item.answer.split())
-            overlong = int(pred_len > gold_len)
-            fmt = int(bool(FORMAT_VIOL_RE.search(raw_pred)) or pred != raw_pred)
-            em_r = em_raw(pred, item.answer) if compute_metrics else None
-            em_n = em_norm(pred, item.answer) if compute_metrics else None
-            f1_val = f1(pred, item.answer) if compute_metrics else None
+        (
+            pred,
+            em_r,
+            em_n,
+            f1_val,
+            overlong,
+            fmt,
+            pred_len,
+            gold_len,
+        ) = postprocess(raw_pred, item, suite, compute_metrics)
         if compute_metrics:
             emr_total += em_r or 0
             emn_total += em_n or 0
@@ -523,8 +504,8 @@ def _evaluate(
                 oracle_em_total += oracle_em_v or 0
                 oracle_f1_total += oracle_f1_v or 0.0
 
-        input_tokens += inputs["input_ids"].shape[-1]
-        gen_tokens += gen.shape[-1]
+        input_tokens += in_tok
+        gen_tokens += gen_tok
         item_t1 = time.perf_counter()
         latency_ms = (item_t1 - item_t0) * 1000.0
         latencies.append(latency_ms)
