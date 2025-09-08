@@ -40,6 +40,14 @@ limited to core memory algorithms; legacy import paths have been removed.
 
 **Retrieval fabric:** one embedding/ANN layer shared across stores; store-type tags; latency SLAs and budgets.
 
+## Evaluation adapter harness
+
+Evaluation runs use small per-algorithm adapters located under
+`hippo_eval.eval.adapters`. Each adapter implements `build`, `retrieve`,
+`teach`, and `store_size`, letting the harness loop over enabled modules in a
+uniform way. This design keeps branching out of the orchestrator and preserves
+the stable public API (`Task`, `evaluate`, `_run_replay`).
+
 # 4) Data structures
 
 ## 4.1 Episodic (HEI-NW)
