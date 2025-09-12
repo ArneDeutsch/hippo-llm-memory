@@ -1,0 +1,15 @@
+This directory contains files copied from the Hugging Face repository
+`sshleifer/tiny-gpt2` (commit/date per project history).
+
+Files:
+  config.json, pytorch_model.bin, tf_model.h5, flax_model.msgpack,
+  vocab.json, merges.txt, tokenizer_config.json, special_tokens_map.json
+
+Licensing:
+* The GPT-2 tokenizer assets derive from OpenAI’s GPT-2 and are licensed
+  under OpenAI’s Modified MIT License. Include a copy of that license when
+  redistributing. (https://github.com/openai/gpt-2/blob/master/LICENSE)
+* The tiny-gpt2 weights/configs are authored by `sshleifer`. The HF model page
+  currently does not list a license. Absent an explicit license, redistribution
+  may be restricted. Use at your own responsibility or replace with a download
+  step (recommended).
