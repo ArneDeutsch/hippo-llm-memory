@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Smoke test for :mod:`scripts.eval_model`."""
 
 import csv

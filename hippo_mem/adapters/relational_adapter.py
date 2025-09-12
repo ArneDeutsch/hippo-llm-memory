@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Relational adapter wrapper emitting residuals for fusion."""
 
 from __future__ import annotations

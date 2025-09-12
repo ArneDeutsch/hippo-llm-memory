@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Metric aggregation helpers for the evaluation harness."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Scoring helpers with exact-match variants and token F1."""
 
 from __future__ import annotations

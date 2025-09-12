@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Thin wrapper exposing the lightweight evaluation bench CLI.
 
 The implementation resides in :mod:`hippo_eval.bench`.  This script

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Tests for gate behavior."""
 
 from hippo_mem.relational.gating import RelationalGate

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.relational.schema import SchemaIndex
 

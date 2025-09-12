@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 #!/usr/bin/env python3
 """Shim to allow legacy `--mode`-style flags for eval_model.py."""
 import argparse

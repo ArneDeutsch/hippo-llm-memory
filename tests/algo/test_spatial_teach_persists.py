@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from pathlib import Path
 
 from hydra.utils import to_absolute_path  # noqa: F401

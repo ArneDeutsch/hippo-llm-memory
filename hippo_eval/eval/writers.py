@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Filesystem writers for evaluation outputs."""
 
 from __future__ import annotations

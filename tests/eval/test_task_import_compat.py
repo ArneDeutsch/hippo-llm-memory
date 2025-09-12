@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Ensure `Task` remains importable from the old location."""
 
 from hippo_eval.eval.harness import Task as HarnessTask

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Semantic behaviour tests for ``RelationalGate``."""
 
 import pytest

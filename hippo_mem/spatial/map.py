@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Deterministic place graph with lightweight planning utilities.
 
 Summary

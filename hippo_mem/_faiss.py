@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """FAISS import helper with warning suppression."""
 
 from __future__ import annotations

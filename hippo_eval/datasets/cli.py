@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 import argparse
 import subprocess
 from pathlib import Path

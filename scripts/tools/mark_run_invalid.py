@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Mark evaluation runs with stub data as invalid.
 
 The script scans a run directory for ``store_meta.json`` files with

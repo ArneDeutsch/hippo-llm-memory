@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Prompt encoding utilities for evaluation harness.
 
 Provides :func:`encode_prompt` which applies chat templates when

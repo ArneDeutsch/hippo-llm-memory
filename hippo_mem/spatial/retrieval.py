@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Spatial subgraph retrieval and packing utilities."""
 
 from __future__ import annotations

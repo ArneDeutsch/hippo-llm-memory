@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """TRL + PEFT LoRA/QLoRA trainer (single GPU).
 
 This script wires together Transformers, TRL's :class:`~trl.SFTTrainer` and

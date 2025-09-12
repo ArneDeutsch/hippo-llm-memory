@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Common data structures and specifications for memory modules."""
 
 from .attn_adapter import CrossAttnAdapter, CrossAttnConfig, LoraLinear

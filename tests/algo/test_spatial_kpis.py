@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from hippo_eval.eval.score import spatial_kpis
 from hippo_eval.eval.types import Task
 

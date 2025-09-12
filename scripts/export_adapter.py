@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Save or merge LoRA adapters.
 
 This script is intentionally tiny; it mirrors the helpers in

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Utilities for training LoRA adapters from replayed memory stores.
 
 This module contains the implementation that was previously embedded in the

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 #!/usr/bin/env python3
 """Summarize parameter sweep runs and prune non-informative cases."""
 

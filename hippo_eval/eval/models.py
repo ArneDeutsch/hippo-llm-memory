@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Model registry loader for evaluation harness.
 
 Reads ``configs/models.yaml`` and returns configuration for a

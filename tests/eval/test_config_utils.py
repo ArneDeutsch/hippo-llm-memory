@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from omegaconf import OmegaConf
 
 from hippo_eval.eval.config_utils import apply_ablation_flags, merge_memory_shortcuts

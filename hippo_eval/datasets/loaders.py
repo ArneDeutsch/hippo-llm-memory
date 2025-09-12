@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Lightweight dataset loading helpers."""
 
 from __future__ import annotations

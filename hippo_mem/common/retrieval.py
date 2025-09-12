@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Shared retrieval utilities for memory modules.
 
 This module consolidates the repeated logic for padding retrieved vectors,

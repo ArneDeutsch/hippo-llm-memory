@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Store path helpers used by evaluation harness and validators."""
 
 from __future__ import annotations

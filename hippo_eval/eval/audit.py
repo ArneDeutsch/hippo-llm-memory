@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Audit presence and checksums of dataset files and evaluation configs."""
 
 from __future__ import annotations

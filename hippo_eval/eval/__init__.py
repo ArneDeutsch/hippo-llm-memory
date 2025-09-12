@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Evaluation utilities for hippo_mem.
 
 Expose helper functions for prompt encoding, model configuration, and

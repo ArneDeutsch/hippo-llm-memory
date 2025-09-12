@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Unit tests for the cross-attention adapter."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 import torch
 
 from hippo_mem.adapters.spatial_adapter import SpatialMemoryAdapter

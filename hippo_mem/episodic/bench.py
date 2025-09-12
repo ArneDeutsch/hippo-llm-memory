@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Benchmark write-gate overhead on synthetic traces."""
 
 from __future__ import annotations

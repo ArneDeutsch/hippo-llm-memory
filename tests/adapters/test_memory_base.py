@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 import hypothesis.extra.numpy as hnp
 import torch
 from hypothesis import HealthCheck, assume, given, settings

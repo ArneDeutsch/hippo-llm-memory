@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 import numpy as np
 
 from hippo_eval.eval.adapters.episodic import episodic_key_from_text

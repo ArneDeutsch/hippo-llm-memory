@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Build memory-first datasets for evaluation."""
 
 from __future__ import annotations

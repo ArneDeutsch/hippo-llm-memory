@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Telemetry integration test for spatial gating."""
 
 from omegaconf import OmegaConf

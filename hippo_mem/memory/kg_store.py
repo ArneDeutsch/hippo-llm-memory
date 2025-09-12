@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Utilities for teaching and querying a semantic knowledge graph.
 
 These helpers implement a tiny knowledge graph for the synthetic

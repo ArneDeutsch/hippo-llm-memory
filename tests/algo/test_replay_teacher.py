@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 import json
 
 from hippo_mem.consolidation.replay_dataset import ReplayDataset

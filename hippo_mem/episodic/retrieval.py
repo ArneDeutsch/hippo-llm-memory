@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Utility for episodic memory retrieval and packing.
 
 Supports optional Hopfield completion of cues before FAISS lookup.

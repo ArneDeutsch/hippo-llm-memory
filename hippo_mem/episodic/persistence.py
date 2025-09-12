@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Persistence helpers for :class:`EpisodicStore`."""
 
 from __future__ import annotations

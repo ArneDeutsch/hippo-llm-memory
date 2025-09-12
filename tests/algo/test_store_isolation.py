@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Ensure baseline runs do not create stores on disk."""
 
 from __future__ import annotations
