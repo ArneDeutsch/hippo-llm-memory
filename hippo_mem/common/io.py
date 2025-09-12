@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Thread-safe I/O helpers with atomic writes."""
 
 from __future__ import annotations

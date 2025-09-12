@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Spatial adapter wrapper providing fusion-compatible interface."""
 
 from __future__ import annotations

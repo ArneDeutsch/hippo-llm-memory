@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Aggregation helpers for run reports."""
 
 from __future__ import annotations

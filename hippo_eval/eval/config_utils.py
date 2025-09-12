@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Utilities for preprocessing evaluation configs.
 
 These helpers fold shortcut memory blocks into ``cfg.memory`` and apply

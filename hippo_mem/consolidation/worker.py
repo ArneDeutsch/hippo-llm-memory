@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Background consolidation worker for replay-based finetuning.
 
 Summary

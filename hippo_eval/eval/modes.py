@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Mode definitions and skeleton strategies for evaluation.
 
 Introduces a ``Mode`` enum and minimal strategy implementations carrying

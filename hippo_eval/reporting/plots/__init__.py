@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Plot helpers for run reports."""
 
 from .metrics import AggBackend, DefaultBackend, PlotBackend, render_suite_plots

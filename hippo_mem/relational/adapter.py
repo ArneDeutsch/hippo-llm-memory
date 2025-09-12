@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Dual-path adapter for semantic and episodic fusion.
 
 Summary

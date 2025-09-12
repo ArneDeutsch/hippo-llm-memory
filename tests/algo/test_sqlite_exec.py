@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 import sqlite3
 
 from hippo_mem.common.sqlite import SQLiteExecMixin

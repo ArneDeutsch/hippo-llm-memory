@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """CLI wrapper for :mod:`hippo_eval.eval.audit`."""
 
 import sys

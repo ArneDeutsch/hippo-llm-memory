@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """LoRA adapter helpers.
 
 This module provides tiny wrappers around the PEFT library so that other pieces

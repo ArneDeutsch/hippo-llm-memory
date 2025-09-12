@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Structured logging for gate decisions."""
 
 from __future__ import annotations

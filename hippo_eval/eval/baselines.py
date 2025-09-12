@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Run baseline evaluation matrix over presets, suites, sizes and seeds."""
 
 from __future__ import annotations

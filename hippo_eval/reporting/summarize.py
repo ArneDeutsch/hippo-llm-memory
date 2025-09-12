@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Aggregate run metrics into per-preset summaries."""
 
 from __future__ import annotations

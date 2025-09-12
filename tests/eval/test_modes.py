@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from hippo_eval.eval.modes import (
     Mode,
     ReplayStrategy,

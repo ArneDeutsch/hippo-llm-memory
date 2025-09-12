@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Dataset to interleave replay items with base training data."""
 
 from __future__ import annotations

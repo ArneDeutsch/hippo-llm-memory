@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Utility functions for episodic memory."""
 
 from __future__ import annotations

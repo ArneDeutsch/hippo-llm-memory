@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from omegaconf import OmegaConf
 
 from hippo_eval.harness import build_runner

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Generate Markdown reports from evaluation runs."""
 
 from __future__ import annotations

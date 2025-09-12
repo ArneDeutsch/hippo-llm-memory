@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Minimal vector index with FAISS or NumPy backends.
 
 The module exposes a tiny ``add``/``search`` interface used by the tests. It

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Shared evaluation types.
 
 This module centralizes small dataclasses used across the evaluation pipeline. Keeping them in one place keeps ``harness.py`` slim and avoids circular imports once helpers are split across modules.

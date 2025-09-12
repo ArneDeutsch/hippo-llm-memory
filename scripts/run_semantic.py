@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """CLI for running the semantic suite with KG dependency and ablation."""
 
 from __future__ import annotations

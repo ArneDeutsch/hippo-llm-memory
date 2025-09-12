@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Deprecated shim for :mod:`hippo_eval.eval.writers`."""
 
 from __future__ import annotations

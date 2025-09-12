@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Thin wrapper around :mod:`hippo_eval.eval.harness` for CLI use.
 
 The full evaluation harness lives in :mod:`hippo_eval.eval.harness`.  This

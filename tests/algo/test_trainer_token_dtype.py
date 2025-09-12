@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from pathlib import Path
 
 from hippo_mem.consolidation.trainer import Args, load_config, train

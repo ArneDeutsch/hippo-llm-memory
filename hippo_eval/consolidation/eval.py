@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Run pre/post consolidation tests with memory disabled.
 
 This script evaluates a model on a suite with ``memory_off`` and optionally a

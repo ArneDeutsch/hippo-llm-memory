@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from hippo_eval.tasks.spatial.generator_multi import generate_spatial_multi
 
 

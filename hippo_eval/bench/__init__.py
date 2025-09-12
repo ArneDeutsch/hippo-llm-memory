@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Light‑weight evaluation harness used in tests and CI.
 
 This module provides a tiny yet functional implementation of the evaluation

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Validate that test prompts do not contain leaked facts.
 
 The script checks that no token from the teach prompts appears in the

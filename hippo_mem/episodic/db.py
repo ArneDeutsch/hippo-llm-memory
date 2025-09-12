@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """SQLite helpers for the episodic store."""
 
 from __future__ import annotations

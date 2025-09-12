@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Small SQLite execution helper mixin."""
 
 from __future__ import annotations

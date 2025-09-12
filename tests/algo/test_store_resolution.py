@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 from hippo_eval.eval.store_utils import resolve_store_meta_path
 
 

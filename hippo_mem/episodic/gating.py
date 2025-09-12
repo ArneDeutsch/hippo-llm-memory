@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Algorithm Card: HEI-NW Gating
 
 Summary

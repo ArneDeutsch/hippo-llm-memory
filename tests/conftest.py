@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Pytest configuration for path setup and marker handling."""
 
 import os

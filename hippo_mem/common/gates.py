@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Common gate decision types and interfaces."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Evaluate a model on JSONL suites and write metrics and metadata.
 
 This script implements the basic evaluation harness described in

@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Dataclasses for episodic traces."""
 
 from __future__ import annotations

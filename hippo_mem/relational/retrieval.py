@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Utilities for relational memory retrieval and packing."""
 
 from __future__ import annotations

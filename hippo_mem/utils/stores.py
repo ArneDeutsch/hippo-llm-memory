@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Utility helpers for persisted stores and preset checks."""
 
 from __future__ import annotations

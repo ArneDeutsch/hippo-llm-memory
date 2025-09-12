@@ -1,3 +1,4 @@
+# Copyright (c) 2025 Arne Deutsch, itemis AG, MIT License
 """Adapters wrapping :mod:`hippo_mem.episodic.adapter` for fusion."""
 
 from __future__ import annotations
