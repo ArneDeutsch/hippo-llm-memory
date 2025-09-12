@@ -10,7 +10,4 @@ This project vendors files from:
 
 * **Model weights and configs from `sshleifer/tiny-gpt2`**
   Source: https://huggingface.co/sshleifer/tiny-gpt2
-  As of 2025-09-12 the Hugging Face page does not declare a license. If you
-  redistribute these files, you are responsible for ensuring you have
-  permission from the rights holder. Consider replacing vendored files with an
-  on-demand download step.
+  As of 2025-09-12 the Hugging Face page does not declare a license.
