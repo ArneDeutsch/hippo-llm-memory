@@ -10,6 +10,4 @@ Licensing:
   under OpenAI’s Modified MIT License. Include a copy of that license when
   redistributing. (https://github.com/openai/gpt-2/blob/master/LICENSE)
 * The tiny-gpt2 weights/configs are authored by `sshleifer`. The HF model page
-  currently does not list a license. Absent an explicit license, redistribution
-  may be restricted. Use at your own responsibility or replace with a download
-  step (recommended).
+  currently does not list a license.
