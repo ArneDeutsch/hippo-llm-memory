@@ -126,7 +126,7 @@ class CrossAttnAdapter(nn.Module):
         if memory is None or not torch.any(memory.mask):
             return hidden_states
         bsz, q_len, _ = hidden_states.shape
-        traces = memory.tokens
+        traces = memory.tokens.to(hidden_states)
         t_len = traces.shape[1]
         q = self.q_proj(hidden_states).view(bsz, q_len, self.num_heads, self.head_dim)
         q = q.transpose(1, 2)
@@ -136,7 +136,8 @@ class CrossAttnAdapter(nn.Module):
         v = v.transpose(1, 2)
         k = self._expand_kv(k)
         v = self._expand_kv(v)
-        mask = torch.where(memory.mask, 0.0, float("-inf"))
+        mask = torch.zeros_like(memory.mask, dtype=hidden_states.dtype, device=hidden_states.device)
+        mask = mask.masked_fill(~memory.mask.to(hidden_states.device), float("-inf"))
         attn_mask = mask[:, None, :].expand(bsz, q_len, mask.size(1))
         if self.use_flash and hasattr(F, "scaled_dot_product_attention"):
             attn = F.scaled_dot_product_attention(

@@ -72,3 +72,14 @@ def test_forward_pass_shapes() -> None:
     with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
         out_flash = adapter_flash(hidden, memory)
     assert out_flash.shape == (1, 3, 8)
+
+
+def test_forward_casts_memory_to_hidden_dtype() -> None:
+    """Memory tokens cast to hidden state dtype."""
+
+    hidden = torch.randn(1, 3, 8, dtype=torch.bfloat16)
+    memory = _make_memory(1, 2, 8)
+    cfg = CrossAttnConfig(hidden_size=8, num_heads=2)
+    adapter = CrossAttnAdapter(cfg).to(dtype=torch.bfloat16)
+    out = adapter(hidden, memory)
+    assert out.dtype is torch.bfloat16
