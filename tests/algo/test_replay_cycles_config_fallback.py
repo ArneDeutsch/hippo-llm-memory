@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def test_replay_cycles_config_fallback(tmp_path: Path) -> None:
     out_nested = tmp_path / "nested"
@@ -16,7 +18,7 @@ def test_replay_cycles_config_fallback(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={out_nested}",
         "replay.cycles=1",
         "dry_run=true",
@@ -33,7 +35,7 @@ def test_replay_cycles_config_fallback(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={out_flat}",
         "replay_cycles=1",
         "dry_run=true",

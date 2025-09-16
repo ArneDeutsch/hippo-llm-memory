@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.testing import FAKE_MODEL_ID
 from hippo_mem.utils.stores import derive
 
 pytestmark = pytest.mark.slow
@@ -25,7 +26,7 @@ def test_eval_model_dry_run(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         "replay.cycles=1",
         f"outdir={outdir}",
         "+ablate.memory.episodic.hopfield=false",
@@ -79,7 +80,7 @@ def test_eval_model_cli_flags(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         f"store_dir={store_dir}",
         "session_id=abc",
@@ -106,7 +107,7 @@ def test_teach_persists_and_skips_metrics(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         f"store_dir={layout.base_dir}",
         f"run_id={run_id}",
@@ -137,7 +138,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir_teach}",
         f"store_dir={layout.base_dir}",
         f"run_id={run_id}",
@@ -156,7 +157,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir_test}",
         f"store_dir={layout.algo_dir}",
         f"run_id={run_id}",
@@ -178,7 +179,7 @@ def test_load_store_and_memory_off(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=2",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir_off}",
         f"store_dir={layout.algo_dir}",
         f"run_id={run_id}",
@@ -214,7 +215,7 @@ def test_run_id_parameter_controls_outdir(tmp_path: Path, preset: str, expected:
         f"preset={preset}",
         "n=2",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         "run_id=RID0101",
         "dry_run=true",
     ]

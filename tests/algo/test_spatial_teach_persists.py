@@ -5,6 +5,7 @@ from hydra.utils import to_absolute_path  # noqa: F401
 from omegaconf import OmegaConf
 
 from hippo_eval.eval.harness import evaluate
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_spatial_teach_writes_jsonl(tmp_path: Path) -> None:
@@ -22,7 +23,7 @@ def test_spatial_teach_writes_jsonl(tmp_path: Path) -> None:
             "strict_telemetry": True,
             "dataset_profile": None,
             "memory_off": False,
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
             "pad_token_id": 0,
             "eos_token_id": 0,
             "max_new_tokens": 8,

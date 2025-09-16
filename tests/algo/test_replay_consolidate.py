@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from hippo_mem.consolidation.trainer import parse_args
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def _write_store(base: Path) -> Path:
@@ -56,7 +57,7 @@ def test_replay_consolidate_auto_targets(tmp_path: Path) -> None:
         {
             "TRANSFORMERS_OFFLINE": "1",
             "HF_HUB_OFFLINE": "1",
-            "HF_MODEL_PATH": "models/tiny-gpt2",
+            "HF_MODEL_PATH": FAKE_MODEL_ID,
         }
     )
     cmd = [
@@ -72,7 +73,7 @@ def test_replay_consolidate_auto_targets(tmp_path: Path) -> None:
         "--outdir",
         str(outdir),
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
     ]
     subprocess.run(cmd, check=True, env=env)
     cfg_path = outdir / "adapter_config.json"
@@ -95,7 +96,7 @@ def test_replay_consolidate_runs(tmp_path: Path) -> None:
         {
             "TRANSFORMERS_OFFLINE": "1",
             "HF_HUB_OFFLINE": "1",
-            "HF_MODEL_PATH": "models/tiny-gpt2",
+            "HF_MODEL_PATH": FAKE_MODEL_ID,
         }
     )
     cmd = [
@@ -111,7 +112,7 @@ def test_replay_consolidate_runs(tmp_path: Path) -> None:
         "--outdir",
         str(outdir),
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
     ]
     subprocess.run(cmd, check=True, env=env)
     meta = json.loads((outdir / "meta.json").read_text())
@@ -133,7 +134,7 @@ def test_replay_consolidate_merge(tmp_path: Path) -> None:
         {
             "TRANSFORMERS_OFFLINE": "1",
             "HF_HUB_OFFLINE": "1",
-            "HF_MODEL_PATH": "models/tiny-gpt2",
+            "HF_MODEL_PATH": FAKE_MODEL_ID,
         }
     )
     cmd = [
@@ -149,7 +150,7 @@ def test_replay_consolidate_merge(tmp_path: Path) -> None:
         "--outdir",
         str(outdir),
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
         "--merge",
     ]
     subprocess.run(cmd, check=True, env=env)

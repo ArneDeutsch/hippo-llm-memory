@@ -6,13 +6,14 @@ from hippo_eval.eval.harness import _evaluate, _init_modules
 from hippo_eval.eval.modes import TestStrategy
 from hippo_eval.eval.types import Task
 from hippo_mem.common.telemetry import registry
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_retrieval_flag_disables_memory(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    tokenizer = AutoTokenizer.from_pretrained("models/tiny-gpt2")
-    model = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    tokenizer = AutoTokenizer.from_pretrained(FAKE_MODEL_ID)
+    model = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     modules = _init_modules("hei_nw", {})
     tasks = [Task(prompt="hello", answer="world")]
 

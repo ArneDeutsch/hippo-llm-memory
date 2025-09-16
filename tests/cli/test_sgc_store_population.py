@@ -2,6 +2,8 @@
 import subprocess
 import sys
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def test_sgc_teach_populates_store(tmp_path):
     outdir = tmp_path / "o"
@@ -17,7 +19,7 @@ def test_sgc_teach_populates_store(tmp_path):
         f"outdir={outdir}",
         f"store_dir={store}",
         f"session_id={sid}",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         "mode=teach",
         "persist=true",
     ]

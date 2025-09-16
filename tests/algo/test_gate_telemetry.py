@@ -9,6 +9,7 @@ from hippo_mem.common.telemetry import gate_registry
 from hippo_mem.relational.gating import RelationalGate
 from hippo_mem.relational.kg import KnowledgeGraph
 from hippo_mem.spatial.map import PlaceGraph
+from hippo_mem.testing import FAKE_MODEL_ID
 from hippo_mem.training.lora import build_spatial_gate, ingest_spatial_traces
 
 
@@ -50,7 +51,7 @@ def test_gate_metrics_propagate(tmp_path: Path) -> None:
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/memory/hei_nw.yaml",
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
         }
     )
     result = build_runner(cfg).run()

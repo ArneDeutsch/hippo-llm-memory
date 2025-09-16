@@ -2,7 +2,7 @@
 set -euo pipefail
 export RUN_ID=${RUN_ID:-dev}
 source "$(dirname "$0")/_env.sh"
-MODEL=models/tiny-gpt2
+MODEL=hippo/fake-tiny-gpt2
 SUITE=episodic
 printf "%-6s %-9s %-9s\n" "seed" "baseline" "hei_nw"
 # Preflight requires baseline roll-up.

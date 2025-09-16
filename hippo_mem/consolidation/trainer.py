@@ -27,6 +27,7 @@ from transformers.pytorch_utils import Conv1D
 from hippo_mem.adapters.lora import default_target_modules, export_adapter, merge_adapter
 from hippo_mem.common import io
 from hippo_mem.consolidation import ReplayDataset
+from hippo_mem.testing.fake_hf import resolve_fake_model_id
 
 
 @dataclass
@@ -139,10 +140,11 @@ class ConsolidationTrainer:
 
     def __init__(self, model_name: str, seed: int) -> None:
         logging.info("loading model %s", model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        resolved = resolve_fake_model_id(model_name) or model_name
+        self.tokenizer = AutoTokenizer.from_pretrained(resolved)
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model = AutoModelForCausalLM.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(resolved)
         torch.manual_seed(seed)
         self.model.train()
         self.lora_hash = ""

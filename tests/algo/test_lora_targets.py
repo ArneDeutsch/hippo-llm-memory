@@ -16,6 +16,7 @@ from hippo_mem.adapters.lora import (
     inspect_first_block,
     register_target_module_strategy,
 )
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_default_targets_enable_trainable_params(monkeypatch) -> None:
@@ -23,7 +24,7 @@ def test_default_targets_enable_trainable_params(monkeypatch) -> None:
 
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    model = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    model = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     targets = default_target_modules(model)
     config = LoraConfig(
         task_type="CAUSAL_LM",
@@ -42,7 +43,7 @@ def test_strategy_registration(monkeypatch) -> None:
 
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    model = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    model = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     model.config.model_type = "dummy"
     original = dict(TARGET_MODULE_STRATEGIES)
 
@@ -62,7 +63,7 @@ def test_llama_targets_include_mlp(monkeypatch) -> None:
 
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    model = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    model = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     model.config.model_type = "llama"
     targets = default_target_modules(model)
     assert set(targets) == {"q_proj", "v_proj", "o_proj", "up_proj", "down_proj"}
@@ -100,7 +101,7 @@ def test_block_extractor_dispatch(monkeypatch) -> None:
 
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    model = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    model = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     # pre: gpt2 extractor present
     assert "gpt2" in BLOCK_EXTRACTORS
     assert inspect_first_block(model) == ["c_attn", "c_proj"]

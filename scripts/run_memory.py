@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -43,7 +45,7 @@ def main() -> None:
     parser.add_argument("--n", type=int, default=1)
     parser.add_argument("--seed", type=int, default=1337)
     parser.add_argument("--mode", default="teach")
-    parser.add_argument("--model", default="models/tiny-gpt2")
+    parser.add_argument("--model", default=FAKE_MODEL_ID)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--episodic-gate", choices=["on", "off", "auto"], default="auto")
     parser.add_argument("--relational-gate", choices=["on", "off", "auto"], default="auto")

@@ -9,13 +9,14 @@ from pathlib import Path
 from omegaconf import OmegaConf
 
 from hippo_eval.eval.harness import _apply_model_defaults, evaluate
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_baseline_metrics_in_teach(tmp_path: Path) -> None:
     cfg = OmegaConf.load("configs/eval/default.yaml")
     cfg.suite = "episodic"
     cfg.preset = "baselines/core"
-    cfg.model = "models/tiny-gpt2"
+    cfg.model = FAKE_MODEL_ID
     cfg.n = 1
     cfg.seed = 1337
     cfg.dry_run = True

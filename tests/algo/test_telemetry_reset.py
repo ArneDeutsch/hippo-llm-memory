@@ -3,6 +3,7 @@ from omegaconf import OmegaConf
 
 from hippo_eval.harness import build_runner
 from hippo_mem.common.telemetry import registry
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_telemetry_resets_between_runs() -> None:
@@ -13,7 +14,7 @@ def test_telemetry_resets_between_runs() -> None:
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/memory/hei_nw.yaml",
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
         }
     )
     build_runner(cfg_mem).run()
@@ -26,7 +27,7 @@ def test_telemetry_resets_between_runs() -> None:
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/baselines/core.yaml",
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
         }
     )
     build_runner(cfg_base).run()

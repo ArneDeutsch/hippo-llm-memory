@@ -12,6 +12,7 @@ import torch
 
 from hippo_mem.adapters.relational_adapter import RelationalMemoryAdapter
 from hippo_mem.common import MemoryTokens
+from hippo_mem.testing import FAKE_MODEL_ID
 from hippo_mem.training.lora import (
     TrainConfig,
     _init_sft_trainer,
@@ -104,7 +105,7 @@ def test_loads_real_model_offline(monkeypatch) -> None:
 
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    monkeypatch.setenv("HF_MODEL_PATH", "models/tiny-gpt2")
+    monkeypatch.setenv("HF_MODEL_PATH", FAKE_MODEL_ID)
 
     cfg = TrainConfig(dry_run=True)
     model, tokenizer = _load_model_and_tokenizer(cfg)
@@ -485,7 +486,7 @@ def test_cli_respects_ablation_flags(monkeypatch) -> None:
 
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    monkeypatch.setenv("HF_MODEL_PATH", "models/tiny-gpt2")
+    monkeypatch.setenv("HF_MODEL_PATH", FAKE_MODEL_ID)
 
     cmd = [
         sys.executable,

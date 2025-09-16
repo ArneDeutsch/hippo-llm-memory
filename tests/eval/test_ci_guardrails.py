@@ -10,6 +10,7 @@ from omegaconf import OmegaConf
 from hippo_eval.consolidation import eval as test_consolidation
 from hippo_eval.eval import harness as eval_helpers
 from hippo_eval.harness import build_runner
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 @pytest.mark.parametrize(
@@ -34,7 +35,7 @@ def test_retrieval_requests_guard(
             "n": 0,
             "seed": 0,
             "preset": preset,
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
         }
     )
 
@@ -58,7 +59,7 @@ def test_retrieval_tokens_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
             "n": 0,
             "seed": 0,
             "preset": "configs/eval/memory/hei_nw.yaml",
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
         }
     )
 
@@ -131,7 +132,7 @@ def test_refusal_rate_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
             "preset": "configs/eval/baselines/core.yaml",
             "use_chat_template": True,
             "max_new_tokens": 8,
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
         }
     )
     with pytest.raises(RuntimeError) as exc:
@@ -177,7 +178,7 @@ def test_consolidation_uplift_guard(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "--seed",
         "1337",
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
         "--allow-tiny-test-model",
         "--adapter",
         str(tmp_path / "adapter"),
@@ -238,7 +239,7 @@ def test_consolidation_ci_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
         "--seed",
         "2025",
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
         "--allow-tiny-test-model",
         "--adapter",
         str(tmp_path / "adapter"),
@@ -297,7 +298,7 @@ def test_consolidation_ci_mode_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "--seed",
         "2025",
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
         "--allow-tiny-test-model",
         "--adapter",
         str(tmp_path / "adapter"),

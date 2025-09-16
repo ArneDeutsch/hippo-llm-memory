@@ -2,7 +2,7 @@
 set -euo pipefail
 RUN_ID="sanity_${RANDOM}"
 STORES="runs/${RUN_ID}/stores"
-MODEL="models/tiny-gpt2"
+MODEL="hippo/fake-tiny-gpt2"
 SIZES=(8)
 SEEDS=(1337)
 

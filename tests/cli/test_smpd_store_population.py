@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def test_smpd_store_population(tmp_path: Path) -> None:
     run_id = "run_ci"
@@ -29,7 +31,7 @@ def test_smpd_store_population(tmp_path: Path) -> None:
                 f"store_dir={stores}",
                 f"session_id={sid}",
                 "strict_telemetry=true",
-                "model=models/tiny-gpt2",
+                f"model={FAKE_MODEL_ID}",
             ],
             check=True,
         )

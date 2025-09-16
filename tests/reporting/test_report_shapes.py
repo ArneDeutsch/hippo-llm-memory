@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 @pytest.mark.slow
 def test_metrics_csv_has_diagnostics(tmp_path: Path) -> None:
@@ -18,7 +20,7 @@ def test_metrics_csv_has_diagnostics(tmp_path: Path) -> None:
         "preset=baselines/core",
         "n=1",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         "mode=teach",
         "dry_run=true",
