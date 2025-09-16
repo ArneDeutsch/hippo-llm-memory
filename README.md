@@ -1,3 +1,7 @@
+# Notes about the repository content
+
+This is an (unfinished) experimental project. Almost all the content is AI generated. It is more an experiment about todays capabilities of AI then anything else. Take information from this repository with a grain of salt!
+
 # hippo-llm-memory
 
 Hippocampus-inspired memory modules for small language models.
