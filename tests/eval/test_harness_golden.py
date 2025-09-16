@@ -7,6 +7,7 @@ import pytest
 from omegaconf import OmegaConf
 
 from hippo_eval.eval import harness
+from hippo_mem.testing import FAKE_MODEL_ID
 
 GOLDEN = Path(__file__).resolve().parent / "golden"
 CASES = [
@@ -36,7 +37,7 @@ def test_harness_golden(tmp_path, suite, preset):
     cfg.n = 5
     cfg.seed = 1337
     cfg.run_id = "golden"
-    cfg.model = str(Path("models/tiny-gpt2"))
+    cfg.model = FAKE_MODEL_ID
     cfg = harness._load_preset(cfg)
     cfg = harness._apply_model_defaults(cfg)
     harness.evaluate(cfg, tmp_path, preflight=False)

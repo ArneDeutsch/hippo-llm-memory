@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from hippo_mem.consolidation.trainer import Args, load_config, train
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_train_handles_float_token_ids(tmp_path: Path) -> None:
@@ -19,7 +20,7 @@ def test_train_handles_float_token_ids(tmp_path: Path) -> None:
         store_dir=str(store_root),
         session_id=session_id,
         outdir=str(out_dir),
-        model="models/tiny-gpt2",
+        model=FAKE_MODEL_ID,
         config=None,
     )
     cfg = load_config(None)

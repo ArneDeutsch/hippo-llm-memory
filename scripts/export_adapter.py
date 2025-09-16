@@ -15,6 +15,7 @@ from peft import PeftModel
 from transformers import AutoModelForCausalLM
 
 from hippo_mem.adapters.lora import export_adapter, load_adapter, merge_adapter
+from hippo_mem.testing.fake_hf import resolve_fake_model_id
 
 
 def parse_args() -> argparse.Namespace:
@@ -32,7 +33,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:  # pragma: no cover - thin CLI wrapper
     args = parse_args()
-    base = AutoModelForCausalLM.from_pretrained(args.base_model)
+    model_name = resolve_fake_model_id(args.base_model) or args.base_model
+    base = AutoModelForCausalLM.from_pretrained(model_name)
     model: PeftModel = load_adapter(base, args.adapter)
     if args.merge:
         merged = merge_adapter(model)

@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def _write_store(base: Path) -> Path:
     session = base / "hei_nw" / "sid"
@@ -28,7 +30,7 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         {
             "TRANSFORMERS_OFFLINE": "1",
             "HF_HUB_OFFLINE": "1",
-            "HF_MODEL_PATH": "models/tiny-gpt2",
+            "HF_MODEL_PATH": FAKE_MODEL_ID,
         }
     )
 
@@ -53,7 +55,7 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         "--outdir",
         str(adapter_dir),
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
     ]
     subprocess.run(cmd, check=True, env=env, cwd=repo)
 
@@ -71,7 +73,7 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         "--seed",
         "1337",
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
         "--allow-tiny-test-model",
         "--outdir",
         str(pre_dir),
@@ -92,7 +94,7 @@ def test_test_consolidation_pre_post(tmp_path: Path) -> None:
         "--seed",
         "1337",
         "--model",
-        "models/tiny-gpt2",
+        FAKE_MODEL_ID,
         "--allow-tiny-test-model",
         "--adapter",
         str(adapter_dir),

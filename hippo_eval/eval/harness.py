@@ -60,6 +60,7 @@ from hippo_mem.common.telemetry import (
     registry,
     set_strict_telemetry,
 )
+from hippo_mem.testing.fake_hf import FAKE_MODEL_ID, resolve_fake_model_id
 from hippo_mem.utils import validate_run_id
 from hippo_mem.utils.stores import assert_store_exists, is_memory_preset
 
@@ -157,7 +158,8 @@ def _apply_model_defaults(cfg: DictConfig) -> DictConfig:
         cfg.memory_off = cfg.get("memory_off", False)
         cfg.no_retrieval_during_teach = cfg.get("no_retrieval_during_teach", True)
         cfg.isolate = cfg.get("isolate", "none")
-        model_cfg = load_model_config(str(cfg.model))
+        resolved_model_id = resolve_fake_model_id(cfg.model) or str(cfg.model)
+        model_cfg = load_model_config(resolved_model_id)
         if cfg.get("use_chat_template") is None:
             cfg.use_chat_template = model_cfg.get("use_chat_template", False)
         if cfg.get("system_prompt") is None:
@@ -1066,15 +1068,19 @@ def build_run_inputs(cfg: DictConfig) -> tuple[
     model_id = (str(cfg.model) or "").strip()
     if not model_id:
         raise ValueError("cfg.model is empty. Pass --model or set $MODEL.")
-    p = Path(model_id)
-    if p.exists() and p.is_dir():
-        if not (p / "config.json").exists():
-            raise ValueError(
-                f"Model path '{p}' exists but is not a Hugging Face model dir (missing config.json). "
-                "Did you accidentally pass the repository root? Set --model correctly."
-            )
-    abs_model_path = Path(to_absolute_path(model_id))
-    model_path = abs_model_path if abs_model_path.exists() else model_id
+    resolved_model_id = resolve_fake_model_id(model_id) or model_id
+    if resolved_model_id == FAKE_MODEL_ID:
+        model_path = FAKE_MODEL_ID
+    else:
+        p = Path(model_id)
+        if p.exists() and p.is_dir():
+            if not (p / "config.json").exists():
+                raise ValueError(
+                    f"Model path '{p}' exists but is not a Hugging Face model dir (missing config.json). "
+                    "Did you accidentally pass the repository root? Set --model correctly."
+                )
+        abs_model_path = Path(to_absolute_path(model_id))
+        model_path = abs_model_path if abs_model_path.exists() else model_id
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     if cfg.pad_token_id is not None:
         tokenizer.pad_token_id = cfg.pad_token_id

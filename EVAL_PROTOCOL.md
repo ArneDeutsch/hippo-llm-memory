@@ -9,7 +9,8 @@ single 12 GB GPU.
 export RUN_ID=run$(date +%Y%m%d)
 export SIZES=(50)        # e.g. 50 100
 export SEEDS=(1337)      # e.g. 1 2 3
-export MODEL=models/tiny-gpt2
+# The fake HF identifier is handled by hippo_mem.testing.fake_hf
+export MODEL=hippo/fake-tiny-gpt2
 ```
 
 ## Episodic (HEI‑NW)

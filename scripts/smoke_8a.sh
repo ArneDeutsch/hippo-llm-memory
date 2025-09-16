@@ -2,7 +2,7 @@
 set -euo pipefail
 export RUN_ID=${RUN_ID:-dev}
 source "$(dirname "$0")/_env.sh"
-export MODEL=models/tiny-gpt2
+export MODEL=hippo/fake-tiny-gpt2
 export HF_MODEL_PATH="$MODEL"
 IFS=$'\n\t'
 

@@ -8,12 +8,13 @@ from transformers import AutoModelForCausalLM
 from hippo_mem.adapters import patch
 from hippo_mem.adapters.patch import MemoryFusionConfig, attach_adapters
 from hippo_mem.common import MemoryTokens
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def _setup_model(monkeypatch: pytest.MonkeyPatch) -> AutoModelForCausalLM:
     monkeypatch.setenv("TRANSFORMERS_OFFLINE", "1")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
-    model = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    model = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     model.eval()
     monkeypatch.setattr(patch, "find_transformer_blocks", lambda m: list(m.transformer.h))
     return model
@@ -27,16 +28,16 @@ def test_disabled_memory_matches_snapshot(monkeypatch: pytest.MonkeyPatch) -> No
 
     expected = torch.tensor(
         [
-            0.01286869,
-            0.01087749,
-            -0.03159444,
-            0.00434459,
-            0.00492962,
-            -0.00780645,
-            -0.03147811,
-            0.04449766,
-            0.04845034,
-            0.01217225,
+            0.76504016,
+            0.06311644,
+            -0.09524395,
+            -0.08798069,
+            0.13141681,
+            -0.15304527,
+            0.04292956,
+            0.12787980,
+            -0.13714597,
+            0.11853138,
         ]
     )
     assert torch.allclose(logits, expected, rtol=0, atol=1e-5)

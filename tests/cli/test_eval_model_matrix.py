@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 @pytest.mark.slow
 def test_eval_model_run_matrix(tmp_path: Path) -> None:
@@ -21,7 +23,7 @@ def test_eval_model_run_matrix(tmp_path: Path) -> None:
         "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         "dry_run=true",
     ]
@@ -46,7 +48,7 @@ def test_eval_model_run_matrix_episodic_multi(tmp_path: Path) -> None:
         "tasks=[episodic_cross_mem]",
         "n_values=[2]",
         "seeds=[1337]",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         "dry_run=true",
     ]
@@ -71,7 +73,7 @@ def test_eval_model_run_matrix_date(tmp_path: Path) -> None:
         "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         "dry_run=true",
         "run_id=RID824",
     ]
@@ -98,7 +100,7 @@ def test_eval_model_run_matrix_baseline(tmp_path: Path) -> None:
         "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         "dry_run=true",
         "run_id=RID824",
     ]
@@ -132,7 +134,7 @@ def test_eval_model_run_matrix_date_time(tmp_path: Path) -> None:
         "+suites=[episodic_cross_mem]",
         "+n_values=[2]",
         "+seeds=[1337]",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         "dry_run=true",
         "run_id=RID2890841",
     ]
@@ -161,7 +163,7 @@ def test_eval_model_run_matrix_presets(tmp_path: Path) -> None:
         "tasks=[episodic_cross_mem]",
         "n_values=[2]",
         "seeds=[1337]",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={tmp_path}",
         "dry_run=true",
     ]

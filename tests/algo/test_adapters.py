@@ -10,13 +10,14 @@ from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import AutoModelForCausalLM, PreTrainedModel
 
 from hippo_mem.adapters.lora import export_adapter, load_adapter, merge_adapter
+from hippo_mem.testing import FAKE_MODEL_ID
 from scripts import export_adapter as export_cli
 
 
 def _create_adapter(tmp_path: Path) -> Path:
     """Create and save a tiny LoRA adapter for testing."""
 
-    base = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    base = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     config = LoraConfig(
         task_type="CAUSAL_LM",
         r=2,
@@ -39,7 +40,7 @@ def test_load_merge_export_adapter(tmp_path, monkeypatch) -> None:
 
     adapter_dir = _create_adapter(tmp_path)
 
-    base = AutoModelForCausalLM.from_pretrained("models/tiny-gpt2")
+    base = AutoModelForCausalLM.from_pretrained(FAKE_MODEL_ID)
     loaded = load_adapter(base, adapter_dir)
     assert isinstance(loaded, PeftModel)
 

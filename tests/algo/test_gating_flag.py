@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def test_gating_flag_disables_gate(tmp_path: Path) -> None:
     outdir = tmp_path / "run"
@@ -16,7 +18,7 @@ def test_gating_flag_disables_gate(tmp_path: Path) -> None:
         "n=1",
         "seed=1337",
         f"outdir={outdir}",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         "mode=teach",
         "gating_enabled=false",
         "dry_run=true",

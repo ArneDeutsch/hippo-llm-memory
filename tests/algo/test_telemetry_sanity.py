@@ -9,6 +9,7 @@ from hippo_mem.common.telemetry import (
     set_strict_telemetry,
     validate_retrieval_snapshot,
 )
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +57,7 @@ def test_env_var_enables_strict(monkeypatch, tmp_path) -> None:
             "n": 1,
             "seed": 0,
             "preset": "baselines/core",
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
             "dataset_profile": None,
         }
     )

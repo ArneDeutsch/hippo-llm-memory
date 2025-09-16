@@ -5,6 +5,7 @@ from omegaconf import OmegaConf
 
 from hippo_eval.harness import build_runner
 from hippo_mem.common.telemetry import registry
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_retrieval_counters_propagate(tmp_path: Path) -> None:
@@ -15,7 +16,7 @@ def test_retrieval_counters_propagate(tmp_path: Path) -> None:
             "n": 5,
             "seed": 1337,
             "preset": "configs/eval/memory/hei_nw.yaml",
-            "model": "models/tiny-gpt2",
+            "model": FAKE_MODEL_ID,
         }
     )
     runner = build_runner(cfg)

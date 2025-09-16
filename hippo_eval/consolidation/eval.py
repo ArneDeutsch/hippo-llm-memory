@@ -12,11 +12,11 @@ Example usage::
 
     # Pre-consolidation baseline
     python scripts/test_consolidation.py --phase pre --suite episodic --n 50 \
-        --seed 1337 --model models/tiny-gpt2 --outdir runs/pre
+        --seed 1337 --model hippo_mem.testing.fake_hf.FAKE_MODEL_ID --outdir runs/pre
 
     # Post-consolidation test
     python scripts/test_consolidation.py --phase post --suite episodic --n 50 \
-        --seed 1337 --model models/tiny-gpt2 --adapter runs/adapter \
+        --seed 1337 --model hippo_mem.testing.fake_hf.FAKE_MODEL_ID --adapter runs/adapter \
         --pre_dir runs/pre --outdir runs/post
 """
 
@@ -39,6 +39,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import hippo_eval.eval.harness as eval_model
 from hippo_mem.adapters.lora import load_adapter, merge_adapter
 from hippo_mem.common import io
+from hippo_mem.testing.fake_hf import FAKE_MODEL_ID, is_fake_model_id, resolve_fake_model_id
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS_DIR = REPO_ROOT / "scripts"
@@ -82,7 +83,7 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
     parser.add_argument(
         "--allow-tiny-test-model",
         action="store_true",
-        help="Enable the tiny-gpt2 test model when MODEL is unset",
+        help="Enable the fake test model when MODEL is unset",
     )
     parser.add_argument(
         "--uplift-mode",
@@ -106,19 +107,21 @@ def _parse_args(argv: Optional[list[str]] = None) -> Args:
 
 
 def _resolve_model(arg_model: str | None, allow_tiny: bool) -> str:
-    m = (arg_model or os.environ.get("MODEL") or "").strip()
-    if not m and allow_tiny:
-        m = "models/tiny-gpt2"
-    if not m:
+    raw = (arg_model or os.environ.get("MODEL") or "").strip()
+    if not raw and allow_tiny:
+        raw = FAKE_MODEL_ID
+    if not raw:
         raise SystemExit(
             "Error: --model is empty and $MODEL is not set.\n",
             "Set --model (e.g., Qwen/Qwen2.5-1.5B-Instruct) or export MODEL.",
         )
-    if m in {"tiny-gpt2", "models/tiny-gpt2"} and not allow_tiny:
-        raise SystemExit(
-            "Error: tiny-gpt2 is for tests only. Pass --allow-tiny-test-model to use it.",
-        )
-    return m
+    if is_fake_model_id(raw):
+        if not allow_tiny:
+            raise SystemExit(
+                f"Error: {FAKE_MODEL_ID} is for tests only. Pass --allow-tiny-test-model to use it.",
+            )
+        return FAKE_MODEL_ID
+    return raw
 
 
 def _build_cfg(model_path: str, args: Args) -> Any:
@@ -166,10 +169,11 @@ def _prepare_model_with_adapter(
 ) -> tuple[str, tempfile.TemporaryDirectory]:
     """Return path to a temp dir containing the base model with ``adapter`` merged."""
 
-    model = AutoModelForCausalLM.from_pretrained(base_model)
+    resolved = resolve_fake_model_id(base_model) or base_model
+    model = AutoModelForCausalLM.from_pretrained(resolved)
     model = load_adapter(model, adapter)
     merged = merge_adapter(model)
-    tokenizer = AutoTokenizer.from_pretrained(base_model)
+    tokenizer = AutoTokenizer.from_pretrained(resolved)
     tmp = tempfile.TemporaryDirectory()
     merged.save_pretrained(tmp.name)
     tokenizer.save_pretrained(tmp.name)

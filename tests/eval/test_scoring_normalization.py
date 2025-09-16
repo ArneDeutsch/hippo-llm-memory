@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from hippo_eval.eval.score import em_norm, normalize
+from hippo_mem.testing import FAKE_MODEL_ID
 
 
 def test_normalize_and_em() -> None:
@@ -25,7 +26,7 @@ def test_harness_writes_em_scores(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         "mode=teach",
         "dry_run=true",

@@ -5,13 +5,15 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def run_eval(args: list[str], outdir: Path) -> None:
     cmd = [
         sys.executable,
         "scripts/eval_model.py",
         *args,
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         "n=1",
         "seed=1337",

@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def test_gate_telemetry_after_replay(tmp_path: Path) -> None:
     store_dir = tmp_path / "stores"
@@ -15,7 +17,7 @@ def test_gate_telemetry_after_replay(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"store_dir={store_dir}",
         "session_id=s1",
     ]

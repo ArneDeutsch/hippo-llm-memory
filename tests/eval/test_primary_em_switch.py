@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.testing import FAKE_MODEL_ID
+
 
 def _run(primary: str, outdir: Path) -> dict:
     cmd = [
@@ -15,7 +17,7 @@ def _run(primary: str, outdir: Path) -> dict:
         "preset=baselines/core",
         "n=1",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         "dry_run=true",
         "mode=teach",

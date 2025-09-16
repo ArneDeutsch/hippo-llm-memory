@@ -58,6 +58,7 @@ from hippo_mem.spatial.adapter import SpatialAdapter
 from hippo_mem.spatial.gating import SpatialGate
 from hippo_mem.spatial.map import PlaceGraph
 from hippo_mem.spatial.retrieval import spatial_retrieve_and_pack
+from hippo_mem.testing.fake_hf import FAKE_MODEL_ID, resolve_fake_model_id
 from hippo_mem.utils import log_memory_status
 
 # Backwards compatibility for tests expecting ``EpisodicAdapter`` symbol
@@ -110,7 +111,7 @@ class TrainConfig:
     """Configuration for LoRA/QLoRA training."""
 
     # Model & data
-    model_name: str = field(default_factory=lambda: os.environ.get("HF_MODEL_PATH", ""))
+    model_name: str = field(default_factory=lambda: os.environ.get("HF_MODEL_PATH", FAKE_MODEL_ID))
     dataset_name: str = "imdb"
     data_format: str = "jsonl"  # {"hf","jsonl"}
     train_files: List[str] = field(default_factory=list)
@@ -223,7 +224,10 @@ ConfigStore.instance().store(name="train_lora_config", node=TrainConfig)
 def _load_model_and_tokenizer(cfg: TrainConfig):
     """Load model and tokenizer with 4‑bit quantisation when possible."""
 
-    tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
+    model_name = resolve_fake_model_id(cfg.model_name) or cfg.model_name
+    if not model_name:
+        raise ValueError("cfg.model_name is empty; set HF_MODEL_PATH or model_name")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     # Ensure pad token is set for causal models
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -242,7 +246,7 @@ def _load_model_and_tokenizer(cfg: TrainConfig):
     except Exception:  # pragma: no cover - optional dependency
         pass
 
-    model = AutoModelForCausalLM.from_pretrained(cfg.model_name, **quant_kwargs)
+    model = AutoModelForCausalLM.from_pretrained(model_name, **quant_kwargs)
     model.config.use_cache = False  # Needed for gradient checkpointing
     model.gradient_checkpointing_enable()
     if cfg.efficiency.flash_attention:

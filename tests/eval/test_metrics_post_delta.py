@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from hippo_mem.testing import FAKE_MODEL_ID
 from hippo_mem.utils.stores import derive
 
 
@@ -22,7 +23,7 @@ def test_replay_writes_post_and_delta(tmp_path: Path) -> None:
         "preset=memory/hei_nw",
         "n=1",
         "seed=1337",
-        "model=models/tiny-gpt2",
+        f"model={FAKE_MODEL_ID}",
         f"outdir={outdir}",
         f"run_id={run_id}",
         f"store_dir={layout.algo_dir}",
